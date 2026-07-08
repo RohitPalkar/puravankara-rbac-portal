@@ -121,7 +121,7 @@ export function DataTable({
             }}
           />
 
-          <Stack direction="row" spacing={0.5}>
+          <Stack direction="row" spacing={0.5} sx={{ ml: 'auto' }}>
             <Button
               size="small"
               variant={hasActiveFilters ? 'soft' : 'text'}
@@ -225,9 +225,6 @@ export function DataTable({
           pageSizeOptions={[5, 10, 25]}
           disableRowSelectionOnClick
           autoHeight
-          disableColumnMenu
-          disableColumnFilter
-          disableColumnSelector
           sortingMode="server"
           filterMode="server"
           sx={{
