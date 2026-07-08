@@ -1,6 +1,6 @@
 import { useMemo, useState, useCallback } from 'react';
 import type { GridColDef } from '@mui/x-data-grid';
-import { DataGrid } from '@mui/x-data-grid';
+import { DataGrid, GridColumnMenuSortItem } from '@mui/x-data-grid';
 import Stack from '@mui/material/Stack';
 import TextField from '@mui/material/TextField';
 import Button from '@mui/material/Button';
@@ -227,6 +227,13 @@ export function DataTable({
           autoHeight
           sortingMode="server"
           filterMode="server"
+          slots={{
+            columnMenu: (props: any) => (
+              <div>
+                <GridColumnMenuSortItem {...props} />
+              </div>
+            ),
+          }}
           sx={{
             '& .MuiDataGrid-row': { cursor: onRowClick ? 'pointer' : 'default' },
           }}
