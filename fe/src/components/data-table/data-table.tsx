@@ -1,6 +1,6 @@
 import { useMemo, useState, useCallback } from 'react';
 import type { GridColDef } from '@mui/x-data-grid';
-import { DataGrid, GridColumnMenuSortItem } from '@mui/x-data-grid';
+import { DataGrid } from '@mui/x-data-grid';
 import Stack from '@mui/material/Stack';
 import TextField from '@mui/material/TextField';
 import Button from '@mui/material/Button';
@@ -14,8 +14,6 @@ import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import { Iconify } from 'src/components/iconify';
 import { CustomPopover, usePopover } from 'src/components/custom-popover';
-
-export type SortConfig = { field: string; order: 'asc' | 'desc' };
 
 export type FilterOption = {
   key: string;
@@ -31,7 +29,6 @@ type Props = {
   onRowClick?: (row: any) => void;
   searchPlaceholder?: string;
   filterOptions?: FilterOption[];
-  initialSort?: SortConfig;
 };
 
 export function DataTable({
@@ -42,10 +39,8 @@ export function DataTable({
   onRowClick,
   searchPlaceholder = 'Search...',
   filterOptions,
-  initialSort = { field: 'createdAt', order: 'desc' },
 }: Props) {
   const [search, setSearch] = useState('');
-  const [sort, setSort] = useState<SortConfig | undefined>(initialSort);
   const [filters, setFilters] = useState<Record<string, string>>({});
   const [hiddenColumns, setHiddenColumns] = useState<Set<string>>(new Set());
 
@@ -72,18 +67,8 @@ export function DataTable({
         data = data.filter((row) => String(row[key]) === val);
       }
     });
-    if (sort) {
-      data = [...data].sort((a, b) => {
-        const aVal = a[sort.field];
-        const bVal = b[sort.field];
-        if (aVal == null) return 1;
-        if (bVal == null) return -1;
-        const cmp = typeof aVal === 'string' ? aVal.localeCompare(bVal) : aVal - bVal;
-        return sort.order === 'asc' ? cmp : -cmp;
-      });
-    }
     return data;
-  }, [rows, search, filters, sort, columns, hiddenColumns]);
+  }, [rows, search, filters, columns, hiddenColumns]);
 
   const processedColumns = useMemo(() => {
     if (columns.length === 0) return [];
@@ -99,12 +84,7 @@ export function DataTable({
     });
   }, []);
 
-  const handleFilterChange = useCallback((key: string, value: string) => {
-    setFilters((prev) => ({ ...prev, [key]: value }));
-  }, []);
-
-  const sortableColumns = visibleColumns.filter((c) => c.field !== 'id' && c.sortable !== false);
-  const hasActiveFilters = sort !== undefined || Object.values(filters).some((v) => v);
+  const hasActiveFilters = Object.values(filters).some((v) => v);
 
   return (
     <Card sx={{ overflow: 'hidden' }}>
@@ -133,56 +113,31 @@ export function DataTable({
             </Button>
             <CustomPopover open={filterPopover.open} anchorEl={filterPopover.anchorEl} onClose={filterPopover.onClose}>
               <Stack spacing={1.5} sx={{ p: 2, minWidth: 220 }}>
-                <Typography variant="subtitle2">Sort By</Typography>
-                <TextField
-                  select
-                  size="small"
-                  label="Field"
-                  value={sort?.field ?? ''}
-                  onChange={(e) => setSort((prev) => ({ field: e.target.value, order: prev?.order ?? 'asc' }))}
-                  fullWidth
-                >
-                  {sortableColumns.map((col) => (
-                    <MenuItem key={col.field} value={col.field}>{col.headerName || col.field}</MenuItem>
-                  ))}
-                </TextField>
-                <TextField
-                  select
-                  size="small"
-                  label="Order"
-                  value={sort?.order ?? 'asc'}
-                  onChange={(e) => setSort((prev) => ({ field: prev?.field ?? 'name', order: e.target.value as 'asc' | 'desc' }))}
-                  fullWidth
-                >
-                  <MenuItem value="asc">Ascending</MenuItem>
-                  <MenuItem value="desc">Descending</MenuItem>
-                </TextField>
-
-                {filterOptions && filterOptions.length > 0 && (
-                  <>
-                    <Divider />
-                    <Typography variant="subtitle2">Filter By</Typography>
-                    {filterOptions.map((f) => (
-                      <TextField
-                        key={f.key}
-                        select
-                        size="small"
-                        label={f.label}
-                        value={filters[f.key] ?? ''}
-                        onChange={(e) => handleFilterChange(f.key, e.target.value)}
-                        fullWidth
-                      >
-                        <MenuItem value="">All</MenuItem>
-                        {f.options.map((o) => (
-                          <MenuItem key={o.value} value={o.value}>{o.label}</MenuItem>
-                        ))}
-                      </TextField>
-                    ))}
-                  </>
+                <Typography variant="subtitle2">Filter By</Typography>
+                {filterOptions && filterOptions.length > 0 ? (
+                  filterOptions.map((f) => (
+                    <TextField
+                      key={f.key}
+                      select
+                      size="small"
+                      label={f.label}
+                      value={filters[f.key] ?? ''}
+                      onChange={(e) => setFilters((prev) => ({ ...prev, [f.key]: e.target.value }))}
+                      fullWidth
+                    >
+                      <MenuItem value="">All</MenuItem>
+                      {f.options.map((o) => (
+                        <MenuItem key={o.value} value={o.value}>{o.label}</MenuItem>
+                      ))}
+                    </TextField>
+                  ))
+                ) : (
+                  <Typography variant="body2" color="text.secondary" sx={{ py: 1 }}>
+                    No filter options available
+                  </Typography>
                 )}
-
                 {hasActiveFilters && (
-                  <Button size="small" color="error" variant="text" onClick={() => { setSort(initialSort); setFilters({}); filterPopover.onClose(); }}>
+                  <Button size="small" color="error" variant="text" onClick={() => { setFilters({}); filterPopover.onClose(); }}>
                     Clear All
                   </Button>
                 )}
@@ -224,16 +179,8 @@ export function DataTable({
           initialState={{ pagination: { paginationModel: { pageSize: 10 } } }}
           pageSizeOptions={[5, 10, 25]}
           disableRowSelectionOnClick
+          disableColumnMenu
           autoHeight
-          sortingMode="server"
-          filterMode="server"
-          slots={{
-            columnMenu: (props: any) => (
-              <div>
-                <GridColumnMenuSortItem {...props} />
-              </div>
-            ),
-          }}
           sx={{
             '& .MuiDataGrid-row': { cursor: onRowClick ? 'pointer' : 'default' },
           }}
