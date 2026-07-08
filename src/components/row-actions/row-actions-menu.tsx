@@ -27,7 +27,7 @@ export function RowActionsMenu({ actions }: Props) {
         onClick={(e) => { e.stopPropagation(); setAnchorEl(e.currentTarget); }}
         sx={{ width: 40, height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
       >
-        <Iconify icon="solar:menu-dots-bold-round-bold" width={20} />
+        <Iconify icon="solar:menu-dots-bold" width={20} sx={{ transform: 'rotate(90deg)' }} />
       </IconButton>
       <Menu
         anchorEl={anchorEl}
