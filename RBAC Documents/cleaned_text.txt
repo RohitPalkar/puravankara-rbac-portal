@@ -1,0 +1,1229 @@
+You are a Senior Enterprise Full Stack Architect with expertise in React, NestJS, MySQL, RBAC, JWT, and Enterprise Security.
+
+The RBAC backend is already implemented.
+Do NOT recreate the RBAC module.
+Your task is to review the complete Frontend and Backend codebase and integrate the existing RBAC implementation end-to-end.
+Understand the existing coding standards, folder structure, architecture, authentication flow, and API patterns before making any changes.
+
+The project has two folders:
+1. Frontend
+2. Backend
+Also review the RBAC Info.xlsx file completely.
+The Excel contains:
+1. RBAC
+2. RBAC_Final
+3. Module Wise Bifurcation
+
+Use it as the single source of truth for Roles, Modules, Sub Modules, Actions, Hierarchy, Departments, Levels, Zones and Permission Mapping.
+
+----------------------------------------------------
+OBJECTIVE
+----------------------------------------------------
+
+Implement complete RBAC integration from Frontend to Backend to Database.
+The entire flow should work locally.
+
+----------------------------------------------------
+FLOW TO IMPLEMENT
+----------------------------------------------------
+
+1. User opens Create User page.
+2. Frontend loads all required dropdowns dynamically from backend.
+
+Example
+Department
+|
+Role
+|
+Level
+|
+Zone
+|
+City
+|
+Project
+|
+Module
+|
+Sub Module
+|
+Designation
+|
+Reporting Manager
+
+All values should come from database.
+No hardcoded values.
+
+----------------------------------------------------
+
+3. User fills Create User form.
+
+Validate
+Required fields
+Email
+Mobile
+Duplicate email
+Duplicate employee code
+Password rules
+Role selection
+Project selection
+Department
+Zone
+Hierarchy
+----------------------------------------------------
+
+4. Submit Create User.
+
+Frontend should call backend API.
+Backend should
+
+Create User
+
+Assign Role
+Assign Hierarchy
+Assign Project
+Assign Module Access
+Assign Permission Mapping
+Generate Audit Log
+Return created user.
+----------------------------------------------------
+
+5. Database should correctly populate
+
+users
+user_role_assignments
+user_hierarchy
+user_project_module_access
+permission_audit_log
+Any other RBAC tables used by the application.
+----------------------------------------------------
+6. Login Flow
+
+Login with newly created user.
+JWT should include
+
+User Id
+
+Primary Role
+
+Department
+
+Zone
+
+Project
+
+Role Id
+
+Other required claims.
+
+----------------------------------------------------
+
+7. After Login
+
+Frontend should call
+
+GET /rbac/permissions/my
+
+Load
+
+Modules
+
+Sub Modules
+
+Actions
+
+Store permissions globally.
+
+----------------------------------------------------
+
+8. Frontend Authorization
+
+Menus
+
+Sidebar
+
+Routes
+
+Pages
+
+Cards
+
+Buttons
+
+Tables
+
+Actions
+
+Bulk Actions
+
+Export
+
+Import
+
+Edit
+
+Delete
+
+Approve
+
+Reject
+
+Upload
+
+Download
+
+Everything should respect permissions.
+
+Hide or Disable based on RBAC.
+
+----------------------------------------------------
+
+9. CRUD Authorization
+
+Every CRUD operation should validate permission.
+
+Example
+
+Create
+
+Read
+
+Update
+
+Delete
+
+Approve
+
+Reject
+
+Export
+
+Import
+
+Upload
+
+Download
+
+Both frontend and backend must enforce permissions.
+
+Frontend should never rely only on UI hiding.
+
+Backend PermissionGuard must validate every request.
+
+----------------------------------------------------
+
+10. User Edit
+
+When editing user
+
+Load existing
+
+Roles
+
+Permissions
+
+Projects
+
+Hierarchy
+
+Module Access
+
+Update correctly.
+
+----------------------------------------------------
+
+11. User Delete
+
+Soft Delete only.
+
+Remove active assignments.
+
+Maintain audit history.
+
+----------------------------------------------------
+
+12. Super Admin
+
+Should bypass permission checks.
+
+----------------------------------------------------
+
+13. Admin
+
+Should only access allowed modules.
+
+----------------------------------------------------
+
+14. Audit Logs
+
+Every operation should log
+
+Created By
+
+Updated By
+
+Timestamp
+
+Old Value
+
+New Value
+
+Action
+
+Module
+
+User
+
+----------------------------------------------------
+
+15. Frontend Requirements
+
+Review existing components.
+
+Reuse existing design system.
+
+Do not redesign UI.
+
+Follow existing coding standards.
+
+Only integrate RBAC.
+
+----------------------------------------------------
+
+16. Backend Requirements
+
+Follow existing architecture.
+
+Controllers
+
+Services
+
+Repositories
+
+DTOs
+
+Guards
+
+Decorators
+
+Entities
+
+Must follow existing project pattern.
+
+----------------------------------------------------
+
+17. Database
+
+Use local MySQL.
+
+Host:
+
+localhost
+
+Username:
+
+root
+
+Password:
+
+YourStrongPassword123!
+
+Generate migrations if required.
+
+Generate seed scripts if required.
+
+----------------------------------------------------
+
+18. Validation
+
+Test
+
+Create User
+
+Assign Role
+
+Login
+
+Permission Loading
+
+Route Guard
+
+Menu Visibility
+
+CRUD Authorization
+
+Project Access
+
+Hierarchy
+
+Zone Restriction
+
+Department Restriction
+
+Permission Update
+
+Role Update
+
+----------------------------------------------------
+
+19. Deliverables
+
+Provide
+
+1. Files Modified
+
+2. Files Created
+
+3. Database Changes
+
+4. API Changes
+
+5. Frontend Changes
+
+6. Backend Changes
+
+7. Migration Commands
+
+8. Seed Commands
+
+9. Run Commands
+
+10. Testing Steps
+
+11. Sample Test Users
+
+12. Sample Login Credentials
+
+13. Expected Results
+
+14. Known Limitations
+
+----------------------------------------------------
+
+20. SUPER ADMIN AUTHENTICATION
+
+----------------------------------------------------
+
+The application currently uses SSO + OTP authentication.
+
+Implement a configurable Super Admin bypass for local development and emergency administration.
+
+Requirements:
+
+1. Existing Authentication
+
+- Do NOT modify or break the existing SSO + OTP flow.
+
+- All existing users must continue to authenticate using the current SSO + OTP mechanism.
+
+2. Super Admin Bypass
+
+Implement a configuration-based authentication bypass for Super Admin only.
+
+When enabled through environment variables, the Super Admin should be able to log in using a username/email and password without going through SSO or OTP.
+
+Example:
+
+SUPER_ADMIN_BYPASS_ENABLED=true
+
+Super Admin Login
+
+Email:
+
+superadmin@company.com
+
+Password:
+
+<secure password>
+
+3. Environment Configuration
+
+The bypass must only work when explicitly enabled via configuration.
+
+Example:
+
+SUPER_ADMIN_BYPASS_ENABLED=true
+
+In Production this value must always be false.
+
+When disabled, the Super Admin should also authenticate using the standard SSO + OTP flow.
+
+4. Authorization
+
+After successful login, the Super Admin should:
+
+• Bypass all PermissionGuard checks.
+
+• Bypass all RolesGuard checks where applicable.
+
+• Have unrestricted access to all modules, sub-modules, actions, projects, zones, cities, departments, and levels.
+
+• Be able to create, update, delete, assign, revoke, and manage every RBAC entity.
+
+5. Audit Logs
+
+Every Super Admin login (including bypass logins) must be recorded with:
+
+- Login Method (SSO or Local Bypass)
+
+- Timestamp
+
+- IP Address
+
+- Device/User Agent
+
+- User ID
+
+- Status (Success/Failure)
+
+6. Security
+
+The bypass must:
+
+• Be disabled by default.
+
+• Never expose passwords in code.
+
+• Read credentials securely from environment variables or the database.
+
+• Never affect any other user accounts.
+
+• Never disable JWT validation.
+
+• Never disable authentication middleware globally.
+
+7. Frontend
+
+Add a separate "Super Admin Login" option that is displayed only when the backend indicates that the bypass is enabled (for example, via a feature flag endpoint or environment configuration).
+
+When the bypass is disabled, hide this option completely.
+
+Do not expose this option to normal users.
+
+8. Database
+
+Ensure the Super Admin user exists with:
+
+- Role: Super Admin
+
+- All permissions assigned
+
+- Full module access
+
+- Full project access
+
+- Full hierarchy access
+
+Seed the Super Admin account if it does not exist.
+
+9. Local Development
+
+The complete flow should work locally using:
+
+MySQL
+
+Host:
+
+localhost
+
+Username:
+
+root
+
+Password:
+
+YourStrongPassword123!
+
+The following scenarios must be validated:
+
+✓ Super Admin Local Login
+
+✓ Standard SSO Login
+
+✓ OTP Login
+
+✓ User Creation
+
+✓ Role Assignment
+
+✓ Permission Assignment
+
+✓ JWT Generation
+
+✓ Permission Loading
+
+✓ Menu Rendering
+
+✓ Route Authorization
+
+✓ CRUD Authorization
+
+✓ Audit Logging
+
+----------------------------------------------------
+
+IMPORTANT
+
+----------------------------------------------------
+
+You are a Senior Enterprise Full Stack Architect with expertise in React, NestJS, MySQL, RBAC, JWT, and Enterprise Security.
+
+The RBAC backend is already implemented.
+
+Do NOT recreate the RBAC module.
+
+Your task is to review the complete Frontend and Backend codebase and integrate the existing RBAC implementation end-to-end.
+
+Understand the existing coding standards, folder structure, architecture, authentication flow, and API patterns before making any changes.
+
+The project has two folders:
+
+Frontend
+
+Backend
+
+Also review the RBAC Info.xlsx file completely.
+
+The Excel contains:
+
+1. RBAC
+
+2. RBAC_Final
+
+3. Module Wise Bifurcation
+
+Use it as the single source of truth for Roles, Modules, Sub Modules, Actions, Hierarchy, Departments, Levels, Zones and Permission Mapping.
+
+----------------------------------------------------
+
+OBJECTIVE
+
+----------------------------------------------------
+
+Implement complete RBAC integration from Frontend to Backend to Database.
+
+The entire flow should work locally.
+
+----------------------------------------------------
+
+FLOW TO IMPLEMENT
+
+----------------------------------------------------
+
+1. User opens Create User page.
+
+2. Frontend loads all required dropdowns dynamically from backend.
+
+Example
+
+Department
+
+Role
+
+Level
+
+Zone
+
+City
+
+Project
+
+Module
+
+Sub Module
+
+Designation
+
+Reporting Manager
+
+All values should come from database.
+
+No hardcoded values.
+
+----------------------------------------------------
+
+3. User fills Create User form.
+
+Validate
+
+Required fields
+
+Email
+
+Mobile
+
+Duplicate email
+
+Duplicate employee code
+
+Password rules
+
+Role selection
+
+Project selection
+
+Department
+
+Zone
+
+Hierarchy
+
+----------------------------------------------------
+
+4. Submit Create User.
+
+Frontend should call backend API.
+
+Backend should
+
+Create User
+
+Assign Role
+
+Assign Hierarchy
+
+Assign Project
+
+Assign Module Access
+
+Assign Permission Mapping
+
+Generate Audit Log
+
+Return created user.
+
+----------------------------------------------------
+
+5. Database should correctly populate
+
+users
+
+user_role_assignments
+
+user_hierarchy
+
+user_project_module_access
+
+permission_audit_log
+
+Any other RBAC tables used by the application.
+
+----------------------------------------------------
+
+6. Login Flow
+
+Login with newly created user.
+
+JWT should include
+
+User Id
+
+Primary Role
+
+Department
+
+Zone
+
+Project
+
+Role Id
+
+Other required claims.
+
+----------------------------------------------------
+
+7. After Login
+
+Frontend should call
+
+GET /rbac/permissions/my
+
+Load
+
+Modules
+
+Sub Modules
+
+Actions
+
+Store permissions globally.
+
+----------------------------------------------------
+
+8. Frontend Authorization
+
+Menus
+
+Sidebar
+
+Routes
+
+Pages
+
+Cards
+
+Buttons
+
+Tables
+
+Actions
+
+Bulk Actions
+
+Export
+
+Import
+
+Edit
+
+Delete
+
+Approve
+
+Reject
+
+Upload
+
+Download
+
+Everything should respect permissions.
+
+Hide or Disable based on RBAC.
+
+----------------------------------------------------
+
+9. CRUD Authorization
+
+Every CRUD operation should validate permission.
+
+Example
+
+Create
+
+Read
+
+Update
+
+Delete
+
+Approve
+
+Reject
+
+Export
+
+Import
+
+Upload
+
+Download
+
+Both frontend and backend must enforce permissions.
+
+Frontend should never rely only on UI hiding.
+
+Backend PermissionGuard must validate every request.
+
+----------------------------------------------------
+
+10. User Edit
+
+When editing user
+
+Load existing
+
+Roles
+
+Permissions
+
+Projects
+
+Hierarchy
+
+Module Access
+
+Update correctly.
+
+----------------------------------------------------
+
+11. User Delete
+
+Soft Delete only.
+
+Remove active assignments.
+
+Maintain audit history.
+
+----------------------------------------------------
+
+12. Super Admin
+
+Should bypass permission checks.
+
+----------------------------------------------------
+
+13. Admin
+
+Should only access allowed modules.
+
+----------------------------------------------------
+
+14. Audit Logs
+
+Every operation should log
+
+Created By
+
+Updated By
+
+Timestamp
+
+Old Value
+
+New Value
+
+Action
+
+Module
+
+User
+
+----------------------------------------------------
+
+15. Frontend Requirements
+
+Review existing components.
+
+Reuse existing design system.
+
+Do not redesign UI.
+
+Follow existing coding standards.
+
+Only integrate RBAC.
+
+----------------------------------------------------
+
+16. Backend Requirements
+
+Follow existing architecture.
+
+Controllers
+
+Services
+
+Repositories
+
+DTOs
+
+Guards
+
+Decorators
+
+Entities
+
+Must follow existing project pattern.
+
+----------------------------------------------------
+
+17. Database
+
+Use local MySQL.
+
+Host:
+
+localhost
+
+Username:
+
+root
+
+Password:
+
+YourStrongPassword123!
+
+Generate migrations if required.
+
+Generate seed scripts if required.
+
+----------------------------------------------------
+
+18. Validation
+
+Test
+
+Create User
+
+Assign Role
+
+Login
+
+Permission Loading
+
+Route Guard
+
+Menu Visibility
+
+CRUD Authorization
+
+Project Access
+
+Hierarchy
+
+Zone Restriction
+
+Department Restriction
+
+Permission Update
+
+Role Update
+
+----------------------------------------------------
+
+19. Deliverables
+
+Provide
+
+1. Files Modified
+
+2. Files Created
+
+3. Database Changes
+
+4. API Changes
+
+5. Frontend Changes
+
+6. Backend Changes
+
+7. Migration Commands
+
+8. Seed Commands
+
+9. Run Commands
+
+10. Testing Steps
+
+11. Sample Test Users
+
+12. Sample Login Credentials
+
+13. Expected Results
+
+14. Known Limitations
+
+----------------------------------------------------
+
+20. SUPER ADMIN AUTHENTICATION
+
+----------------------------------------------------
+
+The application currently uses SSO + OTP authentication.
+
+Implement a configurable Super Admin bypass for local development and emergency administration.
+
+Requirements:
+
+1. Existing Authentication
+
+- Do NOT modify or break the existing SSO + OTP flow.
+
+- All existing users must continue to authenticate using the current SSO + OTP mechanism.
+
+2. Super Admin Bypass
+
+Implement a configuration-based authentication bypass for Super Admin only.
+
+When enabled through environment variables, the Super Admin should be able to log in using a username/email and password without going through SSO or OTP.
+
+Example:
+
+SUPER_ADMIN_BYPASS_ENABLED=true
+
+Super Admin Login
+
+Email:
+
+superadmin@company.com
+
+Password:
+
+<secure password>
+
+3. Environment Configuration
+
+The bypass must only work when explicitly enabled via configuration.
+
+Example:
+
+SUPER_ADMIN_BYPASS_ENABLED=true
+
+In Production this value must always be false.
+
+When disabled, the Super Admin should also authenticate using the standard SSO + OTP flow.
+
+4. Authorization
+
+After successful login, the Super Admin should:
+
+• Bypass all PermissionGuard checks.
+
+• Bypass all RolesGuard checks where applicable.
+
+• Have unrestricted access to all modules, sub-modules, actions, projects, zones, cities, departments, and levels.
+
+• Be able to create, update, delete, assign, revoke, and manage every RBAC entity.
+
+5. Audit Logs
+
+Every Super Admin login (including bypass logins) must be recorded with:
+
+- Login Method (SSO or Local Bypass)
+
+- Timestamp
+
+- IP Address
+
+- Device/User Agent
+
+- User ID
+
+- Status (Success/Failure)
+
+6. Security
+
+The bypass must:
+
+• Be disabled by default.
+
+• Never expose passwords in code.
+
+• Read credentials securely from environment variables or the database.
+
+• Never affect any other user accounts.
+
+• Never disable JWT validation.
+
+• Never disable authentication middleware globally.
+
+7. Frontend
+
+Add a separate "Super Admin Login" option that is displayed only when the backend indicates that the bypass is enabled (for example, via a feature flag endpoint or environment configuration).
+
+When the bypass is disabled, hide this option completely.
+
+Do not expose this option to normal users.
+
+8. Database
+
+Ensure the Super Admin user exists with:
+
+- Role: Super Admin
+
+- All permissions assigned
+
+- Full module access
+
+- Full project access
+
+- Full hierarchy access
+
+Seed the Super Admin account if it does not exist.
+
+9. Local Development
+
+The complete flow should work locally using:
+
+MySQL
+
+Host:
+
+localhost
+
+Username:
+
+root
+
+Password:
+
+YourStrongPassword123!
+
+The following scenarios must be validated:
+
+✓ Super Admin Local Login
+
+✓ Standard SSO Login
+
+✓ OTP Login
+
+✓ User Creation
+
+✓ Role Assignment
+
+✓ Permission Assignment
+
+✓ JWT Generation
+
+✓ Permission Loading
+
+✓ Menu Rendering
+
+✓ Route Authorization
+
+✓ CRUD Authorization
+
+✓ Audit Logging
+
+----------------------------------------------------
+
+IMPORTANT
+
+----------------------------------------------------
+
+- Do NOT remove or replace the existing SSO + OTP implementation.
+
+- The Super Admin bypass is an additive feature for local development and controlled administrative access only.
+
+- Existing authentication, authorization, and RBAC flows must remain fully functional and backward compatible.IMPORTANT
+
+----------------------------------------------------
+
+• Do not recreate RBAC.
+
+• Reuse existing RBAC implementation.
+
+• Follow existing coding standards.
+
+• Do not break existing functionality.
+
+• Maintain backward compatibility.
+
+• Ensure the complete flow works locally from Frontend → Backend → Database → Login → Permission Validation → UI Authorization.
+
+Additional Recommendation
+
+Instead of a permanent "bypass," implement it as a feature flag (e.g., SUPER_ADMIN_BYPASS_ENABLED) that defaults to false and is enabled only in local or non-production environments. This preserves the integrity of your SSO + OTP flow while still giving administrators a controlled way to access the system during development or recovery scenarios.
+
+- Do NOT remove or replace the existing SSO + OTP implementation.
+
+- The Super Admin bypass is an additive feature for local development and controlled administrative access only.
+
+- Existing authentication, authorization, and RBAC flows must remain fully functional and backward compatible.IMPORTANT
+
+----------------------------------------------------
+
+• Do not recreate RBAC.
+
+• Reuse existing RBAC implementation.
+
+• Follow existing coding standards.
+
+• Do not break existing functionality.
+
+• Maintain backward compatibility.
+
+• Ensure the complete flow works locally from Frontend → Backend → Database → Login → Permission Validation → UI Authorization.
+
+Additional Recommendation
+
+Instead of a permanent "bypass," implement it as a feature flag (e.g., SUPER_ADMIN_BYPASS_ENABLED) that defaults to false and is enabled only in local or non-production environments. This preserves the integrity of your SSO + OTP flow while still giving administrators a controlled way to access the system during development or recovery scenarios.
