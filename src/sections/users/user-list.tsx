@@ -18,6 +18,7 @@ import { Form, Field } from 'src/components/hook-form';
 import { Label } from 'src/components/label';
 import { Iconify } from 'src/components/iconify';
 import { PageContainer, PageHeader } from 'src/components/page-layout';
+import { RowActionsMenu } from 'src/components/row-actions';
 import { mockUsers, mockDepartments, mockRoles, mockProjects } from 'src/services/mock-data';
 import type { User } from 'src/types';
 import { paths } from 'src/routes/paths';
@@ -95,18 +96,13 @@ export default function UserListPage() {
       ),
     },
     {
-      field: 'actions', headerName: '', width: 140, sortable: false,
+      field: 'actions', headerName: '', width: 60, sortable: false, disableColumnMenu: true,
       renderCell: (params) => (
-        <Stack direction="row" spacing={0.5}>
-          <Button size="small" variant="soft" onClick={(e) => { e.stopPropagation(); navigate(paths.dashboard.userDetail(params.row.id)); }}>
-            <Iconify icon="solar:eye-bold" width={16} />
-          </Button>
-          <Button size="small" variant="soft" onClick={(e) => { e.stopPropagation(); handleEdit(params.row); }}>
-            <Iconify icon="solar:pen-bold" width={16} />
-          </Button>
-          <Button size="small" variant="soft" color="error" onClick={(e) => { e.stopPropagation(); setDeleteId(params.row.id); }}>
-            <Iconify icon="solar:trash-bin-trash-bold" width={16} />
-          </Button>
+        <Stack direction="row" spacing={0.5} sx={{ justifyContent: 'center', width: 1 }}>
+          <RowActionsMenu actions={[
+            { label: 'Edit', icon: 'solar:pen-bold', onClick: () => handleEdit(params.row) },
+            { label: 'Delete', icon: 'solar:trash-bin-trash-bold', onClick: () => setDeleteId(params.row.id), color: 'error.main' },
+          ]} />
         </Stack>
       ),
     },
