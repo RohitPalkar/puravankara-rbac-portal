@@ -24,11 +24,10 @@ export function RowActionsMenu({ actions }: Props) {
   return (
     <>
       <IconButton
-        size="small"
         onClick={(e) => { e.stopPropagation(); setAnchorEl(e.currentTarget); }}
-        sx={{ mx: 'auto', display: 'flex' }}
+        sx={{ width: 40, height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
       >
-        <Iconify icon="solar:menu-dots-bold" width={18} />
+        <Iconify icon="solar:menu-dots-bold-round-bold" width={20} />
       </IconButton>
       <Menu
         anchorEl={anchorEl}

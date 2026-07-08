@@ -93,7 +93,7 @@ export default function CityListPage() {
     {
       field: 'actions', headerName: '', width: 60, sortable: false, disableColumnMenu: true,
       renderCell: (params) => (
-        <Stack direction="row" spacing={0.5} sx={{ justifyContent: 'center', width: 1 }}>
+        <Stack alignItems="center" sx={{ height: 1, justifyContent: 'center' }}>
           <RowActionsMenu actions={[
             { label: 'Edit', icon: 'solar:pen-bold', onClick: () => handleEdit(params.row) },
             { label: 'Delete', icon: 'solar:trash-bin-trash-bold', onClick: () => setDeleteId(params.row.id), color: 'error.main' },
