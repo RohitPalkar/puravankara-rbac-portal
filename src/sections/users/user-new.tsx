@@ -14,14 +14,19 @@ import FormControlLabel from '@mui/material/FormControlLabel';
 import Radio from '@mui/material/Radio';
 import RadioGroup from '@mui/material/RadioGroup';
 import TextField from '@mui/material/TextField';
-import MenuItem from '@mui/material/MenuItem';
 import Chip from '@mui/material/Chip';
 import Divider from '@mui/material/Divider';
 import Alert from '@mui/material/Alert';
 import Snackbar from '@mui/material/Snackbar';
 import IconButton from '@mui/material/IconButton';
 import Collapse from '@mui/material/Collapse';
-import { useForm } from 'react-hook-form';
+import Autocomplete from '@mui/material/Autocomplete';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import dayjs from 'dayjs';
+import customParseFormat from 'dayjs/plugin/customParseFormat';
+import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z as zod } from 'zod';
 import { CONFIG } from 'src/config-global';
@@ -44,6 +49,16 @@ const USER_GROUP_OPTIONS = [
   { value: 'management', label: 'Management' },
   { value: 'executive', label: 'Executive' },
   { value: 'admin', label: 'Admin' },
+];
+
+const ACCESS_MODULES = [
+  { id: 'crm', name: 'CRM' },
+  { id: 'finance', name: 'Finance' },
+  { id: 'eoi', name: 'EOI' },
+  { id: 'inventory', name: 'Inventory' },
+  { id: 'reports', name: 'Reports' },
+  { id: 'approvals', name: 'Approvals' },
+  { id: 'iom', name: 'IOM' },
 ];
 
 const formSchema = zod.object({
@@ -112,7 +127,6 @@ export default function UserNewPage() {
 
   // Step 2 dependents
   const selectedDeptId = methods.watch('departmentId');
-  const selectedZoneIds = methods.watch('zoneIds');
 
   const filteredPrimaryRoles = useMemo(
     () => mockRoles.filter((r) => r.departmentId === selectedDeptId),
@@ -128,12 +142,6 @@ export default function UserNewPage() {
   const [moduleAccess, setModuleAccess] = useState<ModuleAccess[]>([]);
   const [expandedModules, setExpandedModules] = useState<Record<string, boolean>>({});
   const [projectSearch, setProjectSearch] = useState('');
-
-  const handleZoneToggle = (zoneId: string) => {
-    const current: string[] = methods.getValues('zoneIds') ?? [];
-    const next = current.includes(zoneId) ? current.filter((id) => id !== zoneId) : [...current, zoneId];
-    methods.setValue('zoneIds', next, { shouldValidate: true });
-  };
 
   const handleModuleToggle = (moduleId: string, checked: boolean) => {
     if (checked) {
@@ -223,28 +231,41 @@ export default function UserNewPage() {
               <Box sx={{ p: 3 }}>
                 <Typography variant="subtitle1" sx={{ mb: 2 }}>Organization Details</Typography>
                 <Box display="grid" gridTemplateColumns={{ xs: '1fr', sm: '1fr 1fr' }} gap={2.5}>
-                  {/* Zone */}
-                  <Box>
-                    <Typography variant="body2" sx={{ mb: 1, color: 'text.secondary' }}>Zone *</Typography>
-                    <Stack direction="row" spacing={0.5} flexWrap="wrap" useFlexGap sx={{ mb: 1 }}>
-                      {selectedZoneIds?.map((zoneId) => {
-                        const zone = mockZones.find((z) => z.id === zoneId);
-                        return (
-                          <Chip
-                            key={zoneId}
-                            label={zone?.name ?? zoneId}
-                            size="small"
-                            onDelete={() => handleZoneToggle(zoneId)}
-                          />
-                        );
-                      })}
-                    </Stack>
-                    <TextField select size="small" fullWidth value="" onChange={(e) => handleZoneToggle(e.target.value)}>
-                      {mockZones.filter((z) => !selectedZoneIds?.includes(z.id)).map((z) => (
-                        <MenuItem key={z.id} value={z.id}>{z.name}</MenuItem>
-                      ))}
-                    </TextField>
-                  </Box>
+                  {/* Zone - Autocomplete Chips */}
+                  <Controller
+                    name="zoneIds"
+                    control={methods.control}
+                    render={({ field, fieldState }) => (
+                      <Autocomplete
+                        multiple
+                        options={mockZones.map((z) => z.id)}
+                        getOptionLabel={(option) => mockZones.find((z) => z.id === option)?.name ?? option}
+                        value={field.value ?? []}
+                        onChange={(_, newValue) => field.onChange(newValue)}
+                        renderTags={(value, getTagProps) =>
+                          value.map((option, index) => {
+                            const zone = mockZones.find((z) => z.id === option);
+                            return (
+                              <Chip
+                                label={zone?.name ?? option}
+                                size="small"
+                                {...getTagProps({ index })}
+                                sx={{
+                                  bgcolor: '#e8dff5',
+                                  color: '#7c4dff',
+                                  borderRadius: 1,
+                                  '& .MuiChip-deleteIcon': { color: '#7c4dff', borderRadius: '50%' },
+                                }}
+                              />
+                            );
+                          })
+                        }
+                        renderInput={(params) => (
+                          <TextField {...params} label="Zone *" error={!!fieldState.error} helperText={fieldState.error?.message} />
+                        )}
+                      />
+                    )}
+                  />
 
                   {/* Department */}
                   <Field.Select name="departmentId" label="Department *" options={mockDepartments.map((d) => ({ value: d.id, label: d.name }))} />
@@ -268,8 +289,40 @@ export default function UserNewPage() {
                 <Typography variant="subtitle1" sx={{ mb: 2 }}>User Group</Typography>
                 <Box display="grid" gridTemplateColumns={{ xs: '1fr', sm: '1fr 1fr 1fr' }} gap={2.5}>
                   <Field.Select name="userGroup" label="User Group *" options={USER_GROUP_OPTIONS} />
-                  <Field.Text name="startDate" label="Start Date" placeholder="DD/MM/YYYY" />
-                  <Field.Text name="endDate" label="End Date" placeholder="DD/MM/YYYY" />
+                  <Controller
+                    name="startDate"
+                    control={methods.control}
+                    render={({ field, fieldState }) => (
+                      <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="en">
+                        <DatePicker
+                          label="Start Date *"
+                          format="DD/MM/YYYY"
+                          value={field.value ? dayjs(field.value, 'DD/MM/YYYY') : null}
+                          onChange={(date) => field.onChange(date ? date.format('DD/MM/YYYY') : '')}
+                          slotProps={{
+                            textField: { size: 'small', fullWidth: true, error: !!fieldState.error, helperText: fieldState.error?.message },
+                          }}
+                        />
+                      </LocalizationProvider>
+                    )}
+                  />
+                  <Controller
+                    name="endDate"
+                    control={methods.control}
+                    render={({ field, fieldState }) => (
+                      <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="en">
+                        <DatePicker
+                          format="DD/MM/YYYY"
+                          label="End Date *"
+                          value={field.value ? dayjs(field.value, 'DD/MM/YYYY') : null}
+                          onChange={(date) => field.onChange(date ? date.format('DD/MM/YYYY') : '')}
+                          slotProps={{
+                            textField: { size: 'small', fullWidth: true, error: !!fieldState.error, helperText: fieldState.error?.message },
+                          }}
+                        />
+                      </LocalizationProvider>
+                    )}
+                  />
                 </Box>
               </Box>
             )}
@@ -277,7 +330,7 @@ export default function UserNewPage() {
             {activeStep === 2 && (
               <Box sx={{ p: 3 }}>
                 <Typography variant="subtitle1" sx={{ mb: 2 }}>Access Configuration</Typography>
-                <Box display="grid" gridTemplateColumns={{ xs: '1fr', lg: '1fr 1fr' }} gap={3}>
+                <Box display="grid" gridTemplateColumns={{ xs: '1fr', lg: '30fr 70fr' }} gap={3}>
                   {/* Left: Module Selection */}
                   <Card variant="outlined" sx={{ p: 2 }}>
                     <Typography variant="subtitle2" sx={{ mb: 0.5 }}>Select Modules</Typography>
@@ -289,11 +342,11 @@ export default function UserNewPage() {
                       control={
                         <Checkbox
                           size="small"
-                          checked={moduleAccess.length === mockModules.length}
-                          indeterminate={moduleAccess.length > 0 && moduleAccess.length < mockModules.length}
+                          checked={moduleAccess.length === ACCESS_MODULES.length}
+                          indeterminate={moduleAccess.length > 0 && moduleAccess.length < ACCESS_MODULES.length}
                           onChange={(e) => {
                             if (e.target.checked) {
-                              setModuleAccess(mockModules.map((m) => ({ moduleId: m.id, accessType: 'SELECT_PROJECTS' as const, selectedProjectIds: [] })));
+                              setModuleAccess(ACCESS_MODULES.map((m) => ({ moduleId: m.id, accessType: 'SELECT_PROJECTS' as const, selectedProjectIds: [] })));
                             } else {
                               setModuleAccess([]);
                               setExpandedModules({});
@@ -304,7 +357,7 @@ export default function UserNewPage() {
                     />
                     <Divider sx={{ my: 1 }} />
                     <Stack spacing={0.5}>
-                      {mockModules.map((mod) => (
+                      {ACCESS_MODULES.map((mod) => (
                         <FormControlLabel
                           key={mod.id}
                           label={mod.name}
@@ -354,38 +407,43 @@ export default function UserNewPage() {
                             </Stack>
                           </Stack>
 
-                          <Collapse in={isExpanded} sx={{ mt: 2 }}>
+                          <Box sx={{ mt: 2 }}>
+                            <Typography variant="caption" color="text.secondary" sx={{ mr: 1 }}>Access Type:</Typography>
                             <RadioGroup
                               value={ma.accessType}
                               onChange={(e) => handleAccessTypeChange(ma.moduleId, e.target.value as 'ALL_PROJECTS' | 'SELECT_PROJECTS')}
+                              sx={{ flexDirection: 'row', display: 'inline-flex' }}
                             >
                               <FormControlLabel value="SELECT_PROJECTS" control={<Radio size="small" />} label="Select Projects" />
                               <FormControlLabel value="ALL_PROJECTS" control={<Radio size="small" />} label="All Projects" />
                             </RadioGroup>
+                          </Box>
 
                             {ma.accessType === 'SELECT_PROJECTS' && (
                               <Box sx={{ mt: 1.5 }}>
-                                <TextField
-                                  size="small"
-                                  placeholder="Search projects..."
-                                  value={projectSearch}
-                                  onChange={(e) => setProjectSearch(e.target.value)}
-                                  fullWidth
-                                  sx={{ mb: 1 }}
-                                />
-                                <FormControlLabel
-                                  label="Select All"
-                                  control={
-                                    <Checkbox
-                                      size="small"
-                                      checked={ma.selectedProjectIds.length === mockProjects.length}
-                                      indeterminate={ma.selectedProjectIds.length > 0 && ma.selectedProjectIds.length < mockProjects.length}
-                                      onChange={(e) => {
-                                        setModuleAccess((prev) => prev.map((m) => m.moduleId === ma.moduleId ? { ...m, selectedProjectIds: e.target.checked ? mockProjects.map((p) => p.id) : [] } : m));
-                                      }}
-                                    />
-                                  }
-                                />
+                                <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 1 }}>
+                                  <TextField
+                                    size="small"
+                                    placeholder="Search projects..."
+                                    value={projectSearch}
+                                    onChange={(e) => setProjectSearch(e.target.value)}
+                                    sx={{ flex: 1 }}
+                                  />
+                                  <FormControlLabel
+                                    label="Select All"
+                                    control={
+                                      <Checkbox
+                                        size="small"
+                                        checked={ma.selectedProjectIds.length === mockProjects.length}
+                                        indeterminate={ma.selectedProjectIds.length > 0 && ma.selectedProjectIds.length < mockProjects.length}
+                                        onChange={(e) => {
+                                          setModuleAccess((prev) => prev.map((m) => m.moduleId === ma.moduleId ? { ...m, selectedProjectIds: e.target.checked ? mockProjects.map((p) => p.id) : [] } : m));
+                                        }}
+                                      />
+                                    }
+                                    sx={{ m: 0 }}
+                                  />
+                                </Stack>
                                 <Box sx={{ maxHeight: 180, overflow: 'auto', mt: 0.5 }}>
                                   {filteredProjects.map((project) => (
                                     <FormControlLabel
@@ -417,9 +475,8 @@ export default function UserNewPage() {
                                   </Stack>
                                 )}
                               </Box>
-                            )}
-                          </Collapse>
-                        </Card>
+                              )}
+                            </Card>
                       );
                     })}
                   </Stack>
