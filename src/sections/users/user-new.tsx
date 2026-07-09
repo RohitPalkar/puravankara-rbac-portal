@@ -11,69 +11,93 @@ import Typography from '@mui/material/Typography';
 import Box from '@mui/material/Box';
 import Checkbox from '@mui/material/Checkbox';
 import FormControlLabel from '@mui/material/FormControlLabel';
-import FormGroup from '@mui/material/FormGroup';
-import Alert from '@mui/material/Alert';
-import Snackbar from '@mui/material/Snackbar';
+import Radio from '@mui/material/Radio';
+import RadioGroup from '@mui/material/RadioGroup';
+import TextField from '@mui/material/TextField';
+import MenuItem from '@mui/material/MenuItem';
 import Chip from '@mui/material/Chip';
 import Divider from '@mui/material/Divider';
-import TextField from '@mui/material/TextField';
+import Alert from '@mui/material/Alert';
+import Snackbar from '@mui/material/Snackbar';
+import IconButton from '@mui/material/IconButton';
+import Collapse from '@mui/material/Collapse';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
+import { z as zod } from 'zod';
 import { CONFIG } from 'src/config-global';
 import { Form, Field } from 'src/components/hook-form';
 import { PageContainer, PageHeader } from 'src/components/page-layout';
-import { PermissionTree, type PermissionSelection } from 'src/components/permission-tree';
-import { mockDepartments, mockRoles, mockZones, mockProjects, mockModules, mockSubModules, mockActions, mockUsers } from 'src/services/mock-data';
+import { Iconify } from 'src/components/iconify';
+import { mockDepartments, mockRoles, mockZones, mockProjects, mockModules, mockUsers } from 'src/services/mock-data';
 import { paths } from 'src/routes/paths';
 
 const STEPS = ['Basic Information', 'Organization & Hierarchy', 'Access Configuration'];
 
-const STATUS_OPTIONS = [
-  { value: 'active', label: 'Active' },
-  { value: 'inactive', label: 'Inactive' },
+const EMPLOYMENT_OPTIONS = [
+  { value: 'contract', label: 'Contract' },
+  { value: 'permanent', label: 'Permanent' },
+  { value: 'serving_notice_period', label: 'Serving Notice Period' },
 ];
 
-const step1Schema = z.object({
-  employeeId: z.string().min(1, 'Employee ID is required'),
-  firstName: z.string().min(1, 'First name is required'),
-  lastName: z.string().min(1, 'Last name is required'),
-  email: z.string().email('Invalid email address'),
-  phone: z.string().min(10, 'Valid mobile number required').max(20),
-  status: z.enum(['active', 'inactive']),
+const USER_GROUP_OPTIONS = [
+  { value: 'operations', label: 'Operations' },
+  { value: 'management', label: 'Management' },
+  { value: 'executive', label: 'Executive' },
+  { value: 'admin', label: 'Admin' },
+];
+
+const formSchema = zod.object({
+  employeeName: zod.string().min(1, 'Employee name is required'),
+  employeeId: zod.string().min(1, 'Employee ID is required'),
+  email: zod.string().email('Invalid email address'),
+  mobile: zod.string().min(10, 'Valid mobile number required'),
+  employmentStatus: zod.enum(['contract', 'permanent', 'serving_notice_period']),
+  zoneIds: zod.array(zod.string()).min(1, 'At least one zone is required'),
+  departmentId: zod.string().min(1, 'Department is required'),
+  primaryRoleId: zod.string().min(1, 'Primary role is required'),
+  secondaryRoleId: zod.string().optional(),
+  reportingManagerId: zod.string().min(1, 'Reporting manager is required'),
+  teamLeadId: zod.string().min(1, 'Team lead is required'),
+  deptAdminId: zod.string().min(1, 'Department admin is required'),
+  userGroup: zod.string().min(1, 'User group is required'),
+  startDate: zod.string().min(1, 'Start date is required'),
+  endDate: zod.string().min(1, 'End date is required'),
 });
 
-const step2Schema = z.object({
-  departmentId: z.string().min(1, 'Department is required'),
-  roleId: z.string().min(1, 'Role is required'),
-  zoneIds: z.array(z.string()).min(1, 'At least one zone is required'),
-  reportingManagerId: z.string().optional(),
-});
+type FormData = zod.infer<typeof formSchema>;
 
-const step3Schema = z.object({
-  projectPermissions: z.array(z.object({
-    projectId: z.string(),
-    permissions: z.array(z.object({
-      moduleId: z.string(),
-      subModuleIds: z.array(z.string()),
-      actionIds: z.array(z.string()),
-    })),
-  })).min(1, 'At least one project with permissions is required'),
-});
-
-type Step1Data = z.infer<typeof step1Schema>;
-type Step2Data = z.infer<typeof step2Schema>;
-
-const step1Defaults: Step1Data = { employeeId: '', firstName: '', lastName: '', email: '', phone: '', status: 'active' };
-const step2Defaults: Step2Data = { departmentId: '', roleId: '', zoneIds: [], reportingManagerId: '' };
-
-function generateEmployeeId(existing: typeof mockUsers): string {
-  const maxNum = existing.reduce((max, u) => {
+function generateEmployeeId(): string {
+  const maxNum = mockUsers.reduce((max, u) => {
     const match = u.employeeId.match(/EMP-(\d+)/);
     return match ? Math.max(max, parseInt(match[1], 10)) : max;
   }, 0);
   return `EMP-${String(maxNum + 1).padStart(3, '0')}`;
 }
+
+const defaults: FormData = {
+  employeeName: '',
+  employeeId: generateEmployeeId(),
+  email: '',
+  mobile: '',
+  employmentStatus: 'permanent',
+  zoneIds: [],
+  departmentId: '',
+  primaryRoleId: '',
+  secondaryRoleId: '',
+  reportingManagerId: '',
+  teamLeadId: '',
+  deptAdminId: '',
+  userGroup: 'operations',
+  startDate: '',
+  endDate: '',
+};
+
+// -- Step 3 types --
+type ModuleAccess = {
+  moduleId: string;
+  accessType: 'ALL_PROJECTS' | 'SELECT_PROJECTS';
+  selectedProjectIds: string[];
+};
 
 export default function UserNewPage() {
   const navigate = useNavigate();
@@ -84,216 +108,88 @@ export default function UserNewPage() {
     return Array.from({ length: 12 }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
   });
 
-  // Step 1 form
-  const step1Methods = useForm<Step1Data>({ resolver: zodResolver(step1Schema), defaultValues: { ...step1Defaults, employeeId: generateEmployeeId(mockUsers) } });
-  // Step 2 form
-  const step2Methods = useForm<Step2Data>({ resolver: zodResolver(step2Schema), defaultValues: step2Defaults });
+  const methods = useForm<FormData>({ resolver: zodResolver(formSchema), defaultValues: defaults });
 
-  // Step 3 state
-  const [projectPermissions, setProjectPermissions] = useState<{ projectId: string; permissions: PermissionSelection[] }[]>([]);
+  // Step 2 dependents
+  const selectedDeptId = methods.watch('departmentId');
+  const selectedZoneIds = methods.watch('zoneIds');
 
-  const selectedDeptId = step2Methods.watch('departmentId');
-  const selectedRoleId = step2Methods.watch('roleId');
-  const selectedZoneIds = step2Methods.watch('zoneIds');
-
-  const filteredRoles = useMemo(
+  const filteredPrimaryRoles = useMemo(
     () => mockRoles.filter((r) => r.departmentId === selectedDeptId),
     [selectedDeptId],
   );
 
-  const selectedRole = useMemo(
-    () => mockRoles.find((r) => r.id === selectedRoleId),
-    [selectedRoleId],
-  );
-
-  // Reporting manager: users in same dept with level one above
-  const reportingManagerOptions = useMemo(() => {
-    if (!selectedRole) return [];
-    const roleLevelNum = parseInt(selectedRole.level.replace('L', ''), 10);
-    if (roleLevelNum <= 1) return [];
-    const targetLevel = `L${roleLevelNum - 1}`;
-    return mockUsers
-      .filter((u) => u.level === targetLevel && u.departmentId === selectedDeptId)
-      .map((u) => ({ value: u.id, label: u.name }));
-  }, [selectedRole, selectedDeptId]);
-
-  const zoneOptions = useMemo(
-    () => mockZones,
+  const userOptions = useMemo(
+    () => mockUsers.map((u) => ({ value: u.id, label: u.name })),
     [],
   );
 
+  // Step 3 state
+  const [moduleAccess, setModuleAccess] = useState<ModuleAccess[]>([]);
+  const [expandedModules, setExpandedModules] = useState<Record<string, boolean>>({});
+  const [projectSearch, setProjectSearch] = useState('');
+
   const handleZoneToggle = (zoneId: string) => {
-    const current = step2Methods.getValues('zoneIds') ?? [];
+    const current: string[] = methods.getValues('zoneIds') ?? [];
     const next = current.includes(zoneId) ? current.filter((id) => id !== zoneId) : [...current, zoneId];
-    step2Methods.setValue('zoneIds', next);
+    methods.setValue('zoneIds', next, { shouldValidate: true });
   };
 
-  const handleCopyPermissions = (fromProjectId: string, toProjectId: string) => {
-    const source = projectPermissions.find((p) => p.projectId === fromProjectId);
-    if (!source) return;
-    setProjectPermissions((prev) => {
-      const next = prev.filter((p) => p.projectId !== toProjectId);
-      next.push({ projectId: toProjectId, permissions: source.permissions.map((p) => ({ ...p, actionIds: [...p.actionIds], subModuleIds: [...p.subModuleIds] })) });
-      return next;
-    });
-  };
-
-  const handleProjectToggle = (projectId: string, checked: boolean) => {
+  const handleModuleToggle = (moduleId: string, checked: boolean) => {
     if (checked) {
-      setProjectPermissions((prev) => [...prev, { projectId, permissions: [] }]);
+      setModuleAccess((prev) => [...prev, { moduleId, accessType: 'SELECT_PROJECTS', selectedProjectIds: [] }]);
     } else {
-      setProjectPermissions((prev) => prev.filter((p) => p.projectId !== projectId));
+      setModuleAccess((prev) => prev.filter((m) => m.moduleId !== moduleId));
+      setExpandedModules((prev) => { const n = { ...prev }; delete n[moduleId]; return n; });
     }
   };
 
-  const handlePermissionChange = (projectId: string, permissions: PermissionSelection[]) => {
-    setProjectPermissions((prev) => prev.map((p) => p.projectId === projectId ? { ...p, permissions } : p));
+  const handleAccessTypeChange = (moduleId: string, accessType: 'ALL_PROJECTS' | 'SELECT_PROJECTS') => {
+    setModuleAccess((prev) => prev.map((m) => m.moduleId === moduleId ? { ...m, accessType, selectedProjectIds: [] } : m));
   };
 
-  const validateStep2 = useCallback(async () => {
-    const valid = await step2Methods.trigger();
-    return valid;
-  }, [step2Methods]);
+  const handleProjectToggle = (moduleId: string, projectId: string) => {
+    setModuleAccess((prev) => prev.map((m) => {
+      if (m.moduleId !== moduleId) return m;
+      const ids = m.selectedProjectIds.includes(projectId)
+        ? m.selectedProjectIds.filter((id) => id !== projectId)
+        : [...m.selectedProjectIds, projectId];
+      return { ...m, selectedProjectIds: ids };
+    }));
+  };
+
+  const filteredProjects = useMemo(
+    () => projectSearch ? mockProjects.filter((p) => p.name.toLowerCase().includes(projectSearch.toLowerCase())) : mockProjects,
+    [projectSearch],
+  );
 
   const handleNext = useCallback(async () => {
-    if (activeStep === 0) {
-      const valid = await step1Methods.trigger();
+    const fieldsByStep: Record<number, (keyof FormData)[]> = {
+      0: ['employeeName', 'employeeId', 'email', 'mobile', 'employmentStatus'],
+      1: ['zoneIds', 'departmentId', 'primaryRoleId', 'reportingManagerId', 'teamLeadId', 'deptAdminId', 'userGroup', 'startDate', 'endDate'],
+    };
+
+    const fields = fieldsByStep[activeStep];
+    if (fields) {
+      const valid = await methods.trigger(fields);
       if (!valid) return;
     }
-    if (activeStep === 1) {
-      const valid = await validateStep2();
-      if (!valid) return;
-    }
+
     if (activeStep === STEPS.length - 1) {
-      const hasPermissions = projectPermissions.some((p) => p.permissions.length > 0 && p.permissions.some((perm) => perm.actionIds.length > 0));
-      if (!hasPermissions) return;
+      if (moduleAccess.length === 0) return;
       setShowSuccess(true);
       setTimeout(() => navigate(paths.dashboard.userManagement), 2000);
       return;
     }
+
     setActiveStep((prev) => prev + 1);
-  }, [activeStep, step1Methods, validateStep2, projectPermissions, navigate]);
+  }, [activeStep, methods, moduleAccess, navigate]);
 
   const handleBack = useCallback(() => {
     setActiveStep((prev) => prev - 1);
   }, []);
 
-  const step1Data = step1Methods.watch();
-  const step2Data = step2Methods.watch();
-
-  const renderStep = () => {
-    switch (activeStep) {
-      case 0:
-        return (
-          <Box sx={{ p: 3 }}>
-            <Typography variant="subtitle1" sx={{ mb: 2 }}>User Details</Typography>
-            <Box display="grid" gridTemplateColumns={{ xs: '1fr', sm: '1fr 1fr' }} gap={2.5}>
-              <Field.Text name="employeeId" label="Employee ID" disabled helperText="Auto-generated" />
-              <Field.Text name="firstName" label="First Name" />
-              <Field.Text name="lastName" label="Last Name" />
-              <Field.Text name="email" label="Email" />
-              <Field.Text name="phone" label="Mobile Number" />
-              <Field.Select name="status" label="User Status" options={STATUS_OPTIONS} />
-            </Box>
-          </Box>
-        );
-      case 1:
-        return (
-          <Box sx={{ p: 3 }}>
-            <Typography variant="subtitle1" sx={{ mb: 2 }}>Organization Mapping</Typography>
-            <Box display="grid" gridTemplateColumns={{ xs: '1fr', sm: '1fr 1fr' }} gap={2.5}>
-              <Field.Select name="departmentId" label="Department" options={mockDepartments.map((d) => ({ value: d.id, label: d.name }))} />
-              <Field.Select name="roleId" label="Role" options={filteredRoles.map((r) => ({ value: r.id, label: r.name }))} />
-              {selectedRole && (
-                <TextField label="Hierarchy Level" value={selectedRole.level} disabled helperText="Auto-populated from role" fullWidth />
-              )}
-              {reportingManagerOptions.length > 0 && (
-                <Field.Select name="reportingManagerId" label="Reporting Manager" options={reportingManagerOptions} />
-              )}
-              <Box>
-                <Typography variant="body2" sx={{ mb: 1, color: 'text.secondary' }}>Zone Access *</Typography>
-                <FormGroup row>
-                  {zoneOptions.map((zone) => (
-                    <FormControlLabel
-                      key={zone.id}
-                      control={<Checkbox size="small" checked={selectedZoneIds?.includes(zone.id) ?? false} onChange={() => handleZoneToggle(zone.id)} />}
-                      label={zone.name}
-                    />
-                  ))}
-                </FormGroup>
-              </Box>
-            </Box>
-          </Box>
-        );
-      case 2:
-        return (
-          <Box sx={{ p: 3 }}>
-            <Typography variant="subtitle1" sx={{ mb: 2 }}>Project & Permission Mapping</Typography>
-            <Box display="grid" gridTemplateColumns={{ xs: '1fr', lg: '1fr 1fr' }} gap={3}>
-              {/* Available Projects */}
-              <Card variant="outlined" sx={{ p: 2 }}>
-                <Typography variant="subtitle2" sx={{ mb: 1.5 }}>Available Projects</Typography>
-                <Stack spacing={0.5}>
-                  {mockProjects.map((project) => (
-                    <FormControlLabel
-                      key={project.id}
-                      control={<Checkbox size="small" checked={projectPermissions.some((p) => p.projectId === project.id)} onChange={(e) => handleProjectToggle(project.id, e.target.checked)} />}
-                      label={`${project.name} (${project.code})`}
-                    />
-                  ))}
-                </Stack>
-              </Card>
-
-              {/* Selected Project Permissions */}
-              <Stack spacing={2}>
-                {projectPermissions.length === 0 && (
-                  <Typography variant="body2" color="text.secondary" sx={{ py: 4, textAlign: 'center' }}>
-                    Select a project to configure permissions
-                  </Typography>
-                )}
-                {projectPermissions.map((pp) => {
-                  const project = mockProjects.find((p) => p.id === pp.projectId);
-                  return (
-                    <Card key={pp.projectId} variant="outlined" sx={{ p: 2 }}>
-                      <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 1.5 }}>
-                        <Typography variant="subtitle2">{project?.name}</Typography>
-                        <Stack direction="row" spacing={0.5}>
-                          {projectPermissions
-                            .filter((p) => p.projectId !== pp.projectId && p.permissions.length > 0)
-                            .map((p) => {
-                              const srcProject = mockProjects.find((pj) => pj.id === p.projectId);
-                              return (
-                                <Chip
-                                  key={p.projectId}
-                                  label={`Copy from ${srcProject?.name ?? p.projectId}`}
-                                  size="small"
-                                  variant="outlined"
-                                  onClick={() => handleCopyPermissions(p.projectId, pp.projectId)}
-                                  sx={{ cursor: 'pointer' }}
-                                />
-                              );
-                            })}
-                        </Stack>
-                      </Stack>
-                      <Divider sx={{ mb: 1.5 }} />
-                      <PermissionTree
-                        modules={mockModules}
-                        subModules={mockSubModules}
-                        actions={mockActions}
-                        selection={pp.permissions}
-                        onChange={(perm) => handlePermissionChange(pp.projectId, perm)}
-                      />
-                    </Card>
-                  );
-                })}
-              </Stack>
-            </Box>
-          </Box>
-        );
-      default:
-        return null;
-    }
-  };
+  const step1Data = methods.watch();
 
   return (
     <>
@@ -309,8 +205,227 @@ export default function UserNewPage() {
             ))}
           </Stepper>
 
-          <Form methods={activeStep === 0 ? step1Methods : step2Methods} onSubmit={() => {}}>
-            {renderStep()}
+          <Form methods={methods} onSubmit={() => {}}>
+            {activeStep === 0 && (
+              <Box sx={{ p: 3 }}>
+                <Typography variant="subtitle1" sx={{ mb: 2 }}>User Details</Typography>
+                <Box display="grid" gridTemplateColumns={{ xs: '1fr', sm: '1fr 1fr' }} gap={2.5}>
+                  <Field.Text name="employeeName" label="Employee Name" placeholder="Enter Employee Name" />
+                  <Field.Text name="employeeId" label="Employee ID" disabled helperText="Auto-generated from backend" />
+                  <Field.Text name="email" label="Email ID" />
+                  <Field.Text name="mobile" label="Mobile Number" placeholder="+91 XXXXX XXXXX" />
+                  <Field.Select name="employmentStatus" label="Employment Status" options={EMPLOYMENT_OPTIONS} />
+                </Box>
+              </Box>
+            )}
+
+            {activeStep === 1 && (
+              <Box sx={{ p: 3 }}>
+                <Typography variant="subtitle1" sx={{ mb: 2 }}>Organization Details</Typography>
+                <Box display="grid" gridTemplateColumns={{ xs: '1fr', sm: '1fr 1fr' }} gap={2.5}>
+                  {/* Zone */}
+                  <Box>
+                    <Typography variant="body2" sx={{ mb: 1, color: 'text.secondary' }}>Zone *</Typography>
+                    <Stack direction="row" spacing={0.5} flexWrap="wrap" useFlexGap sx={{ mb: 1 }}>
+                      {selectedZoneIds?.map((zoneId) => {
+                        const zone = mockZones.find((z) => z.id === zoneId);
+                        return (
+                          <Chip
+                            key={zoneId}
+                            label={zone?.name ?? zoneId}
+                            size="small"
+                            onDelete={() => handleZoneToggle(zoneId)}
+                          />
+                        );
+                      })}
+                    </Stack>
+                    <TextField select size="small" fullWidth value="" onChange={(e) => handleZoneToggle(e.target.value)}>
+                      {mockZones.filter((z) => !selectedZoneIds?.includes(z.id)).map((z) => (
+                        <MenuItem key={z.id} value={z.id}>{z.name}</MenuItem>
+                      ))}
+                    </TextField>
+                  </Box>
+
+                  {/* Department */}
+                  <Field.Select name="departmentId" label="Department *" options={mockDepartments.map((d) => ({ value: d.id, label: d.name }))} />
+
+                  {/* Primary Role */}
+                  <Field.Select name="primaryRoleId" label="Primary Role *" options={filteredPrimaryRoles.map((r) => ({ value: r.id, label: r.name }))} />
+
+                  {/* Secondary Role */}
+                  <Field.Select name="secondaryRoleId" label="Secondary Role (optional)" options={filteredPrimaryRoles.map((r) => ({ value: r.id, label: r.name }))} />
+                </Box>
+
+                <Divider sx={{ my: 3 }} />
+                <Typography variant="subtitle1" sx={{ mb: 2 }}>Reporting Hierarchy</Typography>
+                <Box display="grid" gridTemplateColumns={{ xs: '1fr', sm: '1fr 1fr 1fr' }} gap={2.5}>
+                  <Field.Select name="reportingManagerId" label="Reporting Manager *" options={userOptions} />
+                  <Field.Select name="teamLeadId" label="Team Lead *" options={userOptions} />
+                  <Field.Select name="deptAdminId" label="Department Admin *" options={userOptions} />
+                </Box>
+
+                <Divider sx={{ my: 3 }} />
+                <Typography variant="subtitle1" sx={{ mb: 2 }}>User Group</Typography>
+                <Box display="grid" gridTemplateColumns={{ xs: '1fr', sm: '1fr 1fr 1fr' }} gap={2.5}>
+                  <Field.Select name="userGroup" label="User Group *" options={USER_GROUP_OPTIONS} />
+                  <Field.Text name="startDate" label="Start Date" placeholder="DD/MM/YYYY" />
+                  <Field.Text name="endDate" label="End Date" placeholder="DD/MM/YYYY" />
+                </Box>
+              </Box>
+            )}
+
+            {activeStep === 2 && (
+              <Box sx={{ p: 3 }}>
+                <Typography variant="subtitle1" sx={{ mb: 2 }}>Access Configuration</Typography>
+                <Box display="grid" gridTemplateColumns={{ xs: '1fr', lg: '1fr 1fr' }} gap={3}>
+                  {/* Left: Module Selection */}
+                  <Card variant="outlined" sx={{ p: 2 }}>
+                    <Typography variant="subtitle2" sx={{ mb: 0.5 }}>Select Modules</Typography>
+                    <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1.5 }}>
+                      Select the modules this user will have access to
+                    </Typography>
+                    <FormControlLabel
+                      label="Select All"
+                      control={
+                        <Checkbox
+                          size="small"
+                          checked={moduleAccess.length === mockModules.length}
+                          indeterminate={moduleAccess.length > 0 && moduleAccess.length < mockModules.length}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setModuleAccess(mockModules.map((m) => ({ moduleId: m.id, accessType: 'SELECT_PROJECTS' as const, selectedProjectIds: [] })));
+                            } else {
+                              setModuleAccess([]);
+                              setExpandedModules({});
+                            }
+                          }}
+                        />
+                      }
+                    />
+                    <Divider sx={{ my: 1 }} />
+                    <Stack spacing={0.5}>
+                      {mockModules.map((mod) => (
+                        <FormControlLabel
+                          key={mod.id}
+                          label={mod.name}
+                          control={
+                            <Checkbox
+                              size="small"
+                              checked={moduleAccess.some((m) => m.moduleId === mod.id)}
+                              onChange={(e) => handleModuleToggle(mod.id, e.target.checked)}
+                            />
+                          }
+                        />
+                      ))}
+                    </Stack>
+                  </Card>
+
+                  {/* Right: Module Access Cards */}
+                  <Stack spacing={2}>
+                    {moduleAccess.length === 0 && (
+                      <Typography variant="body2" color="text.secondary" sx={{ py: 4, textAlign: 'center' }}>
+                        Select modules from the left panel
+                      </Typography>
+                    )}
+                    {moduleAccess.map((ma) => {
+                      const mod = mockModules.find((m) => m.id === ma.moduleId);
+                      const isExpanded = expandedModules[ma.moduleId] ?? false;
+                      const isConfigured = ma.accessType === 'ALL_PROJECTS' || ma.selectedProjectIds.length > 0;
+
+                      return (
+                        <Card key={ma.moduleId} variant="outlined" sx={{ p: 2 }}>
+                          <Stack direction="row" alignItems="center" justifyContent="space-between">
+                            <Stack direction="row" alignItems="center" spacing={1}>
+                              <IconButton size="small" onClick={() => setExpandedModules((prev) => ({ ...prev, [ma.moduleId]: !prev[ma.moduleId] }))}>
+                                <Iconify icon={isExpanded ? 'solar:alt-arrow-down-bold' : 'solar:alt-arrow-right-bold'} width={16} />
+                              </IconButton>
+                              <Typography variant="subtitle2">{mod?.name}</Typography>
+                            </Stack>
+                            <Stack direction="row" spacing={0.5} alignItems="center">
+                              <Chip
+                                label={isConfigured ? 'Configured' : 'Not Configured'}
+                                size="small"
+                                color={isConfigured ? 'success' : 'default'}
+                                variant="outlined"
+                              />
+                              <IconButton size="small" onClick={() => handleModuleToggle(ma.moduleId, false)}>
+                                <Iconify icon="solar:close-circle-bold" width={18} />
+                              </IconButton>
+                            </Stack>
+                          </Stack>
+
+                          <Collapse in={isExpanded} sx={{ mt: 2 }}>
+                            <RadioGroup
+                              value={ma.accessType}
+                              onChange={(e) => handleAccessTypeChange(ma.moduleId, e.target.value as 'ALL_PROJECTS' | 'SELECT_PROJECTS')}
+                            >
+                              <FormControlLabel value="SELECT_PROJECTS" control={<Radio size="small" />} label="Select Projects" />
+                              <FormControlLabel value="ALL_PROJECTS" control={<Radio size="small" />} label="All Projects" />
+                            </RadioGroup>
+
+                            {ma.accessType === 'SELECT_PROJECTS' && (
+                              <Box sx={{ mt: 1.5 }}>
+                                <TextField
+                                  size="small"
+                                  placeholder="Search projects..."
+                                  value={projectSearch}
+                                  onChange={(e) => setProjectSearch(e.target.value)}
+                                  fullWidth
+                                  sx={{ mb: 1 }}
+                                />
+                                <FormControlLabel
+                                  label="Select All"
+                                  control={
+                                    <Checkbox
+                                      size="small"
+                                      checked={ma.selectedProjectIds.length === mockProjects.length}
+                                      indeterminate={ma.selectedProjectIds.length > 0 && ma.selectedProjectIds.length < mockProjects.length}
+                                      onChange={(e) => {
+                                        setModuleAccess((prev) => prev.map((m) => m.moduleId === ma.moduleId ? { ...m, selectedProjectIds: e.target.checked ? mockProjects.map((p) => p.id) : [] } : m));
+                                      }}
+                                    />
+                                  }
+                                />
+                                <Box sx={{ maxHeight: 180, overflow: 'auto', mt: 0.5 }}>
+                                  {filteredProjects.map((project) => (
+                                    <FormControlLabel
+                                      key={project.id}
+                                      label={project.name}
+                                      control={
+                                        <Checkbox
+                                          size="small"
+                                          checked={ma.selectedProjectIds.includes(project.id)}
+                                          onChange={() => handleProjectToggle(ma.moduleId, project.id)}
+                                        />
+                                      }
+                                    />
+                                  ))}
+                                </Box>
+                                {ma.selectedProjectIds.length > 0 && (
+                                  <Stack direction="row" spacing={0.5} flexWrap="wrap" useFlexGap sx={{ mt: 1 }}>
+                                    {ma.selectedProjectIds.map((pid) => {
+                                      const p = mockProjects.find((pj) => pj.id === pid);
+                                      return (
+                                        <Chip
+                                          key={pid}
+                                          label={p?.name ?? pid}
+                                          size="small"
+                                          onDelete={() => handleProjectToggle(ma.moduleId, pid)}
+                                        />
+                                      );
+                                    })}
+                                  </Stack>
+                                )}
+                              </Box>
+                            )}
+                          </Collapse>
+                        </Card>
+                      );
+                    })}
+                  </Stack>
+                </Box>
+              </Box>
+            )}
           </Form>
 
           <Stack direction="row" justifyContent="space-between" sx={{ p: 3, borderTop: '1px solid', borderColor: 'divider' }}>
@@ -319,7 +434,7 @@ export default function UserNewPage() {
             </Button>
             <Stack direction="row" spacing={1}>
               <Button disabled={activeStep === 0} onClick={handleBack} color="inherit">
-                Back
+                Previous
               </Button>
               <Button variant="contained" onClick={handleNext}>
                 {activeStep === STEPS.length - 1 ? 'Create User' : 'Next'}
