@@ -23,10 +23,10 @@ export const mockCities: City[] = [
 ];
 
 export const mockDepartments: Department[] = [
-  { id: '1', name: 'Sales & Marketing', code: 'S&M', cityId: '1', cityName: 'Mumbai', status: 'active', createdAt: '2024-01-01', updatedAt: '2024-01-01' },
-  { id: '2', name: 'Project Management', code: 'PM', cityId: '1', cityName: 'Mumbai', status: 'active', createdAt: '2024-01-01', updatedAt: '2024-01-01' },
-  { id: '3', name: 'Finance & Accounts', code: 'F&A', cityId: '3', cityName: 'Bangalore', status: 'active', createdAt: '2024-01-01', updatedAt: '2024-01-01' },
-  { id: '4', name: 'Human Resources', code: 'HR', cityId: '2', cityName: 'Navi Mumbai', status: 'active', createdAt: '2024-01-01', updatedAt: '2024-01-01' },
+  { id: '1', name: 'Sales & Marketing', code: 'S&M', maxHierarchyLevels: 7, createdBy: 'Sanjay K', status: 'active', createdAt: '2025-06-24', updatedAt: '2025-06-24' },
+  { id: '2', name: 'Project Management', code: 'PM', maxHierarchyLevels: 5, createdBy: 'Rohit P', status: 'active', createdAt: '2025-06-24', updatedAt: '2025-06-24' },
+  { id: '3', name: 'Finance & Accounts', code: 'F&A', maxHierarchyLevels: 7, createdBy: 'Anita S', status: 'active', createdAt: '2025-06-24', updatedAt: '2025-06-24' },
+  { id: '4', name: 'Human Resources', code: 'HR', maxHierarchyLevels: 6, createdBy: 'Sanjay K', status: 'active', createdAt: '2025-06-24', updatedAt: '2025-06-24' },
 ];
 
 export const mockRoles: Role[] = [
