@@ -48,7 +48,7 @@ export default function UserRoleMappingPage() {
     return mockRoles.filter(
       (r) =>
         r.name.toLowerCase().includes(lower) ||
-        r.code.toLowerCase().includes(lower) ||
+        r.level.toLowerCase().includes(lower) ||
         users.filter((u) => u.roleId === r.id).some((u) => u.name.toLowerCase().includes(lower))
     );
   }, [search, users]);
@@ -143,7 +143,7 @@ export default function UserRoleMappingPage() {
                         <Box>
                           <Typography variant="subtitle1">{role.name}</Typography>
                           <Stack direction="row" spacing={1} alignItems="center">
-                            <Typography variant="caption" color="text.secondary">{role.code}</Typography>
+                            <Typography variant="caption" color="text.secondary">{role.level}</Typography>
                             <Chip label={role.departmentName} size="small" variant="outlined" sx={{ height: 20, fontSize: 11 }} />
                           </Stack>
                         </Box>
