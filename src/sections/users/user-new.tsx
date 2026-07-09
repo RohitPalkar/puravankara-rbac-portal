@@ -135,12 +135,17 @@ export default function UserNewPage() {
             {renderStep()}
           </Form>
           <Stack direction="row" justifyContent="space-between" sx={{ p: 3, borderTop: '1px solid', borderColor: 'divider' }}>
-            <Button disabled={activeStep === 0} onClick={handleBack} color="inherit">
-              Back
+            <Button color="inherit" onClick={() => navigate(paths.dashboard.userManagement)}>
+              Cancel
             </Button>
-            <Button variant="contained" onClick={handleNext}>
-              {activeStep === STEPS.length - 1 ? 'Create User' : 'Next'}
-            </Button>
+            <Stack direction="row" spacing={1}>
+              <Button disabled={activeStep === 0} onClick={handleBack} color="inherit">
+                Back
+              </Button>
+              <Button variant="contained" onClick={handleNext}>
+                {activeStep === STEPS.length - 1 ? 'Create User' : 'Next'}
+              </Button>
+            </Stack>
           </Stack>
         </Card>
       </PageContainer>
