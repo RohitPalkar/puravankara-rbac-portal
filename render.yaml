@@ -1,0 +1,38 @@
+services:
+  - type: web
+    name: puravankara-rbac-api
+    runtime: node
+    region: oregon
+    plan: free
+    rootDir: backend
+    buildCommand: npm install --include=dev && npm run build
+    startCommand: npm run migration:run:prod && npm run seed:prod && npm run start:prod
+    healthCheckPath: /api/v1/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: "3000"
+      - key: DATABASE_URL
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_REFRESH_SECRET
+        generateValue: true
+      - key: CORS_ORIGINS
+        sync: false
+      - key: FRONTEND_URL
+        sync: false
+      - key: REDIS_ENABLED
+        value: "false"
+      - key: DEFAULT_ADMIN_EMAIL
+        value: admin@system.local
+      - key: DEFAULT_ADMIN_PASSWORD
+        sync: false
+      - key: DB_LOGGING
+        value: "false"
+      - key: LOG_LEVEL
+        value: info
+      - key: LOG_FORMAT
+        value: json
+

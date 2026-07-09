@@ -1,0 +1,30 @@
+# dependencies
+node_modules/
+
+# builds
+dist/
+build/
+
+# env
+.env
+.env.local
+.env.production
+
+# logs
+logs/
+*.log
+
+# test
+coverage/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# vercel
+.vercel
+.env*
