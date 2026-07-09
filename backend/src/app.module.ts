@@ -24,6 +24,7 @@ import { NotificationsModule } from './modules/notifications/notifications.modul
 import { HealthModule } from './modules/health/health.module';
 import { SetupModule } from './modules/setup/setup.module';
 import { CommonModule } from './common/common.module';
+import { RoleMappingModule } from './modules/role-mapping/role-mapping.module';
 
 @Module({
   imports: [
@@ -55,6 +56,7 @@ import { CommonModule } from './common/common.module';
     HealthModule,
     SetupModule,
     CommonModule,
+    RoleMappingModule,
   ],
   providers: [
     { provide: APP_FILTER, useClass: AllExceptionsFilter },
