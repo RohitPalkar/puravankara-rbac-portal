@@ -153,7 +153,7 @@ export default function DepartmentListPage() {
                 placeholder="e.g. 7"
                 helperText="Defines the maximum hierarchy depth available for this department."
               />
-              <Field.Select name="status" label="Status" options={STATUS_OPTIONS} />
+              {editing && <Field.Select name="status" label="Status" options={STATUS_OPTIONS} />}
             </Stack>
           </DialogContent>
           <DialogActions>
