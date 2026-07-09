@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { Helmet } from 'react-helmet-async';
 import type { GridColDef } from '@mui/x-data-grid';
 import Button from '@mui/material/Button';
@@ -11,11 +11,12 @@ import Card from '@mui/material/Card';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { CONFIG } from 'src/config-global';
-import { DataTable } from 'src/components/data-table';
+import dayjs from 'dayjs';
 import { Form, Field } from 'src/components/hook-form';
+import { DataTable } from 'src/components/data-table';
 import { Label } from 'src/components/label';
 import { Iconify } from 'src/components/iconify';
+import { CONFIG } from 'src/config-global';
 import { PageContainer, PageHeader } from 'src/components/page-layout';
 import { RowActionsMenu } from 'src/components/row-actions';
 import { mockRoles, mockDepartments } from 'src/services/mock-data';
@@ -29,15 +30,21 @@ const STATUS_OPTIONS = [
 const DEPT_OPTIONS = mockDepartments.map((d) => ({ value: d.id, label: d.name }));
 
 const schema = z.object({
-  name: z.string().min(1, 'Name is required'),
-  code: z.string().min(1, 'Code is required').max(20, 'Max 20 chars'),
-  description: z.string().default(''),
+  name: z.string().min(1, 'Role Name is required'),
   departmentId: z.string().min(1, 'Department is required'),
+  level: z.string().min(1, 'Level is required'),
   status: z.enum(['active', 'inactive']),
 });
 
 type FormData = z.infer<typeof schema>;
-const defaults: FormData = { name: '', code: '', description: '', departmentId: '', status: 'active' };
+const defaults: FormData = { name: '', departmentId: '', level: '', status: 'active' };
+
+function getLevelsForDept(deptId: string): string[] {
+  const dept = mockDepartments.find((d) => d.id === deptId);
+  if (!dept) return [];
+  const count = dept.maxHierarchyLevels;
+  return Array.from({ length: count }, (_, i) => `L${i + 1}`);
+}
 
 export default function RoleListPage() {
   const [data, setData] = useState<Role[]>(mockRoles);
@@ -46,6 +53,12 @@ export default function RoleListPage() {
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
   const methods = useForm<FormData>({ resolver: zodResolver(schema), defaultValues: defaults });
+  const selectedDeptId = methods.watch('departmentId');
+
+  const levelOptions = useMemo(() => {
+    const levels = getLevelsForDept(selectedDeptId);
+    return levels.map((l) => ({ value: l, label: l }));
+  }, [selectedDeptId]);
 
   const handleNew = useCallback(() => {
     setEditing(null);
@@ -55,7 +68,7 @@ export default function RoleListPage() {
 
   const handleEdit = useCallback((row: Role) => {
     setEditing(row);
-    methods.reset({ name: row.name, code: row.code, description: row.description, departmentId: row.departmentId, status: row.status });
+    methods.reset({ name: row.name, departmentId: row.departmentId, level: row.level, status: row.status });
     setOpen(true);
   }, [methods]);
 
@@ -67,9 +80,21 @@ export default function RoleListPage() {
   const onSubmit = useCallback((form: FormData) => {
     const dept = mockDepartments.find((d) => d.id === form.departmentId);
     if (editing) {
-      setData((prev) => prev.map((item) => (item.id === editing.id ? { ...item, ...form, departmentName: dept?.name } : item)));
+      setData((prev) => prev.map((item) =>
+        item.id === editing.id ? { ...item, name: form.name, departmentId: form.departmentId, departmentName: dept?.name, level: form.level, status: form.status, updatedAt: new Date().toISOString() } : item
+      ));
     } else {
-      setData((prev) => [{ id: String(Date.now()), ...form, departmentName: dept?.name, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() }, ...prev]);
+      setData((prev) => [{
+        id: String(Date.now()),
+        name: form.name,
+        level: form.level,
+        departmentId: form.departmentId,
+        departmentName: dept?.name,
+        createdBy: 'You',
+        status: form.status,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      }, ...prev]);
     }
     handleClose();
   }, [editing, handleClose]);
@@ -83,9 +108,13 @@ export default function RoleListPage() {
 
   const columns: GridColDef[] = [
     { field: 'name', headerName: 'Role Name', flex: 1 },
-    { field: 'code', headerName: 'Code', width: 130 },
     { field: 'departmentName', headerName: 'Department', width: 170 },
-    { field: 'description', headerName: 'Description', flex: 1 },
+    { field: 'level', headerName: 'Level', width: 80 },
+    { field: 'createdBy', headerName: 'Created By', width: 130 },
+    {
+      field: 'createdAt', headerName: 'Created Date', width: 120,
+      renderCell: (params) => dayjs(params.value).format('DD/MM/YYYY'),
+    },
     {
       field: 'status', headerName: 'Status', width: 100,
       renderCell: (params) => (
@@ -109,7 +138,7 @@ export default function RoleListPage() {
     <>
       <Helmet><title>Roles - {CONFIG.appName}</title></Helmet>
       <PageContainer>
-        <PageHeader title="Roles" description="Manage roles and permissions" action={
+        <PageHeader title="Roles" description="Manage roles and hierarchy levels" action={
           <Button variant="contained" startIcon={<Iconify icon="solar:add-circle-bold" />} onClick={handleNew}>
             Add Role
           </Button>
@@ -124,11 +153,10 @@ export default function RoleListPage() {
         <Form methods={methods} onSubmit={methods.handleSubmit(onSubmit)}>
           <DialogContent>
             <Stack spacing={2.5} sx={{ mt: 1 }}>
-              <Field.Text name="name" label="Role Name" />
-              <Field.Text name="code" label="Role Code" />
-              <Field.Text name="description" label="Description" multiline rows={2} />
+              <Field.Text name="name" label="Role Name" placeholder="e.g. Finance Executive" />
               <Field.Select name="departmentId" label="Department" options={DEPT_OPTIONS} />
-              <Field.Select name="status" label="Status" options={STATUS_OPTIONS} />
+              <Field.Select name="level" label="Level" options={levelOptions} />
+              {editing && <Field.Select name="status" label="Status" options={STATUS_OPTIONS} />}
             </Stack>
           </DialogContent>
           <DialogActions>

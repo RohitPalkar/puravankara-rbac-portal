@@ -35,10 +35,10 @@ export interface Department {
 export interface Role {
   id: string;
   name: string;
-  code: string;
-  description: string;
+  level: string;
   departmentId: string;
   departmentName?: string;
+  createdBy: string;
   status: Status;
   createdAt: string;
   updatedAt: string;

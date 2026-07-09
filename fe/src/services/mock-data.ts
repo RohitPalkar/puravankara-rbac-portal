@@ -30,10 +30,10 @@ export const mockDepartments: Department[] = [
 ];
 
 export const mockRoles: Role[] = [
-  { id: '1', name: 'Super Admin', code: 'SUPER_ADMIN', description: 'Full system access', departmentId: '1', departmentName: 'Sales & Marketing', status: 'active', createdAt: '2024-01-01', updatedAt: '2024-01-01' },
-  { id: '2', name: 'Project Manager', code: 'PM', description: 'Project oversight', departmentId: '2', departmentName: 'Project Management', status: 'active', createdAt: '2024-01-01', updatedAt: '2024-01-01' },
-  { id: '3', name: 'Finance Manager', code: 'FIN_MGR', description: 'Financial operations', departmentId: '3', departmentName: 'Finance & Accounts', status: 'active', createdAt: '2024-01-01', updatedAt: '2024-01-01' },
-  { id: '4', name: 'HR Manager', code: 'HR_MGR', description: 'HR operations', departmentId: '4', departmentName: 'Human Resources', status: 'active', createdAt: '2024-01-01', updatedAt: '2024-01-01' },
+  { id: '1', name: 'Regional Executive', level: 'L2', departmentId: '1', departmentName: 'Sales & Marketing', createdBy: 'Rohit P', status: 'active', createdAt: '2025-07-09', updatedAt: '2025-07-09' },
+  { id: '2', name: 'Project Lead', level: 'L3', departmentId: '2', departmentName: 'Project Management', createdBy: 'Anita S', status: 'active', createdAt: '2025-07-09', updatedAt: '2025-07-09' },
+  { id: '3', name: 'Finance Executive', level: 'L4', departmentId: '3', departmentName: 'Finance & Accounts', createdBy: 'Sanjay K', status: 'active', createdAt: '2025-07-09', updatedAt: '2025-07-09' },
+  { id: '4', name: 'HR Associate', level: 'L2', departmentId: '4', departmentName: 'Human Resources', createdBy: 'Rohit P', status: 'active', createdAt: '2025-07-09', updatedAt: '2025-07-09' },
 ];
 
 export const mockModules: Module[] = [
