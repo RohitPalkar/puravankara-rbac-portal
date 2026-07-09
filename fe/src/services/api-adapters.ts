@@ -9,6 +9,7 @@ import { catalogApi } from './api/catalog-api';
 import { authApi } from './api/auth-api';
 import { userApi } from './api/user-api';
 import { actionMapper } from './api/action-mapper';
+import { roleMappingApi } from './api/role-mapping-api';
 import {
   mockZones, mockDepartments, mockRoles, mockProjects, mockModules, mockSubModules, mockActions,
   mockPermissionMappings, mockPermissionModuleProjects, mockUsers,
@@ -84,7 +85,7 @@ export function useActions() {
 }
 
 export function usePermissionMappings() {
-  return useApiData(async () => mockPermissionMappings, mockPermissionMappings);
+  return useApiData(() => roleMappingApi.list(), mockPermissionMappings as any);
 }
 
 export function useUsers() {
@@ -246,3 +247,4 @@ export function useUpdateProject() {
 }
 
 export { mockZones, mockDepartments, mockRoles, mockProjects, mockModules, mockSubModules, mockActions, mockPermissionMappings, mockPermissionModuleProjects, mockUsers };
+export { roleMappingApi };

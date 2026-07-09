@@ -14,7 +14,6 @@ const ProjectNewPage = lazy(() => import('src/sections/projects/project-new'));
 const ProjectEditPage = lazy(() => import('src/sections/projects/project-new'));
 const ProjectDetailPage = lazy(() => import('src/sections/projects/project-detail'));
 const DepartmentMasterPage = lazy(() => import('src/sections/organization/department-list'));
-const RoleMasterPage = lazy(() => import('src/sections/organization/role-list'));
 
 // Access Management
 const UserManagementPage = lazy(() => import('src/sections/users/user-list'));
@@ -71,7 +70,6 @@ export const dashboardRoutes = [
       { path: 'project-master/:id', element: <ProjectDetailPage /> },
       { path: 'project-master/:id/edit', element: <ProjectEditPage /> },
       { path: 'department-master', element: <DepartmentMasterPage /> },
-      { path: 'role-master', element: <RoleMasterPage /> },
       { path: 'user-management', element: <UserManagementPage /> },
       { path: 'user-management/new', element: <UserNewPage /> },
       { path: 'user-management/:id', element: <UserDetailPage /> },

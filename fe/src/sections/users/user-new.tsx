@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { useNavigate } from 'react-router-dom';
 import Stepper from '@mui/material/Stepper';
@@ -29,6 +29,9 @@ import { CONFIG } from 'src/config-global';
 import { PageContainer, PageHeader } from 'src/components/page-layout';
 import { Iconify } from 'src/components/iconify';
 import type { User } from 'src/types';
+import { useDepartments, useZones, roleMappingApi } from 'src/services/api-adapters';
+import { userApi } from 'src/services/api/user-api';
+import { isApiMode } from 'src/services/data-source';
 import {
   mockDepartments, mockRoles, mockZones, mockProjects, mockUsers, mockModules,
   mockPermissionMappings, mockPermissionModuleProjects
@@ -63,6 +66,10 @@ const USER_GROUP_OPTIONS = [
 
 export default function UserNewPage() {
   const navigate = useNavigate();
+
+  const { data: apiDepartments } = useDepartments();
+  const { data: apiZones } = useZones();
+
   const [activeStep, setActiveStep] = useState(0);
   const [showSuccess, setShowSuccess] = useState(false);
   const [createdId, setCreatedId] = useState('');
@@ -94,43 +101,101 @@ export default function UserNewPage() {
   const [expandedModules, setExpandedModules] = useState<Record<string, boolean>>({});
   const [projectSearch, setProjectSearch] = useState('');
 
-  const selectedDept = mockDepartments.find((d) => d.id === departmentId);
+  const [deptRoles, setDeptRoles] = useState<any[]>([]);
+  const [roleMappingModulesData, setRoleMappingModulesData] = useState<any[]>([]);
+
+  const departments = isApiMode() ? apiDepartments : mockDepartments;
+  const zones = isApiMode() ? apiZones : mockZones;
+
+  useEffect(() => {
+    if (!departmentId) { setDeptRoles([]); return; }
+    if (isApiMode()) {
+      roleMappingApi.getDepartmentsRoles(Number(departmentId))
+        .then(setDeptRoles)
+        .catch(() => setDeptRoles([]));
+    } else {
+      setDeptRoles(mockRoles.filter((r) => r.departmentId === departmentId));
+    }
+  }, [departmentId]);
+
+  useEffect(() => {
+    if (!primaryRoleId || !departmentId) { setRoleMappingModulesData([]); return; }
+    if (isApiMode()) {
+      roleMappingApi.getById(primaryRoleId)
+        .then((data: any) => {
+          const modules = (data.modules || []).map((m: any) => ({
+            moduleId: String(m.id),
+            moduleName: m.name,
+            moduleIcon: 'solar:widget-bold-duotone',
+            hasSignature: false,
+          }));
+          setRoleMappingModulesData(modules);
+        })
+        .catch(() => setRoleMappingModulesData([]));
+    } else {
+      const mapping = mockPermissionMappings.find(
+        (m) => m.roleId === primaryRoleId && m.departmentId === departmentId && m.level === level
+      );
+      if (mapping) {
+        setRoleMappingModulesData(mapping.modules.map((mod) => {
+          const fullMod = mockModules.find((m) => m.id === mod.moduleId);
+          return {
+            moduleId: mod.moduleId,
+            moduleName: mod.moduleName,
+            moduleIcon: fullMod?.icon ?? 'solar:widget-bold-duotone',
+            hasSignature: mod.subModules.some((sm) => sm.actionNames.includes('Signature')),
+          };
+        }));
+      } else {
+        setRoleMappingModulesData([]);
+      }
+    }
+  }, [primaryRoleId, departmentId, level]);
+
+  const selectedDept = departments.find((d: any) => d.id === departmentId);
   const levelOptions = selectedDept
     ? Array.from({ length: selectedDept.maxHierarchyLevels }, (_, i) => ({ value: `L${i + 1}`, label: `Level ${i + 1}` }))
     : [];
 
   const filteredPrimaryRoles = useMemo(() => {
     if (!departmentId || !level) return [];
-    const deptRoles = mockRoles.filter((r) => r.departmentId === departmentId && r.level === level);
-    const mappingRoleIds = mockPermissionMappings
-      .filter((m) => m.departmentId === departmentId && m.level === level)
-      .map((m) => m.roleId);
-    return deptRoles.filter((r) => mappingRoleIds.includes(r.id));
-  }, [departmentId, level]);
+    const lvlNum = parseInt(level.replace('L', ''), 10);
+    return deptRoles.filter((r: any) => {
+      const rLevel = r.level ? parseInt(r.level.replace('L', ''), 10) : r.hierarchyLevelRank || 0;
+      return rLevel === lvlNum;
+    });
+  }, [deptRoles, departmentId, level]);
 
-  const selectedRole = mockRoles.find((r) => r.id === primaryRoleId);
+  const selectedRole = deptRoles.find((r: any) => r.id === primaryRoleId);
 
   const secondaryRoleOptions = useMemo(() => {
     if (!selectedRole) return [];
-    const userLevelNum = parseInt(selectedRole.level.replace('L', ''), 10);
-    return mockRoles.filter((r) => {
-      const rLevelNum = parseInt(r.level.replace('L', ''), 10);
-      return r.departmentId === departmentId && rLevelNum < userLevelNum;
+    const userLevelNum = selectedRole.level
+      ? parseInt(selectedRole.level.replace('L', ''), 10)
+      : selectedRole.hierarchyLevelRank || 0;
+    return deptRoles.filter((r: any) => {
+      const rLevelNum = r.level ? parseInt(r.level.replace('L', ''), 10) : r.hierarchyLevelRank || 0;
+      return rLevelNum < userLevelNum;
     });
-  }, [selectedRole, departmentId]);
+  }, [selectedRole, deptRoles]);
 
   const hierarchyLevels = useMemo(() => {
     if (!selectedRole) return [];
-    const userLevelNum = parseInt(selectedRole.level.replace('L', ''), 10);
+    const userLevelNum = selectedRole.level
+      ? parseInt(selectedRole.level.replace('L', ''), 10)
+      : selectedRole.hierarchyLevelRank || 0;
     const levelsAbove: { label: string; levelNum: number }[] = [];
     for (let i = userLevelNum - 1; i >= 1; i -= 1) {
-      const levelRoles = mockRoles.filter((r) => r.departmentId === departmentId && r.level === `L${i}`);
+      const levelRoles = deptRoles.filter((r: any) => {
+        const rLevel = r.level ? parseInt(r.level.replace('L', ''), 10) : r.hierarchyLevelRank || 0;
+        return rLevel === i;
+      });
       if (levelRoles.length > 0) {
         levelsAbove.push({ label: `L${i} - ${levelRoles[0].name}`, levelNum: i });
       }
     }
     return levelsAbove;
-  }, [selectedRole, departmentId]);
+  }, [selectedRole, deptRoles]);
 
   const hierarchyUserOptions = useMemo(() => mockUsers
     .filter((u) => u.departmentId === departmentId)
@@ -146,22 +211,7 @@ export default function UserNewPage() {
     return zoneProjects.filter((p) => p.name.toLowerCase().includes(projectSearch.toLowerCase()));
   }, [projectSearch, zoneProjects]);
 
-  const roleMappingModules = useMemo(() => {
-    if (!primaryRoleId) return [];
-    const mapping = mockPermissionMappings.find(
-      (m) => m.roleId === primaryRoleId && m.departmentId === departmentId && m.level === level
-    );
-    if (!mapping) return [];
-    return mapping.modules.map((mod) => {
-      const fullMod = mockModules.find((m) => m.id === mod.moduleId);
-      return {
-        moduleId: mod.moduleId,
-        moduleName: mod.moduleName,
-        moduleIcon: fullMod?.icon ?? 'solar:widget-bold-duotone',
-        hasSignature: mod.subModules.some((sm) => sm.actionNames.includes('Signature')),
-      };
-    });
-  }, [primaryRoleId, departmentId, level]);
+  const roleMappingModules = roleMappingModulesData;
 
   const handleEmployeeLookup = () => {
     if (!employeeId.trim()) { setLookupError('Enter Employee ID'); return; }
@@ -211,7 +261,44 @@ export default function UserNewPage() {
     });
   };
 
-  const handleSave = useCallback(() => {
+  const handleSave = useCallback(async () => {
+    if (isApiMode()) {
+      try {
+        const secondaryRoles: number[] = [];
+        if (secondaryRoleId) secondaryRoles.push(Number(secondaryRoleId));
+        const reporting: Array<{ levelRank: number; managerId: string }> = [];
+        Object.entries(hierarchyReports).forEach(([key, val]) => {
+          if (val) {
+            const lvlNum = parseInt(key.replace('L', ''), 10);
+            reporting.push({ levelRank: lvlNum, managerId: val });
+          }
+        });
+        const result = await userApi.createFull({
+          basic: {
+            name: employeeName,
+            email,
+            departmentId: Number(departmentId),
+            employeeId,
+            mobile,
+            employmentStatus,
+            isActive: true,
+          },
+          organization: {
+            zones: selectedZoneIds.map(Number),
+            primaryRole: Number(primaryRoleId),
+            secondaryRoles: secondaryRoles.length > 0 ? secondaryRoles : undefined,
+            reporting: reporting.length > 0 ? reporting : undefined,
+          },
+        });
+        setCreatedId(result?.user?.empId || employeeId);
+        setCreatedEmail(email);
+        setShowSuccess(true);
+      } catch (e) {
+        console.error('User creation failed:', e);
+      }
+      return;
+    }
+
     const role = mockRoles.find((r) => r.id === primaryRoleId);
     const levelVal = role?.level ?? '';
     const newUser: any = {
@@ -302,31 +389,31 @@ export default function UserNewPage() {
           {activeStep === 1 && (
             <Box sx={{ p: 3 }}>
               <Typography variant="subtitle1" sx={{ mb: 2 }}>Location Access</Typography>
-              <Autocomplete
-                multiple
-                options={mockZones.map((z) => z.id)}
-                getOptionLabel={(option) => mockZones.find((z) => z.id === option)?.name ?? option}
-                value={selectedZoneIds}
-                onChange={(_, newValue) => setSelectedZoneIds(newValue)}
-                renderTags={(value, getTagProps) =>
-                  value.map((option, index) => (
-                    <Chip
-                      label={mockZones.find((z) => z.id === option)?.name ?? option}
-                      size="small"
-                      {...getTagProps({ index })}
-                      sx={{ bgcolor: '#e8dff5', color: '#7c4dff', borderRadius: 1, '& .MuiChip-deleteIcon': { color: '#7c4dff' } }}
-                    />
-                  ))
-                }
-                renderInput={(params) => <TextField {...params} label="Zone" placeholder="Select zones" />}
-                sx={{ mb: 3 }}
-              />
+                <Autocomplete
+                  multiple
+                  options={zones.map((z: any) => z.id)}
+                  getOptionLabel={(option: string) => zones.find((z: any) => z.id === option)?.name ?? option}
+                  value={selectedZoneIds}
+                  onChange={(_, newValue) => setSelectedZoneIds(newValue)}
+                  renderTags={(value, getTagProps) =>
+                    value.map((option, index) => (
+                      <Chip
+                        label={zones.find((z: any) => z.id === option)?.name ?? option}
+                        size="small"
+                        {...getTagProps({ index })}
+                        sx={{ bgcolor: '#e8dff5', color: '#7c4dff', borderRadius: 1, '& .MuiChip-deleteIcon': { color: '#7c4dff' } }}
+                      />
+                    ))
+                  }
+                  renderInput={(params) => <TextField {...params} label="Zone" placeholder="Select zones" />}
+                  sx={{ mb: 3 }}
+                />
 
               <Typography variant="subtitle1" sx={{ mb: 2 }}>Role Assignment</Typography>
               <Box display="grid" gridTemplateColumns={{ xs: '1fr', sm: '1fr 1fr 1fr' }} gap={2.5} sx={{ mb: 3 }}>
                 <TextField select label="Department" value={departmentId} onChange={(e) => { setDepartmentId(e.target.value); setLevel(''); setPrimaryRoleId(''); }}>
                   <MenuItem value="">Select Department</MenuItem>
-                  {mockDepartments.map((d) => <MenuItem key={d.id} value={d.id}>{d.name}</MenuItem>)}
+                  {departments.map((d: any) => <MenuItem key={d.id} value={d.id}>{d.name}</MenuItem>)}
                 </TextField>
                 <TextField select label="Level" value={level} onChange={(e) => { setLevel(e.target.value); setPrimaryRoleId(''); }} disabled={!departmentId}>
                   <MenuItem value="">Select Level</MenuItem>
@@ -334,7 +421,7 @@ export default function UserNewPage() {
                 </TextField>
                 <TextField select label="Primary Role" value={primaryRoleId} onChange={(e) => setPrimaryRoleId(e.target.value)} disabled={!level}>
                   <MenuItem value="">Select Role</MenuItem>
-                  {filteredPrimaryRoles.map((r) => <MenuItem key={r.id} value={r.id}>{r.name}</MenuItem>)}
+                  {filteredPrimaryRoles.map((r: any) => <MenuItem key={r.id} value={r.id}>{r.name}</MenuItem>)}
                 </TextField>
               </Box>
 
@@ -348,7 +435,7 @@ export default function UserNewPage() {
                   sx={{ mb: 3, maxWidth: 360 }}
                 >
                   <MenuItem value="">None</MenuItem>
-                  {secondaryRoleOptions.map((r) => <MenuItem key={r.id} value={r.id}>{r.name} ({r.level})</MenuItem>)}
+                  {secondaryRoleOptions.map((r: any) => <MenuItem key={r.id} value={r.id}>{r.name} ({r.level || `L${r.hierarchyLevelRank}`})</MenuItem>)}
                 </TextField>
               )}
 

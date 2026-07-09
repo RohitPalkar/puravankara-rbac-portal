@@ -12,14 +12,13 @@ import DialogActions from '@mui/material/DialogActions';
 import Card from '@mui/material/Card';
 import Typography from '@mui/material/Typography';
 import Box from '@mui/material/Box';
-import dayjs from 'dayjs';
 import { CONFIG } from 'src/config-global';
 import { DataTable } from 'src/components/data-table';
 import { Label } from 'src/components/label';
 import { Iconify } from 'src/components/iconify';
 import { RowActionsMenu } from 'src/components/row-actions';
 import { PageContainer, PageHeader } from 'src/components/page-layout';
-import { useZones } from 'src/services/api-adapters';
+import { useZones, useDeleteZone } from 'src/services/api-adapters';
 import { isApiMode } from 'src/services/data-source';
 import { mockCities, mockProjectZones } from 'src/services/mock-data';
 import { paths } from 'src/routes/paths';
@@ -31,6 +30,7 @@ export default function ZoneListPage() {
   const [data, setData] = useState<Zone[]>([]);
   useEffect(() => { setData(apiData); }, [apiData]);
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const { mutate: deleteZone } = useDeleteZone();
 
   const getMappedCities = (zoneId: string) => mockCities.filter((c) => c.zoneId === zoneId);
   const getProjectCount = (zoneId: string) => (mockProjectZones[zoneId] ?? []).length;
@@ -39,8 +39,7 @@ export default function ZoneListPage() {
     if (deleteId) {
       if (isApiMode()) {
         try {
-          const { zoneApi } = await import('src/services/api/zone-api');
-          await zoneApi.remove(deleteId);
+          await deleteZone(deleteId);
           refetch();
         } catch (e) { console.error(e); }
       } else {
@@ -48,7 +47,7 @@ export default function ZoneListPage() {
       }
       setDeleteId(null);
     }
-  }, [deleteId, refetch]);
+  }, [deleteId, refetch, deleteZone]);
 
   const columns: GridColDef[] = [
     { field: 'name', headerName: 'Zone Name', flex: 1, minWidth: 180 },
@@ -85,10 +84,6 @@ export default function ZoneListPage() {
       renderCell: (params) => (
         <Label color={params.value === 'active' ? 'success' : 'default'}>{params.value}</Label>
       ),
-    },
-    {
-      field: 'createdAt', headerName: 'Created Date', width: 130,
-      renderCell: (params) => dayjs(params.value).format('DD/MM/YYYY'),
     },
     {
       field: 'actions', headerName: '', width: 60, sortable: false, disableColumnMenu: true,

@@ -15,7 +15,6 @@ import MenuItem from '@mui/material/MenuItem';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import dayjs from 'dayjs';
 import { CONFIG } from 'src/config-global';
 import { DataTable } from 'src/components/data-table';
 import { Form, Field } from 'src/components/hook-form';
@@ -122,6 +121,8 @@ export default function DepartmentListPage() {
     }
   }, [deleteId, refetch]);
 
+
+
   const columns: GridColDef[] = [
     { field: 'name', headerName: 'Department Name', flex: 1, minWidth: 180 },
     { field: 'code', headerName: 'Code', width: 90 },
@@ -138,10 +139,6 @@ export default function DepartmentListPage() {
       renderCell: (params) => (
         <Label color={params.value === 'active' ? 'success' : 'default'}>{params.value}</Label>
       ),
-    },
-    {
-      field: 'createdAt', headerName: 'Created Date', width: 120,
-      renderCell: (params) => dayjs(params.value).format('DD/MM/YYYY'),
     },
     {
       field: 'actions', headerName: '', width: 60, sortable: false, disableColumnMenu: true,

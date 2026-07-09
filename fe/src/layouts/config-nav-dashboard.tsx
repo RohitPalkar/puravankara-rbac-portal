@@ -38,7 +38,6 @@ export const navData = [
         children: [
           { title: 'Zone Management', path: paths.dashboard.zoneMaster, icon: ICONS.zone },
           { title: 'Departments', path: paths.dashboard.departmentMaster, icon: ICONS.department },
-          { title: 'Roles', path: paths.dashboard.roleMaster, icon: ICONS.role },
         ],
       },
       { title: 'Projects', path: paths.dashboard.projectMaster, icon: ICONS.project },

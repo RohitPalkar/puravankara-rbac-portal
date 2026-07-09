@@ -14,7 +14,6 @@ const ROUTE_CODE_MAP: Record<string, string> = {
   '/dashboard': 'DASHBOARD',
   '/dashboard/zone-master': 'ZONE_MGMT',
   '/dashboard/department-master': 'DEPARTMENTS',
-  '/dashboard/role-master': 'ROLES',
   '/dashboard/project-master': 'PROJECTS',
   '/dashboard/permission-mapping': 'PERMISSION_MATRIX',
   '/dashboard/user-management': 'USERS',

@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { useNavigate } from 'react-router-dom';
 import Stack from '@mui/material/Stack';
@@ -28,6 +28,9 @@ import ToggleButton from '@mui/material/ToggleButton';
 import { CONFIG } from 'src/config-global';
 import { PageContainer, PageHeader } from 'src/components/page-layout';
 import { Iconify } from 'src/components/iconify';
+import { useDepartments, useModules, useSubModules, roleMappingApi } from 'src/services/api-adapters';
+import { actionMapper } from 'src/services/api/action-mapper';
+import { isApiMode } from 'src/services/data-source';
 import { mockDepartments, mockRoles, mockModules, mockSubModules, mockPermissionMappings } from 'src/services/mock-data';
 import { paths } from 'src/routes/paths';
 
@@ -52,46 +55,73 @@ type WizardModule = {
 export default function PermissionMappingNewPage() {
   const navigate = useNavigate();
 
+  const { data: apiDepartments } = useDepartments();
+  const { data: apiModules } = useModules();
+  const { data: apiSubModules } = useSubModules();
+
   const [activeStep, setActiveStep] = useState(0);
   const [deptId, setDeptId] = useState('');
   const [level, setLevel] = useState('');
   const [roleId, setRoleId] = useState('');
+  const [deptRoles, setDeptRoles] = useState<any[]>([]);
   const [moduleSearch, setModuleSearch] = useState('');
   const [viewMode, setViewMode] = useState<'tree' | 'matrix'>('tree');
   const [saving, setSaving] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
 
-  const [wizardModules, setWizardModules] = useState<WizardModule[]>(() =>
-    mockModules
-      .filter((m) => !['1', '2', '3', '4', '5', '6', '7'].includes(m.id))
-      .map((m) => ({
+  const departments = isApiMode() ? apiDepartments : mockDepartments;
+  const modules = isApiMode() ? apiModules : mockModules;
+  const subModules = isApiMode() ? apiSubModules : mockSubModules;
+
+  useEffect(() => {
+    if (isApiMode() && deptId) {
+      roleMappingApi.getDepartmentsRoles(Number(deptId))
+        .then(setDeptRoles)
+        .catch(() => setDeptRoles([]));
+    } else if (!isApiMode() && deptId) {
+      setDeptRoles(mockRoles.filter((r) => r.departmentId === deptId));
+    } else {
+      setDeptRoles([]);
+    }
+  }, [deptId]);
+
+  const [wizardModules, setWizardModules] = useState<WizardModule[]>([]);
+
+  useEffect(() => {
+    const filteredModules = isApiMode()
+      ? modules.filter((m: any) => !['Dashboard', 'Geography', 'Organization', 'Product Config', 'Projects', 'Users', 'Permissions'].includes(m.name))
+      : modules.filter((m: any) => !['1', '2', '3', '4', '5', '6', '7'].includes(m.id));
+    setWizardModules(
+      filteredModules.map((m: any) => ({
         moduleId: m.id,
         moduleName: m.name,
-        moduleIcon: m.icon,
+        moduleIcon: (m as any).icon || 'solar:widget-bold-duotone',
         selected: false,
-        subModules: mockSubModules
-          .filter((sm) => sm.moduleId === m.id)
-          .map((sm) => ({
+        subModules: subModules
+          .filter((sm: any) => sm.moduleId === m.id)
+          .map((sm: any) => ({
             subModuleId: sm.id,
             subModuleName: sm.name,
             actionIds: [],
           })),
       }))
-  );
+    );
+  }, [modules, subModules]);
 
-  const selectedDept = mockDepartments.find((d) => d.id === deptId);
+  const selectedDept = departments.find((d: any) => d.id === deptId);
   const levelOptions = selectedDept
     ? Array.from({ length: selectedDept.maxHierarchyLevels }, (_, i) => ({ value: `L${i + 1}`, label: `Level ${i + 1}` }))
     : [];
 
   const filteredRoles = useMemo(() => {
-    let roles = mockRoles;
-    if (deptId) roles = roles.filter((r) => r.departmentId === deptId);
-    if (level) roles = roles.filter((r) => r.level === level);
-    return roles;
-  }, [deptId, level]);
+    const lvlNum = level ? parseInt(level.replace('L', ''), 10) : 0;
+    return deptRoles.filter((r: any) => {
+      const rLevel = r.level ? parseInt(r.level.replace('L', ''), 10) : r.hierarchyLevelRank || 0;
+      return lvlNum === 0 || rLevel === lvlNum;
+    });
+  }, [deptRoles, level]);
 
-  const selectedRole = mockRoles.find((r) => r.id === roleId);
+  const selectedRole = filteredRoles.find((r: any) => r.id === roleId);
 
   const selectedModules = wizardModules.filter((m) => m.selected);
   const totalSubmodules = selectedModules.reduce((acc, m) => acc + m.subModules.length, 0);
@@ -172,42 +202,67 @@ export default function PermissionMappingNewPage() {
     );
   };
 
-  const handleSave = useCallback(() => {
+  const handleSave = useCallback(async () => {
     setSaving(true);
-    const selected = wizardModules.filter((m) => m.selected).map((m) => ({
-      moduleId: m.moduleId,
-      moduleName: m.moduleName,
-      moduleIcon: m.moduleIcon,
-      subModules: m.subModules
-        .filter((sm) => sm.actionIds.length > 0)
-        .map((sm) => ({
-          subModuleId: sm.subModuleId,
-          subModuleName: sm.subModuleName,
-          actionIds: sm.actionIds,
-          actionNames: sm.actionIds,
-        })),
-    }));
-
-    const newMapping = {
-      id: String(Date.now()),
-      departmentId: deptId,
-      departmentName: selectedDept?.name ?? '',
-      level,
-      roleId,
-      roleName: selectedRole?.name ?? '',
-      modules: selected,
-      createdBy: 'You',
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
-
-    (mockPermissionMappings as any).unshift(newMapping);
-
-    setTimeout(() => {
+    try {
+      if (isApiMode()) {
+        const lvlNum = parseInt(level.replace('L', ''), 10);
+        const permissions: Array<{ moduleId: number; subModuleId?: number; actionIds: number[] }> = [];
+        wizardModules.filter((m) => m.selected).forEach((mod) => {
+          mod.subModules.filter((s) => s.actionIds.length > 0).forEach((sm) => {
+            const actionIds = sm.actionIds
+              .map((name) => actionMapper.getActionId(name))
+              .filter((id): id is number => id !== undefined);
+            if (actionIds.length > 0) {
+              permissions.push({
+                moduleId: Number(mod.moduleId),
+                subModuleId: sm.subModuleId ? Number(sm.subModuleId) : undefined,
+                actionIds,
+              });
+            }
+          });
+        });
+        await roleMappingApi.create({
+          name: selectedRole?.name || roleId,
+          hierarchyLevelRank: lvlNum,
+          departmentId: Number(deptId),
+          permissions,
+        });
+      } else {
+        const selected = wizardModules.filter((m) => m.selected).map((m) => ({
+          moduleId: m.moduleId,
+          moduleName: m.moduleName,
+          moduleIcon: m.moduleIcon,
+          subModules: m.subModules
+            .filter((sm) => sm.actionIds.length > 0)
+            .map((sm) => ({
+              subModuleId: sm.subModuleId,
+              subModuleName: sm.subModuleName,
+              actionIds: sm.actionIds,
+              actionNames: sm.actionIds,
+            })),
+        }));
+        const newMapping = {
+          id: String(Date.now()),
+          departmentId: deptId,
+          departmentName: selectedDept?.name ?? '',
+          level,
+          roleId,
+          roleName: selectedRole?.name ?? '',
+          modules: selected,
+          createdBy: 'You',
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        };
+        (mockPermissionMappings as any).unshift(newMapping);
+      }
       setSaving(false);
       setShowSuccess(true);
       setTimeout(() => navigate(paths.dashboard.permissionMatrix), 1200);
-    }, 800);
+    } catch (e) {
+      console.error(e);
+      setSaving(false);
+    }
   }, [deptId, level, roleId, selectedDept, selectedRole, wizardModules, navigate]);
 
   const filteredModuleCards = useMemo(() => {
@@ -248,15 +303,15 @@ export default function PermissionMappingNewPage() {
             <Box display="grid" gridTemplateColumns={{ xs: '1fr', sm: '1fr 1fr' }} gap={2.5}>
               <TextField select label="Department" value={deptId} onChange={(e) => handleDeptChange(e.target.value)}>
                 <MenuItem value="">Select Department</MenuItem>
-                {mockDepartments.map((d) => <MenuItem key={d.id} value={d.id}>{d.name}</MenuItem>)}
+                {departments.map((d: any) => <MenuItem key={d.id} value={d.id}>{d.name}</MenuItem>)}
               </TextField>
               <TextField select label="Hierarchy Level" value={level} onChange={(e) => handleLevelChange(e.target.value)} disabled={!deptId}>
                 <MenuItem value="">Select Level</MenuItem>
                 {levelOptions.map((o) => <MenuItem key={o.value} value={o.value}>{o.label}</MenuItem>)}
               </TextField>
-              <TextField select label="Role" value={roleId} onChange={(e) => setRoleId(e.target.value)} disabled={!deptId}>
+              <TextField select label="Role" value={roleId} onChange={(e) => setRoleId(e.target.value)} disabled={!deptId || !level}>
                 <MenuItem value="">Select Role</MenuItem>
-                {filteredRoles.map((r) => <MenuItem key={r.id} value={r.id}>{r.name}</MenuItem>)}
+                {filteredRoles.map((r: any) => <MenuItem key={r.id} value={r.id}>{r.name}</MenuItem>)}
               </TextField>
             </Box>
             {selectedRole && (

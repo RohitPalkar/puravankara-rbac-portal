@@ -13,7 +13,6 @@ const ADMIN_REGISTRY: Record<string, { title: string; path: string; icon: React.
   DASHBOARD: { title: 'Dashboard', path: paths.dashboard.root, icon: icon('ic-dashboard') },
   ZONE_MGMT: { title: 'Zone Management', path: paths.dashboard.zoneMaster, icon: icon('ic-map') },
   DEPARTMENTS: { title: 'Departments', path: paths.dashboard.departmentMaster, icon: icon('ic-building') },
-  ROLES: { title: 'Roles', path: paths.dashboard.roleMaster, icon: icon('ic-user') },
   PROJECTS: { title: 'Projects', path: paths.dashboard.projectMaster, icon: icon('ic-folder') },
   PERMISSION_MATRIX: { title: 'Permission Mapping', path: paths.dashboard.permissionMatrix, icon: icon('ic-lock') },
   USERS: { title: 'Users', path: paths.dashboard.userManagement, icon: icon('ic-user') },
@@ -56,12 +55,12 @@ export function usePermissionNav(): { navData: NavSection[] } {
 
       const sections: NavSection[] = [];
       if (adminItems.length > 0) {
-        const hasMasters = ['ZONE_MGMT', 'DEPARTMENTS', 'ROLES'].some((c) => allowedModules.some((m) => m.code === c));
+        const hasMasters = ['ZONE_MGMT', 'DEPARTMENTS'].some((c) => allowedModules.some((m) => m.code === c));
         if (hasMasters) {
-          const masterItems = ['ZONE_MGMT', 'DEPARTMENTS', 'ROLES']
+          const masterItems = ['ZONE_MGMT', 'DEPARTMENTS']
             .filter((c) => allowedModules.some((m) => m.code === c))
             .map((c) => ADMIN_REGISTRY[c]);
-          const restItems = adminItems.filter((i) => !['DASHBOARD', 'ZONE_MGMT', 'DEPARTMENTS', 'ROLES'].includes(
+          const restItems = adminItems.filter((i) => !['DASHBOARD', 'ZONE_MGMT', 'DEPARTMENTS'].includes(
             Object.entries(ADMIN_REGISTRY).find(([, v]) => v.title === i.title)?.[0] ?? ''
           ));
           sections.push({
@@ -97,7 +96,6 @@ export function usePermissionNav(): { navData: NavSection[] } {
               children: [
                 ADMIN_REGISTRY.ZONE_MGMT,
                 ADMIN_REGISTRY.DEPARTMENTS,
-                ADMIN_REGISTRY.ROLES,
               ],
             },
             ADMIN_REGISTRY.PROJECTS,
