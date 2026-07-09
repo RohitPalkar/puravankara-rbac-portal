@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
 import type { GridColDef } from '@mui/x-data-grid';
 import Button from '@mui/material/Button';
@@ -21,7 +21,9 @@ import { Iconify } from 'src/components/iconify';
 import { CONFIG } from 'src/config-global';
 import { PageContainer, PageHeader } from 'src/components/page-layout';
 import { RowActionsMenu } from 'src/components/row-actions';
-import { mockRoles, mockDepartments, mockUsers } from 'src/services/mock-data';
+import { useRoles } from 'src/services/api-adapters';
+import { isApiMode } from 'src/services/data-source';
+import { mockDepartments, mockUsers } from 'src/services/mock-data';
 import type { Role } from 'src/types';
 
 const DEPT_OPTIONS = mockDepartments.map((d) => ({ value: d.id, label: d.name }));
@@ -45,7 +47,9 @@ function getLevelsForDept(deptId: string): string[] {
 }
 
 export default function RoleListPage() {
-  const [data, setData] = useState<Role[]>(mockRoles);
+  const { data: apiData, loading, error, refetch } = useRoles();
+  const [data, setData] = useState<Role[]>([]);
+  useEffect(() => { setData(apiData); }, [apiData]);
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Role | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
@@ -77,13 +81,24 @@ export default function RoleListPage() {
     setEditing(null);
   }, []);
 
-  const onSubmit = useCallback((form: FormData) => {
-    const dept = mockDepartments.find((d) => d.id === form.departmentId);
-    if (editing) {
+  const onSubmit = useCallback(async (form: FormData) => {
+    if (isApiMode()) {
+      try {
+        const { roleApi } = await import('src/services/api/role-api');
+        if (editing) {
+          await roleApi.update(editing.id, { name: form.name, hierarchyLevelRank: parseInt(form.level.replace('L', ''), 10) });
+        } else {
+          await roleApi.create({ name: form.name, hierarchyLevelRank: parseInt(form.level.replace('L', ''), 10) });
+        }
+        refetch();
+      } catch (e) { console.error(e); }
+    } else if (editing) {
+      const dept = mockDepartments.find((d) => d.id === form.departmentId);
       setData((prev) => prev.map((item) =>
         item.id === editing.id ? { ...item, name: form.name, code: form.code, description: form.description, departmentId: form.departmentId, departmentName: dept?.name, level: form.level, updatedAt: new Date().toISOString() } : item
       ));
     } else {
+      const dept = mockDepartments.find((d) => d.id === form.departmentId);
       setData((prev) => [{
         id: String(Date.now()),
         name: form.name,
@@ -98,14 +113,22 @@ export default function RoleListPage() {
       }, ...prev]);
     }
     handleClose();
-  }, [editing, handleClose]);
+  }, [editing, handleClose, refetch]);
 
-  const handleDelete = useCallback(() => {
+  const handleDelete = useCallback(async () => {
     if (deleteId) {
-      setData((prev) => prev.filter((item) => item.id !== deleteId));
+      if (isApiMode()) {
+        try {
+          const { roleApi } = await import('src/services/api/role-api');
+          await roleApi.remove(deleteId);
+          refetch();
+        } catch (e) { console.error(e); }
+      } else {
+        setData((prev) => prev.filter((item) => item.id !== deleteId));
+      }
       setDeleteId(null);
     }
-  }, [deleteId]);
+  }, [deleteId, refetch]);
 
   const columns: GridColDef[] = [
     { field: 'name', headerName: 'Role Name', flex: 1, minWidth: 180 },

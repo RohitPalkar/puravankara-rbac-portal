@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { useParams, useNavigate } from 'react-router-dom';
 import Stack from '@mui/material/Stack';
@@ -16,7 +16,9 @@ import IconButton from '@mui/material/IconButton';
 import { CONFIG } from 'src/config-global';
 import { PageContainer, PageHeader } from 'src/components/page-layout';
 import { Iconify } from 'src/components/iconify';
-import { mockZones, mockCities, mockProjects } from 'src/services/mock-data';
+import { useProjects } from 'src/services/api-adapters';
+import { isApiMode } from 'src/services/data-source';
+import { mockZones, mockCities } from 'src/services/mock-data';
 import { paths } from 'src/routes/paths';
 import type { Project } from 'src/types';
 
@@ -31,30 +33,50 @@ export default function ProjectNewPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const isEdit = Boolean(id);
+  const { data: projects, loading: loadingProjects } = useProjects();
+  const projectData = isEdit ? projects.find((p) => p.id === id) : undefined;
 
-  const [projectData] = useState<Project | undefined>(
-    isEdit ? mockProjects.find((p) => p.id === id) : undefined
-  );
-
-  const [name, setName] = useState(projectData?.name ?? '');
-  const [code, setCode] = useState(projectData?.code ?? '');
-  const [brand, setBrand] = useState(projectData?.brand ?? '');
-  const [zoneId, setZoneId] = useState(projectData?.zoneId ?? '');
-  const [cityId, setCityId] = useState(projectData?.cityId ?? '');
-  const [phase, setPhase] = useState(projectData?.phase ?? '');
+  const [initialized, setInitialized] = useState(false);
+  const [name, setName] = useState('');
+  const [code, setCode] = useState('');
+  const [brand, setBrand] = useState('');
+  const [zoneId, setZoneId] = useState('');
+  const [cityId, setCityId] = useState('');
+  const [phase, setPhase] = useState('');
   const status = 'active' as const;
-  const [billingEntity, setBillingEntity] = useState(projectData?.billingEntity ?? '');
-  const [billingAddress, setBillingAddress] = useState(projectData?.billingAddress ?? '');
-  const [gstin, setGstin] = useState(projectData?.gstin ?? '');
-  const [paymentGateway, setPaymentGateway] = useState(projectData?.paymentGateway ?? '');
-  const [incentiveCriteria, setIncentiveCriteria] = useState(projectData?.incentiveCriteria ?? '');
-  const [projectImage, setProjectImage] = useState(projectData?.projectImage ?? '');
-  const [jvImage, setJvImage] = useState(projectData?.jvImage ?? '');
+  const [billingEntity, setBillingEntity] = useState('');
+  const [billingAddress, setBillingAddress] = useState('');
+  const [gstin, setGstin] = useState('');
+  const [paymentGateway, setPaymentGateway] = useState('');
+  const [incentiveCriteria, setIncentiveCriteria] = useState('');
+  const [projectImage, setProjectImage] = useState('');
+  const [jvImage, setJvImage] = useState('');
 
   const [saving, setSaving] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [nameError, setNameError] = useState('');
   const [codeError, setCodeError] = useState('');
+
+  useEffect(() => {
+    if (!initialized && (projects.length > 0 || !isEdit)) {
+      if (isEdit && projectData) {
+        setName(projectData.name);
+        setCode(projectData.code);
+        setBrand(projectData.brand);
+        setZoneId(projectData.zoneId);
+        setCityId(projectData.cityId);
+        setPhase(projectData.phase);
+        setBillingEntity(projectData.billingEntity ?? '');
+        setBillingAddress(projectData.billingAddress ?? '');
+        setGstin(projectData.gstin ?? '');
+        setPaymentGateway(projectData.paymentGateway ?? '');
+        setIncentiveCriteria(projectData.incentiveCriteria ?? '');
+        setProjectImage(projectData.projectImage ?? '');
+        setJvImage(projectData.jvImage ?? '');
+      }
+      setInitialized(true);
+    }
+  }, [initialized, projects, projectData, isEdit]);
 
   const cityOptions = useMemo(() => {
     if (!zoneId) return [];
@@ -63,7 +85,7 @@ export default function ProjectNewPage() {
       .map((c) => ({ value: c.id, label: c.name }));
   }, [zoneId]);
 
-  const handleSave = useCallback(() => {
+  const handleSave = useCallback(async () => {
     let valid = true;
     if (!name.trim()) { setNameError('Project name is required'); valid = false; } else { setNameError(''); }
     if (!code.trim()) { setCodeError('Project code is required'); valid = false; } else { setCodeError(''); }
@@ -76,7 +98,31 @@ export default function ProjectNewPage() {
     const zone = mockZones.find((z) => z.id === zoneId);
     const city = mockCities.find((c) => c.id === cityId);
 
-    setTimeout(() => {
+    if (isApiMode()) {
+      try {
+        const { projectApi } = await import('src/services/api/project-api');
+        const payload: any = {
+          name: name.trim(),
+          code: code.trim(),
+          brand,
+          zoneId,
+          cityId,
+          cityName: city?.name,
+          phase,
+          billingEntity,
+          billingAddress,
+          gstin,
+          paymentGateway,
+          incentiveCriteria,
+        };
+        if (isEdit && projectData) {
+          await projectApi.update(projectData.id, payload);
+        } else {
+          await projectApi.create(payload);
+        }
+      } catch (e) { console.error(e); }
+    } else {
+      const { mockProjects } = await import('src/services/mock-data');
       if (isEdit && projectData) {
         Object.assign(projectData, {
           name: name.trim(), code: code.trim(), brand, zoneId, zoneName: zone?.name,
@@ -96,11 +142,11 @@ export default function ProjectNewPage() {
           updatedAt: new Date().toISOString(),
         });
       }
+    }
 
-      setSaving(false);
-      setShowSuccess(true);
-      setTimeout(() => navigate(paths.dashboard.projectMaster), 1200);
-    }, 800);
+    setSaving(false);
+    setShowSuccess(true);
+    setTimeout(() => navigate(paths.dashboard.projectMaster), 1200);
   }, [name, code, brand, zoneId, cityId, phase, status, billingEntity, billingAddress, gstin, paymentGateway, incentiveCriteria, projectImage, jvImage, isEdit, projectData, navigate]);
 
   if (isEdit && !projectData) {

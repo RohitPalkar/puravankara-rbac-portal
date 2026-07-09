@@ -1,4 +1,4 @@
-import { useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { useNavigate } from 'react-router-dom';
 import Typography from '@mui/material/Typography';
@@ -12,11 +12,16 @@ import type { FilterOption } from 'src/components/data-table';
 import { RowActionsMenu } from 'src/components/row-actions';
 import { Label } from 'src/components/label';
 import { Iconify } from 'src/components/iconify';
-import { mockPermissionMappings } from 'src/services/mock-data';
+import { usePermissionMappings } from 'src/services/api-adapters';
+import { isApiMode } from 'src/services/data-source';
+import type { PermissionMapping } from 'src/types';
 import { paths } from 'src/routes/paths';
 
 export default function PermissionMappingListPage() {
   const navigate = useNavigate();
+  const { data: apiData, loading, error, refetch } = usePermissionMappings();
+  const [data, setData] = useState<PermissionMapping[]>([]);
+  useEffect(() => { setData(apiData); }, [apiData]);
 
   const handleView = useCallback((id: string) => {
     navigate(paths.dashboard.permissionView(id));
@@ -30,12 +35,11 @@ export default function PermissionMappingListPage() {
     navigate(paths.dashboard.permissionNew);
   }, [navigate]);
 
-  const handleDeactivate = useCallback((id: string) => {
-    const idx = mockPermissionMappings.findIndex((m) => m.id === id);
-    if (idx !== -1) {
-      mockPermissionMappings.splice(idx, 1);
-      navigate(paths.dashboard.permissionMatrix);
+  const handleDeactivate = useCallback(async (id: string) => {
+    if (!isApiMode()) {
+      setData((prev) => prev.filter((m) => m.id !== id));
     }
+    navigate(paths.dashboard.permissionMatrix);
   }, [navigate]);
 
   const columns: GridColDef[] = useMemo(() => [
@@ -135,7 +139,7 @@ export default function PermissionMappingListPage() {
           }
         />
 
-        {mockPermissionMappings.length === 0 ? (
+        {data.length === 0 ? (
           <Card sx={{ p: 6, textAlign: 'center' }}>
             <Iconify icon="solar:shield-check-bold" width={48} color="text.disabled" />
             <Typography variant="h6" color="text.secondary" sx={{ mt: 2 }}>
@@ -151,18 +155,18 @@ export default function PermissionMappingListPage() {
         ) : (
           <DataTable
             columns={columns}
-            rows={mockPermissionMappings}
+            rows={data}
             searchPlaceholder="Search by department, role..."
             filterOptions={[
               {
                 key: 'departmentName',
                 label: 'Department',
-                options: [...new Set(mockPermissionMappings.map((r) => r.departmentName))].map((name) => ({ value: name, label: name })),
+                options: [...new Set(data.map((r) => r.departmentName))].map((name) => ({ value: name, label: name })),
               },
               {
                 key: 'level',
                 label: 'Level',
-                options: [...new Set(mockPermissionMappings.map((r) => r.level))].sort().map((l) => ({ value: l, label: l })),
+                options: [...new Set(data.map((r) => r.level))].sort().map((l) => ({ value: l, label: l })),
               },
             ]}
           />

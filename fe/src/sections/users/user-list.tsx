@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
 import type { GridColDef } from '@mui/x-data-grid';
 import Button from '@mui/material/Button';
@@ -19,13 +19,16 @@ import { Iconify } from 'src/components/iconify';
 import { PageContainer, PageHeader } from 'src/components/page-layout';
 import { RowActionsMenu } from 'src/components/row-actions';
 import { Can } from 'src/components/can';
-import { mockUsers } from 'src/services/mock-data';
+import { useUsers } from 'src/services/api-adapters';
+import { isApiMode } from 'src/services/data-source';
 import type { User } from 'src/types';
 import { paths } from 'src/routes/paths';
 
 export default function UserListPage() {
   const navigate = useNavigate();
-  const [data, setData] = useState<User[]>(mockUsers);
+  const { data: apiData, loading, error, refetch } = useUsers();
+  const [data, setData] = useState<User[]>([]);
+  useEffect(() => { setData(apiData); }, [apiData]);
 
   const columns: GridColDef[] = useMemo(() => [
     { field: 'employeeId', headerName: 'Employee ID', width: 110 },
@@ -65,14 +68,22 @@ export default function UserListPage() {
         <RowActionsMenu moduleCode="USERS" actions={[
           { label: 'View', icon: 'solar:eye-bold', action: 'VIEW', onClick: () => navigate(paths.dashboard.userDetail(p.row.id)) },
           { label: 'Edit', icon: 'solar:pen-bold', action: 'EDIT', onClick: () => navigate(paths.dashboard.userNew) },
-          { label: 'Deactivate', icon: 'solar:close-circle-bold', action: 'EDIT', color: 'error.main', onClick: () => {
-            setData((prev) => prev.map((u) => u.id === p.row.id ? { ...u, status: 'inactive' as const } : u));
+          { label: 'Deactivate', icon: 'solar:close-circle-bold', action: 'EDIT', color: 'error.main', onClick: async () => {
+            if (isApiMode()) {
+              try {
+                const { userApi } = await import('src/services/api/user-api');
+                await userApi.deactivate(p.row.id);
+                refetch();
+              } catch (e) { console.error(e); }
+            } else {
+              setData((prev) => prev.map((u) => u.id === p.row.id ? { ...u, status: 'inactive' as const } : u));
+            }
           }},
           { label: 'Reset Password', icon: 'solar:key-bold', action: 'RESET_PASSWORD', onClick: () => {} },
         ]} />
       ),
     },
-  ], [navigate]);
+  ], [navigate, refetch]);
 
   return (
     <>

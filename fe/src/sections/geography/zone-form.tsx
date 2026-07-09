@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { useParams, useNavigate } from 'react-router-dom';
 import Stack from '@mui/material/Stack';
@@ -14,37 +14,48 @@ import { CONFIG } from 'src/config-global';
 import { PageContainer, PageHeader } from 'src/components/page-layout';
 import { Iconify } from 'src/components/iconify';
 import { DualListTransfer, type DualListItem } from 'src/components/dual-list';
-import { mockZones, mockCities } from 'src/services/mock-data';
+import { useZones } from 'src/services/api-adapters';
+import { isApiMode } from 'src/services/data-source';
+import { mockCities } from 'src/services/mock-data';
 import { paths } from 'src/routes/paths';
 import type { Zone } from 'src/types';
-
-function generateZoneCode(existing: Zone[]): string {
-  const maxNum = existing.reduce((max, z) => {
-    const match = z.code.match(/Z-(\d+)/);
-    return match ? Math.max(max, parseInt(match[1], 10)) : max;
-  }, 0);
-  return `Z-${String(maxNum + 1).padStart(2, '0')}`;
-}
 
 export default function ZoneFormPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const isEdit = Boolean(id);
+  const { data: zones, loading: loadingZones } = useZones();
 
-  const [zoneData] = useState<Zone | undefined>(
-    isEdit ? mockZones.find((zn) => zn.id === id) : undefined
-  );
-  const [name, setName] = useState(zoneData?.name ?? '');
-  const [code, setCode] = useState(zoneData?.code ?? generateZoneCode(mockZones));
-  const [description, setDescription] = useState(zoneData?.description ?? '');
+  const zoneData = isEdit ? zones.find((zn) => zn.id === id) : undefined;
+
+  const [initialized, setInitialized] = useState(false);
+  const [name, setName] = useState('');
+  const [code, setCode] = useState('');
+  const [description, setDescription] = useState('');
   const status = 'active' as const;
-  const [mappedCityIds, setMappedCityIds] = useState<string[]>(
-    zoneData ? mockCities.filter((c) => c.zoneId === zoneData.id).map((c) => c.id) : []
-  );
+  const [mappedCityIds, setMappedCityIds] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [nameError, setNameError] = useState('');
   const [cityError, setCityError] = useState('');
+
+  useEffect(() => {
+    if (!initialized && (zones.length > 0 || !isEdit)) {
+      if (zoneData) {
+        setName(zoneData.name);
+        setCode(zoneData.code);
+        setDescription(zoneData.description ?? '');
+        setMappedCityIds(mockCities.filter((c) => c.zoneId === zoneData.id).map((c) => c.id));
+      } else {
+        const maxNum = zones.reduce((max, z) => {
+          const match = z.code.match(/Z-(\d+)/);
+          return match ? Math.max(max, parseInt(match[1], 10)) : max;
+        }, 0);
+        setCode(`Z-${String(maxNum + 1).padStart(2, '0')}`);
+      }
+      setInitialized(true);
+    }
+  }, [initialized, zones, zoneData, isEdit]);
 
   const selectedCityItems: DualListItem[] = useMemo(
     () => mockCities.filter((c) => mappedCityIds.includes(c.id)).map((c) => ({ id: c.id, label: c.name })),
@@ -65,7 +76,7 @@ export default function ZoneFormPage() {
     setMappedCityIds((prev) => prev.filter((pid) => !selectedIds.includes(pid)));
   }, []);
 
-  const handleSave = useCallback(() => {
+  const handleSave = useCallback(async () => {
     let valid = true;
 
     if (!name.trim()) {
@@ -86,7 +97,17 @@ export default function ZoneFormPage() {
 
     setSaving(true);
 
-    setTimeout(() => {
+    if (isApiMode()) {
+      try {
+        const { zoneApi } = await import('src/services/api/zone-api');
+        if (isEdit && zoneData) {
+          await zoneApi.update(zoneData.id, { name: name.trim() });
+        } else {
+          await zoneApi.create({ name: name.trim() });
+        }
+      } catch (e) { console.error(e); }
+    } else {
+      const { mockZones } = await import('src/services/mock-data');
       if (isEdit && zoneData) {
         Object.assign(zoneData, { name: name.trim(), code, description: description.trim(), status, updatedAt: new Date().toISOString() });
       } else {
@@ -105,12 +126,11 @@ export default function ZoneFormPage() {
       mockCities.forEach((c) => {
         c.zoneId = mappedCityIds.includes(c.id) ? (isEdit && zoneData ? zoneData.id : mockZones[0].id) : '';
       });
+    }
 
-      setSaving(false);
-      setShowSuccess(true);
-
-      setTimeout(() => navigate(paths.dashboard.zoneMaster), 1200);
-    }, 800);
+    setSaving(false);
+    setShowSuccess(true);
+    setTimeout(() => navigate(paths.dashboard.zoneMaster), 1200);
   }, [name, code, description, status, mappedCityIds, isEdit, zoneData, navigate]);
 
   if (isEdit && !zoneData) {

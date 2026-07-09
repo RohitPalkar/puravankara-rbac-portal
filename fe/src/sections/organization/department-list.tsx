@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
 import type { GridColDef } from '@mui/x-data-grid';
 import Button from '@mui/material/Button';
@@ -23,7 +23,9 @@ import { Label } from 'src/components/label';
 import { Iconify } from 'src/components/iconify';
 import { PageContainer, PageHeader } from 'src/components/page-layout';
 import { RowActionsMenu } from 'src/components/row-actions';
-import { mockDepartments, mockUsers } from 'src/services/mock-data';
+import { useDepartments, useCreateDepartment, useUpdateDepartment } from 'src/services/api-adapters';
+import { isApiMode } from 'src/services/data-source';
+import { mockUsers } from 'src/services/mock-data';
 import type { Department } from 'src/types';
 
 const schema = z.object({
@@ -49,7 +51,9 @@ function generateCode(name: string, existing: Department[]): string {
 }
 
 export default function DepartmentListPage() {
-  const [data, setData] = useState<Department[]>(mockDepartments);
+  const { data: apiData, loading, error, refetch } = useDepartments();
+  const [data, setData] = useState<Department[]>([]);
+  useEffect(() => { setData(apiData); }, [apiData]);
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Department | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
@@ -75,8 +79,18 @@ export default function DepartmentListPage() {
     setEditing(null);
   }, []);
 
-  const onSubmit = useCallback((form: FormData) => {
-    if (editing) {
+  const onSubmit = useCallback(async (form: FormData) => {
+    if (isApiMode()) {
+      try {
+        const { departmentApi } = await import('src/services/api/department-api');
+        if (editing) {
+          await departmentApi.update(editing.id, { name: form.name, maxHierarchyLevels: form.maxHierarchyLevels });
+        } else {
+          await departmentApi.create({ name: form.name, maxHierarchyLevels: form.maxHierarchyLevels });
+        }
+        refetch();
+      } catch (e) { console.error(e); }
+    } else if (editing) {
       setData((prev) => prev.map((item) => (item.id === editing.id ? { ...item, name: form.name, code: form.code, description: form.description, maxHierarchyLevels: form.maxHierarchyLevels, updatedAt: new Date().toISOString() } : item)));
     } else {
       setData((prev) => [{
@@ -91,14 +105,22 @@ export default function DepartmentListPage() {
       }, ...prev]);
     }
     handleClose();
-  }, [editing, handleClose]);
+  }, [editing, handleClose, refetch]);
 
-  const handleDelete = useCallback(() => {
+  const handleDelete = useCallback(async () => {
     if (deleteId) {
-      setData((prev) => prev.filter((item) => item.id !== deleteId));
+      if (isApiMode()) {
+        try {
+          const { departmentApi } = await import('src/services/api/department-api');
+          await departmentApi.remove(deleteId);
+          refetch();
+        } catch (e) { console.error(e); }
+      } else {
+        setData((prev) => prev.filter((item) => item.id !== deleteId));
+      }
       setDeleteId(null);
     }
-  }, [deleteId]);
+  }, [deleteId, refetch]);
 
   const columns: GridColDef[] = [
     { field: 'name', headerName: 'Department Name', flex: 1, minWidth: 180 },

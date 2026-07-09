@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { useParams, useNavigate } from 'react-router-dom';
 import Button from '@mui/material/Button';
@@ -22,7 +22,8 @@ import { CONFIG } from 'src/config-global';
 import { Label } from 'src/components/label';
 import { Iconify } from 'src/components/iconify';
 import { PageContainer, PageHeader } from 'src/components/page-layout';
-import { mockProjects, mockZones, mockCities, mockUsers, mockRoles, mockDepartments } from 'src/services/mock-data';
+import { useProjects } from 'src/services/api-adapters';
+import { mockZones, mockCities, mockUsers, mockRoles, mockDepartments } from 'src/services/mock-data';
 import { paths } from 'src/routes/paths';
 
 const TABS = ['Overview', 'Users', 'Permissions'];
@@ -31,8 +32,14 @@ export default function ProjectDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState(0);
+  const { data: projects, loading, error } = useProjects();
 
-  const project = mockProjects.find((p) => p.id === id);
+  const [project, setProject] = useState(() => projects.find((p) => p.id === id));
+  useEffect(() => {
+    if (!project && projects.length > 0) {
+      setProject(projects.find((p) => p.id === id));
+    }
+  }, [projects, id, project]);
 
   if (!project) {
     return (

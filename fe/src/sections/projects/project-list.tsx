@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { useNavigate } from 'react-router-dom';
 import type { GridColDef } from '@mui/x-data-grid';
@@ -19,21 +19,32 @@ import { Iconify } from 'src/components/iconify';
 import { PageContainer, PageHeader } from 'src/components/page-layout';
 import { RowActionsMenu } from 'src/components/row-actions';
 import { Can } from 'src/components/can';
-import { mockProjects } from 'src/services/mock-data';
+import { useProjects } from 'src/services/api-adapters';
+import { isApiMode } from 'src/services/data-source';
 import { paths } from 'src/routes/paths';
 import type { Project } from 'src/types';
 
 export default function ProjectListPage() {
   const navigate = useNavigate();
-  const [data, setData] = useState<Project[]>(mockProjects);
+  const { data: apiData, loading, error, refetch } = useProjects();
+  const [data, setData] = useState<Project[]>([]);
+  useEffect(() => { setData(apiData); }, [apiData]);
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
-  const handleDelete = useCallback(() => {
+  const handleDelete = useCallback(async () => {
     if (deleteId) {
-      setData((prev) => prev.filter((item) => item.id !== deleteId));
+      if (isApiMode()) {
+        try {
+          const { projectApi } = await import('src/services/api/project-api');
+          await projectApi.remove(deleteId);
+          refetch();
+        } catch (e) { console.error(e); }
+      } else {
+        setData((prev) => prev.filter((item) => item.id !== deleteId));
+      }
       setDeleteId(null);
     }
-  }, [deleteId]);
+  }, [deleteId, refetch]);
 
   const columns: GridColDef[] = [
     { field: 'name', headerName: 'Project Name', flex: 1, minWidth: 200 },

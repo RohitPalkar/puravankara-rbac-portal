@@ -2,6 +2,9 @@ import { useMemo, useEffect, useCallback } from 'react';
 
 import { useSetState } from 'src/hooks/use-set-state';
 
+import { isApiMode } from 'src/services/data-source';
+import { authApi } from 'src/services/api/auth-api';
+import { usePermissionStore } from 'src/stores/permission-store';
 import axios, { endpoints } from 'src/utils/axios';
 
 import { STORAGE_KEY } from './constant';
@@ -9,14 +12,6 @@ import { AuthContext } from '../auth-context';
 import { setSession, isValidToken } from './utils';
 
 import type { AuthState } from '../../types';
-
-// ----------------------------------------------------------------------
-
-/**
- * NOTE:
- * We only build demo at basic level.
- * Customer will need to do some extra handling yourself if you want to extend the logic and other features...
- */
 
 type Props = {
   children: React.ReactNode;
@@ -35,11 +30,20 @@ export function AuthProvider({ children }: Props) {
       if (accessToken && isValidToken(accessToken)) {
         setSession(accessToken);
 
-        const res = await axios.get(endpoints.auth.me);
-
-        const { user } = res.data;
-
-        setState({ user: { ...user, accessToken }, loading: false });
+        if (isApiMode()) {
+          const user = await authApi.me();
+          setState({ user: { ...user, accessToken }, loading: false });
+          try {
+            const permRes = await authApi.permissionsMe();
+            usePermissionStore.getState().setPermissionResponse(permRes);
+          } catch (e) {
+            console.error('Failed to load permissions:', e);
+          }
+        } else {
+          const res = await axios.get(endpoints.auth.me);
+          const { user } = res.data;
+          setState({ user: { ...user, accessToken }, loading: false });
+        }
       } else {
         setState({ user: null, loading: false });
       }

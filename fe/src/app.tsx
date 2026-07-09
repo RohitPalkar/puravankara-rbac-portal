@@ -16,6 +16,7 @@ import { SettingsDrawer, defaultSettings, SettingsProvider } from 'src/component
 import { AuthProvider } from 'src/auth/context/jwt';
 
 import { usePermissionStore } from 'src/stores/permission-store';
+import { isApiMode } from 'src/services/data-source';
 import { MOCK_USER_PROFILES } from 'src/services/mock-data';
 
 const queryClient = new QueryClient({
@@ -30,6 +31,7 @@ export default function App() {
   useScrollToTop();
 
   useEffect(() => {
+    if (isApiMode()) return;
     const profile = MOCK_USER_PROFILES[DEFAULT_PROFILE];
     if (profile) {
       const primaryRole = profile.roles.find((r) => r.isPrimary) ?? profile.roles[0];

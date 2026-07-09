@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { useNavigate } from 'react-router-dom';
 import type { GridColDef } from '@mui/x-data-grid';
@@ -19,24 +19,36 @@ import { Label } from 'src/components/label';
 import { Iconify } from 'src/components/iconify';
 import { RowActionsMenu } from 'src/components/row-actions';
 import { PageContainer, PageHeader } from 'src/components/page-layout';
-import { mockZones, mockCities, mockProjectZones } from 'src/services/mock-data';
+import { useZones } from 'src/services/api-adapters';
+import { isApiMode } from 'src/services/data-source';
+import { mockCities, mockProjectZones } from 'src/services/mock-data';
 import { paths } from 'src/routes/paths';
 import type { Zone } from 'src/types';
 
 export default function ZoneListPage() {
   const navigate = useNavigate();
-  const [data, setData] = useState<Zone[]>(mockZones);
+  const { data: apiData, loading, error, refetch } = useZones();
+  const [data, setData] = useState<Zone[]>([]);
+  useEffect(() => { setData(apiData); }, [apiData]);
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
   const getMappedCities = (zoneId: string) => mockCities.filter((c) => c.zoneId === zoneId);
   const getProjectCount = (zoneId: string) => (mockProjectZones[zoneId] ?? []).length;
 
-  const handleDelete = useCallback(() => {
+  const handleDelete = useCallback(async () => {
     if (deleteId) {
-      setData((prev) => prev.filter((item) => item.id !== deleteId));
+      if (isApiMode()) {
+        try {
+          const { zoneApi } = await import('src/services/api/zone-api');
+          await zoneApi.remove(deleteId);
+          refetch();
+        } catch (e) { console.error(e); }
+      } else {
+        setData((prev) => prev.filter((item) => item.id !== deleteId));
+      }
       setDeleteId(null);
     }
-  }, [deleteId]);
+  }, [deleteId, refetch]);
 
   const columns: GridColDef[] = [
     { field: 'name', headerName: 'Zone Name', flex: 1, minWidth: 180 },
