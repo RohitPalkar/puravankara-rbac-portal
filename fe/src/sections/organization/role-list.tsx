@@ -8,6 +8,8 @@ import DialogTitle from '@mui/material/DialogTitle';
 import DialogContent from '@mui/material/DialogContent';
 import DialogActions from '@mui/material/DialogActions';
 import Card from '@mui/material/Card';
+import Typography from '@mui/material/Typography';
+import Box from '@mui/material/Box';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -19,25 +21,21 @@ import { Iconify } from 'src/components/iconify';
 import { CONFIG } from 'src/config-global';
 import { PageContainer, PageHeader } from 'src/components/page-layout';
 import { RowActionsMenu } from 'src/components/row-actions';
-import { mockRoles, mockDepartments } from 'src/services/mock-data';
+import { mockRoles, mockDepartments, mockUsers } from 'src/services/mock-data';
 import type { Role } from 'src/types';
-
-const STATUS_OPTIONS = [
-  { value: 'active', label: 'Active' },
-  { value: 'inactive', label: 'Inactive' },
-];
 
 const DEPT_OPTIONS = mockDepartments.map((d) => ({ value: d.id, label: d.name }));
 
 const schema = z.object({
   name: z.string().min(1, 'Role Name is required'),
+  code: z.string().optional(),
+  description: z.string().optional(),
   departmentId: z.string().min(1, 'Department is required'),
   level: z.string().min(1, 'Level is required'),
-  status: z.enum(['active', 'inactive']),
 });
 
 type FormData = z.infer<typeof schema>;
-const defaults: FormData = { name: '', departmentId: '', level: '', status: 'active' };
+const defaults: FormData = { name: '', code: '', description: '', departmentId: '', level: '' };
 
 function getLevelsForDept(deptId: string): string[] {
   const dept = mockDepartments.find((d) => d.id === deptId);
@@ -60,6 +58,8 @@ export default function RoleListPage() {
     return levels.map((l) => ({ value: l, label: l }));
   }, [selectedDeptId]);
 
+  const getUserCount = (roleId: string) => mockUsers.filter((u) => u.roleId === roleId).length;
+
   const handleNew = useCallback(() => {
     setEditing(null);
     methods.reset(defaults);
@@ -68,7 +68,7 @@ export default function RoleListPage() {
 
   const handleEdit = useCallback((row: Role) => {
     setEditing(row);
-    methods.reset({ name: row.name, departmentId: row.departmentId, level: row.level, status: row.status });
+    methods.reset({ name: row.name, code: row.code ?? '', description: row.description ?? '', departmentId: row.departmentId, level: row.level });
     setOpen(true);
   }, [methods]);
 
@@ -81,17 +81,18 @@ export default function RoleListPage() {
     const dept = mockDepartments.find((d) => d.id === form.departmentId);
     if (editing) {
       setData((prev) => prev.map((item) =>
-        item.id === editing.id ? { ...item, name: form.name, departmentId: form.departmentId, departmentName: dept?.name, level: form.level, status: form.status, updatedAt: new Date().toISOString() } : item
+        item.id === editing.id ? { ...item, name: form.name, code: form.code, description: form.description, departmentId: form.departmentId, departmentName: dept?.name, level: form.level, updatedAt: new Date().toISOString() } : item
       ));
     } else {
       setData((prev) => [{
         id: String(Date.now()),
         name: form.name,
+        code: form.code,
+        description: form.description,
         level: form.level,
         departmentId: form.departmentId,
         departmentName: dept?.name,
         createdBy: 'You',
-        status: form.status,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       }, ...prev]);
@@ -107,19 +108,25 @@ export default function RoleListPage() {
   }, [deleteId]);
 
   const columns: GridColDef[] = [
-    { field: 'name', headerName: 'Role Name', flex: 1 },
+    { field: 'name', headerName: 'Role Name', flex: 1, minWidth: 180 },
     { field: 'departmentName', headerName: 'Department', width: 170 },
-    { field: 'level', headerName: 'Level', width: 80 },
-    { field: 'createdBy', headerName: 'Created By', width: 130 },
+    { field: 'level', headerName: 'Hierarchy Level', width: 130 },
     {
-      field: 'createdAt', headerName: 'Created Date', width: 120,
-      renderCell: (params) => dayjs(params.value).format('DD/MM/YYYY'),
+      field: 'userCount', headerName: 'Assigned Users', width: 140,
+      renderCell: (params) => {
+        const count = getUserCount(params.row.id);
+        return <Typography variant="body2">{count} {count === 1 ? 'user' : 'users'}</Typography>;
+      },
     },
     {
       field: 'status', headerName: 'Status', width: 100,
       renderCell: (params) => (
         <Label color={params.value === 'active' ? 'success' : 'default'}>{params.value}</Label>
       ),
+    },
+    {
+      field: 'createdAt', headerName: 'Created Date', width: 120,
+      renderCell: (params) => dayjs(params.value).format('DD/MM/YYYY'),
     },
     {
       field: 'actions', headerName: '', width: 60, sortable: false, disableColumnMenu: true,
@@ -140,12 +147,24 @@ export default function RoleListPage() {
       <PageContainer>
         <PageHeader title="Roles" description="Manage roles and hierarchy levels" action={
           <Button variant="contained" startIcon={<Iconify icon="solar:add-circle-bold" />} onClick={handleNew}>
-            Add Role
+            Create Role
           </Button>
         } />
         <Card sx={{ overflow: 'hidden' }}>
           <DataTable columns={columns} rows={data} getRowId={(r) => r.id} />
         </Card>
+        {data.length === 0 && (
+          <Box sx={{ textAlign: 'center', py: 8 }}>
+            <Iconify icon="solar:user-id-bold" width={48} sx={{ color: 'text.disabled', mb: 2 }} />
+            <Typography variant="h6" color="text.secondary">No Roles Created</Typography>
+            <Typography variant="body2" color="text.disabled" sx={{ mb: 3 }}>
+              Create your first role to start assigning permissions.
+            </Typography>
+            <Button variant="contained" startIcon={<Iconify icon="solar:add-circle-bold" />} onClick={handleNew}>
+              Create Role
+            </Button>
+          </Box>
+        )}
       </PageContainer>
 
       <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
@@ -153,10 +172,11 @@ export default function RoleListPage() {
         <Form methods={methods} onSubmit={methods.handleSubmit(onSubmit)}>
           <DialogContent>
             <Stack spacing={2.5} sx={{ mt: 1 }}>
-              <Field.Text name="name" label="Role Name" placeholder="e.g. Finance Executive" />
-              <Field.Select name="departmentId" label="Department" options={DEPT_OPTIONS} />
-              <Field.Select name="level" label="Level" options={levelOptions} />
-              {editing && <Field.Select name="status" label="Status" options={STATUS_OPTIONS} />}
+              <Field.Select name="departmentId" label="Select Department" options={DEPT_OPTIONS} />
+              <Field.Select name="level" label="Select Level" options={levelOptions} />
+              <Field.Text name="name" label="Role Name" placeholder="e.g. Sales Manager" />
+              <Field.Text name="code" label="Role Code" placeholder="e.g. SMGR" />
+              <Field.Text name="description" label="Description" multiline rows={2} placeholder="Brief description of the role" />
             </Stack>
           </DialogContent>
           <DialogActions>

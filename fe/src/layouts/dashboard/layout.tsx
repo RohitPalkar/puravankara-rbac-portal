@@ -6,6 +6,8 @@ import { useTheme } from '@mui/material/styles';
 import { iconButtonClasses } from '@mui/material/IconButton';
 
 import { useBoolean } from 'src/hooks/use-boolean';
+import { usePermissionNav } from 'src/hooks/use-permission-nav';
+import { usePermissionStore } from 'src/stores/permission-store';
 
 import { Logo } from 'src/components/logo';
 import { useSettingsContext } from 'src/components/settings';
@@ -22,6 +24,7 @@ import { LayoutSection } from '../core/layout-section';
 import { HeaderSection } from '../core/header-section';
 import { StyledDivider, useNavColorVars } from './styles';
 import { AccountDrawer } from '../components/account-drawer';
+import { RoleSwitcher } from '../components/role-switcher';
 import { SettingsButton } from '../components/settings-button';
 import { navData as dashboardNavData } from '../config-nav-dashboard';
 
@@ -47,7 +50,9 @@ export function DashboardLayout({ sx, children, header, data }: DashboardLayoutP
 
   const layoutQuery: Breakpoint = 'lg';
 
-  const navData = data?.nav ?? dashboardNavData;
+  const permissionNav = usePermissionNav();
+  const hasPermResponse = usePermissionStore((s) => s.permissionResponse !== null);
+  const navData = data?.nav ?? (hasPermResponse ? permissionNav.navData : dashboardNavData);
 
   const isNavMini = settings.navLayout === 'mini';
   const isNavHorizontal = settings.navLayout === 'horizontal';
@@ -123,6 +128,7 @@ export function DashboardLayout({ sx, children, header, data }: DashboardLayoutP
             ),
             rightArea: (
               <Box display="flex" alignItems="center" gap={{ xs: 0, sm: 0.75 }}>
+                <RoleSwitcher />
                 <Searchbar data={navData} />
                 <SettingsButton />
                 <AccountDrawer data={_account} />

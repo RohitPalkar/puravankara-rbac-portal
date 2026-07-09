@@ -21,21 +21,15 @@ import { RowActionsMenu } from 'src/components/row-actions';
 import { mockModules } from 'src/services/mock-data';
 import type { Module } from 'src/types';
 
-const STATUS_OPTIONS = [
-  { value: 'active', label: 'Active' },
-  { value: 'inactive', label: 'Inactive' },
-];
-
 const schema = z.object({
   name: z.string().min(1, 'Name is required'),
   code: z.string().min(1, 'Code is required').max(20, 'Max 20 chars'),
   icon: z.string().default(''),
   sortOrder: z.coerce.number().int().min(0),
-  status: z.enum(['active', 'inactive']),
 });
 
 type FormData = z.infer<typeof schema>;
-const defaults: FormData = { name: '', code: '', icon: '', sortOrder: 0, status: 'active' };
+const defaults: FormData = { name: '', code: '', icon: '', sortOrder: 0 };
 
 export default function ModuleListPage() {
   const [data, setData] = useState<Module[]>(mockModules);
@@ -53,7 +47,7 @@ export default function ModuleListPage() {
 
   const handleEdit = useCallback((row: Module) => {
     setEditing(row);
-    methods.reset({ name: row.name, code: row.code, icon: row.icon, sortOrder: row.sortOrder, status: row.status });
+    methods.reset({ name: row.name, code: row.code, icon: row.icon, sortOrder: row.sortOrder });
     setOpen(true);
   }, [methods]);
 
@@ -124,7 +118,6 @@ export default function ModuleListPage() {
               <Field.Text name="code" label="Module Code" />
               <Field.Text name="icon" label="Icon (Iconify name)" />
               <Field.Text name="sortOrder" label="Sort Order" type="number" />
-              <Field.Select name="status" label="Status" options={STATUS_OPTIONS} />
             </Stack>
           </DialogContent>
           <DialogActions>

@@ -1,0 +1,9 @@
+export { default as CrmPage } from './crm';
+export { default as EoiPage } from './eoi';
+export { default as IomPage } from './iom';
+export { default as BookingsPage } from './bookings';
+export { default as InventoryPage } from './inventory';
+export { default as FinancePage } from './finance';
+export { default as ReportsPage } from './reports';
+export { default as DocumentsPage } from './documents';
+export { default as EsignaturePage } from './esignature';

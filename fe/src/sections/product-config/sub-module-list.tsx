@@ -21,11 +21,6 @@ import { RowActionsMenu } from 'src/components/row-actions';
 import { mockSubModules, mockModules } from 'src/services/mock-data';
 import type { SubModule } from 'src/types';
 
-const STATUS_OPTIONS = [
-  { value: 'active', label: 'Active' },
-  { value: 'inactive', label: 'Inactive' },
-];
-
 const MODULE_OPTIONS = mockModules.map((m) => ({ value: m.id, label: m.name }));
 
 const schema = z.object({
@@ -34,11 +29,10 @@ const schema = z.object({
   moduleId: z.string().min(1, 'Module is required'),
   icon: z.string().default(''),
   sortOrder: z.coerce.number().int().min(0),
-  status: z.enum(['active', 'inactive']),
 });
 
 type FormData = z.infer<typeof schema>;
-const defaults: FormData = { name: '', code: '', moduleId: '', icon: '', sortOrder: 0, status: 'active' };
+const defaults: FormData = { name: '', code: '', moduleId: '', icon: '', sortOrder: 0 };
 
 export default function SubModuleListPage() {
   const [data, setData] = useState<SubModule[]>(mockSubModules);
@@ -56,7 +50,7 @@ export default function SubModuleListPage() {
 
   const handleEdit = useCallback((row: SubModule) => {
     setEditing(row);
-    methods.reset({ name: row.name, code: row.code, moduleId: row.moduleId, icon: row.icon, sortOrder: row.sortOrder, status: row.status });
+    methods.reset({ name: row.name, code: row.code, moduleId: row.moduleId, icon: row.icon, sortOrder: row.sortOrder });
     setOpen(true);
   }, [methods]);
 
@@ -130,7 +124,6 @@ export default function SubModuleListPage() {
               <Field.Select name="moduleId" label="Module" options={MODULE_OPTIONS} />
               <Field.Text name="icon" label="Icon (Iconify name)" />
               <Field.Text name="sortOrder" label="Sort Order" type="number" />
-              <Field.Select name="status" label="Status" options={STATUS_OPTIONS} />
             </Stack>
           </DialogContent>
           <DialogActions>

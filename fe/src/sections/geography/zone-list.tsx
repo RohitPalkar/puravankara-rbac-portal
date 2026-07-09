@@ -11,6 +11,7 @@ import DialogContent from '@mui/material/DialogContent';
 import DialogActions from '@mui/material/DialogActions';
 import Card from '@mui/material/Card';
 import Typography from '@mui/material/Typography';
+import Box from '@mui/material/Box';
 import dayjs from 'dayjs';
 import { CONFIG } from 'src/config-global';
 import { DataTable } from 'src/components/data-table';
@@ -18,7 +19,7 @@ import { Label } from 'src/components/label';
 import { Iconify } from 'src/components/iconify';
 import { RowActionsMenu } from 'src/components/row-actions';
 import { PageContainer, PageHeader } from 'src/components/page-layout';
-import { mockZones, mockCities } from 'src/services/mock-data';
+import { mockZones, mockCities, mockProjectZones } from 'src/services/mock-data';
 import { paths } from 'src/routes/paths';
 import type { Zone } from 'src/types';
 
@@ -28,6 +29,7 @@ export default function ZoneListPage() {
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
   const getMappedCities = (zoneId: string) => mockCities.filter((c) => c.zoneId === zoneId);
+  const getProjectCount = (zoneId: string) => (mockProjectZones[zoneId] ?? []).length;
 
   const handleDelete = useCallback(() => {
     if (deleteId) {
@@ -37,18 +39,17 @@ export default function ZoneListPage() {
   }, [deleteId]);
 
   const columns: GridColDef[] = [
-    { field: 'id', headerName: 'ID', width: 60 },
     { field: 'name', headerName: 'Zone Name', flex: 1, minWidth: 180 },
     {
-      field: 'mappedCities', headerName: 'Mapped Cities', width: 300, sortable: false,
+      field: 'mappedCities', headerName: 'Mapped Cities', width: 340, sortable: false,
       renderCell: (params) => {
         const cities = getMappedCities(params.row.id);
         const visible = cities.slice(0, 3);
         const remaining = cities.length - 3;
         return (
-          <Stack direction="row" spacing={0.5} sx={{ flexWrap: 'wrap', py: 1 }}>
+          <Stack direction="row" spacing={0.5} sx={{ flexWrap: 'wrap', py: 1 }} alignItems="center">
             {cities.length === 0 && (
-              <Typography variant="caption" color="text.disabled">—</Typography>
+              <Typography variant="caption" color="text.disabled">No cities mapped</Typography>
             )}
             {visible.map((city) => (
               <Chip key={city.id} label={city.name} size="small" variant="outlined" sx={{ height: 22, fontSize: 11 }} />
@@ -60,10 +61,12 @@ export default function ZoneListPage() {
         );
       },
     },
-    { field: 'createdBy', headerName: 'Created By', width: 140 },
     {
-      field: 'createdAt', headerName: 'Created Date', width: 130,
-      valueFormatter: (value) => dayjs(value).format('DD MMM YYYY'),
+      field: 'projectCount', headerName: 'Project Count', width: 130,
+      renderCell: (params) => {
+        const count = getProjectCount(params.row.id);
+        return <Typography variant="body2">{count} {count === 1 ? 'project' : 'projects'}</Typography>;
+      },
     },
     {
       field: 'status', headerName: 'Status', width: 100,
@@ -72,12 +75,17 @@ export default function ZoneListPage() {
       ),
     },
     {
+      field: 'createdAt', headerName: 'Created Date', width: 130,
+      renderCell: (params) => dayjs(params.value).format('DD/MM/YYYY'),
+    },
+    {
       field: 'actions', headerName: '', width: 60, sortable: false, disableColumnMenu: true,
       renderCell: (params) => (
         <Stack alignItems="center" sx={{ height: 1, justifyContent: 'center' }}>
           <RowActionsMenu actions={[
+            { label: 'View', icon: 'solar:eye-bold', onClick: () => {} },
             { label: 'Edit', icon: 'solar:pen-bold', onClick: () => navigate(paths.dashboard.zoneMasterEdit(params.row.id)) },
-            { label: 'Delete', icon: 'solar:trash-bin-trash-bold', onClick: () => setDeleteId(params.row.id), color: 'error.main' },
+            { label: 'Deactivate', icon: 'solar:lock-bold', onClick: () => {}, color: 'error.main' },
           ]} />
         </Stack>
       ),
@@ -96,6 +104,18 @@ export default function ZoneListPage() {
         <Card sx={{ overflow: 'hidden' }}>
           <DataTable columns={columns} rows={data} getRowId={(r) => r.id} />
         </Card>
+        {data.length === 0 && (
+          <Box sx={{ textAlign: 'center', py: 8 }}>
+            <Iconify icon="solar:map-point-bold" width={48} sx={{ color: 'text.disabled', mb: 2 }} />
+            <Typography variant="h6" color="text.secondary">No Zones Created</Typography>
+            <Typography variant="body2" color="text.disabled" sx={{ mb: 3 }}>
+              Create your first zone to start organizing geographic regions.
+            </Typography>
+            <Button variant="contained" startIcon={<Iconify icon="solar:add-circle-bold" />} onClick={() => navigate(paths.dashboard.zoneMasterCreate)}>
+              Create Zone
+            </Button>
+          </Box>
+        )}
       </PageContainer>
 
       <Dialog open={!!deleteId} onClose={() => setDeleteId(null)} maxWidth="xs">
