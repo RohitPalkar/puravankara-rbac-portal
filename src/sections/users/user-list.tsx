@@ -37,16 +37,15 @@ export default function UserListPage() {
   const columns: GridColDef[] = [
     { field: 'employeeId', headerName: 'Employee ID', width: 110 },
     {
-      field: 'name', headerName: 'User Details', flex: 1, minWidth: 220,
+      field: 'name', headerName: 'User Details', flex: 1, minWidth: 180,
       renderCell: (params) => (
         <Box sx={{ py: 0.5 }}>
           <Typography variant="body2" sx={{ fontWeight: 600 }}>{params.row.name}</Typography>
-          <Typography variant="caption" color="text.secondary">{params.row.email}</Typography>
-          <br />
           <Typography variant="caption" color="text.secondary">{params.row.phone}</Typography>
         </Box>
       ),
     },
+    { field: 'email', headerName: 'Email', width: 200 },
     { field: 'departmentName', headerName: 'Department', width: 150 },
     { field: 'roleName', headerName: 'Role', width: 150 },
     {
