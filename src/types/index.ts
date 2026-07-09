@@ -93,6 +93,9 @@ export interface Project {
 
 export interface User {
   id: string;
+  employeeId: string;
+  firstName: string;
+  lastName: string;
   name: string;
   email: string;
   phone: string;
@@ -100,6 +103,12 @@ export interface User {
   departmentName?: string;
   roleId: string;
   roleName?: string;
+  level: string;
+  reportingManagerId?: string;
+  reportingManagerName?: string;
+  zoneIds: string[];
+  zoneNames?: string[];
+  createdBy: string;
   status: Status;
   projects?: UserProject[];
   createdAt: string;

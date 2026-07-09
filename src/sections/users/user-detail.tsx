@@ -7,18 +7,27 @@ import Card from '@mui/material/Card';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import Button from '@mui/material/Button';
+import Box from '@mui/material/Box';
 import TextField from '@mui/material/TextField';
 import MenuItem from '@mui/material/MenuItem';
+import Chip from '@mui/material/Chip';
 import Checkbox from '@mui/material/Checkbox';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import FormGroup from '@mui/material/FormGroup';
+import Divider from '@mui/material/Divider';
+import type { Status } from 'src/types';
 import { CONFIG } from 'src/config-global';
 import { PageContainer, PageHeader } from 'src/components/page-layout';
 import { Iconify } from 'src/components/iconify';
-import { mockUsers, mockDepartments, mockRoles, mockProjects } from 'src/services/mock-data';
+import { PermissionTree, type PermissionSelection } from 'src/components/permission-tree';
+import { mockUsers, mockDepartments, mockRoles, mockProjects, mockZones, mockModules, mockSubModules, mockActions } from 'src/services/mock-data';
 import { paths } from 'src/routes/paths';
 
 const TABS = ['Profile', 'Project Access', 'Permissions'];
+const STATUS_OPTIONS = [
+  { value: 'active', label: 'Active' },
+  { value: 'inactive', label: 'Inactive' },
+];
 
 export default function UserDetailPage() {
   const { id } = useParams();
@@ -26,12 +35,18 @@ export default function UserDetailPage() {
   const user = mockUsers.find((u) => u.id === id);
 
   const [tab, setTab] = useState(0);
-  const [name, setName] = useState(user?.name ?? '');
+  const [firstName, setFirstName] = useState(user?.firstName ?? '');
+  const [lastName, setLastName] = useState(user?.lastName ?? '');
   const [email, setEmail] = useState(user?.email ?? '');
   const [phone, setPhone] = useState(user?.phone ?? '');
   const [departmentId, setDepartmentId] = useState(user?.departmentId ?? '');
   const [roleId, setRoleId] = useState(user?.roleId ?? '');
+  const [status, setStatus] = useState(user?.status ?? 'active');
   const [selectedProjects, setSelectedProjects] = useState<string[]>(user?.projects?.map((p) => p.projectId) ?? []);
+
+  const [projectPermissions, setProjectPermissions] = useState<{ projectId: string; permissions: PermissionSelection[] }[]>(
+    user?.projects?.map((p) => ({ projectId: p.projectId, permissions: [] })) ?? [],
+  );
 
   if (!user) {
     return (
@@ -49,23 +64,36 @@ export default function UserDetailPage() {
     setSelectedProjects((prev) =>
       prev.includes(projectId) ? prev.filter((pid) => pid !== projectId) : [...prev, projectId]
     );
+    setProjectPermissions((prev) =>
+      prev.some((p) => p.projectId === projectId)
+        ? prev.filter((p) => p.projectId !== projectId)
+        : [...prev, { projectId, permissions: [] }]
+    );
+  };
+
+  const handlePermissionChange = (projectId: string, permissions: PermissionSelection[]) => {
+    setProjectPermissions((prev) => prev.map((p) => p.projectId === projectId ? { ...p, permissions } : p));
   };
 
   return (
     <>
       <Helmet><title>{user.name} - {CONFIG.appName}</title></Helmet>
       <PageContainer>
-        <PageHeader title={user.name} action={
-          <Stack direction="row" spacing={1}>
-            <Button variant="outlined" onClick={() => navigate(paths.dashboard.userManagement)}>
-              <Iconify icon="solar:arrow-left-bold" width={16} sx={{ mr: 0.5 }} />
-              Back
-            </Button>
-            <Button variant="contained" startIcon={<Iconify icon="solar:check-circle-bold" />}>
-              Save
-            </Button>
-          </Stack>
-        } />
+        <PageHeader
+          title={`${user.firstName} ${user.lastName}`}
+          description={`${user.employeeId} · ${user.roleName}`}
+          action={
+            <Stack direction="row" spacing={1}>
+              <Button variant="outlined" onClick={() => navigate(paths.dashboard.userManagement)}>
+                <Iconify icon="solar:arrow-left-bold" width={16} sx={{ mr: 0.5 }} />
+                Back
+              </Button>
+              <Button variant="contained" startIcon={<Iconify icon="solar:check-circle-bold" />}>
+                Save
+              </Button>
+            </Stack>
+          }
+        />
 
         <Tabs value={tab} onChange={(_, v) => setTab(v)} sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
           {TABS.map((label) => <Tab key={label} label={label} />)}
@@ -73,17 +101,35 @@ export default function UserDetailPage() {
 
         {tab === 0 && (
           <Card sx={{ p: 3 }}>
-            <Stack spacing={2.5} maxWidth={480}>
-              <TextField label="Name" value={name} onChange={(e) => setName(e.target.value)} fullWidth />
+            <Typography variant="subtitle1" sx={{ mb: 2.5 }}>Profile Information</Typography>
+            <Box display="grid" gridTemplateColumns={{ xs: '1fr', sm: '1fr 1fr' }} gap={2.5} maxWidth={720}>
+              <TextField label="Employee ID" value={user.employeeId} fullWidth inputProps={{ readOnly: true }} />
+              <TextField label="First Name" value={firstName} onChange={(e) => setFirstName(e.target.value)} fullWidth />
+              <TextField label="Last Name" value={lastName} onChange={(e) => setLastName(e.target.value)} fullWidth />
               <TextField label="Email" value={email} onChange={(e) => setEmail(e.target.value)} fullWidth />
-              <TextField label="Phone" value={phone} onChange={(e) => setPhone(e.target.value)} fullWidth />
+              <TextField label="Mobile Number" value={phone} onChange={(e) => setPhone(e.target.value)} fullWidth />
+              <TextField label="User Status" select value={status} onChange={(e) => setStatus(e.target.value as Status)} fullWidth>
+                {STATUS_OPTIONS.map((o) => <MenuItem key={o.value} value={o.value}>{o.label}</MenuItem>)}
+              </TextField>
+            </Box>
+            <Divider sx={{ my: 3 }} />
+            <Typography variant="subtitle1" sx={{ mb: 2.5 }}>Organization Mapping</Typography>
+            <Box display="grid" gridTemplateColumns={{ xs: '1fr', sm: '1fr 1fr' }} gap={2.5} maxWidth={720}>
               <TextField label="Department" select value={departmentId} onChange={(e) => setDepartmentId(e.target.value)} fullWidth>
                 {mockDepartments.map((d) => <MenuItem key={d.id} value={d.id}>{d.name}</MenuItem>)}
               </TextField>
               <TextField label="Role" select value={roleId} onChange={(e) => setRoleId(e.target.value)} fullWidth>
                 {mockRoles.map((r) => <MenuItem key={r.id} value={r.id}>{r.name}</MenuItem>)}
               </TextField>
-            </Stack>
+              <TextField label="Hierarchy Level" value={user.level} fullWidth inputProps={{ readOnly: true }} />
+              <TextField label="Reporting Manager" value={user.reportingManagerName ?? '-'} fullWidth inputProps={{ readOnly: true }} />
+              <TextField
+                label="Zone Access"
+                value={user.zoneNames?.join(', ') ?? '-'}
+                fullWidth
+                inputProps={{ readOnly: true }}
+              />
+            </Box>
           </Card>
         )}
 
@@ -99,15 +145,35 @@ export default function UserDetailPage() {
                 />
               ))}
             </FormGroup>
+            {projectPermissions.filter((p) => selectedProjects.includes(p.projectId)).map((pp) => {
+              const project = mockProjects.find((pj) => pj.id === pp.projectId);
+              return (
+                <Card key={pp.projectId} variant="outlined" sx={{ mt: 2, p: 2 }}>
+                  <Typography variant="subtitle2" sx={{ mb: 1 }}>{project?.name} Permissions</Typography>
+                  <PermissionTree
+                    modules={mockModules}
+                    subModules={mockSubModules}
+                    actions={mockActions}
+                    selection={pp.permissions}
+                    onChange={(perm) => handlePermissionChange(pp.projectId, perm)}
+                  />
+                </Card>
+              );
+            })}
           </Card>
         )}
 
         {tab === 2 && (
           <Card sx={{ p: 3 }}>
             <Typography variant="subtitle1" sx={{ mb: 2 }}>Role-based Permissions</Typography>
-            <Typography variant="body2" color="text.secondary">
-              Permissions are inherited from the assigned role ({user.roleName}). Project-level overrides can be configured per project.
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+              Permissions are inherited from the assigned role ({user.roleName}). Project-level overrides can be configured in Project Access tab.
             </Typography>
+            <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+              <Chip label={`Level: ${user.level}`} variant="outlined" />
+              <Chip label={`Department: ${user.departmentName}`} variant="outlined" />
+              <Chip label={`Role: ${user.roleName}`} variant="outlined" />
+            </Stack>
           </Card>
         )}
       </PageContainer>
