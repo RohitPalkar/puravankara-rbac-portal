@@ -3,7 +3,6 @@ import { Helmet } from 'react-helmet-async';
 import type { GridColDef } from '@mui/x-data-grid';
 import Button from '@mui/material/Button';
 import Stack from '@mui/material/Stack';
-import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import Dialog from '@mui/material/Dialog';
 import DialogTitle from '@mui/material/DialogTitle';
@@ -37,15 +36,15 @@ export default function UserListPage() {
   const columns: GridColDef[] = [
     { field: 'employeeId', headerName: 'Employee ID', width: 110 },
     {
-      field: 'name', headerName: 'User Details', flex: 1, minWidth: 180,
+      field: 'name', headerName: 'User Details', flex: 1, minWidth: 160,
       renderCell: (params) => (
-        <Box sx={{ py: 0.5 }}>
+        <Stack sx={{ height: 1, justifyContent: 'center' }}>
           <Typography variant="body2" sx={{ fontWeight: 600 }}>{params.row.name}</Typography>
-          <Typography variant="caption" color="text.secondary">{params.row.phone}</Typography>
-        </Box>
+        </Stack>
       ),
     },
     { field: 'email', headerName: 'Email', width: 200 },
+    { field: 'phone', headerName: 'Mobile', width: 130 },
     { field: 'departmentName', headerName: 'Department', width: 150 },
     { field: 'roleName', headerName: 'Role', width: 150 },
     {

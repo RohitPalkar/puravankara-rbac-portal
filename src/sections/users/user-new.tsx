@@ -19,7 +19,7 @@ import Divider from '@mui/material/Divider';
 import Alert from '@mui/material/Alert';
 import Snackbar from '@mui/material/Snackbar';
 import IconButton from '@mui/material/IconButton';
-import Collapse from '@mui/material/Collapse';
+
 import Autocomplete from '@mui/material/Autocomplete';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
@@ -33,7 +33,7 @@ import { CONFIG } from 'src/config-global';
 import { Form, Field } from 'src/components/hook-form';
 import { PageContainer, PageHeader } from 'src/components/page-layout';
 import { Iconify } from 'src/components/iconify';
-import { mockDepartments, mockRoles, mockZones, mockProjects, mockModules, mockUsers } from 'src/services/mock-data';
+import { mockDepartments, mockRoles, mockZones, mockProjects, mockUsers } from 'src/services/mock-data';
 import { paths } from 'src/routes/paths';
 
 const STEPS = ['Basic Information', 'Organization & Hierarchy', 'Access Configuration'];
@@ -302,6 +302,7 @@ export default function UserNewPage() {
                           slotProps={{
                             textField: { size: 'small', fullWidth: true, error: !!fieldState.error, helperText: fieldState.error?.message },
                           }}
+                          sx={{ '& .MuiInputBase-root': { height: 40 } }}
                         />
                       </LocalizationProvider>
                     )}
@@ -319,6 +320,7 @@ export default function UserNewPage() {
                           slotProps={{
                             textField: { size: 'small', fullWidth: true, error: !!fieldState.error, helperText: fieldState.error?.message },
                           }}
+                          sx={{ '& .MuiInputBase-root': { height: 40 } }}
                         />
                       </LocalizationProvider>
                     )}
@@ -381,102 +383,128 @@ export default function UserNewPage() {
                       </Typography>
                     )}
                     {moduleAccess.map((ma) => {
-                      const mod = mockModules.find((m) => m.id === ma.moduleId);
+                      const mod = ACCESS_MODULES.find((m) => m.id === ma.moduleId);
                       const isExpanded = expandedModules[ma.moduleId] ?? false;
                       const isConfigured = ma.accessType === 'ALL_PROJECTS' || ma.selectedProjectIds.length > 0;
+                      const statusLabel = ma.accessType === 'ALL_PROJECTS'
+                        ? 'All Projects'
+                        : ma.selectedProjectIds.length > 0
+                          ? `${ma.selectedProjectIds.length} Project${ma.selectedProjectIds.length > 1 ? 's' : ''} Selected`
+                          : 'Not Configured';
 
                       return (
                         <Card key={ma.moduleId} variant="outlined" sx={{ p: 2 }}>
                           <Stack direction="row" alignItems="center" justifyContent="space-between">
-                            <Stack direction="row" alignItems="center" spacing={1}>
-                              <IconButton size="small" onClick={() => setExpandedModules((prev) => ({ ...prev, [ma.moduleId]: !prev[ma.moduleId] }))}>
-                                <Iconify icon={isExpanded ? 'solar:alt-arrow-down-bold' : 'solar:alt-arrow-right-bold'} width={16} />
-                              </IconButton>
-                              <Typography variant="subtitle2">{mod?.name}</Typography>
-                            </Stack>
+                            <Typography variant="subtitle2">{mod?.name}</Typography>
                             <Stack direction="row" spacing={0.5} alignItems="center">
                               <Chip
-                                label={isConfigured ? 'Configured' : 'Not Configured'}
+                                label={statusLabel}
                                 size="small"
-                                color={isConfigured ? 'success' : 'default'}
-                                variant="outlined"
+                                sx={{
+                                  bgcolor: isConfigured ? 'action.selected' : '#fff3e0',
+                                  color: isConfigured ? 'text.primary' : '#e65100',
+                                  borderRadius: 1,
+                                  fontWeight: 500,
+                                }}
                               />
                               <IconButton size="small" onClick={() => handleModuleToggle(ma.moduleId, false)}>
-                                <Iconify icon="solar:close-circle-bold" width={18} />
+                                <Iconify icon="solar:trash-bin-trash-bold" width={18} />
+                              </IconButton>
+                              <IconButton size="small" onClick={() => setExpandedModules((prev) => ({ ...prev, [ma.moduleId]: !prev[ma.moduleId] }))}>
+                                <Iconify icon={isExpanded ? 'solar:alt-arrow-down-bold' : 'solar:alt-arrow-right-bold'} width={18} />
                               </IconButton>
                             </Stack>
                           </Stack>
 
-                          <Box sx={{ mt: 2 }}>
-                            <Typography variant="caption" color="text.secondary" sx={{ mr: 1 }}>Access Type:</Typography>
-                            <RadioGroup
-                              value={ma.accessType}
-                              onChange={(e) => handleAccessTypeChange(ma.moduleId, e.target.value as 'ALL_PROJECTS' | 'SELECT_PROJECTS')}
-                              sx={{ flexDirection: 'row', display: 'inline-flex' }}
-                            >
-                              <FormControlLabel value="SELECT_PROJECTS" control={<Radio size="small" />} label="Select Projects" />
-                              <FormControlLabel value="ALL_PROJECTS" control={<Radio size="small" />} label="All Projects" />
-                            </RadioGroup>
-                          </Box>
+                          {isExpanded && (
+                            <Box sx={{ mt: 2 }}>
+                              <Stack direction="row" alignItems="center" spacing={0.5}>
+                                <Typography variant="caption" color="text.secondary">Access Type:</Typography>
+                                <RadioGroup
+                                  value={ma.accessType}
+                                  onChange={(e) => handleAccessTypeChange(ma.moduleId, e.target.value as 'ALL_PROJECTS' | 'SELECT_PROJECTS')}
+                                  sx={{ flexDirection: 'row', display: 'inline-flex' }}
+                                >
+                                  <FormControlLabel value="SELECT_PROJECTS" control={<Radio size="small" />} label="Select Projects" />
+                                  <FormControlLabel value="ALL_PROJECTS" control={<Radio size="small" />} label="All Projects" />
+                                </RadioGroup>
+                              </Stack>
 
-                            {ma.accessType === 'SELECT_PROJECTS' && (
-                              <Box sx={{ mt: 1.5 }}>
-                                <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 1 }}>
-                                  <TextField
-                                    size="small"
-                                    placeholder="Search projects..."
-                                    value={projectSearch}
-                                    onChange={(e) => setProjectSearch(e.target.value)}
-                                    sx={{ flex: 1 }}
-                                  />
-                                  <FormControlLabel
-                                    label="Select All"
-                                    control={
-                                      <Checkbox
-                                        size="small"
-                                        checked={ma.selectedProjectIds.length === mockProjects.length}
-                                        indeterminate={ma.selectedProjectIds.length > 0 && ma.selectedProjectIds.length < mockProjects.length}
-                                        onChange={(e) => {
-                                          setModuleAccess((prev) => prev.map((m) => m.moduleId === ma.moduleId ? { ...m, selectedProjectIds: e.target.checked ? mockProjects.map((p) => p.id) : [] } : m));
-                                        }}
-                                      />
-                                    }
-                                    sx={{ m: 0 }}
-                                  />
-                                </Stack>
-                                <Box sx={{ maxHeight: 180, overflow: 'auto', mt: 0.5 }}>
-                                  {filteredProjects.map((project) => (
+                              {ma.accessType === 'SELECT_PROJECTS' && (
+                                <Box sx={{ mt: 1.5 }}>
+                                  <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 1 }}>
+                                    <TextField
+                                      size="small"
+                                      placeholder="Search projects..."
+                                      value={projectSearch}
+                                      onChange={(e) => setProjectSearch(e.target.value)}
+                                      sx={{ flex: 1 }}
+                                    />
                                     <FormControlLabel
-                                      key={project.id}
-                                      label={project.name}
+                                      label="Select All"
                                       control={
                                         <Checkbox
                                           size="small"
-                                          checked={ma.selectedProjectIds.includes(project.id)}
-                                          onChange={() => handleProjectToggle(ma.moduleId, project.id)}
+                                          checked={ma.selectedProjectIds.length === mockProjects.length}
+                                          indeterminate={ma.selectedProjectIds.length > 0 && ma.selectedProjectIds.length < mockProjects.length}
+                                          onChange={(e) => {
+                                            setModuleAccess((prev) => prev.map((m) => m.moduleId === ma.moduleId ? { ...m, selectedProjectIds: e.target.checked ? mockProjects.map((p) => p.id) : [] } : m));
+                                          }}
                                         />
                                       }
+                                      sx={{ m: 0 }}
                                     />
-                                  ))}
-                                </Box>
-                                {ma.selectedProjectIds.length > 0 && (
-                                  <Stack direction="row" spacing={0.5} flexWrap="wrap" useFlexGap sx={{ mt: 1 }}>
-                                    {ma.selectedProjectIds.map((pid) => {
-                                      const p = mockProjects.find((pj) => pj.id === pid);
-                                      return (
-                                        <Chip
-                                          key={pid}
-                                          label={p?.name ?? pid}
-                                          size="small"
-                                          onDelete={() => handleProjectToggle(ma.moduleId, pid)}
-                                        />
-                                      );
-                                    })}
                                   </Stack>
-                                )}
-                              </Box>
+                                  <Box sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 1, p: 1.5, maxHeight: 220, overflow: 'auto' }}>
+                                    <Box display="grid" gridTemplateColumns="repeat(3, 1fr)" gap={0.5}>
+                                      {filteredProjects.map((project) => (
+                                        <FormControlLabel
+                                          key={project.id}
+                                          label={project.name}
+                                          control={
+                                            <Checkbox
+                                              size="small"
+                                              checked={ma.selectedProjectIds.includes(project.id)}
+                                              onChange={() => handleProjectToggle(ma.moduleId, project.id)}
+                                            />
+                                          }
+                                          sx={{ m: 0 }}
+                                        />
+                                      ))}
+                                    </Box>
+                                  </Box>
+                                  {ma.selectedProjectIds.length > 0 && (
+                                    <Stack direction="row" spacing={0.5} flexWrap="wrap" useFlexGap sx={{ mt: 1.5 }}>
+                                      {ma.selectedProjectIds.map((pid) => {
+                                        const p = mockProjects.find((pj) => pj.id === pid);
+                                        return (
+                                          <Chip
+                                            key={pid}
+                                            label={p?.name ?? pid}
+                                            size="small"
+                                            onDelete={() => handleProjectToggle(ma.moduleId, pid)}
+                                            sx={{ bgcolor: '#e8dff5', color: '#7c4dff', borderRadius: 1, '& .MuiChip-deleteIcon': { color: '#7c4dff' } }}
+                                          />
+                                        );
+                                      })}
+                                    </Stack>
+                                  )}
+                                </Box>
                               )}
-                            </Card>
+
+                              {ma.accessType === 'ALL_PROJECTS' && (
+                                <Box sx={{ mt: 1.5, bgcolor: '#e3f2fd', border: '1px solid', borderColor: '#90caf9', borderRadius: 1, p: 1.5 }}>
+                                  <Stack direction="row" alignItems="flex-start" spacing={1}>
+                                    <Iconify icon="solar:info-circle-bold" width={18} color="#1565c0" style={{ marginTop: 2 }} />
+                                    <Typography variant="caption" color="#1565c0">
+                                      User will automatically receive access to all current and future projects.
+                                    </Typography>
+                                  </Stack>
+                                </Box>
+                              )}
+                            </Box>
+                          )}
+                        </Card>
                       );
                     })}
                   </Stack>
