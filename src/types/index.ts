@@ -25,8 +25,8 @@ export interface Department {
   id: string;
   name: string;
   code: string;
-  cityId: string;
-  cityName?: string;
+  maxHierarchyLevels: number;
+  createdBy: string;
   status: Status;
   createdAt: string;
   updatedAt: string;

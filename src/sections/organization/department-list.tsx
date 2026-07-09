@@ -11,6 +11,7 @@ import Card from '@mui/material/Card';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import dayjs from 'dayjs';
 import { CONFIG } from 'src/config-global';
 import { DataTable } from 'src/components/data-table';
 import { Form, Field } from 'src/components/hook-form';
@@ -18,7 +19,7 @@ import { Label } from 'src/components/label';
 import { Iconify } from 'src/components/iconify';
 import { PageContainer, PageHeader } from 'src/components/page-layout';
 import { RowActionsMenu } from 'src/components/row-actions';
-import { mockDepartments, mockCities } from 'src/services/mock-data';
+import { mockDepartments } from 'src/services/mock-data';
 import type { Department } from 'src/types';
 
 const STATUS_OPTIONS = [
@@ -26,17 +27,26 @@ const STATUS_OPTIONS = [
   { value: 'inactive', label: 'Inactive' },
 ];
 
-const CITY_OPTIONS = mockCities.map((c) => ({ value: c.id, label: c.name }));
-
 const schema = z.object({
-  name: z.string().min(1, 'Name is required'),
-  code: z.string().min(1, 'Code is required').max(10, 'Max 10 chars'),
-  cityId: z.string().min(1, 'City is required'),
+  name: z.string().min(1, 'Department Name is required'),
+  maxHierarchyLevels: z.coerce.number().int().min(1, 'Minimum 1 level').max(10, 'Maximum 10 levels'),
   status: z.enum(['active', 'inactive']),
 });
 
 type FormData = z.infer<typeof schema>;
-const defaults: FormData = { name: '', code: '', cityId: '', status: 'active' };
+const defaults: FormData = { name: '', maxHierarchyLevels: 7, status: 'active' };
+
+function generateCode(name: string, existing: Department[]): string {
+  const prefix = name.split(' ').map((w) => w[0]).join('').toUpperCase().slice(0, 3);
+  const existingCodes = existing.map((d) => d.code);
+  let code = prefix;
+  let i = 1;
+  while (existingCodes.includes(code)) {
+    code = `${prefix}${i}`;
+    i += 1;
+  }
+  return code;
+}
 
 export default function DepartmentListPage() {
   const [data, setData] = useState<Department[]>(mockDepartments);
@@ -54,7 +64,7 @@ export default function DepartmentListPage() {
 
   const handleEdit = useCallback((row: Department) => {
     setEditing(row);
-    methods.reset({ name: row.name, code: row.code, cityId: row.cityId, status: row.status });
+    methods.reset({ name: row.name, maxHierarchyLevels: row.maxHierarchyLevels, status: row.status });
     setOpen(true);
   }, [methods]);
 
@@ -64,11 +74,19 @@ export default function DepartmentListPage() {
   }, []);
 
   const onSubmit = useCallback((form: FormData) => {
-    const city = mockCities.find((c) => c.id === form.cityId);
     if (editing) {
-      setData((prev) => prev.map((item) => (item.id === editing.id ? { ...item, ...form, cityName: city?.name } : item)));
+      setData((prev) => prev.map((item) => (item.id === editing.id ? { ...item, name: form.name, maxHierarchyLevels: form.maxHierarchyLevels, status: form.status, updatedAt: new Date().toISOString() } : item)));
     } else {
-      setData((prev) => [{ id: String(Date.now()), ...form, cityName: city?.name, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() }, ...prev]);
+      setData((prev) => [{
+        id: String(Date.now()),
+        name: form.name,
+        code: generateCode(form.name, prev),
+        maxHierarchyLevels: form.maxHierarchyLevels,
+        createdBy: 'You',
+        status: form.status,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      }, ...prev]);
     }
     handleClose();
   }, [editing, handleClose]);
@@ -81,9 +99,14 @@ export default function DepartmentListPage() {
   }, [deleteId]);
 
   const columns: GridColDef[] = [
+    { field: 'code', headerName: 'ID', width: 80 },
     { field: 'name', headerName: 'Department Name', flex: 1 },
-    { field: 'code', headerName: 'Code', width: 100 },
-    { field: 'cityName', headerName: 'City', width: 140 },
+    { field: 'maxHierarchyLevels', headerName: 'Levels', width: 90 },
+    { field: 'createdBy', headerName: 'Created By', width: 130 },
+    {
+      field: 'createdAt', headerName: 'Created Date', width: 120,
+      renderCell: (params) => dayjs(params.value).format('DD/MM/YYYY'),
+    },
     {
       field: 'status', headerName: 'Status', width: 100,
       renderCell: (params) => (
@@ -107,7 +130,7 @@ export default function DepartmentListPage() {
     <>
       <Helmet><title>Departments - {CONFIG.appName}</title></Helmet>
       <PageContainer>
-        <PageHeader title="Departments" description="Manage organizational departments" action={
+        <PageHeader title="Departments" description="Manage organizational departments and hierarchy levels" action={
           <Button variant="contained" startIcon={<Iconify icon="solar:add-circle-bold" />} onClick={handleNew}>
             Add Department
           </Button>
@@ -122,9 +145,14 @@ export default function DepartmentListPage() {
         <Form methods={methods} onSubmit={methods.handleSubmit(onSubmit)}>
           <DialogContent>
             <Stack spacing={2.5} sx={{ mt: 1 }}>
-              <Field.Text name="name" label="Department Name" />
-              <Field.Text name="code" label="Department Code" />
-              <Field.Select name="cityId" label="City" options={CITY_OPTIONS} />
+              <Field.Text name="name" label="Department Name" placeholder="e.g. Finance" />
+              <Field.Text
+                name="maxHierarchyLevels"
+                label="Number of Levels"
+                type="number"
+                placeholder="e.g. 7"
+                helperText="Defines the maximum hierarchy depth available for this department."
+              />
               <Field.Select name="status" label="Status" options={STATUS_OPTIONS} />
             </Stack>
           </DialogContent>
