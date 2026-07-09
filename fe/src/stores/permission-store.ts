@@ -1,4 +1,5 @@
-import type { PermissionSnapshot, PermissionResponse, NavPermissionModule, MockUserRoleInfo } from 'src/types';
+import type { MockUserRoleInfo, PermissionSnapshot, PermissionResponse, NavPermissionModule } from 'src/types';
+
 import { create } from 'zustand';
 
 interface PermissionState {

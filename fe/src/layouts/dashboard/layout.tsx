@@ -7,6 +7,7 @@ import { iconButtonClasses } from '@mui/material/IconButton';
 
 import { useBoolean } from 'src/hooks/use-boolean';
 import { usePermissionNav } from 'src/hooks/use-permission-nav';
+
 import { usePermissionStore } from 'src/stores/permission-store';
 
 import { Logo } from 'src/components/logo';
@@ -23,8 +24,8 @@ import { MenuButton } from '../components/menu-button';
 import { LayoutSection } from '../core/layout-section';
 import { HeaderSection } from '../core/header-section';
 import { StyledDivider, useNavColorVars } from './styles';
-import { AccountDrawer } from '../components/account-drawer';
 import { RoleSwitcher } from '../components/role-switcher';
+import { AccountDrawer } from '../components/account-drawer';
 import { SettingsButton } from '../components/settings-button';
 import { navData as dashboardNavData } from '../config-nav-dashboard';
 

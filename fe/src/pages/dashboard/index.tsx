@@ -1,14 +1,17 @@
 import { Helmet } from 'react-helmet-async';
+
+import Box from '@mui/material/Box';
 import Card from '@mui/material/Card';
+import Chip from '@mui/material/Chip';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
-import Divider from '@mui/material/Divider';
-import Box from '@mui/material/Box';
-import Chip from '@mui/material/Chip';
-import { CONFIG } from 'src/config-global';
-import { PageContainer, PageHeader } from 'src/components/page-layout';
-import { Iconify } from 'src/components/iconify';
+
 import { usePermission } from 'src/hooks/use-permission';
+
+import { CONFIG } from 'src/config-global';
+
+import { Iconify } from 'src/components/iconify';
+import { PageHeader, PageContainer } from 'src/components/page-layout';
 
 export default function DashboardPage() {
   const { activeUser, activeRole, availableRoles, getAllowedModules } = usePermission();

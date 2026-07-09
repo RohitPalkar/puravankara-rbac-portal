@@ -1,31 +1,33 @@
-import { useState, useCallback, useEffect } from 'react';
-import { Helmet } from 'react-helmet-async';
+import type { Department } from 'src/types';
 import type { GridColDef } from '@mui/x-data-grid';
-import Button from '@mui/material/Button';
+
+import { z } from 'zod';
+import { useForm } from 'react-hook-form';
+import { Helmet } from 'react-helmet-async';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useState, useEffect, useCallback } from 'react';
+
+import Box from '@mui/material/Box';
+import Card from '@mui/material/Card';
 import Stack from '@mui/material/Stack';
+import Button from '@mui/material/Button';
 import Dialog from '@mui/material/Dialog';
+import Typography from '@mui/material/Typography';
 import DialogTitle from '@mui/material/DialogTitle';
 import DialogContent from '@mui/material/DialogContent';
 import DialogActions from '@mui/material/DialogActions';
-import Card from '@mui/material/Card';
-import Typography from '@mui/material/Typography';
-import Box from '@mui/material/Box';
-import TextField from '@mui/material/TextField';
-import MenuItem from '@mui/material/MenuItem';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
+
 import { CONFIG } from 'src/config-global';
-import { DataTable } from 'src/components/data-table';
-import { Form, Field } from 'src/components/hook-form';
+import { mockUsers } from 'src/services/mock-data';
+import { isApiMode } from 'src/services/data-source';
+import { useDepartments } from 'src/services/api-adapters';
+
 import { Label } from 'src/components/label';
 import { Iconify } from 'src/components/iconify';
-import { PageContainer, PageHeader } from 'src/components/page-layout';
+import { DataTable } from 'src/components/data-table';
+import { Form, Field } from 'src/components/hook-form';
 import { RowActionsMenu } from 'src/components/row-actions';
-import { useDepartments, useCreateDepartment, useUpdateDepartment } from 'src/services/api-adapters';
-import { isApiMode } from 'src/services/data-source';
-import { mockUsers } from 'src/services/mock-data';
-import type { Department } from 'src/types';
+import { PageHeader, PageContainer } from 'src/components/page-layout';
 
 const schema = z.object({
   name: z.string().min(1, 'Department Name is required'),

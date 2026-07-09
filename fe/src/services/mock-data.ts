@@ -1,7 +1,7 @@
 import type {
-  Zone, City, Role, User, Module, Action, Project, SubModule, Department,
-  ApprovalConfig, ApprovalRequest, Delegation, AuditLog, Notification,
-  PermissionResponse, NavPermissionModule, PermissionMapping, MockUserProfile,
+  Zone, City, Role, User, Module, Action, Project, AuditLog, SubModule,
+  Department, Delegation, Notification, ApprovalConfig, ApprovalRequest,
+  MockUserProfile, PermissionMapping, PermissionResponse,
 } from 'src/types';
 
 const EMPLOYEE_DIRECTORY: { employeeId: string; name: string; email: string; mobile: string }[] = [

@@ -1,5 +1,6 @@
+import type { Module, Action, SubModule } from 'src/types';
+
 import apiClient from 'src/services/api-client';
-import type { Module, SubModule, Action } from 'src/types';
 
 interface ModuleEntity {
   id: number;

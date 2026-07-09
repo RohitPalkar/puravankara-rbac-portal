@@ -1,24 +1,28 @@
-import { useState, useMemo, useCallback, useEffect } from 'react';
+
 import { Helmet } from 'react-helmet-async';
 import { useParams, useNavigate } from 'react-router-dom';
-import Stack from '@mui/material/Stack';
-import Typography from '@mui/material/Typography';
-import Button from '@mui/material/Button';
-import Card from '@mui/material/Card';
-import TextField from '@mui/material/TextField';
-import Alert from '@mui/material/Alert';
-import Snackbar from '@mui/material/Snackbar';
-import LinearProgress from '@mui/material/LinearProgress';
+import { useMemo, useState, useEffect, useCallback } from 'react';
+
 import Box from '@mui/material/Box';
+import Card from '@mui/material/Card';
+import Stack from '@mui/material/Stack';
+import Alert from '@mui/material/Alert';
+import Button from '@mui/material/Button';
+import Snackbar from '@mui/material/Snackbar';
+import TextField from '@mui/material/TextField';
+import Typography from '@mui/material/Typography';
+import LinearProgress from '@mui/material/LinearProgress';
+
+import { paths } from 'src/routes/paths';
+
 import { CONFIG } from 'src/config-global';
-import { PageContainer, PageHeader } from 'src/components/page-layout';
-import { Iconify } from 'src/components/iconify';
-import { DualListTransfer, type DualListItem } from 'src/components/dual-list';
+import { mockCities } from 'src/services/mock-data';
 import { useZones } from 'src/services/api-adapters';
 import { isApiMode } from 'src/services/data-source';
-import { mockCities } from 'src/services/mock-data';
-import { paths } from 'src/routes/paths';
-import type { Zone } from 'src/types';
+
+import { Iconify } from 'src/components/iconify';
+import { PageHeader, PageContainer } from 'src/components/page-layout';
+import { DualListTransfer, type DualListItem } from 'src/components/dual-list';
 
 export default function ZoneFormPage() {
   const { id } = useParams();

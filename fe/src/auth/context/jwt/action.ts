@@ -1,6 +1,7 @@
-import { isApiMode } from 'src/services/data-source';
-import { authApi } from 'src/services/api/auth-api';
 import axios, { endpoints } from 'src/utils/axios';
+
+import { authApi } from 'src/services/api/auth-api';
+import { isApiMode } from 'src/services/data-source';
 
 import { setSession } from './utils';
 import { STORAGE_KEY } from './constant';
@@ -26,7 +27,7 @@ export const signInWithPassword = async ({ email, password }: SignInParams): Pro
   try {
     if (isApiMode()) {
       const result = await authApi.login({ email, password });
-      const accessToken = result.accessToken;
+      const {accessToken} = result;
       if (!accessToken) {
         throw new Error('Access token not found in response');
       }

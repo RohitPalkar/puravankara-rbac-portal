@@ -1,5 +1,6 @@
-import apiClient from 'src/services/api-client';
 import type { User } from 'src/types';
+
+import apiClient from 'src/services/api-client';
 
 interface CreateUserFullDto {
   basic: {

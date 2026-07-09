@@ -1,13 +1,16 @@
 import { useState, useCallback } from 'react';
-import Button from '@mui/material/Button';
+
 import Menu from '@mui/material/Menu';
+import Button from '@mui/material/Button';
 import MenuItem from '@mui/material/MenuItem';
+import Typography from '@mui/material/Typography';
 import ListItemText from '@mui/material/ListItemText';
 import ListItemIcon from '@mui/material/ListItemIcon';
-import Typography from '@mui/material/Typography';
-import { Iconify } from 'src/components/iconify';
-import { usePermissionStore } from 'src/stores/permission-store';
+
 import { MOCK_USER_PROFILES } from 'src/services/mock-data';
+import { usePermissionStore } from 'src/stores/permission-store';
+
+import { Iconify } from 'src/components/iconify';
 
 export function RoleSwitcher() {
   const activeProfileId = usePermissionStore((s) => s.activeProfileId);

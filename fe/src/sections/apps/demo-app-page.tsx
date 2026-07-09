@@ -1,15 +1,20 @@
 import { Helmet } from 'react-helmet-async';
-import { usePathname } from 'src/routes/hooks';
-import Card from '@mui/material/Card';
-import Stack from '@mui/material/Stack';
-import Typography from '@mui/material/Typography';
-import Chip from '@mui/material/Chip';
-import Divider from '@mui/material/Divider';
+
 import Box from '@mui/material/Box';
-import { CONFIG } from 'src/config-global';
-import { PageContainer, PageHeader } from 'src/components/page-layout';
-import { Iconify } from 'src/components/iconify';
+import Card from '@mui/material/Card';
+import Chip from '@mui/material/Chip';
+import Stack from '@mui/material/Stack';
+import Divider from '@mui/material/Divider';
+import Typography from '@mui/material/Typography';
+
+import { usePathname } from 'src/routes/hooks';
+
 import { usePermission } from 'src/hooks/use-permission';
+
+import { CONFIG } from 'src/config-global';
+
+import { Iconify } from 'src/components/iconify';
+import { PageHeader, PageContainer } from 'src/components/page-layout';
 
 const MODULE_CODE_MAP: Record<string, string> = {
   crm: 'CRM',

@@ -1,42 +1,46 @@
-import { useState, useCallback, useMemo, useEffect } from 'react';
+
+import dayjs from 'dayjs';
 import { Helmet } from 'react-helmet-async';
 import { useNavigate } from 'react-router-dom';
-import Stepper from '@mui/material/Stepper';
-import Step from '@mui/material/Step';
-import StepLabel from '@mui/material/StepLabel';
-import Button from '@mui/material/Button';
-import Stack from '@mui/material/Stack';
-import Card from '@mui/material/Card';
-import Typography from '@mui/material/Typography';
+import { useMemo, useState, useEffect, useCallback } from 'react';
+
 import Box from '@mui/material/Box';
-import Checkbox from '@mui/material/Checkbox';
-import TextField from '@mui/material/TextField';
-import MenuItem from '@mui/material/MenuItem';
+import Step from '@mui/material/Step';
+import Card from '@mui/material/Card';
 import Chip from '@mui/material/Chip';
-import Divider from '@mui/material/Divider';
+import Stack from '@mui/material/Stack';
 import Alert from '@mui/material/Alert';
+import Button from '@mui/material/Button';
 import Dialog from '@mui/material/Dialog';
+import Stepper from '@mui/material/Stepper';
+import Divider from '@mui/material/Divider';
+import Checkbox from '@mui/material/Checkbox';
+import MenuItem from '@mui/material/MenuItem';
+import StepLabel from '@mui/material/StepLabel';
+import TextField from '@mui/material/TextField';
+import Typography from '@mui/material/Typography';
+import IconButton from '@mui/material/IconButton';
 import DialogTitle from '@mui/material/DialogTitle';
+import Autocomplete from '@mui/material/Autocomplete';
 import DialogContent from '@mui/material/DialogContent';
 import DialogActions from '@mui/material/DialogActions';
-import IconButton from '@mui/material/IconButton';
-import Autocomplete from '@mui/material/Autocomplete';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
-import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
-import dayjs from 'dayjs';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+
+import { paths } from 'src/routes/paths';
+
 import { CONFIG } from 'src/config-global';
-import { PageContainer, PageHeader } from 'src/components/page-layout';
-import { Iconify } from 'src/components/iconify';
-import type { User } from 'src/types';
-import { useDepartments, useZones, roleMappingApi } from 'src/services/api-adapters';
 import { userApi } from 'src/services/api/user-api';
 import { isApiMode } from 'src/services/data-source';
+import { useZones, useDepartments, roleMappingApi } from 'src/services/api-adapters';
 import {
-  mockDepartments, mockRoles, mockZones, mockProjects, mockUsers, mockModules,
+  mockRoles, mockZones, mockUsers, mockModules, mockProjects, mockDepartments,
   mockPermissionMappings, mockPermissionModuleProjects
 } from 'src/services/mock-data';
-import { paths } from 'src/routes/paths';
+
+import { Iconify } from 'src/components/iconify';
+import { PageHeader, PageContainer } from 'src/components/page-layout';
 
 const EMPLOYEE_DIRECTORY = [
   { employeeId: 'EMP-001', name: 'Rohit Palkar', email: 'rohit@puravankara.com', mobile: '+91-9876543210' },

@@ -1,5 +1,6 @@
-import apiClient from 'src/services/api-client';
 import type { Role } from 'src/types';
+
+import apiClient from 'src/services/api-client';
 
 interface RoleEntity {
   id: number;

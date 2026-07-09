@@ -1,25 +1,29 @@
-import { useState, useCallback } from 'react';
-import { Helmet } from 'react-helmet-async';
+import type { SubModule } from 'src/types';
 import type { GridColDef } from '@mui/x-data-grid';
-import Button from '@mui/material/Button';
+
+import { z } from 'zod';
+import { useForm } from 'react-hook-form';
+import { Helmet } from 'react-helmet-async';
+import { useState, useCallback } from 'react';
+import { zodResolver } from '@hookform/resolvers/zod';
+
+import Card from '@mui/material/Card';
 import Stack from '@mui/material/Stack';
+import Button from '@mui/material/Button';
 import Dialog from '@mui/material/Dialog';
 import DialogTitle from '@mui/material/DialogTitle';
 import DialogContent from '@mui/material/DialogContent';
 import DialogActions from '@mui/material/DialogActions';
-import Card from '@mui/material/Card';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
+
 import { CONFIG } from 'src/config-global';
-import { DataTable } from 'src/components/data-table';
-import { Form, Field } from 'src/components/hook-form';
+import { mockModules, mockSubModules } from 'src/services/mock-data';
+
 import { Label } from 'src/components/label';
 import { Iconify } from 'src/components/iconify';
-import { PageContainer, PageHeader } from 'src/components/page-layout';
+import { DataTable } from 'src/components/data-table';
+import { Form, Field } from 'src/components/hook-form';
 import { RowActionsMenu } from 'src/components/row-actions';
-import { mockSubModules, mockModules } from 'src/services/mock-data';
-import type { SubModule } from 'src/types';
+import { PageHeader, PageContainer } from 'src/components/page-layout';
 
 const MODULE_OPTIONS = mockModules.map((m) => ({ value: m.id, label: m.name }));
 

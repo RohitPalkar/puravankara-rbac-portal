@@ -1,21 +1,25 @@
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import type { GridColDef } from '@mui/x-data-grid';
+import type { PermissionMapping } from 'src/types';
+
 import { Helmet } from 'react-helmet-async';
 import { useNavigate } from 'react-router-dom';
-import Typography from '@mui/material/Typography';
-import Button from '@mui/material/Button';
+import { useMemo, useState, useEffect, useCallback } from 'react';
+
 import Card from '@mui/material/Card';
-import type { GridColDef } from '@mui/x-data-grid';
+import Button from '@mui/material/Button';
+import Typography from '@mui/material/Typography';
+
+import { paths } from 'src/routes/paths';
+
 import { CONFIG } from 'src/config-global';
-import { PageContainer, PageHeader } from 'src/components/page-layout';
-import { DataTable } from 'src/components/data-table';
-import type { FilterOption } from 'src/components/data-table';
-import { RowActionsMenu } from 'src/components/row-actions';
+import { isApiMode } from 'src/services/data-source';
+import { usePermissionMappings } from 'src/services/api-adapters';
+
 import { Label } from 'src/components/label';
 import { Iconify } from 'src/components/iconify';
-import { usePermissionMappings } from 'src/services/api-adapters';
-import { isApiMode } from 'src/services/data-source';
-import type { PermissionMapping } from 'src/types';
-import { paths } from 'src/routes/paths';
+import { DataTable } from 'src/components/data-table';
+import { RowActionsMenu } from 'src/components/row-actions';
+import { PageHeader, PageContainer } from 'src/components/page-layout';
 
 export default function PermissionMappingListPage() {
   const navigate = useNavigate();
@@ -82,7 +86,7 @@ export default function PermissionMappingListPage() {
       headerName: 'Permissions',
       width: 130,
       renderCell: (params: any) => {
-        const row = params.row;
+        const {row} = params;
         const count = row.modules?.reduce(
           (acc: number, m: any) => acc + m.subModules.reduce((a: number, sm: any) => a + sm.actionIds.length, 0),
           0

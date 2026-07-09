@@ -1,5 +1,6 @@
-import apiClient from 'src/services/api-client';
 import type { Department } from 'src/types';
+
+import apiClient from 'src/services/api-client';
 
 interface DepartmentEntity {
   id: number;

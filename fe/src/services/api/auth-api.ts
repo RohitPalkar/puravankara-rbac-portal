@@ -1,5 +1,6 @@
-import apiClient, { setTokens, clearTokens } from 'src/services/api-client';
 import type { PermissionResponse } from 'src/types';
+
+import apiClient, { setTokens, clearTokens } from 'src/services/api-client';
 
 interface LoginRequest {
   email: string;
@@ -103,4 +104,4 @@ export const authApi = {
   },
 };
 
-export type { LoginResponse, MeResponse };
+export type { MeResponse, LoginResponse };

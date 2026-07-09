@@ -1,5 +1,7 @@
-import axios from 'axios';
 import type { AxiosError, InternalAxiosRequestConfig } from 'axios';
+
+import axios from 'axios';
+
 import { CONFIG } from 'src/config-global';
 
 const STORAGE_KEY = 'accessToken';

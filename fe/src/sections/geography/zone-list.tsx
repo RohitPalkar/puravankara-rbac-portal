@@ -1,28 +1,33 @@
-import { useState, useCallback, useEffect } from 'react';
+import type { Zone } from 'src/types';
+import type { GridColDef } from '@mui/x-data-grid';
+
 import { Helmet } from 'react-helmet-async';
 import { useNavigate } from 'react-router-dom';
-import type { GridColDef } from '@mui/x-data-grid';
-import Button from '@mui/material/Button';
-import Stack from '@mui/material/Stack';
+import { useState, useEffect, useCallback } from 'react';
+
+import Box from '@mui/material/Box';
 import Chip from '@mui/material/Chip';
+import Card from '@mui/material/Card';
+import Stack from '@mui/material/Stack';
+import Button from '@mui/material/Button';
 import Dialog from '@mui/material/Dialog';
+import Typography from '@mui/material/Typography';
 import DialogTitle from '@mui/material/DialogTitle';
 import DialogContent from '@mui/material/DialogContent';
 import DialogActions from '@mui/material/DialogActions';
-import Card from '@mui/material/Card';
-import Typography from '@mui/material/Typography';
-import Box from '@mui/material/Box';
+
+import { paths } from 'src/routes/paths';
+
 import { CONFIG } from 'src/config-global';
-import { DataTable } from 'src/components/data-table';
+import { isApiMode } from 'src/services/data-source';
+import { useZones, useDeleteZone } from 'src/services/api-adapters';
+import { mockCities, mockProjectZones } from 'src/services/mock-data';
+
 import { Label } from 'src/components/label';
 import { Iconify } from 'src/components/iconify';
+import { DataTable } from 'src/components/data-table';
 import { RowActionsMenu } from 'src/components/row-actions';
-import { PageContainer, PageHeader } from 'src/components/page-layout';
-import { useZones, useDeleteZone } from 'src/services/api-adapters';
-import { isApiMode } from 'src/services/data-source';
-import { mockCities, mockProjectZones } from 'src/services/mock-data';
-import { paths } from 'src/routes/paths';
-import type { Zone } from 'src/types';
+import { PageHeader, PageContainer } from 'src/components/page-layout';
 
 export default function ZoneListPage() {
   const navigate = useNavigate();

@@ -2,10 +2,11 @@ import { useMemo, useEffect, useCallback } from 'react';
 
 import { useSetState } from 'src/hooks/use-set-state';
 
-import { isApiMode } from 'src/services/data-source';
-import { authApi } from 'src/services/api/auth-api';
-import { usePermissionStore } from 'src/stores/permission-store';
 import axios, { endpoints } from 'src/utils/axios';
+
+import { authApi } from 'src/services/api/auth-api';
+import { isApiMode } from 'src/services/data-source';
+import { usePermissionStore } from 'src/stores/permission-store';
 
 import { STORAGE_KEY } from './constant';
 import { AuthContext } from '../auth-context';

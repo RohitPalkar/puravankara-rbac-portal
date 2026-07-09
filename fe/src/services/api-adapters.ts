@@ -1,18 +1,18 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
-import type { Zone, Department, Role, Project, Module, SubModule, Action, PermissionMapping, PermissionResponse, NavPermissionModule, MockUserRoleInfo, User } from 'src/types';
-import { isApiMode } from './data-source';
+
+import { useRef, useState, useEffect, useCallback } from 'react';
+
 import { zoneApi } from './api/zone-api';
-import { departmentApi } from './api/department-api';
 import { roleApi } from './api/role-api';
+import { userApi } from './api/user-api';
+import { isApiMode } from './data-source';
 import { projectApi } from './api/project-api';
 import { catalogApi } from './api/catalog-api';
-import { authApi } from './api/auth-api';
-import { userApi } from './api/user-api';
 import { actionMapper } from './api/action-mapper';
+import { departmentApi } from './api/department-api';
 import { roleMappingApi } from './api/role-mapping-api';
 import {
-  mockZones, mockDepartments, mockRoles, mockProjects, mockModules, mockSubModules, mockActions,
-  mockPermissionMappings, mockPermissionModuleProjects, mockUsers,
+  mockZones, mockRoles, mockUsers, mockModules, mockActions, mockProjects, mockSubModules,
+  mockDepartments, mockPermissionMappings, mockPermissionModuleProjects,
 } from './mock-data';
 
 function useApiData<T>(
@@ -246,5 +246,5 @@ export function useUpdateProject() {
   return { ...state, mutate };
 }
 
-export { mockZones, mockDepartments, mockRoles, mockProjects, mockModules, mockSubModules, mockActions, mockPermissionMappings, mockPermissionModuleProjects, mockUsers };
+export { mockZones, mockRoles, mockUsers, mockModules, mockActions, mockProjects, mockSubModules, mockDepartments, mockPermissionMappings, mockPermissionModuleProjects };
 export { roleMappingApi };

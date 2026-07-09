@@ -1,26 +1,30 @@
-import { useState, useMemo, useCallback, useEffect } from 'react';
+
 import { Helmet } from 'react-helmet-async';
 import { useParams, useNavigate } from 'react-router-dom';
-import Stack from '@mui/material/Stack';
-import Typography from '@mui/material/Typography';
-import Button from '@mui/material/Button';
-import Card from '@mui/material/Card';
-import TextField from '@mui/material/TextField';
-import MenuItem from '@mui/material/MenuItem';
-import Alert from '@mui/material/Alert';
-import Snackbar from '@mui/material/Snackbar';
-import LinearProgress from '@mui/material/LinearProgress';
+import { useMemo, useState, useEffect, useCallback } from 'react';
+
 import Box from '@mui/material/Box';
+import Card from '@mui/material/Card';
+import Stack from '@mui/material/Stack';
+import Alert from '@mui/material/Alert';
+import Button from '@mui/material/Button';
 import Avatar from '@mui/material/Avatar';
+import MenuItem from '@mui/material/MenuItem';
+import Snackbar from '@mui/material/Snackbar';
+import TextField from '@mui/material/TextField';
+import Typography from '@mui/material/Typography';
 import IconButton from '@mui/material/IconButton';
-import { CONFIG } from 'src/config-global';
-import { PageContainer, PageHeader } from 'src/components/page-layout';
-import { Iconify } from 'src/components/iconify';
-import { useProjects } from 'src/services/api-adapters';
-import { isApiMode } from 'src/services/data-source';
-import { mockZones, mockCities } from 'src/services/mock-data';
+import LinearProgress from '@mui/material/LinearProgress';
+
 import { paths } from 'src/routes/paths';
-import type { Project } from 'src/types';
+
+import { CONFIG } from 'src/config-global';
+import { isApiMode } from 'src/services/data-source';
+import { useProjects } from 'src/services/api-adapters';
+import { mockZones, mockCities } from 'src/services/mock-data';
+
+import { Iconify } from 'src/components/iconify';
+import { PageHeader, PageContainer } from 'src/components/page-layout';
 
 const BRAND_OPTIONS = [
   { value: 'Puravankara', label: 'Puravankara' },

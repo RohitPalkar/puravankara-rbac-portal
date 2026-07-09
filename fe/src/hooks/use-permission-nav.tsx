@@ -1,9 +1,13 @@
-import { useMemo } from 'react';
 import type { NavSection } from 'src/types';
+
+import { useMemo } from 'react';
+
 import { paths } from 'src/routes/paths';
+
 import { CONFIG } from 'src/config-global';
-import { SvgColor } from 'src/components/svg-color';
 import { usePermissionStore } from 'src/stores/permission-store';
+
+import { SvgColor } from 'src/components/svg-color';
 
 const icon = (name: string) => (
   <SvgColor src={`${CONFIG.assetsDir}/assets/icons/navbar/${name}.svg`} />

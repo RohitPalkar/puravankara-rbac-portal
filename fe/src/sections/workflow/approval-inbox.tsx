@@ -1,29 +1,32 @@
-import { useState, useMemo, useCallback } from 'react';
+import type { ApprovalStatus, ApprovalRequest } from 'src/types';
+
 import { Helmet } from 'react-helmet-async';
-import Stack from '@mui/material/Stack';
-import Typography from '@mui/material/Typography';
-import Button from '@mui/material/Button';
-import TextField from '@mui/material/TextField';
-import MenuItem from '@mui/material/MenuItem';
+import { useMemo, useState, useCallback } from 'react';
+
+import Box from '@mui/material/Box';
 import Card from '@mui/material/Card';
 import Chip from '@mui/material/Chip';
-import Avatar from '@mui/material/Avatar';
-import Box from '@mui/material/Box';
-import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
-import ToggleButton from '@mui/material/ToggleButton';
 import List from '@mui/material/List';
-import ListItem from '@mui/material/ListItem';
-import ListItemAvatar from '@mui/material/ListItemAvatar';
-import ListItemText from '@mui/material/ListItemText';
+import Stack from '@mui/material/Stack';
+import Button from '@mui/material/Button';
+import Avatar from '@mui/material/Avatar';
 import Dialog from '@mui/material/Dialog';
+import ListItem from '@mui/material/ListItem';
+import TextField from '@mui/material/TextField';
+import Typography from '@mui/material/Typography';
 import DialogTitle from '@mui/material/DialogTitle';
+import ToggleButton from '@mui/material/ToggleButton';
+import ListItemText from '@mui/material/ListItemText';
 import DialogContent from '@mui/material/DialogContent';
 import DialogActions from '@mui/material/DialogActions';
+import ListItemAvatar from '@mui/material/ListItemAvatar';
+import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
+
 import { CONFIG } from 'src/config-global';
-import { PageContainer, PageHeader } from 'src/components/page-layout';
+import { mockApprovalRequests } from 'src/services/mock-data';
+
 import { Iconify } from 'src/components/iconify';
-import { mockApprovalRequests, mockUsers } from 'src/services/mock-data';
-import type { ApprovalRequest, ApprovalStatus } from 'src/types';
+import { PageHeader, PageContainer } from 'src/components/page-layout';
 
 const STATUS_CONFIG: Record<ApprovalStatus, { color: 'warning' | 'success' | 'error'; label: string }> = {
   pending: { color: 'warning', label: 'Pending' },

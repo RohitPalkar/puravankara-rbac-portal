@@ -100,4 +100,4 @@ export const roleMappingApi = {
   },
 };
 
-export type { CreateRoleMappingDto, RoleMappingListItem, RoleMappingDetailResponse, RoleMappingDetailModule, RoleMappingDetailSubModule, RoleMappingDetailAction, PermissionActionEntry };
+export type { RoleMappingListItem, CreateRoleMappingDto, PermissionActionEntry, RoleMappingDetailModule, RoleMappingDetailAction, RoleMappingDetailResponse, RoleMappingDetailSubModule };

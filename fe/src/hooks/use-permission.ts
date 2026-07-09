@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
+
+import { MOCK_USER_PROFILES } from 'src/services/mock-data';
 import { usePermissionStore } from 'src/stores/permission-store';
-import { mockPermissionResponse, MOCK_USER_PROFILES } from 'src/services/mock-data';
 
 export function usePermission() {
   const permissionResponse = usePermissionStore((s) => s.permissionResponse);
