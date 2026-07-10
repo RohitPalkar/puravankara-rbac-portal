@@ -20,8 +20,7 @@ import { paths } from 'src/routes/paths';
 
 import { CONFIG } from 'src/config-global';
 import { isApiMode } from 'src/services/data-source';
-import { useProjects } from 'src/services/api-adapters';
-import { mockZones, mockCities } from 'src/services/mock-data';
+import { useZones, useCities, useProjects } from 'src/services/api-adapters';
 
 import { Iconify } from 'src/components/iconify';
 import { PageHeader, PageContainer } from 'src/components/page-layout';
@@ -31,13 +30,13 @@ const BRAND_OPTIONS = [
   { value: 'Provident', label: 'Provident' },
 ];
 
-const ZONE_OPTIONS = mockZones.map((z) => ({ value: z.id, label: z.name }));
-
 export default function ProjectNewPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const isEdit = Boolean(id);
   const { data: projects, loading: loadingProjects } = useProjects();
+  const { data: zones } = useZones();
+  const { data: cities } = useCities();
   const projectData = isEdit ? projects.find((p) => p.id === id) : undefined;
 
   const [initialized, setInitialized] = useState(false);
@@ -82,12 +81,7 @@ export default function ProjectNewPage() {
     }
   }, [initialized, projects, projectData, isEdit]);
 
-  const cityOptions = useMemo(() => {
-    if (!zoneId) return [];
-    return mockCities
-      .filter((c) => c.zoneId === zoneId)
-      .map((c) => ({ value: c.id, label: c.name }));
-  }, [zoneId]);
+  const cityOptions = useMemo(() => cities.map((c) => ({ value: c.id, label: c.name })), [cities]);
 
   const handleSave = useCallback(async () => {
     let valid = true;
@@ -99,25 +93,30 @@ export default function ProjectNewPage() {
 
     setSaving(true);
 
-    const zone = mockZones.find((z) => z.id === zoneId);
-    const city = mockCities.find((c) => c.id === cityId);
+    const cityMatch = cities.find((c) => c.id === cityId);
+    const zoneMatch = zones.find((z) => z.id === zoneId);
 
     if (isApiMode()) {
       try {
         const { projectApi } = await import('src/services/api/project-api');
         const payload: any = {
           name: name.trim(),
-          code: code.trim(),
-          brand,
-          zoneId,
-          cityId,
-          cityName: city?.name,
-          phase,
-          billingEntity,
-          billingAddress,
-          gstin,
-          paymentGateway,
-          incentiveCriteria,
+          billingEntityName: billingEntity || undefined,
+          billingGstin: gstin || undefined,
+          isActive: true,
+          extendedMetadata: {
+            brand,
+            zoneId,
+            zoneName: zoneMatch?.name,
+            cityId,
+            cityName: cityMatch?.name,
+            phase,
+            billingAddress,
+            paymentGateway,
+            incentiveCriteria,
+            projectImage,
+            jvImage,
+          },
         };
         if (isEdit && projectData) {
           await projectApi.update(projectData.id, payload);
@@ -129,16 +128,16 @@ export default function ProjectNewPage() {
       const { mockProjects } = await import('src/services/mock-data');
       if (isEdit && projectData) {
         Object.assign(projectData, {
-          name: name.trim(), code: code.trim(), brand, zoneId, zoneName: zone?.name,
-          cityId, cityName: city?.name, phase, status, billingEntity, billingAddress,
+          name: name.trim(), code: code.trim(), brand, zoneId, zoneName: zoneMatch?.name,
+          cityId, cityName: cityMatch?.name, phase, status, billingEntity, billingAddress,
           gstin, paymentGateway, incentiveCriteria, projectImage, jvImage,
           updatedAt: new Date().toISOString(),
         });
       } else {
         mockProjects.unshift({
           id: String(Date.now()),
-          name: name.trim(), code: code.trim(), brand, zoneId, zoneName: zone?.name,
-          cityId, cityName: city?.name, phase, billingEntity, billingAddress,
+          name: name.trim(), code: code.trim(), brand, zoneId, zoneName: zoneMatch?.name,
+          cityId, cityName: cityMatch?.name, phase, billingEntity, billingAddress,
           gstin, paymentGateway, incentiveCriteria, projectImage, jvImage,
           startDate: '', endDate: '', status,
           createdBy: 'You',
@@ -151,7 +150,7 @@ export default function ProjectNewPage() {
     setSaving(false);
     setShowSuccess(true);
     setTimeout(() => navigate(paths.dashboard.projectMaster), 1200);
-  }, [name, code, brand, zoneId, cityId, phase, status, billingEntity, billingAddress, gstin, paymentGateway, incentiveCriteria, projectImage, jvImage, isEdit, projectData, navigate]);
+  }, [name, code, brand, zoneId, cityId, phase, status, billingEntity, billingAddress, gstin, paymentGateway, incentiveCriteria, projectImage, jvImage, isEdit, projectData, zones, cities, navigate]);
 
   if (isEdit && !projectData) {
     return (
@@ -186,7 +185,7 @@ export default function ProjectNewPage() {
               {BRAND_OPTIONS.map((o) => <MenuItem key={o.value} value={o.value}>{o.label}</MenuItem>)}
             </TextField>
             <TextField select label="Zone" value={zoneId} onChange={(e) => { setZoneId(e.target.value); setCityId(''); }} required fullWidth>
-              {ZONE_OPTIONS.map((o) => <MenuItem key={o.value} value={o.value}>{o.label}</MenuItem>)}
+              {zones.map((z) => <MenuItem key={z.id} value={z.id}>{z.name}</MenuItem>)}
             </TextField>
             <TextField select label="City" value={cityId} onChange={(e) => setCityId(e.target.value)} required fullWidth disabled={!zoneId}>
               {cityOptions.length === 0 && <MenuItem value="">{zoneId ? 'No cities available' : 'Select a zone first'}</MenuItem>}

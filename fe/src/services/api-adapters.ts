@@ -4,6 +4,7 @@ import { useRef, useState, useEffect, useCallback } from 'react';
 import { zoneApi } from './api/zone-api';
 import { roleApi } from './api/role-api';
 import { userApi } from './api/user-api';
+import { cityApi } from './api/city-api';
 import { isApiMode } from './data-source';
 import { projectApi } from './api/project-api';
 import { catalogApi } from './api/catalog-api';
@@ -11,7 +12,7 @@ import { actionMapper } from './api/action-mapper';
 import { departmentApi } from './api/department-api';
 import { roleMappingApi } from './api/role-mapping-api';
 import {
-  mockZones, mockRoles, mockUsers, mockModules, mockActions, mockProjects, mockSubModules,
+  mockCities, mockZones, mockRoles, mockUsers, mockModules, mockActions, mockProjects, mockSubModules,
   mockDepartments, mockPermissionMappings, mockPermissionModuleProjects,
 } from './mock-data';
 
@@ -57,6 +58,10 @@ export function useDepartments() {
 
 export function useRoles() {
   return useApiData(() => roleApi.list(), mockRoles);
+}
+
+export function useCities() {
+  return useApiData(() => cityApi.list(), mockCities);
 }
 
 export function useProjects() {

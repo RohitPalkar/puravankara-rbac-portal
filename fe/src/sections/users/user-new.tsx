@@ -33,7 +33,7 @@ import { paths } from 'src/routes/paths';
 import { CONFIG } from 'src/config-global';
 import { userApi } from 'src/services/api/user-api';
 import { isApiMode } from 'src/services/data-source';
-import { useZones, useDepartments, roleMappingApi } from 'src/services/api-adapters';
+import { useZones, useProjects, useDepartments, roleMappingApi } from 'src/services/api-adapters';
 import {
   mockRoles, mockZones, mockUsers, mockModules, mockProjects, mockDepartments,
   mockPermissionMappings, mockPermissionModuleProjects
@@ -73,6 +73,7 @@ export default function UserNewPage() {
 
   const { data: apiDepartments } = useDepartments();
   const { data: apiZones } = useZones();
+  const { data: apiProjects } = useProjects();
 
   const [activeStep, setActiveStep] = useState(0);
   const [showSuccess, setShowSuccess] = useState(false);
@@ -205,15 +206,16 @@ export default function UserNewPage() {
     .filter((u) => u.departmentId === departmentId)
     .map((u) => ({ value: u.id, label: `${u.name} (${u.employeeId})` })), [departmentId]);
 
-  const zoneProjects = useMemo(() => {
+  const allZoneProjects = useMemo(() => {
+    const source = isApiMode() ? apiProjects : mockProjects;
     if (!selectedZoneIds || selectedZoneIds.length === 0) return [];
-    return mockProjects.filter((p) => selectedZoneIds.includes(p.zoneId));
-  }, [selectedZoneIds]);
+    return source.filter((p) => selectedZoneIds.includes(p.zoneId));
+  }, [selectedZoneIds, apiProjects]);
 
   const filteredProjects = useMemo(() => {
-    if (!projectSearch) return zoneProjects;
-    return zoneProjects.filter((p) => p.name.toLowerCase().includes(projectSearch.toLowerCase()));
-  }, [projectSearch, zoneProjects]);
+    if (!projectSearch) return allZoneProjects;
+    return allZoneProjects.filter((p) => p.name.toLowerCase().includes(projectSearch.toLowerCase()));
+  }, [projectSearch, allZoneProjects]);
 
   const roleMappingModules = roleMappingModulesData;
 
@@ -603,7 +605,8 @@ export default function UserNewPage() {
                               {selectedProjectIds.length > 0 && (
                                 <Stack direction="row" spacing={0.5} flexWrap="wrap" useFlexGap sx={{ mt: 1.5 }}>
                                   {selectedProjectIds.map((pid) => {
-                                    const p = mockProjects.find((pj) => pj.id === pid);
+                                    const projectSource = isApiMode() ? apiProjects : mockProjects;
+                                    const p = projectSource.find((pj) => pj.id === pid);
                                     return (
                                       <Chip
                                         key={pid}
