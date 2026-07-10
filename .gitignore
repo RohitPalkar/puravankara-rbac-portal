@@ -27,4 +27,7 @@ Thumbs.db
 
 # vercel
 .vercel
-.env*
+.env
+.env.local
+.env.production
+.env.development

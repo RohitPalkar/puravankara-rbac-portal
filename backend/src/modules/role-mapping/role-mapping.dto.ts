@@ -50,6 +50,32 @@ export class CreateRoleMappingDto {
   permissions: PermissionActionEntry[];
 }
 
+export class UpdateRoleMappingDto {
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  @IsNotEmpty()
+  name?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  hierarchyLevelRank?: number;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsInt()
+  departmentId?: number;
+
+  @ApiPropertyOptional({ type: [PermissionActionEntry] })
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => PermissionActionEntry)
+  permissions?: PermissionActionEntry[];
+}
+
 export class RoleMappingListItem {
   @ApiProperty()
   id: number;

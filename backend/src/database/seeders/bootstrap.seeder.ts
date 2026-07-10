@@ -1,10 +1,13 @@
-import { DataSource } from 'typeorm';
+import { DataSource, In } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { Role } from '../../modules/organization/entities/role.entity';
 import { User } from '../../modules/users/entities/user.entity';
 import { UserAuth } from '../../modules/auth/entities/user-auth.entity';
 import { UserRole } from '../../modules/users/entities/user-role.entity';
 import { Action } from '../../modules/product-catalog/entities/action.entity';
+import { Module } from '../../modules/product-catalog/entities/module.entity';
+import { SubModule } from '../../modules/product-catalog/entities/sub-module.entity';
+import { ModuleAction } from '../../modules/product-catalog/entities/module-action.entity';
 import { Zone } from '../../modules/geography/entities/zone.entity';
 
 const SALT_ROUNDS = 12;
@@ -22,12 +25,91 @@ const SYSTEM_ACTIONS = [
 
 const ZONE_NAMES = ['North', 'South', 'East', 'West'];
 
+const MODULE_SEED: {
+  name: string;
+  subModules: { name: string; actions: string[] }[];
+  moduleActions: string[];
+}[] = [
+  {
+    name: 'CRM',
+    subModules: [
+      { name: 'Leads', actions: ['VIEW', 'CREATE', 'UPDATE', 'DELETE', 'EXPORT', 'IMPORT'] },
+      { name: 'Opportunities', actions: ['VIEW', 'CREATE', 'UPDATE', 'DELETE', 'EXPORT'] },
+      { name: 'Customers', actions: ['VIEW', 'CREATE', 'UPDATE', 'DELETE', 'EXPORT', 'IMPORT'] },
+      { name: 'Reports', actions: ['VIEW', 'EXPORT'] },
+    ],
+    moduleActions: ['VIEW'],
+  },
+  {
+    name: 'EOI',
+    subModules: [
+      { name: 'Enquiries', actions: ['VIEW', 'CREATE', 'UPDATE', 'DELETE', 'EXPORT'] },
+      { name: 'Registrations', actions: ['VIEW', 'CREATE', 'UPDATE', 'DELETE'] },
+      { name: 'Allocations', actions: ['VIEW', 'CREATE', 'UPDATE', 'DELETE', 'APPROVE', 'REJECT'] },
+      { name: 'Reports', actions: ['VIEW', 'EXPORT'] },
+    ],
+    moduleActions: ['VIEW'],
+  },
+  {
+    name: 'IOM',
+    subModules: [
+      { name: 'Inventory', actions: ['VIEW', 'CREATE', 'UPDATE', 'DELETE', 'EXPORT', 'IMPORT'] },
+      { name: 'Bookings', actions: ['VIEW', 'CREATE', 'UPDATE', 'DELETE', 'APPROVE', 'REJECT'] },
+      { name: 'Agreements', actions: ['VIEW', 'CREATE', 'UPDATE', 'DELETE'] },
+      { name: 'Payments', actions: ['VIEW', 'CREATE', 'UPDATE', 'EXPORT'] },
+      { name: 'Reports', actions: ['VIEW', 'EXPORT'] },
+    ],
+    moduleActions: ['VIEW'],
+  },
+  {
+    name: 'Marketing',
+    subModules: [
+      { name: 'Campaigns', actions: ['VIEW', 'CREATE', 'UPDATE', 'DELETE'] },
+      { name: 'Events', actions: ['VIEW', 'CREATE', 'UPDATE', 'DELETE'] },
+      { name: 'Analytics', actions: ['VIEW', 'EXPORT'] },
+    ],
+    moduleActions: ['VIEW'],
+  },
+  {
+    name: 'Finance',
+    subModules: [
+      { name: 'Invoices', actions: ['VIEW', 'CREATE', 'UPDATE', 'DELETE', 'EXPORT'] },
+      { name: 'Payments', actions: ['VIEW', 'CREATE', 'UPDATE', 'APPROVE', 'REJECT'] },
+      { name: 'Reports', actions: ['VIEW', 'EXPORT'] },
+    ],
+    moduleActions: ['VIEW'],
+  },
+  {
+    name: 'Projects',
+    subModules: [
+      { name: 'Project Details', actions: ['VIEW', 'CREATE', 'UPDATE', 'DELETE'] },
+      { name: 'Milestones', actions: ['VIEW', 'CREATE', 'UPDATE'] },
+      { name: 'Reports', actions: ['VIEW', 'EXPORT'] },
+    ],
+    moduleActions: ['VIEW'],
+  },
+  {
+    name: 'System',
+    subModules: [
+      { name: 'Users', actions: ['VIEW', 'CREATE', 'UPDATE', 'DELETE'] },
+      { name: 'Roles', actions: ['VIEW', 'CREATE', 'UPDATE', 'DELETE'] },
+      { name: 'Permissions', actions: ['VIEW', 'CREATE', 'UPDATE', 'DELETE'] },
+      { name: 'Settings', actions: ['VIEW', 'UPDATE'] },
+      { name: 'Audit Logs', actions: ['VIEW', 'EXPORT'] },
+    ],
+    moduleActions: ['VIEW'],
+  },
+];
+
 export async function bootstrapSeeder(dataSource: DataSource): Promise<void> {
   const roleRepo = dataSource.getRepository(Role);
   const userRepo = dataSource.getRepository(User);
   const authRepo = dataSource.getRepository(UserAuth);
   const userRoleRepo = dataSource.getRepository(UserRole);
   const actionRepo = dataSource.getRepository(Action);
+  const moduleRepo = dataSource.getRepository(Module);
+  const subModuleRepo = dataSource.getRepository(SubModule);
+  const moduleActionRepo = dataSource.getRepository(ModuleAction);
   const zoneRepo = dataSource.getRepository(Zone);
 
   // 1. Seed zones
@@ -52,7 +134,43 @@ export async function bootstrapSeeder(dataSource: DataSource): Promise<void> {
     }
   }
 
-  // 2. Seed SUPER_ADMIN role
+  // 3. Seed product catalog: modules, sub-modules, and module-action links
+  const allActions = await actionRepo.find({ where: { isActive: true } });
+  const actionMap = new Map(allActions.map((a) => [a.code, a.id]));
+
+  for (const modDef of MODULE_SEED) {
+    let mod = await moduleRepo.findOne({ where: { name: modDef.name } });
+    if (!mod) {
+      mod = await moduleRepo.save(moduleRepo.create({ name: modDef.name, isActive: true }));
+    }
+
+    for (const smDef of modDef.subModules) {
+      let sm = await subModuleRepo.findOne({ where: { moduleId: mod.id, name: smDef.name } });
+      if (!sm) {
+        sm = await subModuleRepo.save(subModuleRepo.create({ moduleId: mod.id, name: smDef.name, isActive: true }));
+      }
+
+      for (const actionCode of smDef.actions) {
+        const actionId = actionMap.get(actionCode);
+        if (!actionId) continue;
+        const existing = await moduleActionRepo.findOne({ where: { moduleId: mod.id, subModuleId: sm.id, actionId } });
+        if (!existing) {
+          await moduleActionRepo.save(moduleActionRepo.create({ moduleId: mod.id, subModuleId: sm.id, actionId, isActive: true }));
+        }
+      }
+    }
+
+    for (const actionCode of modDef.moduleActions) {
+      const actionId = actionMap.get(actionCode);
+      if (!actionId) continue;
+      const existing = await moduleActionRepo.findOne({ where: { moduleId: mod.id, subModuleId: null, actionId } });
+      if (!existing) {
+        await moduleActionRepo.save(moduleActionRepo.create({ moduleId: mod.id, subModuleId: null as any, actionId, isActive: true }));
+      }
+    }
+  }
+
+  // 5. Seed SUPER_ADMIN role
   const existingRole = await roleRepo.findOne({
     where: { name: 'SUPER_ADMIN' },
   });
@@ -67,7 +185,7 @@ export async function bootstrapSeeder(dataSource: DataSource): Promise<void> {
       }),
     ));
 
-  // 3. Seed system admin user from ENV or defaults
+  // 6. Seed system admin user from ENV or defaults
   const adminEmail = process.env.DEFAULT_ADMIN_EMAIL || 'admin@system.local';
   const adminPassword = process.env.DEFAULT_ADMIN_PASSWORD!;
 

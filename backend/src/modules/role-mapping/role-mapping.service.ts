@@ -14,7 +14,7 @@ import { TemplatePermission } from '../permissions/entities/template-permission.
 import { Module as ProductModule } from '../product-catalog/entities/module.entity';
 import { SubModule } from '../product-catalog/entities/sub-module.entity';
 import { Action } from '../product-catalog/entities/action.entity';
-import { CreateRoleMappingDto } from './role-mapping.dto';
+import { CreateRoleMappingDto, UpdateRoleMappingDto } from './role-mapping.dto';
 import {
   RoleMappingListItem,
   RoleMappingDetailResponse,
@@ -117,6 +117,95 @@ export class RoleMappingService {
       if (err instanceof ConflictException || err instanceof NotFoundException) {
         throw err;
       }
+      throw err;
+    } finally {
+      await queryRunner.release();
+    }
+  }
+
+  async update(id: number, dto: UpdateRoleMappingDto) {
+    const role = await this.roleRepo.findOne({ where: { id } });
+    if (!role) throw new NotFoundException(`Role ${id} not found`);
+
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    try {
+      if (dto.name) role.name = dto.name;
+      if (dto.hierarchyLevelRank != null) role.hierarchyLevelRank = dto.hierarchyLevelRank;
+      await queryRunner.manager.save(role);
+
+      if (dto.departmentId != null) {
+        await queryRunner.manager.delete(DepartmentRole, { roleId: id });
+        const dept = await queryRunner.manager.findOne(Department, {
+          where: { id: dto.departmentId },
+        });
+        if (!dept) throw new NotFoundException(`Department ${dto.departmentId} not found`);
+        await queryRunner.manager.save(queryRunner.manager.create(DepartmentRole, {
+          departmentId: dto.departmentId,
+          roleId: id,
+        }));
+      }
+
+      if (dto.permissions) {
+        const template = await queryRunner.manager.findOne(PermissionTemplate, {
+          where: { name: `Template: ${role.name}` },
+        });
+        if (template) {
+          await queryRunner.manager.delete(TemplatePermission, { templateId: template.id });
+          const tpEntries: TemplatePermission[] = [];
+          for (const entry of dto.permissions) {
+            const { moduleId, subModuleId, actionIds } = entry;
+            for (const actionId of actionIds) {
+              tpEntries.push(queryRunner.manager.create(TemplatePermission, {
+                templateId: template.id,
+                moduleId,
+                subModuleId: subModuleId ?? null,
+                actionId,
+              }));
+            }
+          }
+          if (tpEntries.length > 0) {
+            await queryRunner.manager.save(tpEntries);
+          }
+        }
+      }
+
+      await queryRunner.commitTransaction();
+      return { roleId: id, name: role.name };
+    } catch (err) {
+      await queryRunner.rollbackTransaction();
+      throw err;
+    } finally {
+      await queryRunner.release();
+    }
+  }
+
+  async remove(id: number) {
+    const role = await this.roleRepo.findOne({ where: { id } });
+    if (!role) throw new NotFoundException(`Role ${id} not found`);
+
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    try {
+      const template = await queryRunner.manager.findOne(PermissionTemplate, {
+        where: { name: `Template: ${role.name}` },
+      });
+      if (template) {
+        await queryRunner.manager.delete(TemplatePermission, { templateId: template.id });
+        await queryRunner.manager.delete(PermissionTemplate, template.id);
+      }
+      await queryRunner.manager.delete(DepartmentRole, { roleId: id });
+      role.isActive = false;
+      await queryRunner.manager.save(role);
+
+      await queryRunner.commitTransaction();
+      return { message: `Role "${role.name}" deleted successfully` };
+    } catch (err) {
+      await queryRunner.rollbackTransaction();
       throw err;
     } finally {
       await queryRunner.release();

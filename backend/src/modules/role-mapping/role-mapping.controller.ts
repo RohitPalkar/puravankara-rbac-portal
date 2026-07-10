@@ -2,6 +2,8 @@ import {
   Controller,
   Get,
   Post,
+  Patch,
+  Delete,
   Body,
   Param,
   ParseIntPipe,
@@ -10,7 +12,7 @@ import {
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags, ApiOperation, ApiQuery } from '@nestjs/swagger';
 import { RoleMappingService } from './role-mapping.service';
-import { CreateRoleMappingDto } from './role-mapping.dto';
+import { CreateRoleMappingDto, UpdateRoleMappingDto } from './role-mapping.dto';
 
 @ApiTags('Role Mappings')
 @ApiBearerAuth()
@@ -34,6 +36,21 @@ export class RoleMappingController {
   @ApiOperation({ summary: 'Get role mapping detail with full permission tree' })
   async findById(@Param('id', ParseIntPipe) id: number) {
     return this.svc.findById(id);
+  }
+
+  @Patch(':id')
+  @ApiOperation({ summary: 'Update role mapping metadata and permissions' })
+  async update(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: UpdateRoleMappingDto,
+  ) {
+    return this.svc.update(id, dto);
+  }
+
+  @Delete(':id')
+  @ApiOperation({ summary: 'Soft-delete a role mapping' })
+  async remove(@Param('id', ParseIntPipe) id: number) {
+    return this.svc.remove(id);
   }
 }
 
