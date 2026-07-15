@@ -7,10 +7,8 @@ import {
   Body,
   Param,
   ParseIntPipe,
-  Query,
-  Optional,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiTags, ApiOperation, ApiQuery } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiTags, ApiOperation } from '@nestjs/swagger';
 import { RoleMappingService } from './role-mapping.service';
 import { CreateRoleMappingDto, UpdateRoleMappingDto } from './role-mapping.dto';
 
@@ -67,22 +65,4 @@ export class DepartmentRolesController {
   }
 }
 
-@ApiTags('Users - Available Roles')
-@ApiBearerAuth()
-@Controller('users')
-export class UserAvailableRolesController {
-  constructor(private readonly svc: RoleMappingService) {}
 
-  @Get('available-secondary-roles')
-  @ApiOperation({ summary: 'Get roles eligible for secondary assignment' })
-  @ApiQuery({
-    name: 'exclude',
-    required: false,
-    type: Number,
-    description: 'Primary role ID to exclude',
-  })
-  async getSecondaryRoles(@Query('exclude') exclude?: string) {
-    const excludeId = exclude ? parseInt(exclude, 10) : undefined;
-    return this.svc.findAvailableSecondaryRoles(excludeId);
-  }
-}

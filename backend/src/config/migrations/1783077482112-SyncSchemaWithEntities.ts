@@ -87,7 +87,13 @@ export class SyncSchemaWithEntities1783077482112
       ALTER COLUMN "level_rank" DROP NOT NULL
     `);
 
-    // 6. Create notifications table
+    // 6. user_auth: add missing created_at column (entity has CreateDateColumn)
+    await queryRunner.query(`
+      ALTER TABLE "user_auth"
+      ADD COLUMN IF NOT EXISTS "created_at" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now()
+    `);
+
+    // 7. Create notifications table
     await queryRunner.query(`
       CREATE TABLE IF NOT EXISTS "notifications" (
         "id" SERIAL NOT NULL,
@@ -194,6 +200,9 @@ export class SyncSchemaWithEntities1783077482112
     await queryRunner.query(`
       ALTER TABLE "approval_steps"
       ALTER COLUMN "department_id" SET NOT NULL
+    `);
+    await queryRunner.query(`
+      ALTER TABLE "user_auth" DROP COLUMN IF EXISTS "created_at"
     `);
     await queryRunner.query(`
       ALTER TABLE "users"

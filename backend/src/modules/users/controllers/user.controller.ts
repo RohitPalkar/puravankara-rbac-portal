@@ -9,7 +9,7 @@ import {
   Query,
   ParseIntPipe,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiTags, ApiOperation } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiTags, ApiOperation, ApiQuery } from '@nestjs/swagger';
 import {
   UserService,
   UserRoleService,
@@ -23,17 +23,34 @@ import {
   CreateUserFullDto,
 } from '../dto/user.dto';
 import { PaginationQueryDto } from '../../../common/dto/pagination-query.dto';
+import { RoleMappingService } from '../../role-mapping/role-mapping.service';
 
 @ApiTags('Users')
 @ApiBearerAuth()
 @Controller('users')
 export class UserController {
-  constructor(private readonly userService: UserService) {}
+  constructor(
+    private readonly userService: UserService,
+    private readonly roleMappingService: RoleMappingService,
+  ) {}
 
   @Get()
   @ApiOperation({ summary: 'List all users' })
   async findAll(@Query() query: PaginationQueryDto) {
     return this.userService.findAll(query);
+  }
+
+  @Get('available-secondary-roles')
+  @ApiOperation({ summary: 'Get roles eligible for secondary assignment' })
+  @ApiQuery({
+    name: 'exclude',
+    required: false,
+    type: Number,
+    description: 'Primary role ID to exclude',
+  })
+  async getAvailableSecondaryRoles(@Query('exclude') exclude?: string) {
+    const excludeId = exclude ? parseInt(exclude, 10) : undefined;
+    return this.roleMappingService.findAvailableSecondaryRoles(excludeId);
   }
 
   @Get(':id')

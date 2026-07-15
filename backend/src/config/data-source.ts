@@ -6,13 +6,16 @@ config();
 function buildOptions(): DataSourceOptions {
   const url = process.env.DATABASE_URL;
   const isProduction = process.env.NODE_ENV === 'production';
+  const isSupabaseUrl = url && (url.includes('supabase') || url.includes('pooler'));
   const base: DataSourceOptions = {
     type: 'postgres',
     entities: [__dirname + '/../**/*.entity{.ts,.js}'],
     migrations: [__dirname + '/migrations/*{.ts,.js}'],
     synchronize: false,
     logging: false,
-    ssl: isProduction ? { rejectUnauthorized: false } : undefined,
+    ssl: isProduction || isSupabaseUrl
+      ? { rejectUnauthorized: false }
+      : undefined,
   };
 
   if (url) {

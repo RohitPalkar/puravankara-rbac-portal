@@ -1,3 +1,5 @@
+import * as dotenv from 'dotenv';
+dotenv.config({ path: '.env' });
 import 'reflect-metadata';
 import { NestFactory } from '@nestjs/core';
 import { SeedModule } from './seed.module';

@@ -1,6 +1,7 @@
 import { DataSource, In } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { Role } from '../../modules/organization/entities/role.entity';
+import { Department } from '../../modules/organization/entities/department.entity';
 import { User } from '../../modules/users/entities/user.entity';
 import { UserAuth } from '../../modules/auth/entities/user-auth.entity';
 import { UserRole } from '../../modules/users/entities/user-role.entity';
@@ -24,6 +25,16 @@ const SYSTEM_ACTIONS = [
 ];
 
 const ZONE_NAMES = ['North', 'South', 'East', 'West'];
+
+const DEPARTMENT_NAMES = [
+  'Sales & Marketing',
+  'Finance & Accounts',
+  'Operations',
+  'Human Resources',
+  'Information Technology',
+  'Legal & Compliance',
+  'Customer Relations',
+];
 
 const MODULE_SEED: {
   name: string;
@@ -103,6 +114,7 @@ const MODULE_SEED: {
 
 export async function bootstrapSeeder(dataSource: DataSource): Promise<void> {
   const roleRepo = dataSource.getRepository(Role);
+  const deptRepo = dataSource.getRepository(Department);
   const userRepo = dataSource.getRepository(User);
   const authRepo = dataSource.getRepository(UserAuth);
   const userRoleRepo = dataSource.getRepository(UserRole);
@@ -111,6 +123,14 @@ export async function bootstrapSeeder(dataSource: DataSource): Promise<void> {
   const subModuleRepo = dataSource.getRepository(SubModule);
   const moduleActionRepo = dataSource.getRepository(ModuleAction);
   const zoneRepo = dataSource.getRepository(Zone);
+
+  // 0. Seed departments
+  for (const name of DEPARTMENT_NAMES) {
+    const existing = await deptRepo.findOne({ where: { name } });
+    if (!existing) {
+      await deptRepo.save(deptRepo.create({ name, isActive: true }));
+    }
+  }
 
   // 1. Seed zones
   for (const name of ZONE_NAMES) {

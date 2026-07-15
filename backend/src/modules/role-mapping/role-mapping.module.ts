@@ -12,7 +12,6 @@ import { RoleMappingService } from './role-mapping.service';
 import {
   RoleMappingController,
   DepartmentRolesController,
-  UserAvailableRolesController,
 } from './role-mapping.controller';
 
 @Module({
@@ -31,7 +30,6 @@ import {
   controllers: [
     RoleMappingController,
     DepartmentRolesController,
-    UserAvailableRolesController,
   ],
   providers: [RoleMappingService],
   exports: [RoleMappingService],
