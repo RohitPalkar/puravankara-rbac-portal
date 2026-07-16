@@ -202,7 +202,7 @@ export class AuthService {
 
     let permissions: any = undefined;
     try {
-      await this.compilerService.compileForAllUserProjects(user.empId);
+      this.compilerService.compileForAllUserProjects(user.empId).catch(() => {});
       const accessRows = await this.accessRepo.find({
         where: { userId: user.empId },
         relations: { project: true },
