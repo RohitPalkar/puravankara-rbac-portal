@@ -1,6 +1,7 @@
 
 import { useRef, useState, useEffect, useCallback } from 'react';
 
+import { brandApi } from './api/brand-api';
 import { zoneApi } from './api/zone-api';
 import { roleApi } from './api/role-api';
 import { userApi } from './api/user-api';
@@ -13,7 +14,7 @@ import { departmentApi } from './api/department-api';
 import { roleMappingApi } from './api/role-mapping-api';
 import {
   mockCities, mockZones, mockRoles, mockUsers, mockModules, mockActions, mockProjects, mockSubModules,
-  mockDepartments, mockPermissionMappings, mockPermissionModuleProjects,
+  mockDepartments, mockPermissionMappings, mockPermissionModuleProjects, mockBrands,
 } from './mock-data';
 
 function useApiData<T>(
@@ -95,6 +96,14 @@ export function usePermissionMappings() {
 
 export function useUsers() {
   return useApiData(() => userApi.list(), mockUsers);
+}
+
+export function useBrands() {
+  return useApiData(() => brandApi.list(), mockBrands);
+}
+
+export function useBrand(id: string) {
+  return useApiData(() => brandApi.getById(id), mockBrands.find((b) => b.id === id) ?? mockBrands[0]);
 }
 
 export interface MutationState {

@@ -15,6 +15,7 @@ const icon = (name: string) => (
 
 const ADMIN_REGISTRY: Record<string, { title: string; path: string; icon: React.ReactNode }> = {
   DASHBOARD: { title: 'Dashboard', path: paths.dashboard.root, icon: icon('ic-dashboard') },
+  BRAND: { title: 'Brand', path: paths.dashboard.brandMaster, icon: icon('ic-building') },
   ZONE_MGMT: { title: 'Zone Management', path: paths.dashboard.zoneMaster, icon: icon('ic-map') },
   DEPARTMENTS: { title: 'Departments', path: paths.dashboard.departmentMaster, icon: icon('ic-building') },
   PROJECTS: { title: 'Projects', path: paths.dashboard.projectMaster, icon: icon('ic-folder') },
@@ -59,12 +60,13 @@ export function usePermissionNav(): { navData: NavSection[] } {
 
       const sections: NavSection[] = [];
       if (adminItems.length > 0) {
-        const hasMasters = ['ZONE_MGMT', 'DEPARTMENTS'].some((c) => allowedModules.some((m) => m.code === c));
+        const masterCodes = ['BRAND', 'ZONE_MGMT', 'DEPARTMENTS'];
+        const hasMasters = masterCodes.some((c) => allowedModules.some((m) => m.code === c));
         if (hasMasters) {
-          const masterItems = ['ZONE_MGMT', 'DEPARTMENTS']
+          const masterItems = masterCodes
             .filter((c) => allowedModules.some((m) => m.code === c))
             .map((c) => ADMIN_REGISTRY[c]);
-          const restItems = adminItems.filter((i) => !['DASHBOARD', 'ZONE_MGMT', 'DEPARTMENTS'].includes(
+          const restItems = adminItems.filter((i) => !['DASHBOARD', ...masterCodes].includes(
             Object.entries(ADMIN_REGISTRY).find(([, v]) => v.title === i.title)?.[0] ?? ''
           ));
           sections.push({
@@ -98,6 +100,7 @@ export function usePermissionNav(): { navData: NavSection[] } {
               path: '#',
               icon: icon('ic-dashboard'),
               children: [
+                ADMIN_REGISTRY.BRAND,
                 ADMIN_REGISTRY.ZONE_MGMT,
                 ADMIN_REGISTRY.DEPARTMENTS,
               ],

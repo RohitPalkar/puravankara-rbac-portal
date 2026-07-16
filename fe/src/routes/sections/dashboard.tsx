@@ -9,6 +9,8 @@ import { LoadingScreen } from 'src/components/loading-screen';
 import { AuthGuard, PermissionGuard } from 'src/auth/guard';
 
 // Masters
+const BrandMasterPage = lazy(() => import('src/sections/brands/brand-list'));
+const BrandEditPage = lazy(() => import('src/sections/brands/brand-edit'));
 const ZoneMasterPage = lazy(() => import('src/sections/geography/zone-list'));
 const ZoneFormPage = lazy(() => import('src/sections/geography/zone-form'));
 const ProjectMasterPage = lazy(() => import('src/sections/projects/project-list'));
@@ -64,6 +66,8 @@ export const dashboardRoutes = [
     element: CONFIG.auth.skip ? <>{layoutContent}</> : <AuthGuard>{layoutContent}</AuthGuard>,
     children: [
       { element: <DashboardIndex />, index: true },
+      { path: 'brand-master', element: <BrandMasterPage /> },
+      { path: 'brand-master/:id/edit', element: <BrandEditPage /> },
       { path: 'zone-master', element: <ZoneMasterPage /> },
       { path: 'zone-master/create', element: <ZoneFormPage /> },
       { path: 'zone-master/:id/edit', element: <ZoneFormPage /> },

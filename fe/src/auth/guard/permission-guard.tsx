@@ -16,6 +16,7 @@ import { varBounce, MotionContainer } from 'src/components/animate';
 
 const ROUTE_CODE_MAP: Record<string, string> = {
   '/dashboard': 'DASHBOARD',
+  '/dashboard/brand-master': 'BRAND',
   '/dashboard/zone-master': 'ZONE_MGMT',
   '/dashboard/department-master': 'DEPARTMENTS',
   '/dashboard/project-master': 'PROJECTS',

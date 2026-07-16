@@ -12,6 +12,7 @@ interface ApiResponse<T> {
 interface ZoneEntity {
   id: number;
   name: string;
+  salaryCap?: number;
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
@@ -22,8 +23,7 @@ function mapZone(be: ZoneEntity): Zone {
   return {
     id: String(be.id),
     name: be.name,
-    code: be.name.substring(0, 3).toUpperCase(),
-    description: '',
+    salaryCap: be.salaryCap,
     status: be.isActive !== false ? 'active' : 'inactive',
     createdBy: be.createdBy || '',
     createdAt: be.createdAt,
@@ -45,13 +45,13 @@ export const zoneApi = {
     return mapZone(raw);
   },
 
-  async create(data: { name: string; isActive?: boolean }): Promise<Zone> {
+  async create(data: { name: string; salaryCap?: number; isActive?: boolean }): Promise<Zone> {
     const res = await apiClient.post<ApiResponse<ZoneEntity>>('/zones', data);
     const raw = res.data?.data || res.data;
     return mapZone(raw);
   },
 
-  async update(id: string, data: { name?: string; isActive?: boolean }): Promise<Zone> {
+  async update(id: string, data: { name?: string; salaryCap?: number; isActive?: boolean }): Promise<Zone> {
     const res = await apiClient.patch<ApiResponse<ZoneEntity>>(`/zones/${id}`, data);
     const raw = res.data?.data || res.data;
     return mapZone(raw);

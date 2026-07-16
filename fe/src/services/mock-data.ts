@@ -1,7 +1,7 @@
 import type {
   Zone, City, Role, User, Module, Action, Project, AuditLog, SubModule,
   Department, Delegation, Notification, ApprovalConfig, ApprovalRequest,
-  MockUserProfile, PermissionMapping, PermissionResponse,
+  MockUserProfile, PermissionMapping, PermissionResponse, Brand,
 } from 'src/types';
 
 const EMPLOYEE_DIRECTORY: { employeeId: string; name: string; email: string; mobile: string }[] = [
@@ -16,9 +16,9 @@ const EMPLOYEE_DIRECTORY: { employeeId: string; name: string; email: string; mob
 ];
 
 export const mockZones: Zone[] = [
-  { id: '1', name: 'Mumbai Metro', code: 'MMR', description: 'Western region covering Mumbai metropolitan area', status: 'active', createdBy: 'Rohit Palkar', createdAt: '2024-01-01', updatedAt: '2024-01-01' },
-  { id: '2', name: 'Bangalore Urban', code: 'BUR', description: 'Southern region covering Bangalore and surrounding areas', status: 'active', createdBy: 'Priya Sharma', createdAt: '2024-01-15', updatedAt: '2024-01-15' },
-  { id: '3', name: 'Chennai Region', code: 'CHE', description: 'Eastern coastal region covering Chennai metro', status: 'active', createdBy: 'Rohit Palkar', createdAt: '2024-02-01', updatedAt: '2024-02-01' },
+  { id: '1', name: 'Mumbai Metro', salaryCap: 5000000, status: 'active', createdBy: 'Rohit Palkar', createdAt: '2024-01-01', updatedAt: '2024-01-01' },
+  { id: '2', name: 'Bangalore Urban', salaryCap: 6000000, status: 'active', createdBy: 'Priya Sharma', createdAt: '2024-01-15', updatedAt: '2024-01-15' },
+  { id: '3', name: 'Chennai Region', salaryCap: 4500000, status: 'active', createdBy: 'Rohit Palkar', createdAt: '2024-02-01', updatedAt: '2024-02-01' },
 ];
 
 export const mockCities: City[] = [
@@ -35,10 +35,10 @@ export const mockCities: City[] = [
 ];
 
 export const mockDepartments: Department[] = [
-  { id: '1', name: 'Sales & Marketing', code: 'S&M', description: 'Handles sales operations and marketing campaigns', maxHierarchyLevels: 7, createdBy: 'Sanjay K', status: 'active', createdAt: '2025-06-24', updatedAt: '2025-06-24' },
-  { id: '2', name: 'Project Management', code: 'PM', description: 'Oversees project planning and execution', maxHierarchyLevels: 5, createdBy: 'Rohit P', status: 'active', createdAt: '2025-06-24', updatedAt: '2025-06-24' },
-  { id: '3', name: 'Finance & Accounts', code: 'F&A', description: 'Manages financial operations and accounting', maxHierarchyLevels: 7, createdBy: 'Anita S', status: 'active', createdAt: '2025-06-24', updatedAt: '2025-06-24' },
-  { id: '4', name: 'Human Resources', code: 'HR', description: 'Manages employee lifecycle and organizational culture', maxHierarchyLevels: 6, createdBy: 'Sanjay K', status: 'active', createdAt: '2025-06-24', updatedAt: '2025-06-24' },
+  { id: '1', name: 'Sales & Marketing', maxHierarchyLevels: 7, createdBy: 'Sanjay K', status: 'active', createdAt: '2025-06-24', updatedAt: '2025-06-24' },
+  { id: '2', name: 'Project Management', maxHierarchyLevels: 5, createdBy: 'Rohit P', status: 'active', createdAt: '2025-06-24', updatedAt: '2025-06-24' },
+  { id: '3', name: 'Finance & Accounts', maxHierarchyLevels: 7, createdBy: 'Anita S', status: 'active', createdAt: '2025-06-24', updatedAt: '2025-06-24' },
+  { id: '4', name: 'Human Resources', maxHierarchyLevels: 6, createdBy: 'Sanjay K', status: 'active', createdAt: '2025-06-24', updatedAt: '2025-06-24' },
 ];
 
 export const mockRoles: Role[] = [
@@ -46,6 +46,33 @@ export const mockRoles: Role[] = [
   { id: '2', name: 'Project Lead', code: 'PLD', description: 'Leads project delivery teams', level: 'L3', departmentId: '2', departmentName: 'Project Management', createdBy: 'Anita S', status: 'active', createdAt: '2025-07-09', updatedAt: '2025-07-09' },
   { id: '3', name: 'Finance Executive', code: 'FEX', description: 'Handles financial reporting and analysis', level: 'L4', departmentId: '3', departmentName: 'Finance & Accounts', createdBy: 'Sanjay K', status: 'active', createdAt: '2025-07-09', updatedAt: '2025-07-09' },
   { id: '4', name: 'HR Associate', code: 'HRA', description: 'Supports recruitment and employee engagement', level: 'L2', departmentId: '4', departmentName: 'Human Resources', createdBy: 'Rohit P', status: 'active', createdAt: '2025-07-09', updatedAt: '2025-07-09' },
+];
+
+export const mockBrands: Brand[] = [
+  {
+    id: '1', brandName: 'Puravankara', salaryMultiplier: 1.0,
+    razorpayMerchantId: 'rzp_pura', razorpaySecretKey: 'sk_pura',
+    easebuzzBookingSalt: 'sal_booking', easebuzzBookingKey: 'key_booking', easebuzzBookingSubMerchantId: 'sub_booking',
+    easebuzzMilestoneSalt: 'sal_milestone', easebuzzMilestoneKey: 'key_milestone', easebuzzMilestoneSubMerchantId: 'sub_milestone',
+    billingName: 'Puravankara Projects Ltd', panNumber: 'AAACP1234H', gstin: '29AAACP1234H1Z5',
+    address1: '24, Richmond Road', address2: 'Bangalore - 560025', pinCode: '560025',
+    logoUrl: '', reraRegularizationPercentage: 85, reraQualificationPercentage: 90, maximumRegularizationDays: 60,
+    rtmRegularizationPercentage: 80, rtmQualificationPercentage: 85, regularizationStartDate: '2024-01-01',
+    termsAndConditions: '<p>Standard T&C for Puravankara brand.</p>',
+    status: 'active', createdBy: 'Rohit Palkar', createdAt: '2024-01-01', updatedAt: '2024-06-01',
+  },
+  {
+    id: '2', brandName: 'Provident', salaryMultiplier: 0.8,
+    razorpayMerchantId: 'rzp_prov', razorpaySecretKey: 'sk_prov',
+    easebuzzBookingSalt: 'sal_prov_booking', easebuzzBookingKey: 'key_prov_booking', easebuzzBookingSubMerchantId: 'sub_prov_booking',
+    easebuzzMilestoneSalt: 'sal_prov_milestone', easebuzzMilestoneKey: 'key_prov_milestone', easebuzzMilestoneSubMerchantId: 'sub_prov_milestone',
+    billingName: 'Provident Housing Ltd', panNumber: 'AABCP5678K', gstin: '29AABCP5678K1Z2',
+    address1: '45, Electronic City', address2: 'Bangalore - 560100', pinCode: '560100',
+    logoUrl: '', reraRegularizationPercentage: 75, reraQualificationPercentage: 80, maximumRegularizationDays: 45,
+    rtmRegularizationPercentage: 70, rtmQualificationPercentage: 75, regularizationStartDate: '2024-03-01',
+    termsAndConditions: '<p>Standard T&C for Provident brand.</p>',
+    status: 'active', createdBy: 'Priya Sharma', createdAt: '2024-03-01', updatedAt: '2024-06-15',
+  },
 ];
 
 export const mockModules: Module[] = [

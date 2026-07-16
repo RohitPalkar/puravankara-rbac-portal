@@ -39,6 +39,8 @@ export const paths = {
   },
   dashboard: {
     root: ROOTS.DASHBOARD,
+    brandMaster: `${ROOTS.DASHBOARD}/brand-master`,
+    brandEdit: (id: string) => `${ROOTS.DASHBOARD}/brand-master/${id}/edit`,
     zoneMaster: `${ROOTS.DASHBOARD}/zone-master`,
     zoneMasterCreate: `${ROOTS.DASHBOARD}/zone-master/create`,
     zoneMasterEdit: (id: string) => `${ROOTS.DASHBOARD}/zone-master/${id}/edit`,

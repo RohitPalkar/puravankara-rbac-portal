@@ -85,6 +85,14 @@ export default function ZoneListPage() {
       },
     },
     {
+      field: 'salaryCap', headerName: 'Salary Cap (₹)', width: 140,
+      renderCell: (params) => {
+        const cap = params.row.salaryCap;
+        if (cap == null) return <Typography variant="body2" color="text.disabled">—</Typography>;
+        return <Typography variant="body2">{cap.toLocaleString('en-IN')}</Typography>;
+      },
+    },
+    {
       field: 'status', headerName: 'Status', width: 100,
       renderCell: (params) => (
         <Label color={params.value === 'active' ? 'success' : 'default'}>{params.value}</Label>

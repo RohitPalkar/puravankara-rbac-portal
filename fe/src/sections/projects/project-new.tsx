@@ -4,11 +4,11 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useMemo, useState, useEffect, useCallback } from 'react';
 
 import Box from '@mui/material/Box';
-import Card from '@mui/material/Card';
 import Stack from '@mui/material/Stack';
 import Alert from '@mui/material/Alert';
 import Button from '@mui/material/Button';
 import Avatar from '@mui/material/Avatar';
+import Divider from '@mui/material/Divider';
 import MenuItem from '@mui/material/MenuItem';
 import Snackbar from '@mui/material/Snackbar';
 import TextField from '@mui/material/TextField';
@@ -156,10 +156,10 @@ export default function ProjectNewPage() {
     return (
       <PageContainer>
         <PageHeader title="Project Not Found" description="The requested project does not exist" />
-        <Card sx={{ p: 4, textAlign: 'center' }}>
+        <Box sx={{ p: 4, textAlign: 'center' }}>
           <Typography variant="body1" color="text.secondary">Project not found.</Typography>
           <Button onClick={() => navigate(paths.dashboard.projectMaster)} sx={{ mt: 2 }}>Back to Projects</Button>
-        </Card>
+        </Box>
       </PageContainer>
     );
   }
@@ -176,87 +176,84 @@ export default function ProjectNewPage() {
         {saving && <LinearProgress />}
 
         {/* Section 1: Basic Details */}
-        <Card sx={{ p: 3 }}>
-          <Typography variant="subtitle1" sx={{ mb: 2.5 }}>1. Basic Details</Typography>
-          <Box display="grid" gridTemplateColumns={{ xs: '1fr', sm: '1fr 1fr' }} gap={2.5}>
-            <TextField label="Project Name" value={name} onChange={(e) => { setName(e.target.value); setNameError(''); }} error={!!nameError} helperText={nameError} required fullWidth />
-            <TextField label="Project Code" value={code} onChange={(e) => { setCode(e.target.value); setCodeError(''); }} error={!!codeError} helperText={codeError} required fullWidth />
-            <TextField select label="Brand" value={brand} onChange={(e) => setBrand(e.target.value)} required fullWidth>
-              {BRAND_OPTIONS.map((o) => <MenuItem key={o.value} value={o.value}>{o.label}</MenuItem>)}
-            </TextField>
-            <TextField select label="Zone" value={zoneId} onChange={(e) => { setZoneId(e.target.value); setCityId(''); }} required fullWidth>
-              {zones.map((z) => <MenuItem key={z.id} value={z.id}>{z.name}</MenuItem>)}
-            </TextField>
-            <TextField select label="City" value={cityId} onChange={(e) => setCityId(e.target.value)} required fullWidth disabled={!zoneId}>
-              {cityOptions.length === 0 && <MenuItem value="">{zoneId ? 'No cities available' : 'Select a zone first'}</MenuItem>}
-              {cityOptions.map((o) => <MenuItem key={o.value} value={o.value}>{o.label}</MenuItem>)}
-            </TextField>
-            <TextField label="Phase" value={phase} onChange={(e) => setPhase(e.target.value)} fullWidth />
-            
-          </Box>
-        </Card>
+        <Typography variant="subtitle1" sx={{ mb: 2.5, mt: 3 }}>1. Basic Details</Typography>
+        <Box display="grid" gridTemplateColumns={{ xs: '1fr', sm: '1fr 1fr' }} gap={2.5}>
+          <TextField label="Project Name" value={name} onChange={(e) => { setName(e.target.value); setNameError(''); }} error={!!nameError} helperText={nameError} required fullWidth />
+          <TextField label="Project Code" value={code} onChange={(e) => { setCode(e.target.value); setCodeError(''); }} error={!!codeError} helperText={codeError} required fullWidth />
+          <TextField select label="Brand" value={brand} onChange={(e) => setBrand(e.target.value)} required fullWidth>
+            {BRAND_OPTIONS.map((o) => <MenuItem key={o.value} value={o.value}>{o.label}</MenuItem>)}
+          </TextField>
+          <TextField select label="Zone" value={zoneId} onChange={(e) => { setZoneId(e.target.value); setCityId(''); }} required fullWidth>
+            {zones.map((z) => <MenuItem key={z.id} value={z.id}>{z.name}</MenuItem>)}
+          </TextField>
+          <TextField select label="City" value={cityId} onChange={(e) => setCityId(e.target.value)} required fullWidth disabled={!zoneId}>
+            {cityOptions.length === 0 && <MenuItem value="">{zoneId ? 'No cities available' : 'Select a zone first'}</MenuItem>}
+            {cityOptions.map((o) => <MenuItem key={o.value} value={o.value}>{o.label}</MenuItem>)}
+          </TextField>
+          <TextField label="Phase" value={phase} onChange={(e) => setPhase(e.target.value)} fullWidth />
+        </Box>
+
+        <Divider sx={{ borderStyle: 'dashed', my: 3 }} />
 
         {/* Section 2: Finance Details */}
-        <Card sx={{ p: 3, mt: 3 }}>
-          <Typography variant="subtitle1" sx={{ mb: 2.5 }}>2. Finance Details</Typography>
-          <Box display="grid" gridTemplateColumns={{ xs: '1fr', sm: '1fr 1fr' }} gap={2.5}>
-            <TextField label="Billing Entity" value={billingEntity} onChange={(e) => setBillingEntity(e.target.value)} fullWidth />
-            <TextField label="GSTIN" value={gstin} onChange={(e) => setGstin(e.target.value)} placeholder="e.g. 29AAACP1234H1Z5" helperText="15-character GSTIN format" fullWidth />
-            <TextField label="Billing Address" value={billingAddress} onChange={(e) => setBillingAddress(e.target.value)} multiline rows={2} fullWidth sx={{ gridColumn: { sm: 'span 2' } }} />
-          </Box>
-        </Card>
+        <Typography variant="subtitle1" sx={{ mb: 2.5 }}>2. Finance Details</Typography>
+        <Box display="grid" gridTemplateColumns={{ xs: '1fr', sm: '1fr 1fr' }} gap={2.5}>
+          <TextField label="Billing Entity" value={billingEntity} onChange={(e) => setBillingEntity(e.target.value)} fullWidth />
+          <TextField label="GSTIN" value={gstin} onChange={(e) => setGstin(e.target.value)} placeholder="e.g. 29AAACP1234H1Z5" helperText="15-character GSTIN format" fullWidth />
+          <TextField label="Billing Address" value={billingAddress} onChange={(e) => setBillingAddress(e.target.value)} multiline rows={2} fullWidth sx={{ gridColumn: { sm: 'span 2' } }} />
+        </Box>
+
+        <Divider sx={{ borderStyle: 'dashed', my: 3 }} />
 
         {/* Section 3: Configuration */}
-        <Card sx={{ p: 3, mt: 3 }}>
-          <Typography variant="subtitle1" sx={{ mb: 2.5 }}>3. Configuration</Typography>
-          <Box display="grid" gridTemplateColumns={{ xs: '1fr', sm: '1fr 1fr' }} gap={2.5}>
-            <TextField select label="Payment Gateway" value={paymentGateway} onChange={(e) => setPaymentGateway(e.target.value)} fullWidth>
-              {['Razorpay', 'PhonePe', 'BillDesk', 'PayU', 'CCAvenue'].map((g) => <MenuItem key={g} value={g}>{g}</MenuItem>)}
-            </TextField>
-            <TextField select label="Incentive Criteria" value={incentiveCriteria} onChange={(e) => setIncentiveCriteria(e.target.value)} fullWidth>
-              {['Standard', 'Custom', 'Sales target > 80%', 'Collection > 90%', 'Customer satisfaction > 4.5'].map((c) => <MenuItem key={c} value={c}>{c}</MenuItem>)}
-            </TextField>
-          </Box>
-        </Card>
+        <Typography variant="subtitle1" sx={{ mb: 2.5 }}>3. Configuration</Typography>
+        <Box display="grid" gridTemplateColumns={{ xs: '1fr', sm: '1fr 1fr' }} gap={2.5}>
+          <TextField select label="Payment Gateway" value={paymentGateway} onChange={(e) => setPaymentGateway(e.target.value)} fullWidth>
+            {['Razorpay', 'PhonePe', 'BillDesk', 'PayU', 'CCAvenue'].map((g) => <MenuItem key={g} value={g}>{g}</MenuItem>)}
+          </TextField>
+          <TextField select label="Incentive Criteria" value={incentiveCriteria} onChange={(e) => setIncentiveCriteria(e.target.value)} fullWidth>
+            {['Standard', 'Custom', 'Sales target > 80%', 'Collection > 90%', 'Customer satisfaction > 4.5'].map((c) => <MenuItem key={c} value={c}>{c}</MenuItem>)}
+          </TextField>
+        </Box>
+
+        <Divider sx={{ borderStyle: 'dashed', my: 3 }} />
 
         {/* Section 4: Assets */}
-        <Card sx={{ p: 3, mt: 3 }}>
-          <Typography variant="subtitle1" sx={{ mb: 2.5 }}>4. Assets</Typography>
-          <Box display="grid" gridTemplateColumns={{ xs: '1fr', sm: '1fr 1fr' }} gap={3}>
-            <Box>
-              <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1 }}>Project Image</Typography>
-              {projectImage ? (
-                <Box sx={{ position: 'relative', width: 1, maxWidth: 280 }}>
-                  <Avatar src={projectImage} variant="rounded" sx={{ width: 1, height: 160 }} />
-                  <IconButton size="small" onClick={() => setProjectImage('')} sx={{ position: 'absolute', top: 4, right: 4, bgcolor: 'rgba(0,0,0,0.5)', color: 'white', '&:hover': { bgcolor: 'rgba(0,0,0,0.7)' } }}>
-                    <Iconify icon="solar:close-circle-bold" width={18} />
-                  </IconButton>
-                </Box>
-              ) : (
-                <Box sx={{ border: '2px dashed', borderColor: 'divider', borderRadius: 2, p: 3, textAlign: 'center', maxWidth: 280 }}>
-                  <TextField size="small" placeholder="Paste image URL..." value={projectImage} onChange={(e) => setProjectImage(e.target.value)} fullWidth sx={{ mb: 1 }} />
-                  <Typography variant="caption" color="text.disabled">Enter a URL or upload an image</Typography>
-                </Box>
-              )}
-            </Box>
-            <Box>
-              <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1 }}>JV Image</Typography>
-              {jvImage ? (
-                <Box sx={{ position: 'relative', width: 1, maxWidth: 280 }}>
-                  <Avatar src={jvImage} variant="rounded" sx={{ width: 1, height: 160 }} />
-                  <IconButton size="small" onClick={() => setJvImage('')} sx={{ position: 'absolute', top: 4, right: 4, bgcolor: 'rgba(0,0,0,0.5)', color: 'white', '&:hover': { bgcolor: 'rgba(0,0,0,0.7)' } }}>
-                    <Iconify icon="solar:close-circle-bold" width={18} />
-                  </IconButton>
-                </Box>
-              ) : (
-                <Box sx={{ border: '2px dashed', borderColor: 'divider', borderRadius: 2, p: 3, textAlign: 'center', maxWidth: 280 }}>
-                  <TextField size="small" placeholder="Paste image URL..." value={jvImage} onChange={(e) => setJvImage(e.target.value)} fullWidth sx={{ mb: 1 }} />
-                  <Typography variant="caption" color="text.disabled">Enter a URL or upload an image</Typography>
-                </Box>
-              )}
-            </Box>
+        <Typography variant="subtitle1" sx={{ mb: 2.5 }}>4. Assets</Typography>
+        <Box display="grid" gridTemplateColumns={{ xs: '1fr', sm: '1fr 1fr' }} gap={3}>
+          <Box>
+            <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1 }}>Project Image</Typography>
+            {projectImage ? (
+              <Box sx={{ position: 'relative', width: 1, maxWidth: 280 }}>
+                <Avatar src={projectImage} variant="rounded" sx={{ width: 1, height: 160 }} />
+                <IconButton size="small" onClick={() => setProjectImage('')} sx={{ position: 'absolute', top: 4, right: 4, bgcolor: 'rgba(0,0,0,0.5)', color: 'white', '&:hover': { bgcolor: 'rgba(0,0,0,0.7)' } }}>
+                  <Iconify icon="solar:close-circle-bold" width={18} />
+                </IconButton>
+              </Box>
+            ) : (
+              <Box sx={{ border: '2px dashed', borderColor: 'divider', borderRadius: 2, p: 3, textAlign: 'center', maxWidth: 280 }}>
+                <TextField size="small" placeholder="Paste image URL..." value={projectImage} onChange={(e) => setProjectImage(e.target.value)} fullWidth sx={{ mb: 1 }} />
+                <Typography variant="caption" color="text.disabled">Enter a URL or upload an image</Typography>
+              </Box>
+            )}
           </Box>
-        </Card>
+          <Box>
+            <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1 }}>JV Image</Typography>
+            {jvImage ? (
+              <Box sx={{ position: 'relative', width: 1, maxWidth: 280 }}>
+                <Avatar src={jvImage} variant="rounded" sx={{ width: 1, height: 160 }} />
+                <IconButton size="small" onClick={() => setJvImage('')} sx={{ position: 'absolute', top: 4, right: 4, bgcolor: 'rgba(0,0,0,0.5)', color: 'white', '&:hover': { bgcolor: 'rgba(0,0,0,0.7)' } }}>
+                  <Iconify icon="solar:close-circle-bold" width={18} />
+                </IconButton>
+              </Box>
+            ) : (
+              <Box sx={{ border: '2px dashed', borderColor: 'divider', borderRadius: 2, p: 3, textAlign: 'center', maxWidth: 280 }}>
+                <TextField size="small" placeholder="Paste image URL..." value={jvImage} onChange={(e) => setJvImage(e.target.value)} fullWidth sx={{ mb: 1 }} />
+                <Typography variant="caption" color="text.disabled">Enter a URL or upload an image</Typography>
+              </Box>
+            )}
+          </Box>
+        </Box>
 
         <Box sx={{ position: 'sticky', bottom: 0, zIndex: 10, bgcolor: 'background.default', borderTop: '1px solid', borderColor: 'divider', py: 2, px: 0, mt: 3 }}>
           <Stack direction="row" spacing={1.5} justifyContent="flex-end">

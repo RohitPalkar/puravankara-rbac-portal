@@ -3,8 +3,7 @@ export type Status = 'active' | 'inactive';
 export interface Zone {
   id: string;
   name: string;
-  code: string;
-  description?: string;
+  salaryCap?: number;
   status?: Status;
   createdBy: string;
   createdAt: string;
@@ -25,8 +24,6 @@ export interface City {
 export interface Department {
   id: string;
   name: string;
-  code: string;
-  description?: string;
   maxHierarchyLevels: number;
   createdBy: string;
   status?: Status;
@@ -338,6 +335,38 @@ export interface MockUserProfile {
   };
   roles: MockUserRoleInfo[];
   permissionResponses: Record<string, PermissionResponse>;
+}
+
+export interface Brand {
+  id: string;
+  brandName: string;
+  salaryMultiplier: number;
+  razorpayMerchantId?: string;
+  razorpaySecretKey?: string;
+  easebuzzBookingSalt?: string;
+  easebuzzBookingKey?: string;
+  easebuzzBookingSubMerchantId?: string;
+  easebuzzMilestoneSalt?: string;
+  easebuzzMilestoneKey?: string;
+  easebuzzMilestoneSubMerchantId?: string;
+  billingName?: string;
+  panNumber?: string;
+  gstin?: string;
+  address1?: string;
+  address2?: string;
+  pinCode?: string;
+  logoUrl?: string;
+  reraRegularizationPercentage?: number;
+  reraQualificationPercentage?: number;
+  maximumRegularizationDays?: number;
+  rtmRegularizationPercentage?: number;
+  rtmQualificationPercentage?: number;
+  regularizationStartDate?: string;
+  termsAndConditions?: string;
+  status?: Status;
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface NavItem {

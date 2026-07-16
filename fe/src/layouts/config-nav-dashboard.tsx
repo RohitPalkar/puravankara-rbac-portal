@@ -10,6 +10,7 @@ const icon = (name: string) => (
 
 const ICONS = {
   dashboard: icon('ic-dashboard'),
+  brand: icon('ic-building'),
   zone: icon('ic-map'),
   project: icon('ic-folder'),
   department: icon('ic-building'),
@@ -38,6 +39,7 @@ export const navData = [
         path: '#',
         icon: ICONS.dashboard,
         children: [
+          { title: 'Brand', path: paths.dashboard.brandMaster, icon: ICONS.brand },
           { title: 'Zone Management', path: paths.dashboard.zoneMaster, icon: ICONS.zone },
           { title: 'Departments', path: paths.dashboard.departmentMaster, icon: ICONS.department },
         ],

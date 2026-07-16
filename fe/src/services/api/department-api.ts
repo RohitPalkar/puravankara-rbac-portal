@@ -16,8 +16,6 @@ function mapDepartment(be: DepartmentEntity): Department {
   return {
     id: String(be.id),
     name: be.name,
-    code: be.name.substring(0, 3).toUpperCase(),
-    description: '',
     maxHierarchyLevels: be.maxHierarchyLevels ?? 4,
     status: be.isActive !== false ? 'active' : 'inactive',
     createdBy: be.createdBy || '',

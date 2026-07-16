@@ -31,25 +31,11 @@ import { PageHeader, PageContainer } from 'src/components/page-layout';
 
 const schema = z.object({
   name: z.string().min(1, 'Department Name is required'),
-  code: z.string().min(1, 'Department Code is required'),
-  description: z.string().optional(),
   maxHierarchyLevels: z.coerce.number().int().min(1, 'Minimum 1 level').max(20, 'Maximum 20 levels'),
 });
 
 type FormData = z.infer<typeof schema>;
-const defaults: FormData = { name: '', code: '', description: '', maxHierarchyLevels: 7 };
-
-function generateCode(name: string, existing: Department[]): string {
-  const prefix = name.split(' ').map((w) => w[0]).join('').toUpperCase().slice(0, 3);
-  const existingCodes = existing.map((d) => d.code);
-  let code = prefix;
-  let i = 1;
-  while (existingCodes.includes(code)) {
-    code = `${prefix}${i}`;
-    i += 1;
-  }
-  return code;
-}
+const defaults: FormData = { name: '', maxHierarchyLevels: 7 };
 
 export default function DepartmentListPage() {
   const { data: apiData, loading, error, refetch } = useDepartments();
@@ -71,7 +57,7 @@ export default function DepartmentListPage() {
 
   const handleEdit = useCallback((row: Department) => {
     setEditing(row);
-    methods.reset({ name: row.name, code: row.code, description: row.description ?? '', maxHierarchyLevels: row.maxHierarchyLevels });
+    methods.reset({ name: row.name, maxHierarchyLevels: row.maxHierarchyLevels });
     setOpen(true);
   }, [methods]);
 
@@ -92,13 +78,11 @@ export default function DepartmentListPage() {
         refetch();
       } catch (e) { console.error(e); }
     } else if (editing) {
-      setData((prev) => prev.map((item) => (item.id === editing.id ? { ...item, name: form.name, code: form.code, description: form.description, maxHierarchyLevels: form.maxHierarchyLevels, updatedAt: new Date().toISOString() } : item)));
+      setData((prev) => prev.map((item) => (item.id === editing.id ? { ...item, name: form.name, maxHierarchyLevels: form.maxHierarchyLevels, updatedAt: new Date().toISOString() } : item)));
     } else {
       setData((prev) => [{
         id: String(Date.now()),
         name: form.name,
-        code: form.code || generateCode(form.name, prev),
-        description: form.description,
         maxHierarchyLevels: form.maxHierarchyLevels,
         createdBy: 'You',
         createdAt: new Date().toISOString(),
@@ -127,7 +111,6 @@ export default function DepartmentListPage() {
 
   const columns: GridColDef[] = [
     { field: 'name', headerName: 'Department Name', flex: 1, minWidth: 180 },
-    { field: 'code', headerName: 'Code', width: 90 },
     { field: 'maxHierarchyLevels', headerName: 'Hierarchy Levels', width: 140 },
     {
       field: 'userCount', headerName: 'Users Count', width: 110,
@@ -187,8 +170,6 @@ export default function DepartmentListPage() {
           <DialogContent>
             <Stack spacing={2.5} sx={{ mt: 1 }}>
               <Field.Text name="name" label="Department Name" placeholder="e.g. Finance" />
-              <Field.Text name="code" label="Department Code" placeholder="e.g. FIN" />
-              <Field.Text name="description" label="Description" multiline rows={2} placeholder="Brief description of the department" />
               <Field.Text
                 name="maxHierarchyLevels"
                 label="Number of Hierarchy Levels"
