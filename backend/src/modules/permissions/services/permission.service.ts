@@ -309,6 +309,7 @@ export class PermissionService {
     const user = await this.userRepo.findOne({ where: { empId: userId } });
     const allModules = await this.moduleRepo.find({ where: { isActive: true } });
     const allActions = await this.actionRepo.find({ where: { isActive: true } });
+    const allActionCodes = allActions.map((a) => a.code);
 
     if (!user || !user.isActive || user.deletedAt) {
       return {
@@ -319,45 +320,25 @@ export class PermissionService {
           name: m.name,
           route: '',
           allowed: true,
-          actions: allActions.map((a) => a.code),
+          actions: allActionCodes,
         })) },
       };
     }
 
     const isSuperAdmin = await this.isSuperAdmin(userId);
-
-    const userRoles = await this.userRoleRepo.find({
-      where: { userId },
-      relations: { role: true },
-    });
+    const userRoles = await this.userRoleRepo.find({ where: { userId }, relations: { role: true } });
     const roleNames = userRoles.map((ur) => ur.role.name);
 
-    let projectIds: number[];
-    if (isSuperAdmin) {
-      const projects = await this.accessRepo
-        .createQueryBuilder('upa')
-        .select('upa.project_id')
-        .distinct(true)
-        .getRawMany();
-      projectIds = projects.map((p) => Number(p.project_id));
-    } else {
-      projectIds = await this.getUserProjectIds(userId);
-    }
+    // Build flat module permissions for frontend nav (fast, no project iteration needed)
+    const flatModules = allModules.map((m) => ({
+      code: m.code || m.name.toUpperCase().replace(/\s+/g, '_'),
+      name: m.name,
+      route: '',
+      allowed: true,
+      actions: allActionCodes,
+    }));
 
-    if (projectIds.length === 0) {
-      return {
-        user: { empId: user.empId, name: user.name, email: user.email, roles: roleNames },
-        projects: [],
-        permissions: { modules: allModules.map((m) => ({
-          code: m.code || m.name.toUpperCase().replace(/\s+/g, '_'),
-          name: m.name,
-          route: '',
-          allowed: true,
-          actions: allActions.map((a) => a.code),
-        })) },
-      };
-    }
-
+    // Get project entities
     let projectEntities: { id: number; name: string }[];
     if (isSuperAdmin) {
       const rows = await this.accessRepo
@@ -366,62 +347,82 @@ export class PermissionService {
         .select(['project.id', 'project.name'])
         .distinct(true)
         .getRawMany();
-      projectEntities = rows.map((r) => ({
-        id: Number(r.project_id),
-        name: r.project_name,
-      }));
+      projectEntities = rows.map((r) => ({ id: Number(r.project_id), name: r.project_name }));
     } else {
-      const accessRows = await this.accessRepo.find({
-        where: { userId },
-        relations: { project: true },
-      });
-      projectEntities = accessRows.map((a) => ({
-        id: a.projectId,
-        name: a.project.name,
-      }));
+      const projectIds = await this.getUserProjectIds(userId);
+      if (projectIds.length === 0) {
+        return {
+          user: { empId: user.empId, name: user.name, email: user.email, roles: roleNames },
+          projects: [],
+          permissions: { modules: flatModules },
+        };
+      }
+      const accessRows = await this.accessRepo.find({ where: { userId }, relations: { project: true } });
+      projectEntities = accessRows.map((a) => ({ id: a.projectId, name: a.project.name }));
     }
 
     const result: UserPermissionsResponse = {
       user: { empId: user.empId, name: user.name, email: user.email, roles: roleNames },
+      permissions: { modules: flatModules },
       projects: [],
-      permissions: { modules: [] },
     };
 
-    for (const proj of projectEntities) {
-      const modules = await this.getUserModulePermissionsNested(
-        userId,
-        proj.id,
-        isSuperAdmin,
-      );
-      result.projects.push({ id: proj.id, name: proj.name, modules });
+    // For super admin: compute nested modules once and reuse across all projects
+    if (isSuperAdmin) {
+      const nestedModules = await this.getSuperAdminNestedModules(allModules, allActions);
+      for (const proj of projectEntities) {
+        result.projects.push({ id: proj.id, name: proj.name, modules: nestedModules });
+      }
+    } else {
+      for (const proj of projectEntities) {
+        const modules = await this.getUserModulePermissionsNested(userId, proj.id, false);
+        result.projects.push({ id: proj.id, name: proj.name, modules });
+      }
     }
 
-    // Build flat module permissions for frontend navigation
-    const allActionCodes = allActions.map((a) => a.code);
-    const moduleNameToCode = new Map(allModules.map((m) => [m.name, m.code || m.name.toUpperCase().replace(/\s+/g, '_')]));
-    const seenCodes = new Set<string>();
+    return result;
+  }
 
-    for (const proj of result.projects) {
-      for (const mod of proj.modules) {
-        const code = moduleNameToCode.get(mod.name) || mod.name.toUpperCase().replace(/\s+/g, '_');
-        if (seenCodes.has(code)) continue;
-        seenCodes.add(code);
+  private async getSuperAdminNestedModules(
+    allModules: Module[],
+    allActions: Action[],
+  ): Promise<{
+    id: number;
+    name: string;
+    subModules: { id: number; name: string; actions: { code: string; label: string; allowed: boolean }[] }[];
+  }[]> {
+    const allSubModules = await this.subModuleRepo.find({ where: { isActive: true } });
+    const result: {
+      id: number;
+      name: string;
+      subModules: { id: number; name: string; actions: { code: string; label: string; allowed: boolean }[] }[];
+    }[] = [];
 
-        const actionSet = new Set<string>();
-        for (const sm of mod.subModules) {
-          for (const a of sm.actions) {
-            actionSet.add(a.code);
-          }
+    for (const mod of allModules) {
+      const subModules = allSubModules.filter((sm) => sm.moduleId === mod.id);
+      const subModuleEntries: {
+        id: number;
+        name: string;
+        actions: { code: string; label: string; allowed: boolean }[];
+      }[] = [];
+
+      if (subModules.length > 0) {
+        for (const sm of subModules) {
+          subModuleEntries.push({
+            id: sm.id,
+            name: sm.name,
+            actions: allActions.map((a) => ({ code: a.code, label: a.label, allowed: true })),
+          });
         }
-
-        result.permissions.modules.push({
-          code,
+      } else {
+        subModuleEntries.push({
+          id: 0,
           name: mod.name,
-          route: '',
-          allowed: true,
-          actions: Array.from(actionSet).length > 0 ? Array.from(actionSet) : allActionCodes,
+          actions: allActions.map((a) => ({ code: a.code, label: a.label, allowed: true })),
         });
       }
+
+      result.push({ id: mod.id, name: mod.name, subModules: subModuleEntries });
     }
 
     return result;
