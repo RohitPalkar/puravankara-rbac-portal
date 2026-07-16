@@ -25,10 +25,11 @@ async function bootstrap() {
           'http://localhost:5173',
           'http://localhost:5174',
           'http://localhost:8081',
+          'https://puravankara-rbac-frontend.vercel.app',
         ];
 
   app.enableCors({
-    origin: corsOrigins,
+    origin: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     credentials: true,
   });
