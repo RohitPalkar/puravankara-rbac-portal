@@ -1,0 +1,79 @@
+import { Module } from '@nestjs/common';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { RoleProjectPermission } from './entities/role-project-permission.entity';
+import { PermissionTemplate } from './entities/permission-template.entity';
+import { TemplatePermission } from './entities/template-permission.entity';
+import { UserPermissionTemplate } from './entities/user-permission-template.entity';
+import { UserPermissionOverride } from './entities/user-permission-override.entity';
+import { PermissionScope } from './entities/permission-scope.entity';
+import { ActionPermissionScope } from './entities/action-permission-scope.entity';
+import { UserProjectFeatureMatrix } from './entities/user-project-feature-matrix.entity';
+import { PermissionSnapshotHistory } from './entities/permission-snapshot-history.entity';
+import { User } from '../users/entities/user.entity';
+import { UserRole } from '../users/entities/user-role.entity';
+import { Role } from '../organization/entities/role.entity';
+import { UserProjectAccess } from '../project-access/entities/user-project-access.entity';
+import { UserProjectGroup } from '../project-access/entities/user-project-group.entity';
+import { ProjectGroupProject } from '../project-access/entities/project-group-project.entity';
+import { Module as ProductModule } from '../product-catalog/entities/module.entity';
+import { SubModule } from '../product-catalog/entities/sub-module.entity';
+import { Action } from '../product-catalog/entities/action.entity';
+import { PermissionService } from './services/permission.service';
+import { UserPermissionOverrideService } from './services/user-permission-override.service';
+import { PermissionTemplateService } from './services/permission-template.service';
+import { PermissionCacheService } from './services/permission-cache.service';
+import { PermissionCompilerService } from './services/permission-compiler.service';
+import { PermissionGuard } from './guards/permission.guard';
+import { PermissionController } from './permission.controller';
+import { UserPermissionOverrideController } from './user-permission-override.controller';
+import { PermissionTemplateController } from './permission-template.controller';
+import { RoleProjectPermissionController } from './role-project-permission.controller';
+import { RoleProjectPermissionService } from './services/role-project-permission.service';
+
+@Module({
+  imports: [
+    TypeOrmModule.forFeature([
+      RoleProjectPermission,
+      PermissionTemplate,
+      TemplatePermission,
+      UserPermissionTemplate,
+      UserPermissionOverride,
+      PermissionScope,
+      ActionPermissionScope,
+      UserProjectFeatureMatrix,
+      PermissionSnapshotHistory,
+      User,
+      UserRole,
+      Role,
+      UserProjectAccess,
+      UserProjectGroup,
+      ProjectGroupProject,
+      ProductModule,
+      SubModule,
+      Action,
+    ]),
+  ],
+  controllers: [
+    PermissionController,
+    UserPermissionOverrideController,
+    PermissionTemplateController,
+    RoleProjectPermissionController,
+  ],
+  providers: [
+    PermissionService,
+    UserPermissionOverrideService,
+    PermissionTemplateService,
+    RoleProjectPermissionService,
+    PermissionCacheService,
+    PermissionCompilerService,
+    PermissionGuard,
+  ],
+  exports: [
+    PermissionService,
+    PermissionCacheService,
+    PermissionCompilerService,
+    PermissionGuard,
+    TypeOrmModule,
+  ],
+})
+export class PermissionsModule {}
