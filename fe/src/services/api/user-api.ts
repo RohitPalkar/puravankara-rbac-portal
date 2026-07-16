@@ -37,6 +37,38 @@ interface BulkProjectAccessDto {
   }>;
 }
 
+function mapUserFromApi(raw: any): User {
+  return {
+    id: raw.empId,
+    employeeId: raw.empId,
+    firstName: raw.firstName ?? '',
+    lastName: raw.lastName ?? '',
+    name: raw.name ?? '',
+    email: raw.email ?? '',
+    phone: raw.phone ?? '',
+    departmentId: String(raw.departmentId ?? ''),
+    departmentName: raw.department?.name,
+    roleId: raw.roleId ?? '',
+    roleName: raw.roleName,
+    secondaryRoleId: raw.secondaryRoleId,
+    secondaryRoleName: raw.secondaryRoleName,
+    level: raw.level ?? '',
+    employmentStatus: (raw.employmentStatus ?? '').toLowerCase() as User['employmentStatus'],
+    userGroup: raw.userGroup,
+    startDate: raw.startDate,
+    endDate: raw.endDate,
+    reportingManagerId: raw.reportingManagerId,
+    reportingManagerName: raw.reportingManagerName,
+    zoneIds: raw.zoneIds ?? [],
+    zoneNames: raw.zoneNames,
+    createdBy: raw.createdBy ?? '',
+    status: raw.isActive === true ? 'active' : 'inactive',
+    projects: raw.projects,
+    createdAt: raw.createdAt ?? '',
+    updatedAt: raw.updatedAt ?? '',
+  };
+}
+
 export const userApi = {
   async createFull(dto: CreateUserFullDto): Promise<{ user: any; generatedPassword?: string }> {
     const res = await apiClient.post('/users/full', dto);
@@ -48,12 +80,13 @@ export const userApi = {
     const res = await apiClient.get('/users');
     const raw = res.data?.data || res.data || [];
     const items = Array.isArray(raw) ? raw : raw?.data || [];
-    return items;
+    return (items ?? []).map(mapUserFromApi);
   },
 
   async getById(id: string): Promise<User> {
     const res = await apiClient.get(`/users/${id}`);
-    return res.data?.data || res.data;
+    const raw = res.data?.data || res.data;
+    return mapUserFromApi(raw);
   },
 
   async bulkProjectAccess(dto: BulkProjectAccessDto): Promise<void> {
