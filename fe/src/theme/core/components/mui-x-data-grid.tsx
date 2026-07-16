@@ -105,10 +105,22 @@ const MuiDataGrid: Components<Theme>['MuiDataGrid'] = {
         '--DataGrid-containerBackground': theme.vars.palette.background.neutral,
         '--unstable_DataGrid-headWeight': theme.typography.fontWeightSemiBold,
         borderWidth: 0,
+        borderRadius: 0,
         scrollbarWidth: 'thin',
         scrollbarColor: `${varAlpha(theme.vars.palette.text.disabledChannel, 0.4)} ${varAlpha(theme.vars.palette.text.disabledChannel, 0.08)}`,
         '& .MuiDataGrid-filler > div': { borderTopStyle: 'dashed' },
         '& .MuiDataGrid-topContainer::after': { height: 0 },
+        '& .MuiDataGrid-row': {
+          '&:hover': {
+            backgroundColor: varAlpha(theme.vars.palette.primary.mainChannel, 0.04),
+          },
+          '&.Mui-selected': {
+            backgroundColor: varAlpha(theme.vars.palette.primary.mainChannel, 0.08),
+            '&:hover': {
+              backgroundColor: varAlpha(theme.vars.palette.primary.mainChannel, 0.12),
+            },
+          },
+        },
         '& .MuiDataGrid-virtualScrollerContent': {
           '& .MuiDataGrid-row': {
             '&:hover': {
@@ -132,7 +144,14 @@ const MuiDataGrid: Components<Theme>['MuiDataGrid'] = {
     columnHeader: ({ theme }) => ({
       fontSize: 14,
       color: theme.vars.palette.text.secondary,
+      padding: theme.spacing(1.5, 2),
+      fontWeight: theme.typography.fontWeightSemiBold,
+      textTransform: 'uppercase',
+      letterSpacing: '0.05em',
       '&--sorted': { color: theme.vars.palette.text.primary },
+      '& .MuiDataGrid-columnHeaderTitle': {
+        lineHeight: 1.5,
+      },
     }),
     columnSeparator: { color: 'var(--DataGrid-rowBorderColor)' },
     /**
@@ -140,6 +159,10 @@ const MuiDataGrid: Components<Theme>['MuiDataGrid'] = {
      */
     cell: ({ theme }) => ({
       borderTopStyle: 'dashed',
+      padding: theme.spacing(1.5, 2),
+      display: 'flex',
+      alignItems: 'center',
+      lineHeight: 1.5,
       '&--editing': {
         boxShadow: 'none',
         backgroundColor: varAlpha(theme.vars.palette.primary.mainChannel, 0.08),
@@ -154,6 +177,9 @@ const MuiDataGrid: Components<Theme>['MuiDataGrid'] = {
           height: '100%',
           position: 'absolute',
         },
+      },
+      '&[aria-colindex="1"]': {
+        paddingLeft: theme.spacing(3),
       },
     }),
     /**
