@@ -26,46 +26,6 @@ export class CreateUserDto {
   @IsNotEmpty()
   departmentId: number;
 
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsString()
-  employeeId?: string;
-
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsString()
-  firstName?: string;
-
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsString()
-  lastName?: string;
-
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsString()
-  phone?: string;
-
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsString()
-  mobile?: string;
-
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsString()
-  userGroup?: string;
-
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsString()
-  startDate?: string;
-
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsString()
-  endDate?: string;
-
   @ApiPropertyOptional({ default: 'PERMANENT' })
   @IsOptional()
   @IsString()

@@ -1,0 +1,1 @@
+{"version":3,"file":"csv-import.interface.js","sourceRoot":"","sources":["../../../../src/modules/setup/interfaces/csv-import.interface.ts"],"names":[],"mappings":";;;AAyBa,QAAA,0BAA0B,GAA6B;IAClE,KAAK,EAAE,CAAC,MAAM,EAAE,OAAO,EAAE,YAAY,CAAC;IACtC,QAAQ,EAAE,CAAC,MAAM,CAAC;IAClB,KAAK,EAAE,CAAC,MAAM,EAAE,oBAAoB,CAAC;IACrC,OAAO,EAAE,CAAC,MAAM,CAAC;CAClB,CAAC"}

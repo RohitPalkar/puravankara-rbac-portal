@@ -103,7 +103,7 @@ export class SetupService {
     const q = (sql: string, params?: any[]) => this.zoneRepo.manager.query(sql, params);
 
     // Reset admin auth lock and password
-    const hash = await bcrypt.hash(process.env.DEFAULT_ADMIN_PASSWORD!, 10);
+    const hash = await bcrypt.hash(process.env.DEFAULT_ADMIN_PASSWORD || 'Admin@123456', 10);
     await q(`UPDATE user_auth SET is_locked = false, failed_attempts = 0, password_hash = $1 WHERE user_id IN (SELECT emp_id FROM users WHERE email = $2)`, [hash, ADMIN_EMAIL]);
 
     // Delete non-admin users (cascading deletes handle related tables)

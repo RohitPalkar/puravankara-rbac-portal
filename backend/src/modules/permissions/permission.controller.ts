@@ -2,8 +2,8 @@ import { Controller, Get, Post, Req, Body, Param, HttpCode } from '@nestjs/commo
 import { ApiBearerAuth, ApiTags, ApiOperation } from '@nestjs/swagger';
 import { PermissionService } from './services/permission.service';
 import { PermissionCompilerService } from './services/permission-compiler.service';
-import { PermissionAdapterService, PermissionMeResponse } from './services/permission-adapter.service';
 import { UserPermissionsResponse } from './dto/user-permissions.dto';
+import { User } from '../users/entities/user.entity';
 import {
   ExplainPermissionDto,
   ExplainPermissionResponse,
@@ -16,20 +16,11 @@ export class PermissionController {
   constructor(
     private readonly permissionService: PermissionService,
     private readonly compilerService: PermissionCompilerService,
-    private readonly adapterService: PermissionAdapterService,
   ) {}
 
   @Get('me')
-  @ApiOperation({ summary: 'Get current user permissions for frontend (adapted for FE)' })
-  async getMyPermissions(@Req() req: any): Promise<PermissionMeResponse> {
-    const userId = req.user?.empId || req.user?.userId;
-    const raw = await this.permissionService.getUserPermissions(userId);
-    return this.adapterService.adaptPermissionMeResponse(raw);
-  }
-
-  @Get('me/raw')
-  @ApiOperation({ summary: 'Get current user permissions (raw backend format)' })
-  async getMyPermissionsRaw(@Req() req: any): Promise<UserPermissionsResponse> {
+  @ApiOperation({ summary: 'Get current user permissions for frontend' })
+  async getMyPermissions(@Req() req: any): Promise<UserPermissionsResponse> {
     const userId = req.user?.empId || req.user?.userId;
     return this.permissionService.getUserPermissions(userId);
   }
@@ -63,20 +54,11 @@ export class PermissionController {
   }
 
   @Get('user/:userId')
-  @ApiOperation({ summary: 'Get permissions for a specific user (raw)' })
+  @ApiOperation({ summary: 'Get permissions for a specific user' })
   async getUserPermissions(
     @Param('userId') userId: string,
   ): Promise<UserPermissionsResponse> {
     return this.permissionService.getUserPermissions(userId);
-  }
-
-  @Get('user/:userId/adapted')
-  @ApiOperation({ summary: 'Get permissions for a specific user (adapted for FE)' })
-  async getUserPermissionsAdapted(
-    @Param('userId') userId: string,
-  ): Promise<PermissionMeResponse> {
-    const raw = await this.permissionService.getUserPermissions(userId);
-    return this.adapterService.adaptPermissionMeResponse(raw);
   }
 
   @Post('explain')

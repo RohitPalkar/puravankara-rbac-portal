@@ -7,7 +7,6 @@ import {
   UseGuards,
   HttpCode,
   HttpStatus,
-  Redirect,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags, ApiOperation } from '@nestjs/swagger';
 import { AuthService } from './services/auth.service';
@@ -17,7 +16,6 @@ import { SetPasswordDto } from './dto/set-password.dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { CurrentUser } from './decorators/current-user.decorator';
 import { Public } from './decorators/public.decorator';
-import { RawResponse } from '../../common/decorators/raw-response.decorator';
 import type { Request } from 'express';
 import type { AuthenticatedUser } from './decorators/current-user.decorator';
 
@@ -31,17 +29,6 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Login with email and password' })
   async login(@Body() dto: LoginDto, @Req() req: Request) {
-    const ip = req.ip;
-    const ua = req.headers['user-agent'];
-    return this.authService.login(dto, ip, ua);
-  }
-
-  @Public()
-  @RawResponse()
-  @Post('sign-in')
-  @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Sign in alias for login (FE compatibility)' })
-  async signIn(@Body() dto: LoginDto, @Req() req: Request) {
     const ip = req.ip;
     const ua = req.headers['user-agent'];
     return this.authService.login(dto, ip, ua);
@@ -88,7 +75,6 @@ export class AuthController {
   }
 
   @UseGuards(JwtAuthGuard)
-  @RawResponse()
   @ApiBearerAuth()
   @Get('me')
   @HttpCode(HttpStatus.OK)

@@ -2,7 +2,6 @@ import { Module, forwardRef } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
-import { ConfigService } from '@nestjs/config';
 import { AuthController } from './auth.controller';
 import { AuthService } from './services/auth.service';
 import { TokenService } from './services/token.service';
@@ -22,12 +21,9 @@ import { PermissionsModule } from '../permissions/permissions.module';
   imports: [
     TypeOrmModule.forFeature([User, UserAuth, UserSession, UserRole, UserProjectAccess]),
     PassportModule.register({ defaultStrategy: 'jwt' }),
-    JwtModule.registerAsync({
-      inject: [ConfigService],
-      useFactory: (config: ConfigService) => ({
-        secret: config.get<string>('JWT_SECRET'),
-        signOptions: { expiresIn: 900 },
-      }),
+    JwtModule.register({
+      secret: process.env.JWT_SECRET || 'puravankara-rbac-jwt-secret-key-2026',
+      signOptions: { expiresIn: 900 },
     }),
     forwardRef(() => PermissionsModule),
     AuditModule,

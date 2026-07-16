@@ -41,6 +41,6 @@ export const envValidationSchema = Joi.object({
   LOGIN_THROTTLE_TTL: Joi.number().default(60),
   LOGIN_THROTTLE_LIMIT: Joi.number().default(5),
 
-  DEFAULT_ADMIN_EMAIL: Joi.string().required(),
-  DEFAULT_ADMIN_PASSWORD: Joi.string().min(8).required(),
+  DEFAULT_ADMIN_EMAIL: Joi.string().default('admin@system.local'),
+  DEFAULT_ADMIN_PASSWORD: Joi.string().min(8).default('Admin@123456'),
 });

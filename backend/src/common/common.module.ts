@@ -7,7 +7,6 @@ import { TemplatePermission } from '../modules/permissions/entities/template-per
 import { ModuleAction } from '../modules/product-catalog/entities/module-action.entity';
 import { DepartmentRole } from '../modules/organization/entities/department-role.entity';
 import { DependencyValidatorService } from './services/dependency-validator.service';
-import { ResponseMapperService } from './services/response-mapper.service';
 
 @Global()
 @Module({
@@ -21,7 +20,7 @@ import { ResponseMapperService } from './services/response-mapper.service';
       DepartmentRole,
     ]),
   ],
-  providers: [DependencyValidatorService, ResponseMapperService],
-  exports: [DependencyValidatorService, ResponseMapperService],
+  providers: [DependencyValidatorService],
+  exports: [DependencyValidatorService],
 })
 export class CommonModule {}

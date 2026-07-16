@@ -9,6 +9,7 @@ import { AllExceptionsFilter } from './common/filters/http-exception.filter';
 import { TransformInterceptor } from './common/interceptors/transform.interceptor';
 import { PermissionGuard } from './modules/permissions/guards/permission.guard';
 import { JwtAuthGuard } from './modules/auth/guards/jwt-auth.guard';
+import { BrandsModule } from './modules/brands/brands.module';
 import { GeographyModule } from './modules/geography/geography.module';
 import { ProjectsModule } from './modules/projects/projects.module';
 import { OrganizationModule } from './modules/organization/organization.module';
@@ -24,7 +25,6 @@ import { NotificationsModule } from './modules/notifications/notifications.modul
 import { HealthModule } from './modules/health/health.module';
 import { SetupModule } from './modules/setup/setup.module';
 import { CommonModule } from './common/common.module';
-import { RoleMappingModule } from './modules/role-mapping/role-mapping.module';
 
 @Module({
   imports: [
@@ -41,6 +41,7 @@ import { RoleMappingModule } from './modules/role-mapping/role-mapping.module';
         limit: Number(process.env.THROTTLE_LIMIT || 100),
       },
     ]),
+    BrandsModule,
     GeographyModule,
     ProjectsModule,
     OrganizationModule,
@@ -56,7 +57,6 @@ import { RoleMappingModule } from './modules/role-mapping/role-mapping.module';
     HealthModule,
     SetupModule,
     CommonModule,
-    RoleMappingModule,
   ],
   providers: [
     { provide: APP_FILTER, useClass: AllExceptionsFilter },

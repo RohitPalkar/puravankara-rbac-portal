@@ -169,7 +169,7 @@ export class UserService {
       });
       if (existing) throw new ConflictException('Email already in use');
 
-      const empId = dto.basic.employeeId || await this.generateEmpId();
+      const empId = await this.generateEmpId();
 
       const user = queryRunner.manager.create(User, {
         empId,

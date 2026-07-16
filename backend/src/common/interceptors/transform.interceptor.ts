@@ -4,10 +4,8 @@ import {
   ExecutionContext,
   CallHandler,
 } from '@nestjs/common';
-import { Reflector } from '@nestjs/core';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { RAW_RESPONSE_KEY } from '../decorators/raw-response.decorator';
 
 export interface ApiResponse<T> {
   statusCode: number;
@@ -21,20 +19,13 @@ export class TransformInterceptor<T> implements NestInterceptor<
   T,
   ApiResponse<T>
 > {
-  constructor(private readonly reflector: Reflector) {}
-
   intercept(
     context: ExecutionContext,
     next: CallHandler,
   ): Observable<ApiResponse<T>> {
-    const isRaw = this.reflector.getAllAndOverride<boolean>(
-      RAW_RESPONSE_KEY,
-      [context.getHandler(), context.getClass()],
-    );
-
     return next.handle().pipe(
       map((res) => {
-        if (isRaw || (res && res.__raw)) return res;
+        if (res && res.__raw) return res.data;
         return {
           statusCode: context.switchToHttp().getResponse().statusCode,
           message: res?.message || 'Success',

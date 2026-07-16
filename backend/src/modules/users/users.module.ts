@@ -19,14 +19,12 @@ import {
 import { UserZoneController } from './controllers/user-zone.controller';
 import { PermissionsModule } from '../permissions/permissions.module';
 import { NotificationsModule } from '../notifications/notifications.module';
-import { RoleMappingModule } from '../role-mapping/role-mapping.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([User, UserRole, UserZone, UserReportingLine, UserAuth]),
     PermissionsModule,
     NotificationsModule,
-    RoleMappingModule,
   ],
   controllers: [
     UserController,

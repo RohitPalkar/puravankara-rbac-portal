@@ -29,7 +29,6 @@ import { UserPermissionOverrideController } from './user-permission-override.con
 import { PermissionTemplateController } from './permission-template.controller';
 import { RoleProjectPermissionController } from './role-project-permission.controller';
 import { RoleProjectPermissionService } from './services/role-project-permission.service';
-import { PermissionAdapterService } from './services/permission-adapter.service';
 
 @Module({
   imports: [
@@ -68,14 +67,12 @@ import { PermissionAdapterService } from './services/permission-adapter.service'
     PermissionCacheService,
     PermissionCompilerService,
     PermissionGuard,
-    PermissionAdapterService,
   ],
   exports: [
     PermissionService,
     PermissionCacheService,
     PermissionCompilerService,
     PermissionGuard,
-    PermissionAdapterService,
     TypeOrmModule,
   ],
 })
