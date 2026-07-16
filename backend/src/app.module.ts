@@ -10,6 +10,7 @@ import { TransformInterceptor } from './common/interceptors/transform.intercepto
 import { PermissionGuard } from './modules/permissions/guards/permission.guard';
 import { JwtAuthGuard } from './modules/auth/guards/jwt-auth.guard';
 import { BrandsModule } from './modules/brands/brands.module';
+import { PhasesModule } from './modules/phases/phases.module';
 import { GeographyModule } from './modules/geography/geography.module';
 import { ProjectsModule } from './modules/projects/projects.module';
 import { OrganizationModule } from './modules/organization/organization.module';
@@ -42,6 +43,7 @@ import { CommonModule } from './common/common.module';
       },
     ]),
     BrandsModule,
+    PhasesModule,
     GeographyModule,
     ProjectsModule,
     OrganizationModule,
