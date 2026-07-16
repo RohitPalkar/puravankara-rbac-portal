@@ -58,12 +58,37 @@ class UserInfo {
   roles: string[];
 }
 
+class FlatModule {
+  @ApiProperty()
+  code: string;
+
+  @ApiProperty()
+  name: string;
+
+  @ApiProperty()
+  route: string;
+
+  @ApiProperty({ default: true })
+  allowed: boolean;
+
+  @ApiProperty({ type: [String] })
+  actions: string[];
+}
+
+class FrontendPermissions {
+  @ApiProperty({ type: [FlatModule] })
+  modules: FlatModule[];
+}
+
 export class UserPermissionsResponse {
   @ApiProperty()
   user: UserInfo;
 
   @ApiProperty({ type: [ProjectPermissions] })
   projects: ProjectPermissions[];
+
+  @ApiProperty({ type: FrontendPermissions })
+  permissions: FrontendPermissions;
 }
 
-export { ProjectPermissions, ModulePermissions, SubModulePermissions, ActionPermission, UserInfo };
+export { ProjectPermissions, ModulePermissions, SubModulePermissions, ActionPermission, UserInfo, FlatModule, FrontendPermissions };

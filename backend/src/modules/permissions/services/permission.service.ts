@@ -307,8 +307,21 @@ export class PermissionService {
 
   async getUserPermissions(userId: string): Promise<UserPermissionsResponse> {
     const user = await this.userRepo.findOne({ where: { empId: userId } });
+    const allModules = await this.moduleRepo.find({ where: { isActive: true } });
+    const allActions = await this.actionRepo.find({ where: { isActive: true } });
+
     if (!user || !user.isActive || user.deletedAt) {
-      return { user: { empId: userId, name: '', email: '', roles: [] }, projects: [] };
+      return {
+        user: { empId: userId, name: '', email: '', roles: [] },
+        projects: [],
+        permissions: { modules: allModules.map((m) => ({
+          code: m.code || m.name.toUpperCase().replace(/\s+/g, '_'),
+          name: m.name,
+          route: '',
+          allowed: true,
+          actions: allActions.map((a) => a.code),
+        })) },
+      };
     }
 
     const isSuperAdmin = await this.isSuperAdmin(userId);
@@ -335,6 +348,13 @@ export class PermissionService {
       return {
         user: { empId: user.empId, name: user.name, email: user.email, roles: roleNames },
         projects: [],
+        permissions: { modules: allModules.map((m) => ({
+          code: m.code || m.name.toUpperCase().replace(/\s+/g, '_'),
+          name: m.name,
+          route: '',
+          allowed: true,
+          actions: allActions.map((a) => a.code),
+        })) },
       };
     }
 
@@ -364,6 +384,7 @@ export class PermissionService {
     const result: UserPermissionsResponse = {
       user: { empId: user.empId, name: user.name, email: user.email, roles: roleNames },
       projects: [],
+      permissions: { modules: [] },
     };
 
     for (const proj of projectEntities) {
@@ -373,6 +394,34 @@ export class PermissionService {
         isSuperAdmin,
       );
       result.projects.push({ id: proj.id, name: proj.name, modules });
+    }
+
+    // Build flat module permissions for frontend navigation
+    const allActionCodes = allActions.map((a) => a.code);
+    const moduleNameToCode = new Map(allModules.map((m) => [m.name, m.code || m.name.toUpperCase().replace(/\s+/g, '_')]));
+    const seenCodes = new Set<string>();
+
+    for (const proj of result.projects) {
+      for (const mod of proj.modules) {
+        const code = moduleNameToCode.get(mod.name) || mod.name.toUpperCase().replace(/\s+/g, '_');
+        if (seenCodes.has(code)) continue;
+        seenCodes.add(code);
+
+        const actionSet = new Set<string>();
+        for (const sm of mod.subModules) {
+          for (const a of sm.actions) {
+            actionSet.add(a.code);
+          }
+        }
+
+        result.permissions.modules.push({
+          code,
+          name: mod.name,
+          route: '',
+          allowed: true,
+          actions: Array.from(actionSet).length > 0 ? Array.from(actionSet) : allActionCodes,
+        });
+      }
     }
 
     return result;
