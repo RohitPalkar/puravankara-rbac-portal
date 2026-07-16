@@ -11,6 +11,8 @@ import { PermissionGuard } from './modules/permissions/guards/permission.guard';
 import { JwtAuthGuard } from './modules/auth/guards/jwt-auth.guard';
 import { BrandsModule } from './modules/brands/brands.module';
 import { PhasesModule } from './modules/phases/phases.module';
+import { ChannelPartnerTypesModule } from './modules/channel-partner-types/channel-partner-types.module';
+import { ChannelPartnersModule } from './modules/channel-partners/channel-partners.module';
 import { GeographyModule } from './modules/geography/geography.module';
 import { ProjectsModule } from './modules/projects/projects.module';
 import { OrganizationModule } from './modules/organization/organization.module';
@@ -44,6 +46,8 @@ import { CommonModule } from './common/common.module';
     ]),
     BrandsModule,
     PhasesModule,
+    ChannelPartnerTypesModule,
+    ChannelPartnersModule,
     GeographyModule,
     ProjectsModule,
     OrganizationModule,
