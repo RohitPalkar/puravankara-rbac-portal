@@ -7,8 +7,10 @@ import { CONFIG } from 'src/config-global';
 const STORAGE_KEY = 'accessToken';
 const REFRESH_KEY = 'refreshToken';
 
+const API_PREFIX = '/api/v1';
+
 const apiClient = axios.create({
-  baseURL: CONFIG.serverUrl,
+  baseURL: CONFIG.serverUrl.endsWith('/') ? CONFIG.serverUrl.slice(0, -1) + API_PREFIX : CONFIG.serverUrl + API_PREFIX,
   headers: { 'Content-Type': 'application/json' },
 });
 
@@ -62,7 +64,7 @@ apiClient.interceptors.response.use(
         const refreshToken = sessionStorage.getItem(REFRESH_KEY);
         if (!refreshToken) throw new Error('No refresh token');
 
-        const res = await axios.post(`${CONFIG.serverUrl}/auth/refresh`, {
+        const res = await axios.post(`${CONFIG.serverUrl}${API_PREFIX}/auth/refresh`, {
           refreshToken,
         });
 

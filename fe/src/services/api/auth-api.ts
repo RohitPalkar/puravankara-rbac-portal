@@ -57,7 +57,7 @@ interface MePermissionsResponse {
 
 export const authApi = {
   async login(data: LoginRequest): Promise<LoginResponse> {
-    const res = await apiClient.post('/auth/sign-in', data);
+    const res = await apiClient.post('/auth/login', data);
     const result = res.data?.data || res.data;
     if (result.accessToken) {
       setTokens(result.accessToken, result.refreshToken);
