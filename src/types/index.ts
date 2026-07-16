@@ -173,13 +173,50 @@ export interface ChannelPartner {
   updatedAt: string;
 }
 
+export interface ProjectPaymentGateway {
+  id: string;
+  gatewayType: 'razorpay' | 'easebuzz_booking' | 'easebuzz_milestone';
+  merchantId?: string;
+  secretKey?: string;
+  salt?: string;
+  key?: string;
+  subMerchantId?: string;
+  isActive: boolean;
+}
+
+export interface ProjectIncentiveRule {
+  id: string;
+  incentiveType: 'rera' | 'rtm';
+  regularizationPercentage?: number;
+  payablePercentage?: number;
+  maxDays?: number;
+  startDate?: string;
+}
+
 export interface Project {
   id: string;
   name: string;
   code: string;
+  brandId: string;
+  brandName?: string;
+  cityId: string;
+  cityName?: string;
+  billingName?: string;
+  panNumber?: string;
+  gstin?: string;
+  address1?: string;
+  address2?: string;
+  pinCode?: string;
+  projectImage?: string;
+  jvLogo?: string;
+  sfdcProjectName?: string;
+  codename?: string;
+  termsHtml?: string;
   startDate: string;
   endDate: string;
   status: Status;
+  paymentGateways?: ProjectPaymentGateway[];
+  incentiveRules?: ProjectIncentiveRule[];
   createdAt: string;
   updatedAt: string;
 }
