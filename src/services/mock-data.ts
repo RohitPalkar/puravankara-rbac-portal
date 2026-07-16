@@ -1,6 +1,6 @@
 import type {
   Zone, City, Role, User, Module, Action, Project, SubModule, Department, Brand, Phase,
-  ChannelPartnerType, ChannelPartner, UserGroup,
+  ChannelPartnerType, ChannelPartner, UserGroup, ProjectPaymentGateway, ProjectIncentiveRule,
   ApprovalConfig, ApprovalRequest, Delegation, AuditLog, Notification,
 } from 'src/types';
 
@@ -92,9 +92,36 @@ export const mockActions: Action[] = [
 ];
 
 export const mockProjects: Project[] = [
-  { id: '1', name: 'Park Avenue Phase 3', code: 'PA3', startDate: '2024-01-01', endDate: '2026-12-31', status: 'active', createdAt: '2024-01-01', updatedAt: '2024-01-01' },
-  { id: '2', name: 'Bella Garden Residency', code: 'BGR', startDate: '2024-03-01', endDate: '2027-06-30', status: 'active', createdAt: '2024-01-01', updatedAt: '2024-01-01' },
-  { id: '3', name: 'Greenfield Towers', code: 'GFT', startDate: '2024-06-01', endDate: '2027-12-31', status: 'active', createdAt: '2024-01-01', updatedAt: '2024-01-01' },
+  {
+    id: '1', name: 'Park Avenue Phase 3', code: 'PA3',
+    brandId: '1', brandName: 'Puravankara', cityId: '1', cityName: 'Mumbai',
+    billingName: 'Puravankara Ltd', panNumber: 'AAACP1234C', gstin: '27AAACP1234C1ZW',
+    address1: '130/131, 2nd Floor, Raheja Center', pinCode: '400051',
+    startDate: '2024-01-01', endDate: '2026-12-31', status: 'active',
+    paymentGateways: [{ id: '1', gatewayType: 'easebuzz_booking', salt: 'salt1', key: 'key1', subMerchantId: 'sub1', isActive: true } as ProjectPaymentGateway],
+    incentiveRules: [
+      { id: '1', incentiveType: 'rera', regularizationPercentage: 5, payablePercentage: 80, maxDays: 30 } as ProjectIncentiveRule,
+    ],
+    createdAt: '2024-01-01', updatedAt: '2024-06-01',
+  },
+  {
+    id: '2', name: 'Bella Garden Residency', code: 'BGR',
+    brandId: '2', brandName: 'Provident Housing', cityId: '3', cityName: 'Bangalore',
+    billingName: 'Provident Housing Ltd', panNumber: 'BBBCP5678D', gstin: '29BBBCP5678D1ZX',
+    address1: '12/3, Bannerghatta Road', pinCode: '560076',
+    startDate: '2024-03-01', endDate: '2027-06-30', status: 'active',
+    incentiveRules: [
+      { id: '2', incentiveType: 'rera', regularizationPercentage: 5, payablePercentage: 75, maxDays: 45 } as ProjectIncentiveRule,
+      { id: '3', incentiveType: 'rtm', regularizationPercentage: 3, payablePercentage: 85 } as ProjectIncentiveRule,
+    ],
+    createdAt: '2024-02-01', updatedAt: '2024-05-15',
+  },
+  {
+    id: '3', name: 'Greenfield Towers', code: 'GFT',
+    brandId: '1', brandName: 'Puravankara', cityId: '2', cityName: 'Navi Mumbai',
+    startDate: '2024-06-01', endDate: '2027-12-31', status: 'active',
+    createdAt: '2024-06-01', updatedAt: '2024-06-01',
+  },
 ];
 
 export const mockUserGroups: UserGroup[] = [

@@ -53,6 +53,8 @@ export const paths = {
     channelPartnerMasterCreate: `${ROOTS.DASHBOARD}/channel-partner-master/create`,
     channelPartnerMasterEdit: (id: string) => `${ROOTS.DASHBOARD}/channel-partner-master/${id}/edit`,
     projectMaster: `${ROOTS.DASHBOARD}/project-master`,
+    projectMasterCreate: `${ROOTS.DASHBOARD}/project-master/create`,
+    projectMasterEdit: (id: string) => `${ROOTS.DASHBOARD}/project-master/${id}/edit`,
     departmentMaster: `${ROOTS.DASHBOARD}/department-master`,
     roleMaster: `${ROOTS.DASHBOARD}/role-master`,
     // Access Management
