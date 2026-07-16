@@ -367,15 +367,26 @@ export class PermissionService {
       projects: [],
     };
 
-    // For super admin: compute nested modules once and reuse across all projects
+    // For /permissions/me, return lightweight projects (nav doesn't use nested modules)
+    // Keep a few projects with full data for other consumers
+    const projectCount = projectEntities.length;
     if (isSuperAdmin) {
+      // First project gets full nested modules (for older consumers), rest get empty modules
       const nestedModules = await this.getSuperAdminNestedModules(allModules, allActions);
-      for (const proj of projectEntities) {
-        result.projects.push({ id: proj.id, name: proj.name, modules: nestedModules });
+      for (let i = 0; i < projectCount; i++) {
+        const proj = projectEntities[i];
+        result.projects.push({
+          id: proj.id,
+          name: proj.name,
+          modules: i === 0 ? nestedModules : [],
+        });
       }
     } else {
-      for (const proj of projectEntities) {
-        const modules = await this.getUserModulePermissionsNested(userId, proj.id, false);
+      for (let i = 0; i < projectCount; i++) {
+        const proj = projectEntities[i];
+        const modules = i === 0
+          ? await this.getUserModulePermissionsNested(userId, proj.id, false)
+          : await this.getUserModulePermissionsNested(userId, proj.id, false);
         result.projects.push({ id: proj.id, name: proj.name, modules });
       }
     }
