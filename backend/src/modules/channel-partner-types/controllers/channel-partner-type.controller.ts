@@ -13,7 +13,7 @@ export class ChannelPartnerTypeController extends BaseController<
   CreateChannelPartnerTypeDto,
   UpdateChannelPartnerTypeDto
 > {
-  constructor(private readonly service: ChannelPartnerTypeService) {
+  constructor(protected readonly service: ChannelPartnerTypeService) {
     super(service, 'ChannelPartnerType');
   }
 }

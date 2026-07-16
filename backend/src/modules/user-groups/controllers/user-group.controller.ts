@@ -13,7 +13,7 @@ export class UserGroupController extends BaseController<
   CreateUserGroupDto,
   UpdateUserGroupDto
 > {
-  constructor(private readonly service: UserGroupService) {
+  constructor(protected readonly service: UserGroupService) {
     super(service, 'UserGroup');
   }
 }

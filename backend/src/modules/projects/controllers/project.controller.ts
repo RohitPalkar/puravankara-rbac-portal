@@ -1,8 +1,9 @@
-import { Controller, Get, Post, Body, Patch, Param, ParseIntPipe } from '@nestjs/common';
-import { ApiBearerAuth, ApiTags, ApiOperation } from '@nestjs/swagger';
+import { Controller, Get, Post, Body, Patch, Param, ParseIntPipe, Query } from '@nestjs/common';
+import { ApiBearerAuth, ApiTags, ApiOperation, ApiQuery } from '@nestjs/swagger';
 import { ProjectService } from '../services/project.service';
 import { CreateProjectDto, UpdateProjectDto } from '../dto/project.dto';
 import { Project } from '../entities/project.entity';
+import { PaginatedResult } from '../../../common/crud/crud.interface';
 
 @ApiTags('Projects')
 @ApiBearerAuth()
@@ -11,15 +12,20 @@ export class ProjectController {
   constructor(private readonly projectService: ProjectService) {}
 
   @Get()
-  @ApiOperation({ summary: 'Get all projects' })
-  async findAll(): Promise<Project[]> {
-    return this.projectService.findAll();
+  @ApiOperation({ summary: 'Get all projects (paginated)' })
+  @ApiQuery({ name: 'page', required: false })
+  @ApiQuery({ name: 'limit', required: false })
+  async findAll(
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+  ): Promise<PaginatedResult<Project>> {
+    return this.projectService.findAll({ page: page ? parseInt(page, 10) : 1, limit: limit ? parseInt(limit, 10) : 100 });
   }
 
   @Get(':id')
-  @ApiOperation({ summary: 'Get project by ID' })
-  async findOne(@Param('id', ParseIntPipe) id: number): Promise<Project> {
-    return this.projectService.findOne(id);
+  @ApiOperation({ summary: 'Get project by ID with relations' })
+  async findById(@Param('id', ParseIntPipe) id: number): Promise<Project> {
+    return this.projectService.findById(id);
   }
 
   @Post()
