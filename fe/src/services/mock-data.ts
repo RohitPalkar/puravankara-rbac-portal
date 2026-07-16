@@ -263,6 +263,7 @@ export const mockPermissionResponse: Record<string, PermissionResponse> = {
     permissions: {
       modules: [
         { code: 'DASHBOARD', name: 'Dashboard', route: '/dashboard', allowed: true, actions: ['VIEW', 'EXPORT'] },
+        { code: 'BRAND', name: 'Brand', route: '/dashboard/brand-master', allowed: true, actions: ['VIEW', 'CREATE', 'EDIT', 'DELETE'] },
         { code: 'ZONE_MGMT', name: 'Zone Management', route: '/dashboard/zone-master', allowed: true, actions: ['VIEW', 'CREATE', 'EDIT', 'DELETE'] },
         { code: 'DEPARTMENTS', name: 'Departments', route: '/dashboard/department-master', allowed: true, actions: ['VIEW', 'CREATE', 'EDIT', 'DELETE'] },
         { code: 'ROLES', name: 'Roles', route: '/dashboard/role-master', allowed: true, actions: ['VIEW', 'CREATE', 'EDIT', 'DELETE'] },
