@@ -42,6 +42,7 @@ interface MePermissionsResponse {
     name: string;
     email: string;
     role?: string;
+    roles?: string[];
   };
   permissions: {
     modules: Array<{
@@ -77,7 +78,7 @@ export const authApi = {
         id: raw.user.empId,
         name: raw.user.name,
         email: raw.user.email,
-        role: raw.user.role,
+        role: raw.user.role || (raw.user.roles?.[0]) || 'admin',
       },
       permissions: {
         modules: (raw.permissions?.modules ?? []).map((m) => ({
