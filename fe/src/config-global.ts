@@ -34,7 +34,7 @@ export const CONFIG: ConfigValue = {
   assetsDir: import.meta.env.VITE_ASSETS_DIR ?? '',
   auth: {
     method: 'jwt',
-    skip: true,
+    skip: false,
     redirectPath: paths.dashboard.root,
   },
   mapboxApiKey: import.meta.env.VITE_MAPBOX_API_KEY ?? '',
