@@ -1,5 +1,6 @@
 import type {
-  Zone, City, Role, User, Module, Action, Project, SubModule, Department,
+  Zone, City, Role, User, Module, Action, Project, SubModule, Department, Brand, Phase,
+  ChannelPartnerType, ChannelPartner, UserGroup,
   ApprovalConfig, ApprovalRequest, Delegation, AuditLog, Notification,
 } from 'src/types';
 
@@ -7,6 +8,30 @@ export const mockZones: Zone[] = [
   { id: '1', name: 'Mumbai Metro', code: 'MMR', status: 'active', createdBy: 'Rohit Palkar', createdAt: '2024-01-01', updatedAt: '2024-01-01' },
   { id: '2', name: 'Bangalore Urban', code: 'BUR', status: 'active', createdBy: 'Priya Sharma', createdAt: '2024-01-15', updatedAt: '2024-01-15' },
   { id: '3', name: 'Chennai Region', code: 'CHE', status: 'active', createdBy: 'Rohit Palkar', createdAt: '2024-02-01', updatedAt: '2024-02-01' },
+];
+
+export const mockBrands: Brand[] = [
+  { id: '1', brandName: 'Puravankara', billingName: 'Puravankara Ltd', address1: '130/131, 2nd Floor, Raheja Center', address2: 'Plot No. C-30, Bandra Kurla Complex', city: 'Mumbai', state: 'Maharashtra', country: 'India', pinCode: '400051', panNumber: 'AAACP1234C', gstin: '27AAACP1234C1ZW', logoUrl: '', salaryMultiplier: 1, razorpayMerchantId: 'rzp_live_XXXXXXXX', razorpaySecretKey: 'sk_live_XXXXXXXX', easebuzzBookingSalt: 'salt1', easebuzzBookingKey: 'key1', easebuzzBookingSubMerchantId: 'sub1', easebuzzMilestoneSalt: 'salt2', easebuzzMilestoneKey: 'key2', easebuzzMilestoneSubMerchantId: 'sub2', reraRegularizationPercentage: 5, reraQualificationPercentage: 80, maximumRegularizationDays: 30, rtmRegularizationPercentage: 3, rtmQualificationPercentage: 90, regularizationStartDate: '2024-04-01', termsAndConditions: 'Standard T&C apply as per RERA guidelines.', status: 'active', createdBy: 'Rohit Palkar', createdAt: '2024-01-01', updatedAt: '2024-06-01' },
+  { id: '2', brandName: 'Provident Housing', billingName: 'Provident Housing Ltd', address1: '12/3, Bannerghatta Road', city: 'Bangalore', state: 'Karnataka', country: 'India', pinCode: '560076', panNumber: 'BBBCP5678D', gstin: '29BBBCP5678D1ZX', salaryMultiplier: 0.9, reraRegularizationPercentage: 5, reraQualificationPercentage: 75, maximumRegularizationDays: 45, rtmRegularizationPercentage: 3, rtmQualificationPercentage: 85, status: 'active', createdBy: 'Priya Sharma', createdAt: '2024-02-01', updatedAt: '2024-05-15' },
+];
+
+export const mockPhases: Phase[] = [
+  { id: '1', brandId: '1', brandName: 'Puravankara', cityId: '1', cityName: 'Mumbai', projectId: '1', projectName: 'Park Avenue Phase 3', phaseName: 'Phase 1', sfdcPhaseName: 'PA3-P1', sfdcBlockName: 'Tower A', possessionDate: '2026-12-31', agreementExecutionPercentage: 10, bookingGatewayId: 'sub1', milestoneGatewayId: 'sub2', launchEnabled: true, launchStartDate: '2024-06-01', launchEndDate: '2025-06-30', sustenanceEnabled: false, status: 'active', createdBy: 'Rohit Palkar', createdAt: '2024-01-15', updatedAt: '2024-06-01' },
+  { id: '2', brandId: '1', brandName: 'Puravankara', cityId: '2', cityName: 'Navi Mumbai', projectId: '1', projectName: 'Park Avenue Phase 3', phaseName: 'Phase 2', sfdcPhaseName: 'PA3-P2', possessionDate: '2027-06-30', agreementExecutionPercentage: 25, launchEnabled: false, sustenanceEnabled: false, status: 'active', createdBy: 'Rohit Palkar', createdAt: '2024-03-01', updatedAt: '2024-06-01' },
+  { id: '3', brandId: '2', brandName: 'Provident Housing', cityId: '3', cityName: 'Bangalore', projectId: '2', projectName: 'Bella Garden Residency', phaseName: 'Tower 1', sfdcPhaseName: 'BGR-T1', possessionDate: '2027-03-31', bookingGatewayId: 'sub1', milestoneGatewayId: 'sub2', launchEnabled: true, launchStartDate: '2024-08-01', launchEndDate: '2025-03-31', sustenanceEnabled: true, sustenanceDate: '2025-04-01', status: 'active', createdBy: 'Priya Sharma', createdAt: '2024-04-01', updatedAt: '2024-06-01' },
+];
+
+export const mockChannelPartnerTypes: ChannelPartnerType[] = [
+  { id: '1', name: 'Reward Plus', description: 'Reward Plus partner category', status: 'active', createdAt: '2024-01-01', updatedAt: '2024-01-01' },
+  { id: '2', name: 'Advantage Club', description: 'Advantage Club partner category', status: 'active', createdAt: '2024-01-01', updatedAt: '2024-01-01' },
+  { id: '3', name: 'Regional AOP', description: 'Regional AOP partner category', status: 'active', createdAt: '2024-01-01', updatedAt: '2024-01-01' },
+  { id: '4', name: 'Retail Partner', description: 'Retail Partner category', status: 'active', createdAt: '2024-01-01', updatedAt: '2024-01-01' },
+];
+
+export const mockChannelPartners: ChannelPartner[] = [
+  { id: '1', cpId: 'CP-000001', cpName: 'ABC Realty', cpTypeId: '1', cpTypeName: 'Reward Plus', startDate: '2024-01-01', endDate: '2025-12-31', status: 'active', createdBy: 'Rohit Palkar', createdAt: '2024-01-01', updatedAt: '2024-01-01' },
+  { id: '2', cpId: 'CP-000002', cpName: 'XYZ Developers', cpTypeId: '2', cpTypeName: 'Advantage Club', startDate: '2024-03-01', status: 'active', createdBy: 'Priya Sharma', createdAt: '2024-03-01', updatedAt: '2024-03-01' },
+  { id: '3', cpId: 'CP-000003', cpName: 'PQR Holdings', cpTypeId: '4', cpTypeName: 'Retail Partner', startDate: '2024-06-01', endDate: '2026-05-31', status: 'active', createdBy: 'Rohit Palkar', createdAt: '2024-06-01', updatedAt: '2024-06-01' },
 ];
 
 export const mockCities: City[] = [
@@ -70,6 +95,13 @@ export const mockProjects: Project[] = [
   { id: '1', name: 'Park Avenue Phase 3', code: 'PA3', startDate: '2024-01-01', endDate: '2026-12-31', status: 'active', createdAt: '2024-01-01', updatedAt: '2024-01-01' },
   { id: '2', name: 'Bella Garden Residency', code: 'BGR', startDate: '2024-03-01', endDate: '2027-06-30', status: 'active', createdAt: '2024-01-01', updatedAt: '2024-01-01' },
   { id: '3', name: 'Greenfield Towers', code: 'GFT', startDate: '2024-06-01', endDate: '2027-12-31', status: 'active', createdAt: '2024-01-01', updatedAt: '2024-01-01' },
+];
+
+export const mockUserGroups: UserGroup[] = [
+  { id: '1', name: 'Operations', description: 'Operations team members', status: 'active', createdAt: '2024-01-01', updatedAt: '2024-01-01' },
+  { id: '2', name: 'Management', description: 'Management team members', status: 'active', createdAt: '2024-01-01', updatedAt: '2024-01-01' },
+  { id: '3', name: 'Executive', description: 'Executive team members', status: 'active', createdAt: '2024-01-01', updatedAt: '2024-01-01' },
+  { id: '4', name: 'Admin', description: 'Administrative team members', status: 'active', createdAt: '2024-01-01', updatedAt: '2024-01-01' },
 ];
 
 export const mockUsers: User[] = [

@@ -9,6 +9,13 @@ import { AuthGuard } from 'src/auth/guard';
 // Masters
 const ZoneMasterPage = lazy(() => import('src/sections/geography/zone-list'));
 const ZoneFormPage = lazy(() => import('src/sections/geography/zone-form'));
+const BrandMasterPage = lazy(() => import('src/sections/brand/brand-list'));
+const BrandFormPage = lazy(() => import('src/sections/brand/brand-form'));
+const PhaseMasterPage = lazy(() => import('src/sections/phase/phase-list'));
+const PhaseFormPage = lazy(() => import('src/sections/phase/phase-form'));
+const ChannelPartnerPage = lazy(() => import('src/sections/channel-partner/cp-list'));
+const ChannelPartnerFormPage = lazy(() => import('src/sections/channel-partner/cp-form'));
+const ChannelPartnerTypePage = lazy(() => import('src/sections/channel-partner/cp-type-list'));
 const ProjectMasterPage = lazy(() => import('src/sections/projects/project-list'));
 const DepartmentMasterPage = lazy(() => import('src/sections/organization/department-list'));
 const RoleMasterPage = lazy(() => import('src/sections/organization/role-list'));
@@ -50,6 +57,16 @@ export const dashboardRoutes = [
       { path: 'zone-master', element: <ZoneMasterPage /> },
       { path: 'zone-master/create', element: <ZoneFormPage /> },
       { path: 'zone-master/:id/edit', element: <ZoneFormPage /> },
+      { path: 'brand-master', element: <BrandMasterPage /> },
+      { path: 'brand-master/create', element: <BrandFormPage /> },
+      { path: 'brand-master/:id/edit', element: <BrandFormPage /> },
+      { path: 'phase-master', element: <PhaseMasterPage /> },
+      { path: 'phase-master/create', element: <PhaseFormPage /> },
+      { path: 'phase-master/:id/edit', element: <PhaseFormPage /> },
+      { path: 'cp-type-master', element: <ChannelPartnerTypePage /> },
+      { path: 'channel-partner-master', element: <ChannelPartnerPage /> },
+      { path: 'channel-partner-master/create', element: <ChannelPartnerFormPage /> },
+      { path: 'channel-partner-master/:id/edit', element: <ChannelPartnerFormPage /> },
       { path: 'project-master', element: <ProjectMasterPage /> },
       { path: 'department-master', element: <DepartmentMasterPage /> },
       { path: 'role-master', element: <RoleMasterPage /> },

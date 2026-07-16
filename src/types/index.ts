@@ -80,6 +80,99 @@ export interface Action {
   updatedAt: string;
 }
 
+export interface Brand {
+  id: string;
+  brandName: string;
+  billingName?: string;
+  address1?: string;
+  address2?: string;
+  city?: string;
+  state?: string;
+  country?: string;
+  pinCode?: string;
+  panNumber?: string;
+  gstin?: string;
+  logoUrl?: string;
+  salaryMultiplier: number;
+  razorpayMerchantId?: string;
+  razorpaySecretKey?: string;
+  easebuzzBookingSalt?: string;
+  easebuzzBookingKey?: string;
+  easebuzzBookingSubMerchantId?: string;
+  easebuzzMilestoneSalt?: string;
+  easebuzzMilestoneKey?: string;
+  easebuzzMilestoneSubMerchantId?: string;
+  reraRegularizationPercentage?: number;
+  reraQualificationPercentage?: number;
+  maximumRegularizationDays?: number;
+  rtmRegularizationPercentage?: number;
+  rtmQualificationPercentage?: number;
+  regularizationStartDate?: string;
+  termsAndConditions?: string;
+  status: Status;
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface Phase {
+  id: string;
+  brandId: string;
+  brandName?: string;
+  cityId: string;
+  cityName?: string;
+  projectId: string;
+  projectName?: string;
+  phaseName: string;
+  sfdcPhaseName: string;
+  sfdcBlockName?: string;
+  possessionDate: string;
+  agreementExecutionPercentage?: number;
+  bookingGatewayId?: string;
+  milestoneGatewayId?: string;
+  launchEnabled: boolean;
+  launchStartDate?: string;
+  launchEndDate?: string;
+  sustenanceEnabled: boolean;
+  sustenanceDate?: string;
+  status: Status;
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface UserGroup {
+  id: string;
+  name: string;
+  description?: string;
+  status: Status;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ChannelPartnerType {
+  id: string;
+  name: string;
+  description?: string;
+  status: Status;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ChannelPartner {
+  id: string;
+  cpId: string;
+  cpName: string;
+  cpTypeId: string;
+  cpTypeName?: string;
+  startDate: string;
+  endDate?: string;
+  status: Status;
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface Project {
   id: string;
   name: string;
