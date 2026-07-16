@@ -1,30 +1,29 @@
-import { useState, useCallback } from 'react';
-import { Helmet } from 'react-helmet-async';
+import type { Action } from 'src/types';
 import type { GridColDef } from '@mui/x-data-grid';
-import Button from '@mui/material/Button';
+
+import { z } from 'zod';
+import { useForm } from 'react-hook-form';
+import { Helmet } from 'react-helmet-async';
+import { useState, useCallback } from 'react';
+import { zodResolver } from '@hookform/resolvers/zod';
+
+import Card from '@mui/material/Card';
 import Stack from '@mui/material/Stack';
+import Button from '@mui/material/Button';
 import Dialog from '@mui/material/Dialog';
 import DialogTitle from '@mui/material/DialogTitle';
 import DialogContent from '@mui/material/DialogContent';
 import DialogActions from '@mui/material/DialogActions';
-import Card from '@mui/material/Card';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
+
 import { CONFIG } from 'src/config-global';
-import { DataTable } from 'src/components/data-table';
-import { Form, Field } from 'src/components/hook-form';
+import { mockActions, mockSubModules } from 'src/services/mock-data';
+
 import { Label } from 'src/components/label';
 import { Iconify } from 'src/components/iconify';
-import { PageContainer, PageHeader } from 'src/components/page-layout';
+import { DataTable } from 'src/components/data-table';
+import { Form, Field } from 'src/components/hook-form';
 import { RowActionsMenu } from 'src/components/row-actions';
-import { mockActions, mockSubModules } from 'src/services/mock-data';
-import type { Action } from 'src/types';
-
-const STATUS_OPTIONS = [
-  { value: 'active', label: 'Active' },
-  { value: 'inactive', label: 'Inactive' },
-];
+import { PageHeader, PageContainer } from 'src/components/page-layout';
 
 const SUBMODULE_OPTIONS = mockSubModules.map((s) => ({ value: s.id, label: s.name }));
 
@@ -33,11 +32,10 @@ const schema = z.object({
   code: z.string().min(1, 'Code is required').max(20, 'Max 20 chars'),
   subModuleId: z.string().min(1, 'Sub Module is required'),
   sortOrder: z.coerce.number().int().min(0),
-  status: z.enum(['active', 'inactive']),
 });
 
 type FormData = z.infer<typeof schema>;
-const defaults: FormData = { name: '', code: '', subModuleId: '', sortOrder: 0, status: 'active' };
+const defaults: FormData = { name: '', code: '', subModuleId: '', sortOrder: 0 };
 
 export default function ActionListPage() {
   const [data, setData] = useState<Action[]>(mockActions);
@@ -55,7 +53,7 @@ export default function ActionListPage() {
 
   const handleEdit = useCallback((row: Action) => {
     setEditing(row);
-    methods.reset({ name: row.name, code: row.code, subModuleId: row.subModuleId, sortOrder: row.sortOrder, status: row.status });
+    methods.reset({ name: row.name, code: row.code, subModuleId: row.subModuleId, sortOrder: row.sortOrder });
     setOpen(true);
   }, [methods]);
 
@@ -128,7 +126,6 @@ export default function ActionListPage() {
               <Field.Text name="code" label="Action Code" />
               <Field.Select name="subModuleId" label="Sub Module" options={SUBMODULE_OPTIONS} />
               <Field.Text name="sortOrder" label="Sort Order" type="number" />
-              <Field.Select name="status" label="Status" options={STATUS_OPTIONS} />
             </Stack>
           </DialogContent>
           <DialogActions>

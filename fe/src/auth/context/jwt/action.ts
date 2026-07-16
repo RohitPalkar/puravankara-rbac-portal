@@ -1,5 +1,8 @@
 import axios, { endpoints } from 'src/utils/axios';
 
+import { authApi } from 'src/services/api/auth-api';
+import { isApiMode } from 'src/services/data-source';
+
 import { setSession } from './utils';
 import { STORAGE_KEY } from './constant';
 
@@ -22,17 +25,22 @@ export type SignUpParams = {
  *************************************** */
 export const signInWithPassword = async ({ email, password }: SignInParams): Promise<void> => {
   try {
-    const params = { email, password };
-
-    const res = await axios.post(endpoints.auth.signIn, params);
-
-    const { accessToken } = res.data;
-
-    if (!accessToken) {
-      throw new Error('Access token not found in response');
+    if (isApiMode()) {
+      const result = await authApi.login({ email, password });
+      const {accessToken} = result;
+      if (!accessToken) {
+        throw new Error('Access token not found in response');
+      }
+      setSession(accessToken);
+    } else {
+      const params = { email, password };
+      const res = await axios.post(endpoints.auth.signIn, params);
+      const { accessToken } = res.data;
+      if (!accessToken) {
+        throw new Error('Access token not found in response');
+      }
+      setSession(accessToken);
     }
-
-    setSession(accessToken);
   } catch (error) {
     console.error('Error during sign in:', error);
     throw error;

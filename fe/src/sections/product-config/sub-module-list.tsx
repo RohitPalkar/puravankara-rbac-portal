@@ -1,30 +1,29 @@
-import { useState, useCallback } from 'react';
-import { Helmet } from 'react-helmet-async';
+import type { SubModule } from 'src/types';
 import type { GridColDef } from '@mui/x-data-grid';
-import Button from '@mui/material/Button';
+
+import { z } from 'zod';
+import { useForm } from 'react-hook-form';
+import { Helmet } from 'react-helmet-async';
+import { useState, useCallback } from 'react';
+import { zodResolver } from '@hookform/resolvers/zod';
+
+import Card from '@mui/material/Card';
 import Stack from '@mui/material/Stack';
+import Button from '@mui/material/Button';
 import Dialog from '@mui/material/Dialog';
 import DialogTitle from '@mui/material/DialogTitle';
 import DialogContent from '@mui/material/DialogContent';
 import DialogActions from '@mui/material/DialogActions';
-import Card from '@mui/material/Card';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
+
 import { CONFIG } from 'src/config-global';
-import { DataTable } from 'src/components/data-table';
-import { Form, Field } from 'src/components/hook-form';
+import { mockModules, mockSubModules } from 'src/services/mock-data';
+
 import { Label } from 'src/components/label';
 import { Iconify } from 'src/components/iconify';
-import { PageContainer, PageHeader } from 'src/components/page-layout';
+import { DataTable } from 'src/components/data-table';
+import { Form, Field } from 'src/components/hook-form';
 import { RowActionsMenu } from 'src/components/row-actions';
-import { mockSubModules, mockModules } from 'src/services/mock-data';
-import type { SubModule } from 'src/types';
-
-const STATUS_OPTIONS = [
-  { value: 'active', label: 'Active' },
-  { value: 'inactive', label: 'Inactive' },
-];
+import { PageHeader, PageContainer } from 'src/components/page-layout';
 
 const MODULE_OPTIONS = mockModules.map((m) => ({ value: m.id, label: m.name }));
 
@@ -34,11 +33,10 @@ const schema = z.object({
   moduleId: z.string().min(1, 'Module is required'),
   icon: z.string().default(''),
   sortOrder: z.coerce.number().int().min(0),
-  status: z.enum(['active', 'inactive']),
 });
 
 type FormData = z.infer<typeof schema>;
-const defaults: FormData = { name: '', code: '', moduleId: '', icon: '', sortOrder: 0, status: 'active' };
+const defaults: FormData = { name: '', code: '', moduleId: '', icon: '', sortOrder: 0 };
 
 export default function SubModuleListPage() {
   const [data, setData] = useState<SubModule[]>(mockSubModules);
@@ -56,7 +54,7 @@ export default function SubModuleListPage() {
 
   const handleEdit = useCallback((row: SubModule) => {
     setEditing(row);
-    methods.reset({ name: row.name, code: row.code, moduleId: row.moduleId, icon: row.icon, sortOrder: row.sortOrder, status: row.status });
+    methods.reset({ name: row.name, code: row.code, moduleId: row.moduleId, icon: row.icon, sortOrder: row.sortOrder });
     setOpen(true);
   }, [methods]);
 
@@ -130,7 +128,6 @@ export default function SubModuleListPage() {
               <Field.Select name="moduleId" label="Module" options={MODULE_OPTIONS} />
               <Field.Text name="icon" label="Icon (Iconify name)" />
               <Field.Text name="sortOrder" label="Sort Order" type="number" />
-              <Field.Select name="status" label="Status" options={STATUS_OPTIONS} />
             </Stack>
           </DialogContent>
           <DialogActions>

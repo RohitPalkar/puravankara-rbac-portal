@@ -31,7 +31,7 @@ export default defineConfig({
       },
     ],
   },
-  server: { port: PORT, host: true },
+  server: { port: PORT, host: true, fs: { allow: ['..', '.'] } },
   preview: { port: PORT, host: true },
   build: {
     rollupOptions: {

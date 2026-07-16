@@ -1,29 +1,33 @@
+import type { UserProject } from 'src/types';
+
 import { useState } from 'react';
 import { Helmet } from 'react-helmet-async';
-import Stack from '@mui/material/Stack';
-import Typography from '@mui/material/Typography';
-import Button from '@mui/material/Button';
-import TextField from '@mui/material/TextField';
-import MenuItem from '@mui/material/MenuItem';
+
+import Box from '@mui/material/Box';
 import Card from '@mui/material/Card';
 import Chip from '@mui/material/Chip';
-import Avatar from '@mui/material/Avatar';
 import List from '@mui/material/List';
-import ListItem from '@mui/material/ListItem';
-import ListItemAvatar from '@mui/material/ListItemAvatar';
-import ListItemText from '@mui/material/ListItemText';
-import IconButton from '@mui/material/IconButton';
-import Tooltip from '@mui/material/Tooltip';
-import Box from '@mui/material/Box';
+import Stack from '@mui/material/Stack';
+import Button from '@mui/material/Button';
+import Avatar from '@mui/material/Avatar';
 import Dialog from '@mui/material/Dialog';
+import Tooltip from '@mui/material/Tooltip';
+import MenuItem from '@mui/material/MenuItem';
+import ListItem from '@mui/material/ListItem';
+import TextField from '@mui/material/TextField';
+import Typography from '@mui/material/Typography';
+import IconButton from '@mui/material/IconButton';
 import DialogTitle from '@mui/material/DialogTitle';
+import ListItemText from '@mui/material/ListItemText';
 import DialogContent from '@mui/material/DialogContent';
 import DialogActions from '@mui/material/DialogActions';
+import ListItemAvatar from '@mui/material/ListItemAvatar';
+
 import { CONFIG } from 'src/config-global';
-import { PageContainer, PageHeader } from 'src/components/page-layout';
+import { mockUsers, mockProjects } from 'src/services/mock-data';
+
 import { Iconify } from 'src/components/iconify';
-import { mockProjects, mockUsers, mockRoles } from 'src/services/mock-data';
-import type { UserProject } from 'src/types';
+import { PageHeader, PageContainer } from 'src/components/page-layout';
 
 const stringToColor = (name: string) => {
   const colors = ['hsl(210,55%,50%)', 'hsl(160,55%,50%)', 'hsl(30,55%,50%)', 'hsl(280,55%,50%)', 'hsl(0,55%,50%)'];

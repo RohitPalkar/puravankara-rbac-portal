@@ -1,60 +1,53 @@
-import { useState, useCallback } from 'react';
-import { Helmet } from 'react-helmet-async';
+import type { Department } from 'src/types';
 import type { GridColDef } from '@mui/x-data-grid';
-import Button from '@mui/material/Button';
+
+import { z } from 'zod';
+import { useForm } from 'react-hook-form';
+import { Helmet } from 'react-helmet-async';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useState, useEffect, useCallback } from 'react';
+
+import Box from '@mui/material/Box';
+import Card from '@mui/material/Card';
 import Stack from '@mui/material/Stack';
+import Button from '@mui/material/Button';
 import Dialog from '@mui/material/Dialog';
+import Typography from '@mui/material/Typography';
 import DialogTitle from '@mui/material/DialogTitle';
 import DialogContent from '@mui/material/DialogContent';
 import DialogActions from '@mui/material/DialogActions';
-import Card from '@mui/material/Card';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
-import dayjs from 'dayjs';
+
 import { CONFIG } from 'src/config-global';
-import { DataTable } from 'src/components/data-table';
-import { Form, Field } from 'src/components/hook-form';
+import { mockUsers } from 'src/services/mock-data';
+import { isApiMode } from 'src/services/data-source';
+import { useDepartments } from 'src/services/api-adapters';
+
 import { Label } from 'src/components/label';
 import { Iconify } from 'src/components/iconify';
-import { PageContainer, PageHeader } from 'src/components/page-layout';
+import { DataTable } from 'src/components/data-table';
+import { Form, Field } from 'src/components/hook-form';
 import { RowActionsMenu } from 'src/components/row-actions';
-import { mockDepartments } from 'src/services/mock-data';
-import type { Department } from 'src/types';
-
-const STATUS_OPTIONS = [
-  { value: 'active', label: 'Active' },
-  { value: 'inactive', label: 'Inactive' },
-];
+import { PageHeader, PageContainer } from 'src/components/page-layout';
 
 const schema = z.object({
   name: z.string().min(1, 'Department Name is required'),
-  maxHierarchyLevels: z.coerce.number().int().min(1, 'Minimum 1 level').max(10, 'Maximum 10 levels'),
-  status: z.enum(['active', 'inactive']),
+  maxHierarchyLevels: z.coerce.number().int().min(1, 'Minimum 1 level').max(20, 'Maximum 20 levels'),
 });
 
 type FormData = z.infer<typeof schema>;
-const defaults: FormData = { name: '', maxHierarchyLevels: 7, status: 'active' };
-
-function generateCode(name: string, existing: Department[]): string {
-  const prefix = name.split(' ').map((w) => w[0]).join('').toUpperCase().slice(0, 3);
-  const existingCodes = existing.map((d) => d.code);
-  let code = prefix;
-  let i = 1;
-  while (existingCodes.includes(code)) {
-    code = `${prefix}${i}`;
-    i += 1;
-  }
-  return code;
-}
+const defaults: FormData = { name: '', maxHierarchyLevels: 7 };
 
 export default function DepartmentListPage() {
-  const [data, setData] = useState<Department[]>(mockDepartments);
+  const { data: apiData, loading, error, refetch } = useDepartments();
+  const [data, setData] = useState<Department[]>([]);
+  useEffect(() => { setData(apiData); }, [apiData]);
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Department | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
   const methods = useForm<FormData>({ resolver: zodResolver(schema), defaultValues: defaults });
+
+  const getUserCount = (deptId: string) => mockUsers.filter((u) => u.departmentId === deptId).length;
 
   const handleNew = useCallback(() => {
     setEditing(null);
@@ -64,7 +57,7 @@ export default function DepartmentListPage() {
 
   const handleEdit = useCallback((row: Department) => {
     setEditing(row);
-    methods.reset({ name: row.name, maxHierarchyLevels: row.maxHierarchyLevels, status: row.status });
+    methods.reset({ name: row.name, maxHierarchyLevels: row.maxHierarchyLevels });
     setOpen(true);
   }, [methods]);
 
@@ -73,39 +66,58 @@ export default function DepartmentListPage() {
     setEditing(null);
   }, []);
 
-  const onSubmit = useCallback((form: FormData) => {
-    if (editing) {
-      setData((prev) => prev.map((item) => (item.id === editing.id ? { ...item, name: form.name, maxHierarchyLevels: form.maxHierarchyLevels, status: form.status, updatedAt: new Date().toISOString() } : item)));
+  const onSubmit = useCallback(async (form: FormData) => {
+    if (isApiMode()) {
+      try {
+        const { departmentApi } = await import('src/services/api/department-api');
+        if (editing) {
+          await departmentApi.update(editing.id, { name: form.name, maxHierarchyLevels: form.maxHierarchyLevels });
+        } else {
+          await departmentApi.create({ name: form.name, maxHierarchyLevels: form.maxHierarchyLevels });
+        }
+        refetch();
+      } catch (e) { console.error(e); }
+    } else if (editing) {
+      setData((prev) => prev.map((item) => (item.id === editing.id ? { ...item, name: form.name, maxHierarchyLevels: form.maxHierarchyLevels, updatedAt: new Date().toISOString() } : item)));
     } else {
       setData((prev) => [{
         id: String(Date.now()),
         name: form.name,
-        code: generateCode(form.name, prev),
         maxHierarchyLevels: form.maxHierarchyLevels,
         createdBy: 'You',
-        status: form.status,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       }, ...prev]);
     }
     handleClose();
-  }, [editing, handleClose]);
+  }, [editing, handleClose, refetch]);
 
-  const handleDelete = useCallback(() => {
+  const handleDelete = useCallback(async () => {
     if (deleteId) {
-      setData((prev) => prev.filter((item) => item.id !== deleteId));
+      if (isApiMode()) {
+        try {
+          const { departmentApi } = await import('src/services/api/department-api');
+          await departmentApi.remove(deleteId);
+          refetch();
+        } catch (e) { console.error(e); }
+      } else {
+        setData((prev) => prev.filter((item) => item.id !== deleteId));
+      }
       setDeleteId(null);
     }
-  }, [deleteId]);
+  }, [deleteId, refetch]);
+
+
 
   const columns: GridColDef[] = [
-    { field: 'code', headerName: 'ID', width: 80 },
-    { field: 'name', headerName: 'Department Name', flex: 1 },
-    { field: 'maxHierarchyLevels', headerName: 'Levels', width: 90 },
-    { field: 'createdBy', headerName: 'Created By', width: 130 },
+    { field: 'name', headerName: 'Department Name', flex: 1, minWidth: 180 },
+    { field: 'maxHierarchyLevels', headerName: 'Hierarchy Levels', width: 140 },
     {
-      field: 'createdAt', headerName: 'Created Date', width: 120,
-      renderCell: (params) => dayjs(params.value).format('DD/MM/YYYY'),
+      field: 'userCount', headerName: 'Users Count', width: 110,
+      renderCell: (params) => {
+        const count = getUserCount(params.row.id);
+        return <Typography variant="body2">{count}</Typography>;
+      },
     },
     {
       field: 'status', headerName: 'Status', width: 100,
@@ -138,6 +150,18 @@ export default function DepartmentListPage() {
         <Card sx={{ overflow: 'hidden' }}>
           <DataTable columns={columns} rows={data} getRowId={(r) => r.id} />
         </Card>
+        {data.length === 0 && (
+          <Box sx={{ textAlign: 'center', py: 8 }}>
+            <Iconify icon="solar:buildings-bold" width={48} sx={{ color: 'text.disabled', mb: 2 }} />
+            <Typography variant="h6" color="text.secondary">No Departments Created</Typography>
+            <Typography variant="body2" color="text.disabled" sx={{ mb: 3 }}>
+              Create your first department to start building your organization structure.
+            </Typography>
+            <Button variant="contained" startIcon={<Iconify icon="solar:add-circle-bold" />} onClick={handleNew}>
+              Add Department
+            </Button>
+          </Box>
+        )}
       </PageContainer>
 
       <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
@@ -148,12 +172,11 @@ export default function DepartmentListPage() {
               <Field.Text name="name" label="Department Name" placeholder="e.g. Finance" />
               <Field.Text
                 name="maxHierarchyLevels"
-                label="Number of Levels"
+                label="Number of Hierarchy Levels"
                 type="number"
                 placeholder="e.g. 7"
-                helperText="Defines the maximum hierarchy depth available for this department."
+                helperText="Defines the maximum hierarchy depth available for this department (max 20)."
               />
-              {editing && <Field.Select name="status" label="Status" options={STATUS_OPTIONS} />}
             </Stack>
           </DialogContent>
           <DialogActions>

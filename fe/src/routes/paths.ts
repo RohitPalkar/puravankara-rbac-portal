@@ -1,6 +1,7 @@
 const ROOTS = {
   AUTH: '/auth',
   DASHBOARD: '/dashboard',
+  APPS: '/apps',
 };
 
 export const paths = {
@@ -38,26 +39,42 @@ export const paths = {
   },
   dashboard: {
     root: ROOTS.DASHBOARD,
-    // Masters
+    brandMaster: `${ROOTS.DASHBOARD}/brand-master`,
+    brandEdit: (id: string) => `${ROOTS.DASHBOARD}/brand-master/${id}/edit`,
     zoneMaster: `${ROOTS.DASHBOARD}/zone-master`,
     zoneMasterCreate: `${ROOTS.DASHBOARD}/zone-master/create`,
     zoneMasterEdit: (id: string) => `${ROOTS.DASHBOARD}/zone-master/${id}/edit`,
     projectMaster: `${ROOTS.DASHBOARD}/project-master`,
+    projectNew: `${ROOTS.DASHBOARD}/project-master/new`,
+    projectDetail: (id: string) => `${ROOTS.DASHBOARD}/project-master/${id}`,
+    projectEdit: (id: string) => `${ROOTS.DASHBOARD}/project-master/${id}/edit`,
     departmentMaster: `${ROOTS.DASHBOARD}/department-master`,
     roleMaster: `${ROOTS.DASHBOARD}/role-master`,
-    // Access Management
     userManagement: `${ROOTS.DASHBOARD}/user-management`,
     userNew: `${ROOTS.DASHBOARD}/user-management/new`,
     userDetail: (id: string) => `${ROOTS.DASHBOARD}/user-management/${id}`,
     userRoleMapping: `${ROOTS.DASHBOARD}/user-role-mapping`,
     projectAssignment: `${ROOTS.DASHBOARD}/project-assignment`,
-    permissionMatrix: `${ROOTS.DASHBOARD}/permission-matrix`,
-    // Workflow
+    permissionMatrix: `${ROOTS.DASHBOARD}/permission-mapping`,
+    permissionNew: `${ROOTS.DASHBOARD}/permission-mapping/new`,
+    permissionEdit: (id: string) => `${ROOTS.DASHBOARD}/permission-mapping/${id}/edit`,
+    permissionView: (id: string) => `${ROOTS.DASHBOARD}/permission-mapping/${id}`,
     approvalConfig: `${ROOTS.DASHBOARD}/approval-config`,
     approvalInbox: `${ROOTS.DASHBOARD}/approval-inbox`,
     delegations: `${ROOTS.DASHBOARD}/delegations`,
-    // System
     auditLogs: `${ROOTS.DASHBOARD}/audit-logs`,
     notifications: `${ROOTS.DASHBOARD}/notifications`,
+  },
+  apps: {
+    root: ROOTS.APPS,
+    crm: `${ROOTS.APPS}/crm`,
+    eoi: `${ROOTS.APPS}/eoi`,
+    iom: `${ROOTS.APPS}/iom`,
+    bookings: `${ROOTS.APPS}/bookings`,
+    inventory: `${ROOTS.APPS}/inventory`,
+    finance: `${ROOTS.APPS}/finance`,
+    reports: `${ROOTS.APPS}/reports`,
+    documents: `${ROOTS.APPS}/documents`,
+    esignature: `${ROOTS.APPS}/esignature`,
   },
 };

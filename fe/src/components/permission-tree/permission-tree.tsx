@@ -1,13 +1,16 @@
+import type { Module, Action, SubModule } from 'src/types';
+
 import { useState } from 'react';
-import Stack from '@mui/material/Stack';
+
 import Box from '@mui/material/Box';
+import Stack from '@mui/material/Stack';
 import Checkbox from '@mui/material/Checkbox';
-import FormControlLabel from '@mui/material/FormControlLabel';
-import Typography from '@mui/material/Typography';
 import Collapse from '@mui/material/Collapse';
+import Typography from '@mui/material/Typography';
 import IconButton from '@mui/material/IconButton';
+import FormControlLabel from '@mui/material/FormControlLabel';
+
 import { Iconify } from 'src/components/iconify';
-import type { Module, SubModule, Action } from 'src/types';
 
 export type PermissionSelection = {
   moduleId: string;
