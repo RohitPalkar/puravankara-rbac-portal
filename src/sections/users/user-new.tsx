@@ -19,6 +19,7 @@ import Divider from '@mui/material/Divider';
 import Alert from '@mui/material/Alert';
 import Snackbar from '@mui/material/Snackbar';
 import IconButton from '@mui/material/IconButton';
+import InputAdornment from '@mui/material/InputAdornment';
 
 import Autocomplete from '@mui/material/Autocomplete';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
@@ -33,22 +34,15 @@ import { CONFIG } from 'src/config-global';
 import { Form, Field } from 'src/components/hook-form';
 import { PageContainer, PageHeader } from 'src/components/page-layout';
 import { Iconify } from 'src/components/iconify';
-import { mockDepartments, mockRoles, mockZones, mockProjects, mockUsers } from 'src/services/mock-data';
+import { mockDepartments, mockRoles, mockZones, mockProjects, mockUsers, mockUserGroups } from 'src/services/mock-data';
 import { paths } from 'src/routes/paths';
 
-const STEPS = ['Basic Information', 'Organization & Hierarchy', 'Access Configuration'];
+const STEPS = ['Basic Information', 'Project Mapping', 'Organisation & Hierarchy', 'Review & Create'];
 
 const EMPLOYMENT_OPTIONS = [
   { value: 'contract', label: 'Contract' },
   { value: 'permanent', label: 'Permanent' },
   { value: 'serving_notice_period', label: 'Serving Notice Period' },
-];
-
-const USER_GROUP_OPTIONS = [
-  { value: 'operations', label: 'Operations' },
-  { value: 'management', label: 'Management' },
-  { value: 'executive', label: 'Executive' },
-  { value: 'admin', label: 'Admin' },
 ];
 
 const ACCESS_MODULES = [
@@ -61,9 +55,16 @@ const ACCESS_MODULES = [
   { id: 'iom', name: 'IOM' },
 ];
 
+const SAP_EMPLOYEES: Record<string, { name: string; email: string; mobile: string }> = {
+  'EMP-005': { name: 'Vikas Gupta', email: 'vikas.gupta@puravankara.com', mobile: '+91-9876543214' },
+  'EMP-006': { name: 'Neha Jain', email: 'neha.jain@puravankara.com', mobile: '+91-9876543215' },
+  'EMP-007': { name: 'Arun Kumar', email: 'arun.kumar@puravankara.com', mobile: '+91-9876543216' },
+  'EMP-008': { name: 'Pooja Singh', email: 'pooja.singh@puravankara.com', mobile: '+91-9876543217' },
+};
+
 const formSchema = zod.object({
-  employeeName: zod.string().min(1, 'Employee name is required'),
   employeeId: zod.string().min(1, 'Employee ID is required'),
+  employeeName: zod.string().min(1, 'Employee name is required'),
   email: zod.string().email('Invalid email address'),
   mobile: zod.string().min(10, 'Valid mobile number required'),
   employmentStatus: zod.enum(['contract', 'permanent', 'serving_notice_period']),
@@ -74,24 +75,16 @@ const formSchema = zod.object({
   reportingManagerId: zod.string().min(1, 'Reporting manager is required'),
   teamLeadId: zod.string().min(1, 'Team lead is required'),
   deptAdminId: zod.string().min(1, 'Department admin is required'),
-  userGroup: zod.string().min(1, 'User group is required'),
+  userGroupId: zod.string().min(1, 'User group is required'),
   startDate: zod.string().min(1, 'Start date is required'),
   endDate: zod.string().min(1, 'End date is required'),
 });
 
 type FormData = zod.infer<typeof formSchema>;
 
-function generateEmployeeId(): string {
-  const maxNum = mockUsers.reduce((max, u) => {
-    const match = u.employeeId.match(/EMP-(\d+)/);
-    return match ? Math.max(max, parseInt(match[1], 10)) : max;
-  }, 0);
-  return `EMP-${String(maxNum + 1).padStart(3, '0')}`;
-}
-
 const defaults: FormData = {
+  employeeId: '',
   employeeName: '',
-  employeeId: generateEmployeeId(),
   email: '',
   mobile: '',
   employmentStatus: 'permanent',
@@ -102,12 +95,12 @@ const defaults: FormData = {
   reportingManagerId: '',
   teamLeadId: '',
   deptAdminId: '',
-  userGroup: 'operations',
+  userGroupId: '1',
   startDate: '',
   endDate: '',
 };
 
-// -- Step 3 types --
+// -- Step 2 types --
 type ModuleAccess = {
   moduleId: string;
   accessType: 'ALL_PROJECTS' | 'SELECT_PROJECTS';
@@ -118,6 +111,7 @@ export default function UserNewPage() {
   const navigate = useNavigate();
   const [activeStep, setActiveStep] = useState(0);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [sapFetchError, setSapFetchError] = useState('');
   const [tempPassword] = useState(() => {
     const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
     return Array.from({ length: 12 }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
@@ -125,7 +119,6 @@ export default function UserNewPage() {
 
   const methods = useForm<FormData>({ resolver: zodResolver(formSchema), defaultValues: defaults });
 
-  // Step 2 dependents
   const selectedDeptId = methods.watch('departmentId');
 
   const filteredPrimaryRoles = useMemo(
@@ -138,7 +131,7 @@ export default function UserNewPage() {
     [],
   );
 
-  // Step 3 state
+  // Step 2 state
   const [moduleAccess, setModuleAccess] = useState<ModuleAccess[]>([]);
   const [expandedModules, setExpandedModules] = useState<Record<string, boolean>>({});
   const [projectSearch, setProjectSearch] = useState('');
@@ -171,10 +164,25 @@ export default function UserNewPage() {
     [projectSearch],
   );
 
+  const handleSapFetch = useCallback(() => {
+    const empId = methods.getValues('employeeId');
+    if (!empId) { setSapFetchError('Enter an Employee ID first'); return; }
+    const result = SAP_EMPLOYEES[empId];
+    if (result) {
+      methods.setValue('employeeName', result.name);
+      methods.setValue('email', result.email);
+      methods.setValue('mobile', result.mobile);
+      setSapFetchError('');
+    } else {
+      setSapFetchError('Employee not found in SAP system. Enter details manually.');
+    }
+  }, [methods]);
+
   const handleNext = useCallback(async () => {
     const fieldsByStep: Record<number, (keyof FormData)[]> = {
-      0: ['employeeName', 'employeeId', 'email', 'mobile', 'employmentStatus'],
-      1: ['zoneIds', 'departmentId', 'primaryRoleId', 'reportingManagerId', 'teamLeadId', 'deptAdminId', 'userGroup', 'startDate', 'endDate'],
+      0: ['employeeId', 'employeeName', 'email', 'mobile'],
+      1: ['zoneIds', 'departmentId', 'primaryRoleId'],
+      2: ['employmentStatus', 'reportingManagerId', 'teamLeadId', 'deptAdminId', 'userGroupId', 'startDate', 'endDate'],
     };
 
     const fields = fieldsByStep[activeStep];
@@ -197,7 +205,25 @@ export default function UserNewPage() {
     setActiveStep((prev) => prev - 1);
   }, []);
 
-  const step1Data = methods.watch();
+  const formValues = methods.watch();
+
+  const reviewData = useMemo(() => {
+    const zoneNames = formValues.zoneIds.map((id) => mockZones.find((z) => z.id === id)?.name ?? id);
+    const deptName = mockDepartments.find((d) => d.id === formValues.departmentId)?.name ?? '';
+    const roleName = filteredPrimaryRoles.find((r) => r.id === formValues.primaryRoleId)?.name ?? '';
+    const secondaryName = formValues.secondaryRoleId
+      ? filteredPrimaryRoles.find((r) => r.id === formValues.secondaryRoleId)?.name ?? ''
+      : '';
+    const rmName = mockUsers.find((u) => u.id === formValues.reportingManagerId)?.name ?? '';
+    const tlName = mockUsers.find((u) => u.id === formValues.teamLeadId)?.name ?? '';
+    const daName = mockUsers.find((u) => u.id === formValues.deptAdminId)?.name ?? '';
+    const groupName = mockUserGroups.find((g) => g.id === formValues.userGroupId)?.name ?? '';
+    const empStatusLabel = EMPLOYMENT_OPTIONS.find((o) => o.value === formValues.employmentStatus)?.label ?? '';
+    return {
+      zoneNames, deptName, roleName, secondaryName,
+      rmName, tlName, daName, groupName, empStatusLabel,
+    };
+  }, [formValues, filteredPrimaryRoles]);
 
   return (
     <>
@@ -214,24 +240,49 @@ export default function UserNewPage() {
           </Stepper>
 
           <Form methods={methods} onSubmit={() => {}}>
+            {/* Step 1: Basic Information */}
             {activeStep === 0 && (
               <Box sx={{ p: 3 }}>
-                <Typography variant="subtitle1" sx={{ mb: 2 }}>User Details</Typography>
+                <Typography variant="subtitle1" sx={{ mb: 2 }}>Employee Information</Typography>
+                <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 2 }}>
+                  Enter the Employee ID to fetch details from SAP, or fill in the fields manually.
+                </Typography>
                 <Box display="grid" gridTemplateColumns={{ xs: '1fr', sm: '1fr 1fr' }} gap={2.5}>
+                  <Field.Text
+                    name="employeeId"
+                    label="Employee ID"
+                    placeholder="e.g. EMP-005"
+                    InputProps={{
+                      endAdornment: (
+                        <InputAdornment position="end">
+                          <Button
+                            size="small"
+                            variant="contained"
+                            onClick={handleSapFetch}
+                            sx={{ minWidth: 60, height: 30, fontSize: 12 }}
+                          >
+                            Fetch
+                          </Button>
+                        </InputAdornment>
+                      ),
+                    }}
+                  />
+                  <Box />
+                  {sapFetchError && (
+                    <Alert severity="warning" sx={{ gridColumn: '1 / -1' }}>{sapFetchError}</Alert>
+                  )}
                   <Field.Text name="employeeName" label="Employee Name" placeholder="Enter Employee Name" />
-                  <Field.Text name="employeeId" label="Employee ID" disabled helperText="Auto-generated from backend" />
-                  <Field.Text name="email" label="Email ID" />
+                  <Field.Text name="email" label="Email ID" placeholder="Enter Email Address" />
                   <Field.Text name="mobile" label="Mobile Number" placeholder="+91 XXXXX XXXXX" />
-                  <Field.Select name="employmentStatus" label="Employment Status" options={EMPLOYMENT_OPTIONS} />
                 </Box>
               </Box>
             )}
 
+            {/* Step 2: Project Mapping */}
             {activeStep === 1 && (
               <Box sx={{ p: 3 }}>
-                <Typography variant="subtitle1" sx={{ mb: 2 }}>Organization Details</Typography>
+                <Typography variant="subtitle1" sx={{ mb: 2 }}>Project Assignment</Typography>
                 <Box display="grid" gridTemplateColumns={{ xs: '1fr', sm: '1fr 1fr' }} gap={2.5}>
-                  {/* Zone - Autocomplete Chips */}
                   <Controller
                     name="zoneIds"
                     control={methods.control}
@@ -266,74 +317,14 @@ export default function UserNewPage() {
                       />
                     )}
                   />
-
-                  {/* Department */}
                   <Field.Select name="departmentId" label="Department *" options={mockDepartments.map((d) => ({ value: d.id, label: d.name }))} />
-
-                  {/* Primary Role */}
                   <Field.Select name="primaryRoleId" label="Primary Role *" options={filteredPrimaryRoles.map((r) => ({ value: r.id, label: r.name }))} />
-
-                  {/* Secondary Role */}
                   <Field.Select name="secondaryRoleId" label="Secondary Role (optional)" options={filteredPrimaryRoles.map((r) => ({ value: r.id, label: r.name }))} />
                 </Box>
 
                 <Divider sx={{ my: 3 }} />
-                <Typography variant="subtitle1" sx={{ mb: 2 }}>Reporting Hierarchy</Typography>
-                <Box display="grid" gridTemplateColumns={{ xs: '1fr', sm: '1fr 1fr 1fr' }} gap={2.5}>
-                  <Field.Select name="reportingManagerId" label="Reporting Manager *" options={userOptions} />
-                  <Field.Select name="teamLeadId" label="Team Lead *" options={userOptions} />
-                  <Field.Select name="deptAdminId" label="Department Admin *" options={userOptions} />
-                </Box>
-
-                <Divider sx={{ my: 3 }} />
-                <Typography variant="subtitle1" sx={{ mb: 2 }}>User Group</Typography>
-                <Box display="grid" gridTemplateColumns={{ xs: '1fr', sm: '1fr 1fr 1fr' }} gap={2.5}>
-                  <Field.Select name="userGroup" label="User Group *" options={USER_GROUP_OPTIONS} />
-                  <Controller
-                    name="startDate"
-                    control={methods.control}
-                    render={({ field, fieldState }) => (
-                      <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="en">
-                        <DatePicker
-                          label="Start Date *"
-                          format="DD/MM/YYYY"
-                          value={field.value ? dayjs(field.value, 'DD/MM/YYYY') : null}
-                          onChange={(date) => field.onChange(date ? date.format('DD/MM/YYYY') : '')}
-                          slotProps={{
-                            textField: { size: 'small', fullWidth: true, error: !!fieldState.error, helperText: fieldState.error?.message },
-                          }}
-                          sx={{ '& .MuiInputBase-root': { height: 40 } }}
-                        />
-                      </LocalizationProvider>
-                    )}
-                  />
-                  <Controller
-                    name="endDate"
-                    control={methods.control}
-                    render={({ field, fieldState }) => (
-                      <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="en">
-                        <DatePicker
-                          format="DD/MM/YYYY"
-                          label="End Date *"
-                          value={field.value ? dayjs(field.value, 'DD/MM/YYYY') : null}
-                          onChange={(date) => field.onChange(date ? date.format('DD/MM/YYYY') : '')}
-                          slotProps={{
-                            textField: { size: 'small', fullWidth: true, error: !!fieldState.error, helperText: fieldState.error?.message },
-                          }}
-                          sx={{ '& .MuiInputBase-root': { height: 40 } }}
-                        />
-                      </LocalizationProvider>
-                    )}
-                  />
-                </Box>
-              </Box>
-            )}
-
-            {activeStep === 2 && (
-              <Box sx={{ p: 3 }}>
-                <Typography variant="subtitle1" sx={{ mb: 2 }}>Access Configuration</Typography>
+                <Typography variant="subtitle1" sx={{ mb: 2 }}>Module Access</Typography>
                 <Box display="grid" gridTemplateColumns={{ xs: '1fr', lg: '30fr 70fr' }} gap={3}>
-                  {/* Left: Module Selection */}
                   <Card variant="outlined" sx={{ p: 2 }}>
                     <Typography variant="subtitle2" sx={{ mb: 0.5 }}>Select Modules</Typography>
                     <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1.5 }}>
@@ -375,7 +366,6 @@ export default function UserNewPage() {
                     </Stack>
                   </Card>
 
-                  {/* Right: Module Access Cards */}
                   <Stack spacing={2}>
                     {moduleAccess.length === 0 && (
                       <Typography variant="body2" color="text.secondary" sx={{ py: 4, textAlign: 'center' }}>
@@ -511,6 +501,131 @@ export default function UserNewPage() {
                 </Box>
               </Box>
             )}
+
+            {/* Step 3: Organisation & Hierarchy */}
+            {activeStep === 2 && (
+              <Box sx={{ p: 3 }}>
+                <Typography variant="subtitle1" sx={{ mb: 2 }}>Employment Status</Typography>
+                <Box display="grid" gridTemplateColumns={{ xs: '1fr', sm: '1fr 1fr' }} gap={2.5}>
+                  <Field.Select name="employmentStatus" label="Employment Status" options={EMPLOYMENT_OPTIONS} />
+                </Box>
+
+                <Divider sx={{ my: 3 }} />
+                <Typography variant="subtitle1" sx={{ mb: 2 }}>Reporting Hierarchy</Typography>
+                <Box display="grid" gridTemplateColumns={{ xs: '1fr', sm: '1fr 1fr 1fr' }} gap={2.5}>
+                  <Field.Select name="reportingManagerId" label="Reporting Manager *" options={userOptions} />
+                  <Field.Select name="teamLeadId" label="Team Lead *" options={userOptions} />
+                  <Field.Select name="deptAdminId" label="Department Admin *" options={userOptions} />
+                </Box>
+
+                <Divider sx={{ my: 3 }} />
+                <Typography variant="subtitle1" sx={{ mb: 2 }}>User Group & Tenure</Typography>
+                <Box display="grid" gridTemplateColumns={{ xs: '1fr', sm: '1fr 1fr 1fr' }} gap={2.5}>
+                  <Field.Select name="userGroupId" label="User Group *" options={mockUserGroups.map((g) => ({ value: g.id, label: g.name }))} />
+                  <Controller
+                    name="startDate"
+                    control={methods.control}
+                    render={({ field, fieldState }) => (
+                      <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="en">
+                        <DatePicker
+                          label="Start Date *"
+                          format="DD/MM/YYYY"
+                          value={field.value ? dayjs(field.value, 'DD/MM/YYYY') : null}
+                          onChange={(date) => field.onChange(date ? date.format('DD/MM/YYYY') : '')}
+                          slotProps={{
+                            textField: { size: 'small', fullWidth: true, error: !!fieldState.error, helperText: fieldState.error?.message },
+                          }}
+                          sx={{ '& .MuiInputBase-root': { height: 40 } }}
+                        />
+                      </LocalizationProvider>
+                    )}
+                  />
+                  <Controller
+                    name="endDate"
+                    control={methods.control}
+                    render={({ field, fieldState }) => (
+                      <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="en">
+                        <DatePicker
+                          format="DD/MM/YYYY"
+                          label="End Date *"
+                          value={field.value ? dayjs(field.value, 'DD/MM/YYYY') : null}
+                          onChange={(date) => field.onChange(date ? date.format('DD/MM/YYYY') : '')}
+                          slotProps={{
+                            textField: { size: 'small', fullWidth: true, error: !!fieldState.error, helperText: fieldState.error?.message },
+                          }}
+                          sx={{ '& .MuiInputBase-root': { height: 40 } }}
+                        />
+                      </LocalizationProvider>
+                    )}
+                  />
+                </Box>
+              </Box>
+            )}
+
+            {/* Step 4: Review & Create */}
+            {activeStep === 3 && (
+              <Box sx={{ p: 3 }}>
+                <Typography variant="subtitle1" sx={{ mb: 3 }}>Review User Details</Typography>
+
+                <Card variant="outlined" sx={{ p: 2, mb: 2 }}>
+                  <Typography variant="subtitle2" sx={{ mb: 1, color: 'text.secondary' }}>Basic Information</Typography>
+                  <Box display="grid" gridTemplateColumns="1fr 1fr" gap={1}>
+                    <Typography variant="caption" color="text.secondary">Employee ID</Typography>
+                    <Typography variant="body2">{formValues.employeeId}</Typography>
+                    <Typography variant="caption" color="text.secondary">Name</Typography>
+                    <Typography variant="body2">{formValues.employeeName}</Typography>
+                    <Typography variant="caption" color="text.secondary">Email</Typography>
+                    <Typography variant="body2">{formValues.email}</Typography>
+                    <Typography variant="caption" color="text.secondary">Mobile</Typography>
+                    <Typography variant="body2">{formValues.mobile}</Typography>
+                  </Box>
+                </Card>
+
+                <Card variant="outlined" sx={{ p: 2, mb: 2 }}>
+                  <Typography variant="subtitle2" sx={{ mb: 1, color: 'text.secondary' }}>Project Mapping</Typography>
+                  <Box display="grid" gridTemplateColumns="1fr 1fr" gap={1}>
+                    <Typography variant="caption" color="text.secondary">Zones</Typography>
+                    <Typography variant="body2">{reviewData.zoneNames.join(', ') || '-'}</Typography>
+                    <Typography variant="caption" color="text.secondary">Department</Typography>
+                    <Typography variant="body2">{reviewData.deptName}</Typography>
+                    <Typography variant="caption" color="text.secondary">Primary Role</Typography>
+                    <Typography variant="body2">{reviewData.roleName}</Typography>
+                    {reviewData.secondaryName && (
+                      <>
+                        <Typography variant="caption" color="text.secondary">Secondary Role</Typography>
+                        <Typography variant="body2">{reviewData.secondaryName}</Typography>
+                      </>
+                    )}
+                    <Typography variant="caption" color="text.secondary">Modules Assigned</Typography>
+                    <Typography variant="body2">
+                      {moduleAccess.length > 0
+                        ? moduleAccess.map((m) => ACCESS_MODULES.find((a) => a.id === m.moduleId)?.name).join(', ')
+                        : 'None'}
+                    </Typography>
+                  </Box>
+                </Card>
+
+                <Card variant="outlined" sx={{ p: 2, mb: 2 }}>
+                  <Typography variant="subtitle2" sx={{ mb: 1, color: 'text.secondary' }}>Organisation & Hierarchy</Typography>
+                  <Box display="grid" gridTemplateColumns="1fr 1fr" gap={1}>
+                    <Typography variant="caption" color="text.secondary">Employment Status</Typography>
+                    <Typography variant="body2">{reviewData.empStatusLabel}</Typography>
+                    <Typography variant="caption" color="text.secondary">Reporting Manager</Typography>
+                    <Typography variant="body2">{reviewData.rmName}</Typography>
+                    <Typography variant="caption" color="text.secondary">Team Lead</Typography>
+                    <Typography variant="body2">{reviewData.tlName}</Typography>
+                    <Typography variant="caption" color="text.secondary">Dept Admin</Typography>
+                    <Typography variant="body2">{reviewData.daName}</Typography>
+                    <Typography variant="caption" color="text.secondary">User Group</Typography>
+                    <Typography variant="body2">{reviewData.groupName}</Typography>
+                    <Typography variant="caption" color="text.secondary">Start Date</Typography>
+                    <Typography variant="body2">{formValues.startDate}</Typography>
+                    <Typography variant="caption" color="text.secondary">End Date</Typography>
+                    <Typography variant="body2">{formValues.endDate}</Typography>
+                  </Box>
+                </Card>
+              </Box>
+            )}
           </Form>
 
           <Stack direction="row" justifyContent="space-between" sx={{ p: 3, borderTop: '1px solid', borderColor: 'divider' }}>
@@ -532,7 +647,7 @@ export default function UserNewPage() {
       <Snackbar open={showSuccess} autoHideDuration={3000} anchorOrigin={{ vertical: 'top', horizontal: 'center' }}>
         <Alert severity="success" variant="filled" sx={{ width: 1 }}>
           <Typography variant="body2" fontWeight={600}>User Created Successfully</Typography>
-          <Typography variant="caption">Email: {step1Data.email}</Typography>
+          <Typography variant="caption">Email: {formValues.email}</Typography>
           <br />
           <Typography variant="caption">Temporary Password: {tempPassword}</Typography>
         </Alert>
