@@ -8,6 +8,7 @@ import {
   Param,
   Query,
   ParseIntPipe,
+  NotFoundException,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags, ApiOperation } from '@nestjs/swagger';
 import {
@@ -40,6 +41,18 @@ export class UserController {
   @ApiOperation({ summary: 'Get user by emp_id' })
   async findById(@Param('id') id: string) {
     return this.userService.findById(id);
+  }
+
+  @Post('fetch-employee')
+  @ApiOperation({ summary: 'Mock SAP fetch - returns employee details by ID' })
+  async fetchEmployee(@Body('employeeId') employeeId: string) {
+    const mockDb: Record<string, { employeeName: string; email: string; mobile: string }> = {
+      'PPL06414': { employeeName: 'Rohit Palkar', email: 'rohit@puravankara.com', mobile: '9876543210' },
+      'PPL06415': { employeeName: 'Priya Sharma', email: 'priya@puravankara.com', mobile: '9876543211' },
+    };
+    const result = mockDb[employeeId];
+    if (!result) throw new NotFoundException('No employee found in SAP');
+    return result;
   }
 
   @Post()
