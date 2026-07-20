@@ -44,6 +44,10 @@ apiClient.interceptors.response.use(
 
     switch (status) {
       case 401:
+        if (accessToken) {
+          accessToken = null;
+          delete apiClient.defaults.headers.common.Authorization;
+        }
         return Promise.reject(new UnauthorizedError(data));
       case 404:
         return Promise.reject(new NotFoundError(data));

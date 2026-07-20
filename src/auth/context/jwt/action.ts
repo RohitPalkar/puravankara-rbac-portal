@@ -1,3 +1,5 @@
+import { setAccessToken } from 'src/services/api/client';
+
 import axios, { endpoints } from 'src/utils/axios';
 
 import { setSession } from './utils';
@@ -32,6 +34,7 @@ export const signInWithPassword = async ({ email, password }: SignInParams): Pro
   }
 
   setSession(accessToken);
+  setAccessToken(accessToken);
 };
 
 /** **************************************
@@ -66,4 +69,5 @@ export const signUp = async ({
  *************************************** */
 export const signOut = async (): Promise<void> => {
   await setSession(null);
+  setAccessToken(null);
 };

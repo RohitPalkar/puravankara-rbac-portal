@@ -2,6 +2,7 @@ import { useMemo, useEffect, useCallback } from 'react';
 
 import { useSetState } from 'src/hooks/use-set-state';
 
+import { setAccessToken } from 'src/services/api/client';
 import axios, { endpoints } from 'src/utils/axios';
 
 import { STORAGE_KEY } from './constant';
@@ -34,6 +35,7 @@ export function AuthProvider({ children }: Props) {
 
       if (accessToken && isValidToken(accessToken)) {
         setSession(accessToken);
+        setAccessToken(accessToken);
 
         const res = await axios.get(endpoints.auth.me);
 
@@ -45,6 +47,7 @@ export function AuthProvider({ children }: Props) {
       }
     } catch (error) {
       console.error(error);
+      setAccessToken(null);
       setState({ user: null, loading: false });
     }
   }, [setState]);
