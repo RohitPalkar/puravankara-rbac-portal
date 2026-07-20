@@ -26,7 +26,7 @@ services:
       - key: REDIS_ENABLED
         value: "false"
       - key: DEFAULT_ADMIN_EMAIL
-        value: admin@system.local
+        value: admin@puravankara.com
       - key: DEFAULT_ADMIN_PASSWORD
         sync: false
       - key: DB_LOGGING
