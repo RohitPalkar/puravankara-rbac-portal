@@ -1,4 +1,4 @@
-import { useMemo, useState, useCallback } from 'react';
+import { useMemo, useState, useCallback, useEffect } from 'react';
 import type { GridColDef, GridPaginationModel } from '@mui/x-data-grid';
 import { DataGrid } from '@mui/x-data-grid';
 import Stack from '@mui/material/Stack';
@@ -28,6 +28,7 @@ type Props = {
   onRowClick?: (row: any) => void;
   searchPlaceholder?: string;
   filterOptions?: FilterOption[];
+  onFiltersChange?: (filters: Record<string, string>) => void;
   paginationMode?: 'client' | 'server';
   paginationModel?: GridPaginationModel;
   onPaginationModelChange?: (model: GridPaginationModel) => void;
@@ -44,6 +45,7 @@ export function DataTable({
   onRowClick,
   searchPlaceholder = 'Search...',
   filterOptions,
+  onFiltersChange,
   paginationMode = 'client',
   paginationModel,
   onPaginationModelChange,
@@ -54,6 +56,10 @@ export function DataTable({
   const [localSearch, setLocalSearch] = useState('');
   const [filters, setFilters] = useState<Record<string, string>>({});
   const [hiddenColumns, setHiddenColumns] = useState<Set<string>>(new Set());
+
+  useEffect(() => {
+    onFiltersChange?.(filters);
+  }, [filters, onFiltersChange]);
 
   const filterPopover = usePopover();
   const columnsPopover = usePopover();

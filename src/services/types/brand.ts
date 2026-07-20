@@ -16,6 +16,9 @@ export interface Brand extends AppBase {
   gstin?: string;
   address1?: string;
   address2?: string;
+  city?: string;
+  state?: string;
+  country?: string;
   pinCode?: string;
   logoUrl?: string;
   reraRegularizationPercentage?: number;
@@ -44,6 +47,9 @@ export interface CreateBrandRequest {
   gstin?: string;
   address1?: string;
   address2?: string;
+  city?: string;
+  state?: string;
+  country?: string;
   pinCode?: string;
   logoUrl?: string;
   reraRegularizationPercentage?: number;

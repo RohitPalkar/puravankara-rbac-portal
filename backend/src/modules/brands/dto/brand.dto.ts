@@ -86,6 +86,21 @@ export class CreateBrandDto {
   @ApiPropertyOptional()
   @IsOptional()
   @IsString()
+  city?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  state?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  country?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
   @Matches(/^\d{6}$/, { message: 'PIN code must be 6 digits' })
   pinCode?: string;
 
@@ -232,6 +247,21 @@ export class UpdateBrandDto {
   @ApiPropertyOptional()
   @IsOptional()
   @IsString()
+  city?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  state?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  country?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
   @Matches(/^\d{6}$/, { message: 'PIN code must be 6 digits' })
   pinCode?: string;
 
@@ -343,6 +373,15 @@ export class BrandResponseDto {
 
   @ApiPropertyOptional()
   address2?: string;
+
+  @ApiPropertyOptional()
+  city?: string;
+
+  @ApiPropertyOptional()
+  state?: string;
+
+  @ApiPropertyOptional()
+  country?: string;
 
   @ApiPropertyOptional()
   pinCode?: string;

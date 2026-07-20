@@ -48,6 +48,15 @@ export class Brand extends AppBaseEntity {
   @Column({ name: 'address_2', nullable: true })
   address2: string;
 
+  @Column({ nullable: true })
+  city: string;
+
+  @Column({ nullable: true })
+  state: string;
+
+  @Column({ nullable: true })
+  country: string;
+
   @Column({ name: 'pin_code', nullable: true })
   pinCode: string;
 
