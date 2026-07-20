@@ -50,7 +50,7 @@ function CitiesChipCell({ cities }: { cities?: string[] }) {
   const remaining = cities?.slice(MAX_VISIBLE_CITIES) ?? [];
 
   return (
-    <Stack direction="row" spacing={0.5} alignItems="center" sx={{ flexWrap: 'wrap', gap: 0.5, py: 0.5 }}>
+    <Stack direction="row" spacing={0.5} alignItems="center" sx={{ flexWrap: 'wrap', gap: 0.5, height: 1, alignContent: 'center' }}>
       {visible.map((name) => (
         <Chip key={name} label={name} size="small" variant="outlined" sx={{ height: 22, '& .MuiChip-label': { fontSize: '0.75rem', px: 0.8 } }} />
       ))}
@@ -139,19 +139,7 @@ export default function ZoneListPage() {
   const columns: GridColDef[] = [
     { field: 'name', headerName: 'Zone Name', flex: 1, minWidth: 180 },
     {
-      field: 'salaryCapping', headerName: 'Salary Capping', width: 130,
-      renderCell: (params) => params.row.salaryCappingLabel ?? `${params.value}x`,
-    },
-    {
-      field: 'startDate', headerName: 'Start Date', width: 130,
-      valueFormatter: (value) => value || '-',
-    },
-    {
-      field: 'endDate', headerName: 'End Date', width: 130,
-      valueFormatter: (value) => value || '-',
-    },
-    {
-      field: 'citiesMapped', headerName: 'Cities Mapped', minWidth: 250, flex: 1,
+      field: 'citiesMapped', headerName: 'Cities Mapped', minWidth: 280, flex: 1,
       renderCell: (params) => <CitiesChipCell cities={params.value} />,
     },
     {
