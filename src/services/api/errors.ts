@@ -1,7 +1,10 @@
+/* eslint-disable max-classes-per-file */
+
 import type { ApiError } from '../types/api';
 
 export class AppApiError extends Error {
   public statusCode: number;
+
   public error: string;
 
   constructor(apiError: ApiError) {
