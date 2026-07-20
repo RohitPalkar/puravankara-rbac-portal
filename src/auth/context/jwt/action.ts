@@ -21,21 +21,17 @@ export type SignUpParams = {
  * Sign in
  *************************************** */
 export const signInWithPassword = async ({ email, password }: SignInParams): Promise<void> => {
-  try {
-    const params = { email, password };
+  const params = { email, password };
 
-    const res = await axios.post(endpoints.auth.signIn, params);
+  const res = await axios.post(endpoints.auth.signIn, params);
 
-    const { accessToken } = res.data.data;
+  const { accessToken } = res.data.data;
 
-    if (!accessToken) {
-      throw new Error('Access token not found in response');
-    }
-
-    setSession(accessToken);
-  } catch (error) {
-    throw error;
+  if (!accessToken) {
+    throw new Error('Access token not found in response');
   }
+
+  setSession(accessToken);
 };
 
 /** **************************************
@@ -54,28 +50,20 @@ export const signUp = async ({
     lastName,
   };
 
-  try {
-    const res = await axios.post(endpoints.auth.signUp, params);
+  const res = await axios.post(endpoints.auth.signUp, params);
 
-    const { accessToken } = res.data.data;
+  const { accessToken } = res.data.data;
 
-    if (!accessToken) {
-      throw new Error('Access token not found in response');
-    }
-
-    sessionStorage.setItem(STORAGE_KEY, accessToken);
-  } catch (error) {
-    throw error;
+  if (!accessToken) {
+    throw new Error('Access token not found in response');
   }
+
+  sessionStorage.setItem(STORAGE_KEY, accessToken);
 };
 
 /** **************************************
  * Sign out
  *************************************** */
 export const signOut = async (): Promise<void> => {
-  try {
-    await setSession(null);
-  } catch (error) {
-    throw error;
-  }
+  await setSession(null);
 };
