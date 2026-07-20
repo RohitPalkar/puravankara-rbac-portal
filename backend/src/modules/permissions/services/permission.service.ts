@@ -371,15 +371,19 @@ export class PermissionService {
     // Keep a few projects with full data for other consumers
     const projectCount = projectEntities.length;
     if (isSuperAdmin) {
-      // First project gets full nested modules (for older consumers), rest get empty modules
       const nestedModules = await this.getSuperAdminNestedModules(allModules, allActions);
-      for (let i = 0; i < projectCount; i++) {
-        const proj = projectEntities[i];
-        result.projects.push({
-          id: proj.id,
-          name: proj.name,
-          modules: i === 0 ? nestedModules : [],
-        });
+      if (projectCount === 0) {
+        // SUPER_ADMIN with no projects — provide a virtual project so frontend permission checks pass
+        result.projects.push({ id: 0, name: 'All Projects', modules: nestedModules });
+      } else {
+        for (let i = 0; i < projectCount; i++) {
+          const proj = projectEntities[i];
+          result.projects.push({
+            id: proj.id,
+            name: proj.name,
+            modules: i === 0 ? nestedModules : [],
+          });
+        }
       }
     } else {
       for (let i = 0; i < projectCount; i++) {
