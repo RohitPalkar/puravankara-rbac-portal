@@ -1,10 +1,13 @@
-import { DataSource } from 'typeorm';
+import { DataSource, In } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { Role } from '../../modules/organization/entities/role.entity';
 import { User } from '../../modules/users/entities/user.entity';
 import { UserAuth } from '../../modules/auth/entities/user-auth.entity';
 import { UserRole } from '../../modules/users/entities/user-role.entity';
 import { Action } from '../../modules/product-catalog/entities/action.entity';
+import { Module } from '../../modules/product-catalog/entities/module.entity';
+import { SubModule } from '../../modules/product-catalog/entities/sub-module.entity';
+import { ModuleAction } from '../../modules/product-catalog/entities/module-action.entity';
 import { Zone } from '../../modules/geography/entities/zone.entity';
 
 const SALT_ROUNDS = 12;
@@ -20,6 +23,30 @@ const SYSTEM_ACTIONS = [
   'IMPORT',
 ];
 
+const MODULES_SEED = [
+  { name: 'Geography', code: 'GEOGRAPHY' },
+  { name: 'Brands', code: 'BRANDS' },
+  { name: 'Organization', code: 'ORGANIZATION' },
+  { name: 'Product Config', code: 'PRODUCT_CONFIG' },
+  { name: 'Projects', code: 'PROJECTS' },
+  { name: 'Users', code: 'USERS' },
+  { name: 'Permissions', code: 'PERMISSIONS' },
+];
+
+const SUB_MODULES_SEED: { name: string; code: string; moduleName: string }[] = [
+  { name: 'ZONES', code: 'ZONES', moduleName: 'Geography' },
+  { name: 'CITIES', code: 'CITIES', moduleName: 'Geography' },
+  { name: 'BRANDS', code: 'BRANDS', moduleName: 'Brands' },
+  { name: 'DEPARTMENTS', code: 'DEPARTMENTS', moduleName: 'Organization' },
+  { name: 'ROLES', code: 'ROLES', moduleName: 'Organization' },
+  { name: 'MODULES', code: 'MODULES', moduleName: 'Product Config' },
+  { name: 'SUB_MODULES', code: 'SUB_MODULES', moduleName: 'Product Config' },
+  { name: 'ACTIONS', code: 'ACTIONS', moduleName: 'Product Config' },
+  { name: 'PROJECTS', code: 'PROJECTS', moduleName: 'Projects' },
+  { name: 'USERS', code: 'USERS', moduleName: 'Users' },
+  { name: 'PERMISSIONS', code: 'PERMISSIONS', moduleName: 'Permissions' },
+];
+
 const ZONE_NAMES = ['North', 'South', 'East', 'West'];
 
 export async function bootstrapSeeder(dataSource: DataSource): Promise<void> {
@@ -28,6 +55,9 @@ export async function bootstrapSeeder(dataSource: DataSource): Promise<void> {
   const authRepo = dataSource.getRepository(UserAuth);
   const userRoleRepo = dataSource.getRepository(UserRole);
   const actionRepo = dataSource.getRepository(Action);
+  const moduleRepo = dataSource.getRepository(Module);
+  const subModuleRepo = dataSource.getRepository(SubModule);
+  const moduleActionRepo = dataSource.getRepository(ModuleAction);
   const zoneRepo = dataSource.getRepository(Zone);
 
   // 1. Seed zones
@@ -38,11 +68,34 @@ export async function bootstrapSeeder(dataSource: DataSource): Promise<void> {
     }
   }
 
-  // 2. Seed system actions
+  // 2. Seed modules
+  const moduleMap = new Map<string, Module>();
+  for (const m of MODULES_SEED) {
+    let mod = await moduleRepo.findOne({ where: { name: m.name } });
+    if (!mod) {
+      mod = await moduleRepo.save(moduleRepo.create({ name: m.name, code: m.code, isActive: true }));
+    }
+    moduleMap.set(m.name, mod);
+  }
+
+  // 3. Seed sub-modules
+  const subModuleMap = new Map<string, SubModule>();
+  for (const sm of SUB_MODULES_SEED) {
+    const parentModule = moduleMap.get(sm.moduleName);
+    if (!parentModule) continue;
+    let sub = await subModuleRepo.findOne({ where: { moduleId: parentModule.id, name: sm.name } });
+    if (!sub) {
+      sub = await subModuleRepo.save(subModuleRepo.create({ moduleId: parentModule.id, name: sm.name, isActive: true }));
+    }
+    subModuleMap.set(sm.name, sub);
+  }
+
+  // 4. Seed system actions
+  const allActions: Action[] = [];
   for (const code of SYSTEM_ACTIONS) {
-    const existing = await actionRepo.findOne({ where: { code } });
-    if (!existing) {
-      await actionRepo.save(
+    let action = await actionRepo.findOne({ where: { code } });
+    if (!action) {
+      action = await actionRepo.save(
         actionRepo.create({
           code,
           label: code.charAt(0) + code.slice(1).toLowerCase(),
@@ -50,9 +103,29 @@ export async function bootstrapSeeder(dataSource: DataSource): Promise<void> {
         }),
       );
     }
+    allActions.push(action);
   }
 
-  // 2. Seed SUPER_ADMIN role
+  // 5. Seed module-actions (link all actions to all sub-modules)
+  for (const sub of subModuleMap.values()) {
+    for (const action of allActions) {
+      const existing = await moduleActionRepo.findOne({
+        where: { moduleId: sub.moduleId, subModuleId: sub.id, actionId: action.id },
+      });
+      if (!existing) {
+        await moduleActionRepo.save(
+          moduleActionRepo.create({
+            moduleId: sub.moduleId,
+            subModuleId: sub.id,
+            actionId: action.id,
+            isActive: true,
+          }),
+        );
+      }
+    }
+  }
+
+  // 6. Seed SUPER_ADMIN role
   const existingRole = await roleRepo.findOne({
     where: { name: 'SUPER_ADMIN' },
   });

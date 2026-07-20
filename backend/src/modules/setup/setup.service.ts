@@ -137,6 +137,76 @@ export class SetupService {
       }
     }
 
-    this.logger.log('Reset complete: zones/cities reseeded; non-admin users removed');
+    // Re-seed modules and sub-modules
+    await q(`DELETE FROM module_actions`);
+    await q(`DELETE FROM sub_modules`);
+    await q(`DELETE FROM modules`);
+    await q(`DELETE FROM actions WHERE code NOT IN ('VIEW', 'CREATE', 'UPDATE', 'DELETE', 'APPROVE', 'REJECT', 'EXPORT', 'IMPORT')`);
+
+    // Modules
+    const moduleInserts: { name: string; code: string }[] = [
+      { name: 'Geography', code: 'GEOGRAPHY' },
+      { name: 'Brands', code: 'BRANDS' },
+      { name: 'Organization', code: 'ORGANIZATION' },
+      { name: 'Product Config', code: 'PRODUCT_CONFIG' },
+      { name: 'Projects', code: 'PROJECTS' },
+      { name: 'Users', code: 'USERS' },
+      { name: 'Permissions', code: 'PERMISSIONS' },
+    ];
+    const modIds: Record<string, number> = {};
+    for (const m of moduleInserts) {
+      const r = await q(`INSERT INTO modules (name, code, is_active) VALUES ($1, $2, true) RETURNING id`, [m.name, m.code]);
+      modIds[m.name] = r[0].id;
+    }
+
+    // Actions
+    const actionCodes = ['VIEW', 'CREATE', 'UPDATE', 'DELETE', 'APPROVE', 'REJECT', 'EXPORT', 'IMPORT'];
+    const actIds: Record<string, number> = {};
+    for (const code of actionCodes) {
+      const existing = await q(`SELECT id FROM actions WHERE code = $1`, [code]);
+      if (existing.length > 0) {
+        actIds[code] = existing[0].id;
+      } else {
+        const r = await q(`INSERT INTO actions (code, label, is_active) VALUES ($1, $2, true) RETURNING id`, [code, code.charAt(0) + code.slice(1).toLowerCase()]);
+        actIds[code] = r[0].id;
+      }
+    }
+
+    // Sub-modules
+    const subModuleInserts: { name: string; moduleName: string }[] = [
+      { name: 'ZONES', moduleName: 'Geography' },
+      { name: 'CITIES', moduleName: 'Geography' },
+      { name: 'BRANDS', moduleName: 'Brands' },
+      { name: 'DEPARTMENTS', moduleName: 'Organization' },
+      { name: 'ROLES', moduleName: 'Organization' },
+      { name: 'MODULES', moduleName: 'Product Config' },
+      { name: 'SUB_MODULES', moduleName: 'Product Config' },
+      { name: 'ACTIONS', moduleName: 'Product Config' },
+      { name: 'PROJECTS', moduleName: 'Projects' },
+      { name: 'USERS', moduleName: 'Users' },
+      { name: 'PERMISSIONS', moduleName: 'Permissions' },
+    ];
+    const subIds: Record<string, number> = {};
+    for (const sm of subModuleInserts) {
+      const modId = modIds[sm.moduleName];
+      if (!modId) continue;
+      const r = await q(`INSERT INTO sub_modules (module_id, name, is_active) VALUES ($1, $2, true) RETURNING id`, [modId, sm.name]);
+      subIds[sm.name] = r[0].id;
+    }
+
+    // Module-actions (link all actions to all sub-modules)
+    for (const [subName, subId] of Object.entries(subIds)) {
+      const subMod = subModuleInserts.find((sm) => sm.name === subName);
+      if (!subMod) continue;
+      const modId = modIds[subMod.moduleName];
+      if (!modId) continue;
+      for (const actionCode of actionCodes) {
+        const actId = actIds[actionCode];
+        if (!actId) continue;
+        await q(`INSERT INTO module_actions (module_id, sub_module_id, action_id, is_active) VALUES ($1, $2, $3, true) ON CONFLICT DO NOTHING`, [modId, subId, actId]);
+      }
+    }
+
+    this.logger.log('Reset complete: zones/cities reseeded; modules/sub-modules seeded; non-admin users removed');
   }
 }
