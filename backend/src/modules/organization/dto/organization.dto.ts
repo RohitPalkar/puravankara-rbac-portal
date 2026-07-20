@@ -6,6 +6,7 @@ import {
   IsBoolean,
   IsInt,
   Min,
+  Max,
 } from 'class-validator';
 
 export class CreateDepartmentDto {
@@ -18,6 +19,7 @@ export class CreateDepartmentDto {
   @IsOptional()
   @IsInt()
   @Min(1)
+  @Max(10)
   maxHierarchyLevels?: number;
 
   @ApiPropertyOptional({ default: true })
@@ -37,6 +39,7 @@ export class UpdateDepartmentDto {
   @IsOptional()
   @IsInt()
   @Min(1)
+  @Max(10)
   maxHierarchyLevels?: number;
 
   @ApiPropertyOptional()
