@@ -37,6 +37,17 @@ const INDIAN_STATES = [
   'Uttar Pradesh', 'Uttarakhand', 'West Bengal',
 ];
 
+const MAJOR_CITIES = [
+  'Ahmedabad', 'Bengaluru', 'Bhopal', 'Chandigarh', 'Chennai',
+  'Coimbatore', 'Delhi', 'Faridabad', 'Ghaziabad', 'Gurugram',
+  'Guwahati', 'Hyderabad', 'Indore', 'Jaipur', 'Jodhpur',
+  'Kochi', 'Kolkata', 'Kozhikode', 'Lucknow', 'Ludhiana',
+  'Madurai', 'Mangaluru', 'Mumbai', 'Nagpur', 'Nashik',
+  'Navi Mumbai', 'Noida', 'Patna', 'Pune', 'Raipur',
+  'Rajkot', 'Ranchi', 'Surat', 'Thane', 'Thiruvananthapuram',
+  'Vadodara', 'Varanasi', 'Vijayawada', 'Visakhapatnam',
+];
+
 function hasBrandPermission(
   permissions: { projects: { modules: { subModules: { name: string; actions: { code: string; allowed: boolean }[] }[] }[] }[] } | undefined,
   action: string
@@ -269,11 +280,15 @@ export default function BrandFormPage() {
               <TextField label="Billing Name" value={billingName} onChange={(e) => setBillingName(e.target.value)} />
               <TextField label="Address Line 1" value={address1} onChange={(e) => setAddress1(e.target.value)} sx={{ gridColumn: { xs: '1', sm: '1 / -1' } }} />
               <TextField label="Address Line 2" value={address2} onChange={(e) => setAddress2(e.target.value)} sx={{ gridColumn: { xs: '1', sm: '1 / -1' } }} />
-              <TextField label="City" value={city} onChange={(e) => setCity(e.target.value)} />
+              <TextField label="City" value={city} onChange={(e) => setCity(e.target.value)} select>
+                {MAJOR_CITIES.map((c) => <MenuItem key={c} value={c}>{c}</MenuItem>)}
+              </TextField>
               <TextField label="State" value={state} onChange={(e) => setState(e.target.value)} select>
                 {INDIAN_STATES.map((s) => <MenuItem key={s} value={s}>{s}</MenuItem>)}
               </TextField>
-              <TextField label="Country" value={country} onChange={(e) => setCountry(e.target.value)} />
+              <TextField label="Country" value={country} onChange={(e) => setCountry(e.target.value)} select>
+                <MenuItem value="India">India</MenuItem>
+              </TextField>
               <TextField label="PIN Code" value={pinCode} onChange={(e) => setPinCode(e.target.value)} inputProps={{ maxLength: 6 }} />
               <TextField label="PAN Number" value={panNumber} onChange={(e) => setPanNumber(e.target.value.toUpperCase())} inputProps={{ maxLength: 10 }} />
               <TextField label="GSTIN" value={gstin} onChange={(e) => setGstin(e.target.value.toUpperCase())} inputProps={{ maxLength: 15 }} />
@@ -296,7 +311,7 @@ export default function BrandFormPage() {
                   <Button size="small" color="error" onClick={() => setLogoUrl('')}>Remove</Button>
                 )}
               </Box>
-              <TextField label="Salary Multiplier" value={salaryMultiplier} onChange={(e) => setSalaryMultiplier(Number(e.target.value))} type="number" inputProps={{ step: 0.1, min: 0 }} />
+              <TextField label="Salary Multiplier" value={salaryMultiplier} onChange={(e) => setSalaryMultiplier(Number(e.target.value))} type="number" inputProps={{ step: 0.1, min: 0.01, max: 100 }} />
             </Stack>
           </Card>
 

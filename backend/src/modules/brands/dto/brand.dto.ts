@@ -13,7 +13,8 @@ export class CreateBrandDto {
 
   @ApiProperty()
   @IsNumber()
-  @Min(0)
+  @Min(0.01)
+  @Max(100)
   @Type(() => Number)
   salaryMultiplier: number;
 
@@ -174,7 +175,8 @@ export class UpdateBrandDto {
   @ApiPropertyOptional()
   @IsOptional()
   @IsNumber()
-  @Min(0)
+  @Min(0.01)
+  @Max(100)
   @Type(() => Number)
   salaryMultiplier?: number;
 
