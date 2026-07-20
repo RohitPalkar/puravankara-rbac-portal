@@ -22,7 +22,9 @@ export class WorkflowService {
     private readonly stepRepo: Repository<ApprovalStep>,
   ) {}
 
-  async create(dto: CreateWorkflowDto): Promise<{ workflow: ApprovalWorkflow; steps: ApprovalStep[] }> {
+  async create(
+    dto: CreateWorkflowDto,
+  ): Promise<{ workflow: ApprovalWorkflow; steps: ApprovalStep[] }> {
     const workflow = this.workflowRepo.create({
       name: dto.name,
       moduleId: dto.moduleId,

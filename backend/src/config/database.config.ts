@@ -7,17 +7,17 @@ function buildDatabaseConfig(): TypeOrmModuleOptions {
   if (!nodeEnv) {
     console.warn(
       'WARNING: NODE_ENV is not set. ' +
-      'synchronize defaults to false for safety. ' +
-      'Set NODE_ENV=production for production deployments.',
+        'synchronize defaults to false for safety. ' +
+        'Set NODE_ENV=production for production deployments.',
     );
   }
 
   const isProduction = nodeEnv === 'production';
-  const isSupabaseUrl = url && (url.includes('supabase') || url.includes('pooler'));
+  const isSupabaseUrl =
+    url && (url.includes('supabase') || url.includes('pooler'));
 
   // NEVER true when NODE_ENV=production; opt-in only via TYPEORM_SYNC=true
-  const synchronize =
-    process.env.TYPEORM_SYNC === 'true' && !isProduction;
+  const synchronize = process.env.TYPEORM_SYNC === 'true' && !isProduction;
 
   const base: TypeOrmModuleOptions = {
     type: 'postgres',
@@ -28,9 +28,8 @@ function buildDatabaseConfig(): TypeOrmModuleOptions {
     extra: {
       max: Number(process.env.DB_POOL_MAX) || 10,
     },
-    ssl: isProduction || isSupabaseUrl
-      ? { rejectUnauthorized: false }
-      : undefined,
+    ssl:
+      isProduction || isSupabaseUrl ? { rejectUnauthorized: false } : undefined,
   };
 
   if (url) {

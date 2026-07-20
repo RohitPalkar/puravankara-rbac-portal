@@ -1,4 +1,11 @@
-import { Entity, PrimaryColumn, ManyToOne, JoinColumn, CreateDateColumn, UpdateDateColumn } from 'typeorm';
+import {
+  Entity,
+  PrimaryColumn,
+  ManyToOne,
+  JoinColumn,
+  CreateDateColumn,
+  UpdateDateColumn,
+} from 'typeorm';
 import { City } from './city.entity';
 import { Zone } from './zone.entity';
 
@@ -10,11 +17,11 @@ export class CityZoneMapping {
   @PrimaryColumn({ name: 'zone_id' })
   zoneId: number;
 
-  @ManyToOne(() => City, { nullable: false , onDelete: 'CASCADE' })
+  @ManyToOne(() => City, { nullable: false, onDelete: 'CASCADE' })
   @JoinColumn({ name: 'city_id' })
   city: City;
 
-  @ManyToOne(() => Zone, { nullable: false , onDelete: 'CASCADE' })
+  @ManyToOne(() => Zone, { nullable: false, onDelete: 'CASCADE' })
   @JoinColumn({ name: 'zone_id' })
   zone: Zone;
 

@@ -33,7 +33,9 @@ describe('UserRoleService', () => {
         },
         {
           provide: PermissionCompilerService,
-          useValue: { compileForAllUserProjects: jest.fn().mockResolvedValue(undefined) },
+          useValue: {
+            compileForAllUserProjects: jest.fn().mockResolvedValue(undefined),
+          },
         },
       ],
     }).compile();
@@ -92,7 +94,9 @@ describe('UserRoleService', () => {
 
       await service.assign(dto);
 
-      expect(compilerService.compileForAllUserProjects).toHaveBeenCalledWith('PPL00002');
+      expect(compilerService.compileForAllUserProjects).toHaveBeenCalledWith(
+        'PPL00002',
+      );
     });
   });
 
@@ -129,7 +133,9 @@ describe('UserRoleService', () => {
 
       await service.revoke('PPL00002', 1, 2);
 
-      expect(compilerService.compileForAllUserProjects).toHaveBeenCalledWith('PPL00002');
+      expect(compilerService.compileForAllUserProjects).toHaveBeenCalledWith(
+        'PPL00002',
+      );
     });
   });
 });

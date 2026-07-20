@@ -22,7 +22,7 @@ export class ApprovalRequestStep extends AppBaseEntity {
   @Column({ name: 'action_date', type: 'timestamptz', nullable: true })
   actionDate: Date;
 
-  @ManyToOne(() => ApprovalRequest, { nullable: false , onDelete: 'CASCADE' })
+  @ManyToOne(() => ApprovalRequest, { nullable: false, onDelete: 'CASCADE' })
   @JoinColumn({ name: 'request_id' })
   request: ApprovalRequest;
 }

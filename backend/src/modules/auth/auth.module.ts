@@ -19,7 +19,13 @@ import { PermissionsModule } from '../permissions/permissions.module';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([User, UserAuth, UserSession, UserRole, UserProjectAccess]),
+    TypeOrmModule.forFeature([
+      User,
+      UserAuth,
+      UserSession,
+      UserRole,
+      UserProjectAccess,
+    ]),
     PassportModule.register({ defaultStrategy: 'jwt' }),
     JwtModule.register({
       secret: process.env.JWT_SECRET || 'puravankara-rbac-jwt-secret-key-2026',

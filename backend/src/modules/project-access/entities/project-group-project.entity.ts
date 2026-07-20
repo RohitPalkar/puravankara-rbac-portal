@@ -1,4 +1,11 @@
-import { Entity, PrimaryColumn, ManyToOne, JoinColumn, CreateDateColumn, UpdateDateColumn } from 'typeorm';
+import {
+  Entity,
+  PrimaryColumn,
+  ManyToOne,
+  JoinColumn,
+  CreateDateColumn,
+  UpdateDateColumn,
+} from 'typeorm';
 import { ProjectGroup } from './project-group.entity';
 import { Project } from '../../projects/entities/project.entity';
 
@@ -10,11 +17,11 @@ export class ProjectGroupProject {
   @PrimaryColumn({ name: 'project_id' })
   projectId: number;
 
-  @ManyToOne(() => ProjectGroup, { nullable: false , onDelete: 'CASCADE' })
+  @ManyToOne(() => ProjectGroup, { nullable: false, onDelete: 'CASCADE' })
   @JoinColumn({ name: 'group_id' })
   group: ProjectGroup;
 
-  @ManyToOne(() => Project, { nullable: false , onDelete: 'CASCADE' })
+  @ManyToOne(() => Project, { nullable: false, onDelete: 'CASCADE' })
   @JoinColumn({ name: 'project_id' })
   project: Project;
 

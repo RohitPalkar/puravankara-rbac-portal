@@ -1,4 +1,12 @@
-import { Entity, PrimaryColumn, ManyToOne, JoinColumn, Column, CreateDateColumn, UpdateDateColumn } from 'typeorm';
+import {
+  Entity,
+  PrimaryColumn,
+  ManyToOne,
+  JoinColumn,
+  Column,
+  CreateDateColumn,
+  UpdateDateColumn,
+} from 'typeorm';
 import { User } from './user.entity';
 
 @Entity('user_reporting_lines')
@@ -18,11 +26,11 @@ export class UserReportingLine {
   @Column({ name: 'effective_to', type: 'date', nullable: true })
   effectiveTo: Date;
 
-  @ManyToOne(() => User, { nullable: false , onDelete: 'CASCADE' })
+  @ManyToOne(() => User, { nullable: false, onDelete: 'CASCADE' })
   @JoinColumn({ name: 'user_id' })
   user: User;
 
-  @ManyToOne(() => User, { nullable: false , onDelete: 'CASCADE' })
+  @ManyToOne(() => User, { nullable: false, onDelete: 'CASCADE' })
   @JoinColumn({ name: 'reports_to_user_id' })
   reportsTo: User;
 

@@ -6,7 +6,13 @@ export class Brand extends AppBaseEntity {
   @Column({ name: 'brand_name', unique: true, nullable: false })
   brandName: string;
 
-  @Column({ name: 'salary_multiplier', type: 'decimal', precision: 10, scale: 2, nullable: false })
+  @Column({
+    name: 'salary_multiplier',
+    type: 'decimal',
+    precision: 10,
+    scale: 2,
+    nullable: false,
+  })
   salaryMultiplier: number;
 
   @Column({ name: 'razorpay_merchant_id', nullable: true })
@@ -63,19 +69,43 @@ export class Brand extends AppBaseEntity {
   @Column({ name: 'logo_url', nullable: true })
   logoUrl: string;
 
-  @Column({ name: 'rera_regularization_percentage', type: 'decimal', precision: 5, scale: 2, nullable: true })
+  @Column({
+    name: 'rera_regularization_percentage',
+    type: 'decimal',
+    precision: 5,
+    scale: 2,
+    nullable: true,
+  })
   reraRegularizationPercentage: number;
 
-  @Column({ name: 'rera_qualification_percentage', type: 'decimal', precision: 5, scale: 2, nullable: true })
+  @Column({
+    name: 'rera_qualification_percentage',
+    type: 'decimal',
+    precision: 5,
+    scale: 2,
+    nullable: true,
+  })
   reraQualificationPercentage: number;
 
   @Column({ name: 'maximum_regularization_days', type: 'int', nullable: true })
   maximumRegularizationDays: number;
 
-  @Column({ name: 'rtm_regularization_percentage', type: 'decimal', precision: 5, scale: 2, nullable: true })
+  @Column({
+    name: 'rtm_regularization_percentage',
+    type: 'decimal',
+    precision: 5,
+    scale: 2,
+    nullable: true,
+  })
   rtmRegularizationPercentage: number;
 
-  @Column({ name: 'rtm_qualification_percentage', type: 'decimal', precision: 5, scale: 2, nullable: true })
+  @Column({
+    name: 'rtm_qualification_percentage',
+    type: 'decimal',
+    precision: 5,
+    scale: 2,
+    nullable: true,
+  })
   rtmQualificationPercentage: number;
 
   @Column({ name: 'regularization_start_date', type: 'date', nullable: true })

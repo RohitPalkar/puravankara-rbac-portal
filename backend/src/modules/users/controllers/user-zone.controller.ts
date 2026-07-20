@@ -7,7 +7,12 @@ import {
   ParseIntPipe,
   Body,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiTags, ApiOperation, ApiProperty } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiTags,
+  ApiOperation,
+  ApiProperty,
+} from '@nestjs/swagger';
 import { IsString, IsNotEmpty, IsInt } from 'class-validator';
 import { UserZoneService } from '../services/user-zone.service';
 import { UserZone } from '../entities/user-zone.entity';

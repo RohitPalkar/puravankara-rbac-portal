@@ -22,7 +22,11 @@ export class UserProjectFeatureMatrix {
   @Column({ name: 'project_id', nullable: false })
   projectId: number;
 
-  @Column({ name: 'feature_privileges_document', type: 'jsonb', nullable: true })
+  @Column({
+    name: 'feature_privileges_document',
+    type: 'jsonb',
+    nullable: true,
+  })
   featurePrivilegesDocument: Record<string, any>;
 
   @CreateDateColumn({ name: 'generated_at', type: 'timestamptz' })

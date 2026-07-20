@@ -202,7 +202,9 @@ export class AuthService {
 
     let permissions: any = undefined;
     try {
-      this.compilerService.compileForAllUserProjects(user.empId).catch(() => {});
+      this.compilerService
+        .compileForAllUserProjects(user.empId)
+        .catch(() => {});
       const accessRows = await this.accessRepo.find({
         where: { userId: user.empId },
         relations: { project: true },
@@ -214,11 +216,13 @@ export class AuthService {
           accessRows[0].projectId,
         );
         permissions = {
-          projects: [{
-            id: accessRows[0].projectId,
-            name: accessRows[0].project.name,
-            modules: snapshot.modules,
-          }],
+          projects: [
+            {
+              id: accessRows[0].projectId,
+              name: accessRows[0].project.name,
+              modules: snapshot.modules,
+            },
+          ],
         };
       }
     } catch {
@@ -337,10 +341,7 @@ export class AuthService {
     });
   }
 
-  async setInitialPassword(
-    userId: string,
-    password: string,
-  ): Promise<void> {
+  async setInitialPassword(userId: string, password: string): Promise<void> {
     const user = await this.userRepository.findOne({
       where: { empId: userId },
     });
@@ -348,7 +349,7 @@ export class AuthService {
 
     const passwordHash = await bcrypt.hash(password, 10);
 
-    let userAuth = await this.userAuthRepository.findOne({
+    const userAuth = await this.userAuthRepository.findOne({
       where: { userId },
     });
 

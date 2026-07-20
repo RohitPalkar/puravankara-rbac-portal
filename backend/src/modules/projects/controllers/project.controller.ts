@@ -1,5 +1,19 @@
-import { Controller, Get, Post, Body, Patch, Param, ParseIntPipe, Query } from '@nestjs/common';
-import { ApiBearerAuth, ApiTags, ApiOperation, ApiQuery } from '@nestjs/swagger';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  ParseIntPipe,
+  Query,
+} from '@nestjs/common';
+import {
+  ApiBearerAuth,
+  ApiTags,
+  ApiOperation,
+  ApiQuery,
+} from '@nestjs/swagger';
 import { ProjectService } from '../services/project.service';
 import { CreateProjectDto, UpdateProjectDto } from '../dto/project.dto';
 import { Project } from '../entities/project.entity';
@@ -19,7 +33,10 @@ export class ProjectController {
     @Query('page') page?: string,
     @Query('limit') limit?: string,
   ): Promise<PaginatedResult<Project>> {
-    return this.projectService.findAll({ page: page ? parseInt(page, 10) : 1, limit: limit ? parseInt(limit, 10) : 100 });
+    return this.projectService.findAll({
+      page: page ? parseInt(page, 10) : 1,
+      limit: limit ? parseInt(limit, 10) : 100,
+    });
   }
 
   @Get(':id')
@@ -29,7 +46,9 @@ export class ProjectController {
   }
 
   @Post()
-  @ApiOperation({ summary: 'Create a new project with payment gateways and incentive rules' })
+  @ApiOperation({
+    summary: 'Create a new project with payment gateways and incentive rules',
+  })
   async create(@Body() dto: CreateProjectDto): Promise<Project> {
     return this.projectService.create(dto);
   }

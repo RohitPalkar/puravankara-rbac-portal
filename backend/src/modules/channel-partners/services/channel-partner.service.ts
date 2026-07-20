@@ -3,7 +3,10 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { ChannelPartner } from '../entities/channel-partner.entity';
 import { BaseService } from '../../../common/crud/base.service';
-import { CreateChannelPartnerDto, UpdateChannelPartnerDto } from '../dto/channel-partner.dto';
+import {
+  CreateChannelPartnerDto,
+  UpdateChannelPartnerDto,
+} from '../dto/channel-partner.dto';
 
 @Injectable()
 export class ChannelPartnerService extends BaseService<ChannelPartner> {
@@ -18,7 +21,10 @@ export class ChannelPartnerService extends BaseService<ChannelPartner> {
     return super.create(dto);
   }
 
-  async update(id: number, dto: UpdateChannelPartnerDto): Promise<ChannelPartner> {
+  async update(
+    id: number,
+    dto: UpdateChannelPartnerDto,
+  ): Promise<ChannelPartner> {
     return super.update(id, dto);
   }
 }

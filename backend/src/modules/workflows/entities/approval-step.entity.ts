@@ -28,7 +28,7 @@ export class ApprovalStep extends AppBaseEntity {
   @Column({ name: 'is_mandatory', default: true })
   isMandatory: boolean;
 
-  @ManyToOne(() => ApprovalWorkflow, { nullable: false , onDelete: 'CASCADE' })
+  @ManyToOne(() => ApprovalWorkflow, { nullable: false, onDelete: 'CASCADE' })
   @JoinColumn({ name: 'workflow_id' })
   workflow: ApprovalWorkflow;
 

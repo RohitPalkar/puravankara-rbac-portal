@@ -10,7 +10,14 @@ import { ProjectController } from './controllers/project.controller';
 import { ProjectLocationController } from './controllers/project-location.controller';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Project, ProjectLocation, ProjectPaymentGateway, ProjectIncentiveRule])],
+  imports: [
+    TypeOrmModule.forFeature([
+      Project,
+      ProjectLocation,
+      ProjectPaymentGateway,
+      ProjectIncentiveRule,
+    ]),
+  ],
   controllers: [ProjectController, ProjectLocationController],
   providers: [ProjectService, ProjectLocationService],
   exports: [TypeOrmModule],

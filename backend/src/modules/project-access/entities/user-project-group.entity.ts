@@ -1,4 +1,12 @@
-import { Entity, PrimaryColumn, ManyToOne, JoinColumn, Column, CreateDateColumn, UpdateDateColumn } from 'typeorm';
+import {
+  Entity,
+  PrimaryColumn,
+  ManyToOne,
+  JoinColumn,
+  Column,
+  CreateDateColumn,
+  UpdateDateColumn,
+} from 'typeorm';
 import { User } from '../../users/entities/user.entity';
 import { ProjectGroup } from './project-group.entity';
 
@@ -16,11 +24,11 @@ export class UserProjectGroup {
   @Column({ name: 'assigned_at', type: 'timestamptz', nullable: true })
   assignedAt: Date;
 
-  @ManyToOne(() => User, { nullable: false , onDelete: 'CASCADE' })
+  @ManyToOne(() => User, { nullable: false, onDelete: 'CASCADE' })
   @JoinColumn({ name: 'user_id' })
   user: User;
 
-  @ManyToOne(() => ProjectGroup, { nullable: false , onDelete: 'CASCADE' })
+  @ManyToOne(() => ProjectGroup, { nullable: false, onDelete: 'CASCADE' })
   @JoinColumn({ name: 'group_id' })
   group: ProjectGroup;
 

@@ -1,4 +1,12 @@
-import { Controller, Get, Post, Req, Body, Param, HttpCode } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Req,
+  Body,
+  Param,
+  HttpCode,
+} from '@nestjs/common';
 import { ApiBearerAuth, ApiTags, ApiOperation } from '@nestjs/swagger';
 import { PermissionService } from './services/permission.service';
 import { PermissionCompilerService } from './services/permission-compiler.service';
@@ -26,7 +34,9 @@ export class PermissionController {
   }
 
   @Post('compile/:userId/:projectId')
-  @ApiOperation({ summary: 'Compile and cache permission snapshot for user+project' })
+  @ApiOperation({
+    summary: 'Compile and cache permission snapshot for user+project',
+  })
   async compile(
     @Param('userId') userId: string,
     @Param('projectId') projectId: number,
@@ -36,7 +46,9 @@ export class PermissionController {
   }
 
   @Post('compile/:userId')
-  @ApiOperation({ summary: 'Compile permission snapshots for all user projects' })
+  @ApiOperation({
+    summary: 'Compile permission snapshots for all user projects',
+  })
   async compileAll(
     @Param('userId') userId: string,
   ): Promise<{ message: string }> {

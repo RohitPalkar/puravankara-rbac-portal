@@ -22,7 +22,13 @@ import { NotificationsModule } from '../notifications/notifications.module';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([User, UserRole, UserZone, UserReportingLine, UserAuth]),
+    TypeOrmModule.forFeature([
+      User,
+      UserRole,
+      UserZone,
+      UserReportingLine,
+      UserAuth,
+    ]),
     PermissionsModule,
     NotificationsModule,
   ],

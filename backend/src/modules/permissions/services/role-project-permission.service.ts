@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ConflictException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { RoleProjectPermission } from '../entities/role-project-permission.entity';
@@ -13,7 +17,15 @@ export class RoleProjectPermissionService {
   ) {}
 
   async findAll(): Promise<RoleProjectPermission[]> {
-    return this.repository.find({ relations: { role: true, project: true, module: true, subModule: true, action: true } });
+    return this.repository.find({
+      relations: {
+        role: true,
+        project: true,
+        module: true,
+        subModule: true,
+        action: true,
+      },
+    });
   }
 
   async findByRole(roleId: number): Promise<RoleProjectPermission[]> {
@@ -23,14 +35,23 @@ export class RoleProjectPermissionService {
     });
   }
 
-  async findByRoleAndProject(roleId: number, projectId: number): Promise<RoleProjectPermission[]> {
+  async findByRoleAndProject(
+    roleId: number,
+    projectId: number,
+  ): Promise<RoleProjectPermission[]> {
     return this.repository.find({
       where: { roleId, projectId },
       relations: { module: true, subModule: true, action: true },
     });
   }
 
-  async create(dto: { roleId: number; projectId: number; moduleId: number; subModuleId?: number; actionId: number }): Promise<RoleProjectPermission> {
+  async create(dto: {
+    roleId: number;
+    projectId: number;
+    moduleId: number;
+    subModuleId?: number;
+    actionId: number;
+  }): Promise<RoleProjectPermission> {
     const existing = await this.repository.findOne({
       where: {
         roleId: dto.roleId,
@@ -41,7 +62,9 @@ export class RoleProjectPermissionService {
       },
     });
     if (existing) {
-      throw new ConflictException('Permission already exists for this role/project/module/action');
+      throw new ConflictException(
+        'Permission already exists for this role/project/module/action',
+      );
     }
     const saved = await this.repository.save(this.repository.create(dto));
     await this.compilerService.compileForRole(dto.roleId).catch(() => {});

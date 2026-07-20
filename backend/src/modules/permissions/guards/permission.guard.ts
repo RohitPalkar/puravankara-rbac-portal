@@ -91,9 +91,7 @@ export class PermissionGuard {
       relations: { role: true },
     });
     return roles.some(
-      (ur) =>
-        ur.role?.isSystemRole === true ||
-        ur.role?.name === 'SUPER_ADMIN',
+      (ur) => ur.role?.isSystemRole === true || ur.role?.name === 'SUPER_ADMIN',
     );
   }
 

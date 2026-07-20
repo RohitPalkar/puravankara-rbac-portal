@@ -1,4 +1,11 @@
-import { Entity, PrimaryColumn, ManyToOne, JoinColumn, CreateDateColumn, UpdateDateColumn } from 'typeorm';
+import {
+  Entity,
+  PrimaryColumn,
+  ManyToOne,
+  JoinColumn,
+  CreateDateColumn,
+  UpdateDateColumn,
+} from 'typeorm';
 import { Department } from './department.entity';
 import { Role } from './role.entity';
 
@@ -10,11 +17,11 @@ export class DepartmentRole {
   @PrimaryColumn({ name: 'role_id' })
   roleId: number;
 
-  @ManyToOne(() => Department, { nullable: false , onDelete: 'SET NULL' })
+  @ManyToOne(() => Department, { nullable: false, onDelete: 'SET NULL' })
   @JoinColumn({ name: 'department_id' })
   department: Department;
 
-  @ManyToOne(() => Role, { nullable: false , onDelete: 'CASCADE' })
+  @ManyToOne(() => Role, { nullable: false, onDelete: 'CASCADE' })
   @JoinColumn({ name: 'role_id' })
   role: Role;
 

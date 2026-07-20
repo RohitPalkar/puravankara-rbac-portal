@@ -307,26 +307,35 @@ export class PermissionService {
 
   async getUserPermissions(userId: string): Promise<UserPermissionsResponse> {
     const user = await this.userRepo.findOne({ where: { empId: userId } });
-    const allModules = await this.moduleRepo.find({ where: { isActive: true } });
-    const allActions = await this.actionRepo.find({ where: { isActive: true } });
+    const allModules = await this.moduleRepo.find({
+      where: { isActive: true },
+    });
+    const allActions = await this.actionRepo.find({
+      where: { isActive: true },
+    });
     const allActionCodes = allActions.map((a) => a.code);
 
     if (!user || !user.isActive || user.deletedAt) {
       return {
         user: { empId: userId, name: '', email: '', roles: [] },
         projects: [],
-        permissions: { modules: allModules.map((m) => ({
-          code: m.code || m.name.toUpperCase().replace(/\s+/g, '_'),
-          name: m.name,
-          route: '',
-          allowed: true,
-          actions: allActionCodes,
-        })) },
+        permissions: {
+          modules: allModules.map((m) => ({
+            code: m.code || m.name.toUpperCase().replace(/\s+/g, '_'),
+            name: m.name,
+            route: '',
+            allowed: true,
+            actions: allActionCodes,
+          })),
+        },
       };
     }
 
     const isSuperAdmin = await this.isSuperAdmin(userId);
-    const userRoles = await this.userRoleRepo.find({ where: { userId }, relations: { role: true } });
+    const userRoles = await this.userRoleRepo.find({
+      where: { userId },
+      relations: { role: true },
+    });
     const roleNames = userRoles.map((ur) => ur.role.name);
 
     // Build flat module permissions for frontend nav (fast, no project iteration needed)
@@ -347,22 +356,41 @@ export class PermissionService {
         .select(['project.id', 'project.name'])
         .distinct(true)
         .getRawMany();
-      projectEntities = rows.map((r) => ({ id: Number(r.project_id), name: r.project_name }));
+      projectEntities = rows.map((r) => ({
+        id: Number(r.project_id),
+        name: r.project_name,
+      }));
     } else {
       const projectIds = await this.getUserProjectIds(userId);
       if (projectIds.length === 0) {
         return {
-          user: { empId: user.empId, name: user.name, email: user.email, roles: roleNames },
+          user: {
+            empId: user.empId,
+            name: user.name,
+            email: user.email,
+            roles: roleNames,
+          },
           projects: [],
           permissions: { modules: flatModules },
         };
       }
-      const accessRows = await this.accessRepo.find({ where: { userId }, relations: { project: true } });
-      projectEntities = accessRows.map((a) => ({ id: a.projectId, name: a.project.name }));
+      const accessRows = await this.accessRepo.find({
+        where: { userId },
+        relations: { project: true },
+      });
+      projectEntities = accessRows.map((a) => ({
+        id: a.projectId,
+        name: a.project.name,
+      }));
     }
 
     const result: UserPermissionsResponse = {
-      user: { empId: user.empId, name: user.name, email: user.email, roles: roleNames },
+      user: {
+        empId: user.empId,
+        name: user.name,
+        email: user.email,
+        roles: roleNames,
+      },
       permissions: { modules: flatModules },
       projects: [],
     };
@@ -371,10 +399,17 @@ export class PermissionService {
     // Keep a few projects with full data for other consumers
     const projectCount = projectEntities.length;
     if (isSuperAdmin) {
-      const nestedModules = await this.getSuperAdminNestedModules(allModules, allActions);
+      const nestedModules = await this.getSuperAdminNestedModules(
+        allModules,
+        allActions,
+      );
       if (projectCount === 0) {
         // SUPER_ADMIN with no projects — provide a virtual project so frontend permission checks pass
-        result.projects.push({ id: 0, name: 'All Projects', modules: nestedModules });
+        result.projects.push({
+          id: 0,
+          name: 'All Projects',
+          modules: nestedModules,
+        });
       } else {
         for (let i = 0; i < projectCount; i++) {
           const proj = projectEntities[i];
@@ -388,9 +423,10 @@ export class PermissionService {
     } else {
       for (let i = 0; i < projectCount; i++) {
         const proj = projectEntities[i];
-        const modules = i === 0
-          ? await this.getUserModulePermissionsNested(userId, proj.id, false)
-          : await this.getUserModulePermissionsNested(userId, proj.id, false);
+        const modules =
+          i === 0
+            ? await this.getUserModulePermissionsNested(userId, proj.id, false)
+            : await this.getUserModulePermissionsNested(userId, proj.id, false);
         result.projects.push({ id: proj.id, name: proj.name, modules });
       }
     }
@@ -401,16 +437,28 @@ export class PermissionService {
   private async getSuperAdminNestedModules(
     allModules: Module[],
     allActions: Action[],
-  ): Promise<{
-    id: number;
-    name: string;
-    subModules: { id: number; name: string; actions: { code: string; label: string; allowed: boolean }[] }[];
-  }[]> {
-    const allSubModules = await this.subModuleRepo.find({ where: { isActive: true } });
+  ): Promise<
+    {
+      id: number;
+      name: string;
+      subModules: {
+        id: number;
+        name: string;
+        actions: { code: string; label: string; allowed: boolean }[];
+      }[];
+    }[]
+  > {
+    const allSubModules = await this.subModuleRepo.find({
+      where: { isActive: true },
+    });
     const result: {
       id: number;
       name: string;
-      subModules: { id: number; name: string; actions: { code: string; label: string; allowed: boolean }[] }[];
+      subModules: {
+        id: number;
+        name: string;
+        actions: { code: string; label: string; allowed: boolean }[];
+      }[];
     }[] = [];
 
     for (const mod of allModules) {
@@ -426,14 +474,22 @@ export class PermissionService {
           subModuleEntries.push({
             id: sm.id,
             name: sm.name,
-            actions: allActions.map((a) => ({ code: a.code, label: a.label, allowed: true })),
+            actions: allActions.map((a) => ({
+              code: a.code,
+              label: a.label,
+              allowed: true,
+            })),
           });
         }
       } else {
         subModuleEntries.push({
           id: 0,
           name: mod.name,
-          actions: allActions.map((a) => ({ code: a.code, label: a.label, allowed: true })),
+          actions: allActions.map((a) => ({
+            code: a.code,
+            label: a.label,
+            allowed: true,
+          })),
         });
       }
 
@@ -548,18 +604,24 @@ export class PermissionService {
     userId: string,
     projectId: number,
     isSuperAdmin: boolean,
-  ): Promise<{
-    id: number;
-    name: string;
-    subModules: {
+  ): Promise<
+    {
       id: number;
       name: string;
-      actions: { code: string; label: string; allowed: boolean }[];
-    }[];
-  }[]> {
+      subModules: {
+        id: number;
+        name: string;
+        actions: { code: string; label: string; allowed: boolean }[];
+      }[];
+    }[]
+  > {
     const modules = await this.moduleRepo.find({ where: { isActive: true } });
-    const allSubModules = await this.subModuleRepo.find({ where: { isActive: true } });
-    const allActions = await this.actionRepo.find({ where: { isActive: true } });
+    const allSubModules = await this.subModuleRepo.find({
+      where: { isActive: true },
+    });
+    const allActions = await this.actionRepo.find({
+      where: { isActive: true },
+    });
     const result: {
       id: number;
       name: string;
@@ -630,16 +692,24 @@ export class PermissionService {
 
         if (subModules.length > 0) {
           for (const sm of subModules) {
-            const smRolePerms = rolePerms.filter((p) => p.subModuleId === sm.id);
-            const smTemplatePerms = templatePerms.filter((p) => p.subModuleId === sm.id);
-            const smOverrides = overrides.filter((o) => o.subModuleId === sm.id);
+            const smRolePerms = rolePerms.filter(
+              (p) => p.subModuleId === sm.id,
+            );
+            const smTemplatePerms = templatePerms.filter(
+              (p) => p.subModuleId === sm.id,
+            );
+            const smOverrides = overrides.filter(
+              (o) => o.subModuleId === sm.id,
+            );
 
             const grantedActionIds = new Set<number>();
             for (const p of smRolePerms) grantedActionIds.add(p.actionId);
             for (const p of smTemplatePerms) grantedActionIds.add(p.actionId);
             for (const o of smOverrides) {
-              if (o.permissionType === 'DENY') grantedActionIds.delete(o.actionId);
-              if (o.permissionType === 'ALLOW') grantedActionIds.add(o.actionId);
+              if (o.permissionType === 'DENY')
+                grantedActionIds.delete(o.actionId);
+              if (o.permissionType === 'ALLOW')
+                grantedActionIds.add(o.actionId);
             }
 
             const actions = allActions
@@ -655,7 +725,8 @@ export class PermissionService {
           for (const p of rolePerms) grantedActionIds.add(p.actionId);
           for (const p of templatePerms) grantedActionIds.add(p.actionId);
           for (const o of overrides) {
-            if (o.permissionType === 'DENY') grantedActionIds.delete(o.actionId);
+            if (o.permissionType === 'DENY')
+              grantedActionIds.delete(o.actionId);
             if (o.permissionType === 'ALLOW') grantedActionIds.add(o.actionId);
           }
 
@@ -671,7 +742,11 @@ export class PermissionService {
       }
 
       if (subModuleEntries.length > 0) {
-        result.push({ id: mod.id, name: mod.name, subModules: subModuleEntries });
+        result.push({
+          id: mod.id,
+          name: mod.name,
+          subModules: subModuleEntries,
+        });
       }
     }
 

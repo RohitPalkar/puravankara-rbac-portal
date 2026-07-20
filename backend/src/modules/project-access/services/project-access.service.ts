@@ -64,7 +64,9 @@ export class UserProjectAccessService {
       )
       .catch(() => {});
 
-    this.compilerService.compileAndSave(dto.userId, dto.projectId).catch(() => {});
+    this.compilerService
+      .compileAndSave(dto.userId, dto.projectId)
+      .catch(() => {});
 
     return saved;
   }

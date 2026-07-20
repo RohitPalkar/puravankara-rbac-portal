@@ -1,5 +1,15 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsString, IsNotEmpty, IsOptional, IsBoolean } from 'class-validator';
+import {
+  IsString,
+  IsNotEmpty,
+  IsOptional,
+  IsBoolean,
+  IsNumber,
+  Min,
+  Max,
+  IsDateString,
+} from 'class-validator';
+import { Type } from 'class-transformer';
 
 export class CreateZoneDto {
   @ApiProperty()
@@ -11,6 +21,26 @@ export class CreateZoneDto {
   @IsOptional()
   @IsBoolean()
   isActive?: boolean;
+
+  @ApiPropertyOptional({
+    type: Number,
+    example: 1.0,
+    description: 'Salary capping multiplier (1.00 - 10.00)',
+  })
+  @IsOptional()
+  @IsNumber()
+  @Min(1.0)
+  @Max(10.0)
+  @Type(() => Number)
+  salaryCapping?: number;
+
+  @ApiPropertyOptional({
+    example: '2026-07-20',
+    description: 'Effective date (YYYY-MM-DD)',
+  })
+  @IsOptional()
+  @IsDateString()
+  effectiveDate?: string;
 }
 
 export class UpdateZoneDto {
@@ -24,6 +54,26 @@ export class UpdateZoneDto {
   @IsOptional()
   @IsBoolean()
   isActive?: boolean;
+
+  @ApiPropertyOptional({
+    type: Number,
+    example: 1.0,
+    description: 'Salary capping multiplier (1.00 - 10.00)',
+  })
+  @IsOptional()
+  @IsNumber()
+  @Min(1.0)
+  @Max(10.0)
+  @Type(() => Number)
+  salaryCapping?: number;
+
+  @ApiPropertyOptional({
+    example: '2026-07-20',
+    description: 'Effective date (YYYY-MM-DD)',
+  })
+  @IsOptional()
+  @IsDateString()
+  effectiveDate?: string;
 }
 
 export class ZoneResponseDto {
@@ -35,6 +85,18 @@ export class ZoneResponseDto {
 
   @ApiProperty()
   isActive: boolean;
+
+  @ApiProperty({ type: Number, example: 1.0 })
+  salaryCapping: number;
+
+  @ApiProperty({ example: '2026-07-20' })
+  effectiveDate: Date;
+
+  @ApiProperty({ example: '2x' })
+  salaryCappingLabel: string;
+
+  @ApiProperty({ example: 5 })
+  citiesMapped: number;
 
   @ApiProperty()
   createdAt: Date;

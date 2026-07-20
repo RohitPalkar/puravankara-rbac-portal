@@ -110,6 +110,18 @@ export default function ZoneListPage() {
     { field: 'id', headerName: 'ID', width: 60 },
     { field: 'name', headerName: 'Zone Name', flex: 1, minWidth: 180 },
     {
+      field: 'salaryCapping', headerName: 'Salary Capping', width: 130,
+      renderCell: (params) => params.row.salaryCappingLabel ?? `${params.value}x`,
+    },
+    {
+      field: 'effectiveDate', headerName: 'Effective Date', width: 130,
+      valueFormatter: (value) => value ? dayjs(value).format('DD MMM YYYY') : '-',
+    },
+    {
+      field: 'citiesMapped', headerName: 'Cities Mapped', width: 120,
+      valueFormatter: (value) => value ?? 0,
+    },
+    {
       field: 'isActive', headerName: 'Status', width: 100,
       renderCell: (params) => (
         <Label color={params.value ? 'success' : 'default'}>

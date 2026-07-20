@@ -14,7 +14,18 @@ import { Role } from '../organization/entities/role.entity';
 import { User } from '../users/entities/user.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Department, Project, ProductModule, Zone, City, Role, User, SystemSetting])],
+  imports: [
+    TypeOrmModule.forFeature([
+      Department,
+      Project,
+      ProductModule,
+      Zone,
+      City,
+      Role,
+      User,
+      SystemSetting,
+    ]),
+  ],
   controllers: [SetupController],
   providers: [SetupService, SystemSettingService],
   exports: [SystemSettingService],

@@ -24,10 +24,22 @@ export class ProjectIncentiveRule extends AppBaseEntity {
   })
   incentiveType: IncentiveType;
 
-  @Column({ name: 'regularization_percentage', type: 'decimal', precision: 5, scale: 2, nullable: true })
+  @Column({
+    name: 'regularization_percentage',
+    type: 'decimal',
+    precision: 5,
+    scale: 2,
+    nullable: true,
+  })
   regularizationPercentage: number;
 
-  @Column({ name: 'payable_percentage', type: 'decimal', precision: 5, scale: 2, nullable: true })
+  @Column({
+    name: 'payable_percentage',
+    type: 'decimal',
+    precision: 5,
+    scale: 2,
+    nullable: true,
+  })
   payablePercentage: number;
 
   @Column({ name: 'max_days', type: 'int', nullable: true })

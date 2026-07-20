@@ -24,11 +24,11 @@ export class UserProjectAccess {
   @Column({ name: 'assigned_at', type: 'timestamptz', nullable: true })
   assignedAt: Date;
 
-  @ManyToOne(() => User, { nullable: false , onDelete: 'CASCADE' })
+  @ManyToOne(() => User, { nullable: false, onDelete: 'CASCADE' })
   @JoinColumn({ name: 'user_id' })
   user: User;
 
-  @ManyToOne(() => Project, { nullable: false , onDelete: 'CASCADE' })
+  @ManyToOne(() => Project, { nullable: false, onDelete: 'CASCADE' })
   @JoinColumn({ name: 'project_id' })
   project: Project;
 

@@ -16,10 +16,7 @@ export class SystemSettingService {
   }
 
   async set(key: string, value: Record<string, any>): Promise<void> {
-    await this.repo.upsert(
-      { key, value },
-      { conflictPaths: ['key'] },
-    );
+    await this.repo.upsert({ key, value }, { conflictPaths: ['key'] });
   }
 
   async delete(key: string): Promise<void> {

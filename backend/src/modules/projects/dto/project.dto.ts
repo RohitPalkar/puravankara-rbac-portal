@@ -1,7 +1,18 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
-  IsString, IsNotEmpty, IsOptional, IsBoolean, IsNumber, Min, Max, IsInt, IsEnum,
-  Matches, ValidateNested, IsArray, MinLength,
+  IsString,
+  IsNotEmpty,
+  IsOptional,
+  IsBoolean,
+  IsNumber,
+  Min,
+  Max,
+  IsInt,
+  IsEnum,
+  Matches,
+  ValidateNested,
+  IsArray,
+  MinLength,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { PaymentGatewayType } from '../entities/project-payment-gateway.entity';

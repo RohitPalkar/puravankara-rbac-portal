@@ -73,7 +73,9 @@ export async function bootstrapSeeder(dataSource: DataSource): Promise<void> {
   for (const m of MODULES_SEED) {
     let mod = await moduleRepo.findOne({ where: { name: m.name } });
     if (!mod) {
-      mod = await moduleRepo.save(moduleRepo.create({ name: m.name, code: m.code, isActive: true }));
+      mod = await moduleRepo.save(
+        moduleRepo.create({ name: m.name, code: m.code, isActive: true }),
+      );
     }
     moduleMap.set(m.name, mod);
   }
@@ -83,9 +85,17 @@ export async function bootstrapSeeder(dataSource: DataSource): Promise<void> {
   for (const sm of SUB_MODULES_SEED) {
     const parentModule = moduleMap.get(sm.moduleName);
     if (!parentModule) continue;
-    let sub = await subModuleRepo.findOne({ where: { moduleId: parentModule.id, name: sm.name } });
+    let sub = await subModuleRepo.findOne({
+      where: { moduleId: parentModule.id, name: sm.name },
+    });
     if (!sub) {
-      sub = await subModuleRepo.save(subModuleRepo.create({ moduleId: parentModule.id, name: sm.name, isActive: true }));
+      sub = await subModuleRepo.save(
+        subModuleRepo.create({
+          moduleId: parentModule.id,
+          name: sm.name,
+          isActive: true,
+        }),
+      );
     }
     subModuleMap.set(sm.name, sub);
   }
@@ -110,7 +120,11 @@ export async function bootstrapSeeder(dataSource: DataSource): Promise<void> {
   for (const sub of subModuleMap.values()) {
     for (const action of allActions) {
       const existing = await moduleActionRepo.findOne({
-        where: { moduleId: sub.moduleId, subModuleId: sub.id, actionId: action.id },
+        where: {
+          moduleId: sub.moduleId,
+          subModuleId: sub.id,
+          actionId: action.id,
+        },
       });
       if (!existing) {
         await moduleActionRepo.save(
@@ -147,7 +161,10 @@ export async function bootstrapSeeder(dataSource: DataSource): Promise<void> {
   let adminUser = await userRepo.findOne({ where: { email: adminEmail } });
   if (!adminUser) {
     // Generate emp_id using normal sequence
-    const [lastUser] = await userRepo.find({ order: { createdAt: 'DESC' }, take: 1 });
+    const [lastUser] = await userRepo.find({
+      order: { createdAt: 'DESC' },
+      take: 1,
+    });
     const lastNum = lastUser
       ? parseInt(lastUser.empId.replace('PPL', ''), 10)
       : 0;
@@ -166,7 +183,9 @@ export async function bootstrapSeeder(dataSource: DataSource): Promise<void> {
   }
 
   // Ensure UserAuth record exists (even if user was created by prior migration)
-  const existingAuth = await authRepo.findOne({ where: { userId: adminUser.empId } });
+  const existingAuth = await authRepo.findOne({
+    where: { userId: adminUser.empId },
+  });
   if (!existingAuth) {
     const passwordHash: string = await bcrypt.hash(adminPassword, SALT_ROUNDS);
     await authRepo.save(

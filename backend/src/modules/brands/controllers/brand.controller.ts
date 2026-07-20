@@ -1,5 +1,10 @@
 import { Controller, Get, Query, Param, ParseIntPipe } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
 import { BrandService } from '../services/brand.service';
 import { CreateBrandDto, UpdateBrandDto } from '../dto/brand.dto';
 import { QueryBrandDto } from '../dto/query-brand.dto';
@@ -37,7 +42,10 @@ export class BrandController extends BaseController<
   @ApiOperation({ summary: 'List all brands (sensitive fields excluded)' })
   @ApiResponse({ status: 200, description: 'Paginated list of brands' })
   async findAll(@Query() query: QueryBrandDto) {
-    const result = await this.brandService.findAll(query, ['brandName', 'billingName']);
+    const result = await this.brandService.findAll(query, [
+      'brandName',
+      'billingName',
+    ]);
     return {
       data: result.data.map(stripSensitiveFields),
       meta: result.meta,

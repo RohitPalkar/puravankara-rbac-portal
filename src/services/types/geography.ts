@@ -15,11 +15,17 @@ export type UpdateCityRequest = Partial<CreateCityRequest>;
 export interface Zone extends AppBase {
   name: string;
   isActive: boolean;
+  salaryCapping: number;
+  effectiveDate: string;
+  salaryCappingLabel?: string;
+  citiesMapped?: number;
 }
 
 export interface CreateZoneRequest {
   name: string;
   isActive?: boolean;
+  salaryCapping?: number;
+  effectiveDate?: string;
 }
 
 export type UpdateZoneRequest = Partial<CreateZoneRequest>;

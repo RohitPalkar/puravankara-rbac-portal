@@ -21,6 +21,9 @@ export class SetupController {
   @ApiOperation({ summary: 'Reset zones, cities, and non-admin users' })
   async reset(): Promise<{ message: string }> {
     await this.setupService.reset();
-    return { message: 'Reset complete: zones (4), cities seeded, non-admin users removed' };
+    return {
+      message:
+        'Reset complete: zones (4), cities seeded, non-admin users removed',
+    };
   }
 }

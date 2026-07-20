@@ -24,7 +24,13 @@ export class Phase extends AppBaseEntity {
   @Column({ name: 'possession_date', type: 'date', nullable: false })
   possessionDate: string;
 
-  @Column({ name: 'agreement_execution_percentage', type: 'decimal', precision: 5, scale: 2, nullable: true })
+  @Column({
+    name: 'agreement_execution_percentage',
+    type: 'decimal',
+    precision: 5,
+    scale: 2,
+    nullable: true,
+  })
   agreementExecutionPercentage: number;
 
   @Column({ name: 'booking_gateway_id', nullable: true })

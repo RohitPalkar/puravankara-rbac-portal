@@ -26,7 +26,6 @@ import {
 import { PermissionCompilerService } from '../../permissions/services/permission-compiler.service';
 import { NotificationService } from '../../notifications/services/notification.service';
 
-
 @Injectable()
 export class UserService {
   private readonly logger = new Logger(UserService.name);
@@ -82,7 +81,9 @@ export class UserService {
     return user;
   }
 
-  async create(dto: CreateUserDto): Promise<{ user: User; generatedPassword: string }> {
+  async create(
+    dto: CreateUserDto,
+  ): Promise<{ user: User; generatedPassword: string }> {
     const existing = await this.repository.findOne({
       where: { email: dto.email },
     });
@@ -158,7 +159,12 @@ export class UserService {
     await this.repository.save(user);
   }
 
-  async createFull(dto: CreateUserFullDto): Promise<{ user: User; roles: UserRole[]; zones: UserZone[]; reportingLines: UserReportingLine[] }> {
+  async createFull(dto: CreateUserFullDto): Promise<{
+    user: User;
+    roles: UserRole[];
+    zones: UserZone[];
+    reportingLines: UserReportingLine[];
+  }> {
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
@@ -235,11 +241,18 @@ export class UserService {
       return { user: savedUser, roles, zones, reportingLines };
     } catch (err) {
       await queryRunner.rollbackTransaction();
-      this.logger.error(`User creation transaction failed: ${(err as Error).message}`);
-      if (err instanceof ConflictException || err instanceof BadRequestException) {
+      this.logger.error(
+        `User creation transaction failed: ${(err as Error).message}`,
+      );
+      if (
+        err instanceof ConflictException ||
+        err instanceof BadRequestException
+      ) {
         throw err;
       }
-      throw new BadRequestException('User creation failed. All changes rolled back.');
+      throw new BadRequestException(
+        'User creation failed. All changes rolled back.',
+      );
     } finally {
       await queryRunner.release();
     }

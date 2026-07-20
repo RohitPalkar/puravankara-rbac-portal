@@ -33,15 +33,15 @@ export class UserRole {
   @Column({ name: 'assigned_at', type: 'timestamptz', nullable: true })
   assignedAt: Date;
 
-  @ManyToOne(() => User, { nullable: false , onDelete: 'CASCADE' })
+  @ManyToOne(() => User, { nullable: false, onDelete: 'CASCADE' })
   @JoinColumn({ name: 'user_id' })
   user: User;
 
-  @ManyToOne(() => Department, { nullable: true , onDelete: 'SET NULL' })
+  @ManyToOne(() => Department, { nullable: true, onDelete: 'SET NULL' })
   @JoinColumn({ name: 'department_id' })
   department: Department | null;
 
-  @ManyToOne(() => Role, { nullable: false , onDelete: 'CASCADE' })
+  @ManyToOne(() => Role, { nullable: false, onDelete: 'CASCADE' })
   @JoinColumn({ name: 'role_id' })
   role: Role;
 

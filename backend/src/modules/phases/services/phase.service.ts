@@ -3,7 +3,11 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Phase } from '../entities/phase.entity';
 import { BaseService } from '../../../common/crud/base.service';
-import { CreatePhaseDto, UpdatePhaseDto, UpdateLaunchDto } from '../dto/phase.dto';
+import {
+  CreatePhaseDto,
+  UpdatePhaseDto,
+  UpdateLaunchDto,
+} from '../dto/phase.dto';
 
 @Injectable()
 export class PhaseService extends BaseService<Phase> {
@@ -23,7 +27,7 @@ export class PhaseService extends BaseService<Phase> {
   }
 
   async updateLaunch(id: number, dto: UpdateLaunchDto): Promise<Phase> {
-    const phase = await this.repository.findOneOrFail({ where: { id } as any });
+    const phase = await this.repository.findOneOrFail({ where: { id } });
     Object.assign(phase, dto);
     return this.repository.save(phase);
   }

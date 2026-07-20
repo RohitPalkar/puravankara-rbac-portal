@@ -1,4 +1,11 @@
-import { Entity, PrimaryColumn, ManyToOne, JoinColumn, CreateDateColumn, UpdateDateColumn } from 'typeorm';
+import {
+  Entity,
+  PrimaryColumn,
+  ManyToOne,
+  JoinColumn,
+  CreateDateColumn,
+  UpdateDateColumn,
+} from 'typeorm';
 import { Project } from './project.entity';
 import { City } from '../../geography/entities/city.entity';
 import { Zone } from '../../geography/entities/zone.entity';
@@ -14,15 +21,15 @@ export class ProjectLocation {
   @PrimaryColumn({ name: 'zone_id' })
   zoneId: number;
 
-  @ManyToOne(() => Project, { nullable: false , onDelete: 'CASCADE' })
+  @ManyToOne(() => Project, { nullable: false, onDelete: 'CASCADE' })
   @JoinColumn({ name: 'project_id' })
   project: Project;
 
-  @ManyToOne(() => City, { nullable: false , onDelete: 'CASCADE' })
+  @ManyToOne(() => City, { nullable: false, onDelete: 'CASCADE' })
   @JoinColumn({ name: 'city_id' })
   city: City;
 
-  @ManyToOne(() => Zone, { nullable: false , onDelete: 'CASCADE' })
+  @ManyToOne(() => Zone, { nullable: false, onDelete: 'CASCADE' })
   @JoinColumn({ name: 'zone_id' })
   zone: Zone;
 

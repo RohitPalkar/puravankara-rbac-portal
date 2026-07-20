@@ -66,7 +66,10 @@ export class PermissionCompilerService {
     private readonly cacheService: PermissionCacheService,
   ) {}
 
-  async compileForUser(userId: string, projectId: number): Promise<FeatureMatrixModule[]> {
+  async compileForUser(
+    userId: string,
+    projectId: number,
+  ): Promise<FeatureMatrixModule[]> {
     const user = await this.userRepo.findOne({ where: { empId: userId } });
     if (!user || !user.isActive || user.deletedAt) {
       return [];
@@ -87,7 +90,11 @@ export class PermissionCompilerService {
 
       const allowedActionCodes = new Set(allowedActions.map((a) => a.code));
 
-      const featureSubModules: { id: number; name: string; actions: string[] }[] = [];
+      const featureSubModules: {
+        id: number;
+        name: string;
+        actions: string[];
+      }[] = [];
 
       if (isSuperAdmin) {
         if (subModules.length > 0) {
@@ -107,13 +114,18 @@ export class PermissionCompilerService {
         }
       } else {
         const hasModuleAccess = await this.hasModuleAccess(
-          userId, projectId, mod.id,
+          userId,
+          projectId,
+          mod.id,
         );
         if (!hasModuleAccess) continue;
 
         for (const sm of subModules) {
           const smActions = await this.resolveSubModuleActions(
-            userId, projectId, mod.id, sm.id,
+            userId,
+            projectId,
+            mod.id,
+            sm.id,
           );
           if (smActions.length > 0) {
             featureSubModules.push({
@@ -126,7 +138,9 @@ export class PermissionCompilerService {
 
         if (subModules.length === 0) {
           const actions = await this.resolveModuleActions(
-            userId, projectId, mod.id,
+            userId,
+            projectId,
+            mod.id,
           );
           if (actions.length > 0) {
             featureSubModules.push({
@@ -209,7 +223,9 @@ export class PermissionCompilerService {
     projectId: number,
   ): Promise<{ modules: FeatureMatrixModule[] }> {
     const cacheKey = `permissions:snapshot:${userId}:${projectId}`;
-    const cached = await this.cacheService.get<{ modules: FeatureMatrixModule[] }>(cacheKey);
+    const cached = await this.cacheService.get<{
+      modules: FeatureMatrixModule[];
+    }>(cacheKey);
     if (cached) return cached;
 
     const matrix = await this.matrixRepo.findOne({
@@ -217,7 +233,9 @@ export class PermissionCompilerService {
     });
 
     if (matrix?.featurePrivilegesDocument) {
-      const doc = matrix.featurePrivilegesDocument as { modules: FeatureMatrixModule[] };
+      const doc = matrix.featurePrivilegesDocument as {
+        modules: FeatureMatrixModule[];
+      };
       await this.cacheService.set(cacheKey, doc, 3600);
       return doc;
     }
@@ -276,9 +294,15 @@ export class PermissionCompilerService {
     moduleId: number,
   ): Promise<boolean> {
     const rolePerms = await this.rppRepo.findOne({
-      where: { roleId: In(
-        (await this.userRoleRepo.find({ where: { userId } })).map((ur) => ur.roleId)
-      ), projectId, moduleId },
+      where: {
+        roleId: In(
+          (await this.userRoleRepo.find({ where: { userId } })).map(
+            (ur) => ur.roleId,
+          ),
+        ),
+        projectId,
+        moduleId,
+      },
     });
     if (rolePerms) return true;
 

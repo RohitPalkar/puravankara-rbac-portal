@@ -57,13 +57,17 @@ export class UserPermissionOverrideService {
       existing.permissionType = dto.permissionType as PermissionType;
       existing.reason = dto.reason;
       const saved = await this.repository.save(existing);
-      await this.compilerService.compileAndSave(dto.userId, dto.projectId).catch(() => {});
+      await this.compilerService
+        .compileAndSave(dto.userId, dto.projectId)
+        .catch(() => {});
       return saved;
     }
 
     const override = this.repository.create(dto as any);
     const saved = await this.repository.save(override);
-    await this.compilerService.compileAndSave(dto.userId, dto.projectId).catch(() => {});
+    await this.compilerService
+      .compileAndSave(dto.userId, dto.projectId)
+      .catch(() => {});
     return saved as unknown as Promise<UserPermissionOverride>;
   }
 
@@ -72,7 +76,9 @@ export class UserPermissionOverrideService {
     if (!entity) throw new NotFoundException('Override not found');
     const { userId, projectId } = entity;
     await this.repository.delete(id);
-    await this.compilerService.compileAndSave(userId, projectId).catch(() => {});
+    await this.compilerService
+      .compileAndSave(userId, projectId)
+      .catch(() => {});
   }
 
   async removeByKey(

@@ -1,4 +1,11 @@
-import { Entity, PrimaryColumn, ManyToOne, JoinColumn, CreateDateColumn, UpdateDateColumn } from 'typeorm';
+import {
+  Entity,
+  PrimaryColumn,
+  ManyToOne,
+  JoinColumn,
+  CreateDateColumn,
+  UpdateDateColumn,
+} from 'typeorm';
 import { Action } from '../../product-catalog/entities/action.entity';
 import { PermissionScope } from './permission-scope.entity';
 
@@ -10,11 +17,11 @@ export class ActionPermissionScope {
   @PrimaryColumn({ name: 'scope_id' })
   scopeId: number;
 
-  @ManyToOne(() => Action, { nullable: false , onDelete: 'CASCADE' })
+  @ManyToOne(() => Action, { nullable: false, onDelete: 'CASCADE' })
   @JoinColumn({ name: 'action_id' })
   action: Action;
 
-  @ManyToOne(() => PermissionScope, { nullable: false , onDelete: 'CASCADE' })
+  @ManyToOne(() => PermissionScope, { nullable: false, onDelete: 'CASCADE' })
   @JoinColumn({ name: 'scope_id' })
   scope: PermissionScope;
 

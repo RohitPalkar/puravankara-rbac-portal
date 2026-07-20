@@ -91,4 +91,12 @@ export class UserPermissionsResponse {
   permissions: FrontendPermissions;
 }
 
-export { ProjectPermissions, ModulePermissions, SubModulePermissions, ActionPermission, UserInfo, FlatModule, FrontendPermissions };
+export {
+  ProjectPermissions,
+  ModulePermissions,
+  SubModulePermissions,
+  ActionPermission,
+  UserInfo,
+  FlatModule,
+  FrontendPermissions,
+};
