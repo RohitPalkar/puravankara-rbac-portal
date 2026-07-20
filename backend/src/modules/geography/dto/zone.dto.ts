@@ -17,11 +17,6 @@ export class CreateZoneDto {
   @IsNotEmpty()
   name: string;
 
-  @ApiPropertyOptional({ default: true })
-  @IsOptional()
-  @IsBoolean()
-  isActive?: boolean;
-
   @ApiPropertyOptional({
     type: Number,
     example: 1.0,
@@ -34,13 +29,15 @@ export class CreateZoneDto {
   @Type(() => Number)
   salaryCapping?: number;
 
-  @ApiPropertyOptional({
-    example: '2026-07-20',
-    description: 'Effective date (YYYY-MM-DD)',
-  })
+  @ApiPropertyOptional({ example: '2026-07-20', description: 'Start date (YYYY-MM-DD)' })
   @IsOptional()
   @IsDateString()
-  effectiveDate?: string;
+  startDate?: string;
+
+  @ApiPropertyOptional({ example: '2026-12-31', description: 'End date (YYYY-MM-DD)' })
+  @IsOptional()
+  @IsDateString()
+  endDate?: string;
 }
 
 export class UpdateZoneDto {
@@ -67,13 +64,15 @@ export class UpdateZoneDto {
   @Type(() => Number)
   salaryCapping?: number;
 
-  @ApiPropertyOptional({
-    example: '2026-07-20',
-    description: 'Effective date (YYYY-MM-DD)',
-  })
+  @ApiPropertyOptional({ example: '2026-07-20', description: 'Start date (YYYY-MM-DD)' })
   @IsOptional()
   @IsDateString()
-  effectiveDate?: string;
+  startDate?: string;
+
+  @ApiPropertyOptional({ example: '2026-12-31', description: 'End date (YYYY-MM-DD)' })
+  @IsOptional()
+  @IsDateString()
+  endDate?: string;
 }
 
 export class ZoneResponseDto {
@@ -90,13 +89,16 @@ export class ZoneResponseDto {
   salaryCapping: number;
 
   @ApiProperty({ example: '2026-07-20' })
-  effectiveDate: Date;
+  startDate: Date;
+
+  @ApiProperty({ example: '2026-12-31', nullable: true })
+  endDate: Date | null;
 
   @ApiProperty({ example: '2x' })
   salaryCappingLabel: string;
 
-  @ApiProperty({ example: 5 })
-  citiesMapped: number;
+  @ApiProperty({ example: ['Mumbai', 'Delhi'] })
+  citiesMapped: string[];
 
   @ApiProperty()
   createdAt: Date;

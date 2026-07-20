@@ -18,10 +18,9 @@ export class Zone extends AppBaseEntity {
   })
   salaryCapping: number;
 
-  @Column({
-    name: 'effective_date',
-    type: 'date',
-    default: () => 'CURRENT_DATE',
-  })
-  effectiveDate: Date;
+  @Column({ name: 'start_date', type: 'date', default: () => 'CURRENT_DATE' })
+  startDate: Date;
+
+  @Column({ name: 'end_date', type: 'date', nullable: true })
+  endDate: Date | null;
 }

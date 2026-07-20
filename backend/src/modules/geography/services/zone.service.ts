@@ -31,9 +31,11 @@ export class ZoneService extends BaseService<Zone> {
   }
 
   private async enhanceZone(zone: Zone) {
-    const citiesMapped = await this.mappingRepo.count({
+    const mappings = await this.mappingRepo.find({
       where: { zoneId: zone.id },
+      relations: { city: true },
     });
+    const cityNames = mappings.map((m) => m.city.name).sort();
     const salaryCapping = Number(zone.salaryCapping);
     const label =
       salaryCapping % 1 === 0
@@ -43,7 +45,7 @@ export class ZoneService extends BaseService<Zone> {
       ...zone,
       salaryCapping,
       salaryCappingLabel: label,
-      citiesMapped,
+      citiesMapped: cityNames,
     };
   }
 }

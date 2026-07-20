@@ -16,19 +16,20 @@ export interface Zone extends AppBase {
   name: string;
   isActive: boolean;
   salaryCapping: number;
-  effectiveDate: string;
+  startDate: string;
+  endDate: string | null;
   salaryCappingLabel?: string;
-  citiesMapped?: number;
+  citiesMapped?: string[];
 }
 
 export interface CreateZoneRequest {
   name: string;
-  isActive?: boolean;
   salaryCapping?: number;
-  effectiveDate?: string;
+  startDate?: string;
+  endDate?: string;
 }
 
-export type UpdateZoneRequest = Partial<CreateZoneRequest>;
+export type UpdateZoneRequest = Partial<CreateZoneRequest> & { isActive?: boolean };
 
 export interface CityZoneMapping {
   cityId: number;

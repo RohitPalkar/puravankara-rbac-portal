@@ -12,7 +12,9 @@ import DialogActions from '@mui/material/DialogActions';
 import Card from '@mui/material/Card';
 import Box from '@mui/material/Box';
 import Alert from '@mui/material/Alert';
-import dayjs from 'dayjs';
+import Chip from '@mui/material/Chip';
+import Tooltip from '@mui/material/Tooltip';
+import Typography from '@mui/material/Typography';
 import { CONFIG } from 'src/config-global';
 import { DataTable, type FilterOption } from 'src/components/data-table';
 import { EmptyState } from 'src/components/empty-state';
@@ -27,6 +29,7 @@ import { useDeleteZone } from 'src/services/hooks/use-geography';
 import { useMyPermissions } from 'src/services/hooks/use-permissions';
 
 const PAGE_SIZE = 20;
+const MAX_VISIBLE_CITIES = 5;
 
 function hasZonePermission(
   permissions: { projects: { modules: { subModules: { name: string; actions: { code: string; allowed: boolean }[] }[] }[] }[] } | undefined,
@@ -39,6 +42,33 @@ function hasZonePermission(
         sub.name === 'ZONES' && sub.actions.some((a) => a.code === action && a.allowed)
       )
     )
+  );
+}
+
+function CitiesChipCell({ cities }: { cities?: string[] }) {
+  const visible = cities?.slice(0, MAX_VISIBLE_CITIES) ?? [];
+  const remaining = cities?.slice(MAX_VISIBLE_CITIES) ?? [];
+
+  return (
+    <Stack direction="row" spacing={0.5} alignItems="center" sx={{ flexWrap: 'wrap', gap: 0.5, py: 0.5 }}>
+      {visible.map((name) => (
+        <Chip key={name} label={name} size="small" variant="outlined" sx={{ height: 22, '& .MuiChip-label': { fontSize: '0.75rem', px: 0.8 } }} />
+      ))}
+      {remaining.length > 0 && (
+        <Tooltip
+          title={
+            <Stack spacing={0.3}>
+              {remaining.map((name) => (
+                <Typography key={name} variant="caption">{name}</Typography>
+              ))}
+            </Stack>
+          }
+          arrow
+        >
+          <Chip label={`+${remaining.length} more`} size="small" color="primary" variant="outlined" sx={{ height: 22, '& .MuiChip-label': { fontSize: '0.75rem', px: 0.8 } }} />
+        </Tooltip>
+      )}
+    </Stack>
   );
 }
 
@@ -107,35 +137,30 @@ export default function ZoneListPage() {
   ];
 
   const columns: GridColDef[] = [
-    { field: 'id', headerName: 'ID', width: 60 },
     { field: 'name', headerName: 'Zone Name', flex: 1, minWidth: 180 },
     {
       field: 'salaryCapping', headerName: 'Salary Capping', width: 130,
       renderCell: (params) => params.row.salaryCappingLabel ?? `${params.value}x`,
     },
     {
-      field: 'effectiveDate', headerName: 'Effective Date', width: 130,
-      valueFormatter: (value) => value ? dayjs(value).format('DD MMM YYYY') : '-',
+      field: 'startDate', headerName: 'Start Date', width: 130,
+      valueFormatter: (value) => value || '-',
     },
     {
-      field: 'citiesMapped', headerName: 'Cities Mapped', width: 120,
-      valueFormatter: (value) => value ?? 0,
+      field: 'endDate', headerName: 'End Date', width: 130,
+      valueFormatter: (value) => value || '-',
     },
     {
-      field: 'isActive', headerName: 'Status', width: 100,
+      field: 'citiesMapped', headerName: 'Cities Mapped', minWidth: 250, flex: 1,
+      renderCell: (params) => <CitiesChipCell cities={params.value} />,
+    },
+    {
+      field: 'isActive', headerName: 'Status', width: 90,
       renderCell: (params) => (
         <Label color={params.value ? 'success' : 'default'}>
           {params.value ? 'Active' : 'Inactive'}
         </Label>
       ),
-    },
-    {
-      field: 'createdAt', headerName: 'Created Date', width: 130,
-      valueFormatter: (value) => value ? dayjs(value).format('DD MMM YYYY') : '-',
-    },
-    {
-      field: 'updatedAt', headerName: 'Updated Date', width: 130,
-      valueFormatter: (value) => value ? dayjs(value).format('DD MMM YYYY') : '-',
     },
     ...(canEdit || canDelete ? [{
       field: 'actions' as const, headerName: '', width: 60, sortable: false, disableColumnMenu: true,
