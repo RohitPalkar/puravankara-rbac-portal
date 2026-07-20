@@ -19,6 +19,7 @@ const ChannelPartnerTypePage = lazy(() => import('src/sections/channel-partner/c
 const ProjectMasterPage = lazy(() => import('src/sections/projects/project-list'));
 const ProjectFormPage = lazy(() => import('src/sections/projects/project-form'));
 const DepartmentMasterPage = lazy(() => import('src/sections/organization/department-list'));
+const DepartmentFormPage = lazy(() => import('src/sections/organization/department-form'));
 const RoleMasterPage = lazy(() => import('src/sections/organization/role-list'));
 
 // Access Management
@@ -72,6 +73,8 @@ export const dashboardRoutes = [
       { path: 'project-master/create', element: <ProjectFormPage /> },
       { path: 'project-master/:id/edit', element: <ProjectFormPage /> },
       { path: 'department-master', element: <DepartmentMasterPage /> },
+      { path: 'department-master/create', element: <DepartmentFormPage /> },
+      { path: 'department-master/:id/edit', element: <DepartmentFormPage /> },
       { path: 'role-master', element: <RoleMasterPage /> },
       // Access Management
       { path: 'user-management', element: <UserManagementPage /> },

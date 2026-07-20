@@ -1,5 +1,5 @@
 import { useMemo, useState, useCallback } from 'react';
-import type { GridColDef } from '@mui/x-data-grid';
+import type { GridColDef, GridPaginationModel } from '@mui/x-data-grid';
 import { DataGrid } from '@mui/x-data-grid';
 import Stack from '@mui/material/Stack';
 import TextField from '@mui/material/TextField';
@@ -8,7 +8,6 @@ import MenuItem from '@mui/material/MenuItem';
 import ListItemText from '@mui/material/ListItemText';
 import ListItemIcon from '@mui/material/ListItemIcon';
 import Checkbox from '@mui/material/Checkbox';
-import Divider from '@mui/material/Divider';
 import Card from '@mui/material/Card';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
@@ -29,6 +28,12 @@ type Props = {
   onRowClick?: (row: any) => void;
   searchPlaceholder?: string;
   filterOptions?: FilterOption[];
+  paginationMode?: 'client' | 'server';
+  paginationModel?: GridPaginationModel;
+  onPaginationModelChange?: (model: GridPaginationModel) => void;
+  rowCount?: number;
+  onSearchChange?: (value: string) => void;
+  searchValue?: string;
 };
 
 export function DataTable({
@@ -39,18 +44,28 @@ export function DataTable({
   onRowClick,
   searchPlaceholder = 'Search...',
   filterOptions,
+  paginationMode = 'client',
+  paginationModel,
+  onPaginationModelChange,
+  rowCount,
+  onSearchChange,
+  searchValue,
 }: Props) {
-  const [search, setSearch] = useState('');
+  const [localSearch, setLocalSearch] = useState('');
   const [filters, setFilters] = useState<Record<string, string>>({});
   const [hiddenColumns, setHiddenColumns] = useState<Set<string>>(new Set());
 
   const filterPopover = usePopover();
   const columnsPopover = usePopover();
 
+  const isServerSide = paginationMode === 'server';
+
   const visibleColumns = useMemo(() => columns.filter((col) => col.field !== 'actions'), [columns]);
 
   const filteredRows = useMemo(() => {
+    if (isServerSide) return rows;
     let data = rows;
+    const search = localSearch;
     if (search) {
       const lower = search.toLowerCase();
       data = data.filter((row) =>
@@ -68,7 +83,7 @@ export function DataTable({
       }
     });
     return data;
-  }, [rows, search, filters, columns, hiddenColumns]);
+  }, [rows, localSearch, filters, columns, hiddenColumns, isServerSide]);
 
   const processedColumns = useMemo(() => {
     if (columns.length === 0) return [];
@@ -84,6 +99,15 @@ export function DataTable({
     });
   }, []);
 
+  const handleSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    if (onSearchChange) {
+      onSearchChange(value);
+    } else {
+      setLocalSearch(value);
+    }
+  }, [onSearchChange]);
+
   const hasActiveFilters = Object.values(filters).some((v) => v);
 
   return (
@@ -93,8 +117,8 @@ export function DataTable({
           <TextField
             size="small"
             placeholder={searchPlaceholder}
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            value={onSearchChange ? (searchValue ?? '') : localSearch}
+            onChange={handleSearchChange}
             sx={{ flex: 1, maxWidth: 360 }}
             InputProps={{
               startAdornment: <Iconify icon="solar:magnifer-bold" width={18} style={{ marginRight: 8, opacity: 0.5 }} />,
@@ -171,12 +195,16 @@ export function DataTable({
 
       <Box sx={{ overflowX: 'auto' }}>
         <DataGrid
-          rows={filteredRows}
+          rows={isServerSide ? rows : filteredRows}
           columns={processedColumns}
           loading={loading}
           getRowId={getRowId ?? ((row) => row.id)}
           onRowClick={(params) => onRowClick?.(params.row)}
-          initialState={{ pagination: { paginationModel: { pageSize: 10 } } }}
+          paginationMode={paginationMode}
+          {...(isServerSide && paginationModel ? { paginationModel } : {})}
+          {...(isServerSide && onPaginationModelChange ? { onPaginationModelChange } : {})}
+          {...(isServerSide && rowCount !== undefined ? { rowCount } : {})}
+          initialState={isServerSide ? undefined : { pagination: { paginationModel: { pageSize: 10 } } }}
           pageSizeOptions={[5, 10, 25]}
           disableRowSelectionOnClick
           disableColumnMenu

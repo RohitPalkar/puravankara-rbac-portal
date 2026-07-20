@@ -56,6 +56,8 @@ export const paths = {
     projectMasterCreate: `${ROOTS.DASHBOARD}/project-master/create`,
     projectMasterEdit: (id: string) => `${ROOTS.DASHBOARD}/project-master/${id}/edit`,
     departmentMaster: `${ROOTS.DASHBOARD}/department-master`,
+    departmentMasterCreate: `${ROOTS.DASHBOARD}/department-master/create`,
+    departmentMasterEdit: (id: string) => `${ROOTS.DASHBOARD}/department-master/${id}/edit`,
     roleMaster: `${ROOTS.DASHBOARD}/role-master`,
     // Access Management
     userManagement: `${ROOTS.DASHBOARD}/user-management`,

@@ -1,87 +1,141 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { useNavigate } from 'react-router-dom';
-import type { GridColDef } from '@mui/x-data-grid';
+import { useQuery } from '@tanstack/react-query';
+import type { GridColDef, GridPaginationModel } from '@mui/x-data-grid';
 import Button from '@mui/material/Button';
 import Stack from '@mui/material/Stack';
-import Chip from '@mui/material/Chip';
 import Dialog from '@mui/material/Dialog';
 import DialogTitle from '@mui/material/DialogTitle';
 import DialogContent from '@mui/material/DialogContent';
 import DialogActions from '@mui/material/DialogActions';
 import Card from '@mui/material/Card';
-import Typography from '@mui/material/Typography';
+import Box from '@mui/material/Box';
+import Alert from '@mui/material/Alert';
 import dayjs from 'dayjs';
 import { CONFIG } from 'src/config-global';
-import { DataTable } from 'src/components/data-table';
+import { DataTable, type FilterOption } from 'src/components/data-table';
+import { EmptyState } from 'src/components/empty-state';
 import { Label } from 'src/components/label';
 import { Iconify } from 'src/components/iconify';
 import { RowActionsMenu } from 'src/components/row-actions';
 import { PageContainer, PageHeader } from 'src/components/page-layout';
-import { mockZones, mockCities } from 'src/services/mock-data';
 import { paths } from 'src/routes/paths';
-import type { Zone } from 'src/types';
+import { queryKeys } from 'src/services/api/query-keys';
+import { zoneService } from 'src/services/services/geography.service';
+import { useDeleteZone } from 'src/services/hooks/use-geography';
+import { useMyPermissions } from 'src/services/hooks/use-permissions';
+
+const PAGE_SIZE = 20;
+
+function hasZonePermission(
+  permissions: { projects: { modules: { subModules: { name: string; actions: { code: string; allowed: boolean }[] }[] }[] }[] } | undefined,
+  action: string
+): boolean {
+  if (!permissions) return false;
+  return permissions.projects.some((project) =>
+    project.modules.some((mod) =>
+      mod.subModules.some((sub) =>
+        sub.name === 'ZONES' && sub.actions.some((a) => a.code === action && a.allowed)
+      )
+    )
+  );
+}
 
 export default function ZoneListPage() {
   const navigate = useNavigate();
-  const [data, setData] = useState<Zone[]>(mockZones);
-  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [deleteId, setDeleteId] = useState<number | null>(null);
+  const [paginationModel, setPaginationModel] = useState<GridPaginationModel>({ page: 0, pageSize: PAGE_SIZE });
+  const [search, setSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState('');
 
-  const getMappedCities = (zoneId: string) => mockCities.filter((c) => c.zoneId === zoneId);
+  const { data: permissions } = useMyPermissions();
 
-  const handleDelete = useCallback(() => {
-    if (deleteId) {
-      setData((prev) => prev.filter((item) => item.id !== deleteId));
+  const canCreate = useMemo(() => hasZonePermission(permissions, 'CREATE'), [permissions]);
+  const canEdit = useMemo(() => hasZonePermission(permissions, 'EDIT'), [permissions]);
+  const canDelete = useMemo(() => hasZonePermission(permissions, 'DELETE'), [permissions]);
+
+  const queryParams = useMemo(() => {
+    const params: Record<string, unknown> = {
+      page: paginationModel.page + 1,
+      limit: paginationModel.pageSize,
+      sortBy: 'createdAt',
+      sortOrder: 'DESC',
+    };
+    if (search) params.search = search;
+    if (statusFilter) params.isActive = statusFilter === 'active';
+    return params;
+  }, [search, statusFilter, paginationModel]);
+
+  const { data: response, isLoading, isError, error } = useQuery({
+    queryKey: [...queryKeys.zones.list(queryParams as Record<string, unknown>)],
+    queryFn: async () => {
+      const res = await zoneService.list(queryParams as any);
+      return { data: res.data, meta: res.meta };
+    },
+  });
+
+  const zones = response?.data ?? [];
+  const meta = response?.meta;
+
+  const { mutateAsync: deleteZone, isPending: isDeleting } = useDeleteZone();
+
+  const handleDelete = useCallback(async () => {
+    if (deleteId === null) return;
+    try {
+      await deleteZone(deleteId);
       setDeleteId(null);
+    } catch {
+      // handled by query cache invalidation
     }
-  }, [deleteId]);
+  }, [deleteId, deleteZone]);
+
+  const handleSearchChange = useCallback((value: string) => {
+    setSearch(value);
+    setPaginationModel((prev) => ({ ...prev, page: 0 }));
+  }, []);
+
+  const filterOptions: FilterOption[] = [
+    {
+      key: 'isActive',
+      label: 'Status',
+      options: [
+        { value: 'active', label: 'Active' },
+        { value: 'inactive', label: 'Inactive' },
+      ],
+    },
+  ];
 
   const columns: GridColDef[] = [
     { field: 'id', headerName: 'ID', width: 60 },
     { field: 'name', headerName: 'Zone Name', flex: 1, minWidth: 180 },
     {
-      field: 'mappedCities', headerName: 'Mapped Cities', width: 300, sortable: false,
-      renderCell: (params) => {
-        const cities = getMappedCities(params.row.id);
-        const visible = cities.slice(0, 3);
-        const remaining = cities.length - 3;
-        return (
-          <Stack direction="row" spacing={0.5} sx={{ flexWrap: 'wrap', py: 1 }}>
-            {cities.length === 0 && (
-              <Typography variant="caption" color="text.disabled">—</Typography>
-            )}
-            {visible.map((city) => (
-              <Chip key={city.id} label={city.name} size="small" variant="outlined" sx={{ height: 22, fontSize: 11 }} />
-            ))}
-            {remaining > 0 && (
-              <Chip label={`+${remaining} More`} size="small" color="primary" variant="soft" sx={{ height: 22, fontSize: 11 }} />
-            )}
-          </Stack>
-        );
-      },
-    },
-    { field: 'createdBy', headerName: 'Created By', width: 140 },
-    {
-      field: 'createdAt', headerName: 'Created Date', width: 130,
-      valueFormatter: (value) => dayjs(value).format('DD MMM YYYY'),
-    },
-    {
-      field: 'status', headerName: 'Status', width: 100,
+      field: 'isActive', headerName: 'Status', width: 100,
       renderCell: (params) => (
-        <Label color={params.value === 'active' ? 'success' : 'default'}>{params.value}</Label>
+        <Label color={params.value ? 'success' : 'default'}>
+          {params.value ? 'Active' : 'Inactive'}
+        </Label>
       ),
     },
     {
-      field: 'actions', headerName: '', width: 60, sortable: false, disableColumnMenu: true,
-      renderCell: (params) => (
+      field: 'createdAt', headerName: 'Created Date', width: 130,
+      valueFormatter: (value) => value ? dayjs(value).format('DD MMM YYYY') : '-',
+    },
+    {
+      field: 'updatedAt', headerName: 'Updated Date', width: 130,
+      valueFormatter: (value) => value ? dayjs(value).format('DD MMM YYYY') : '-',
+    },
+    ...(canEdit || canDelete ? [{
+      field: 'actions' as const, headerName: '', width: 60, sortable: false, disableColumnMenu: true,
+      renderCell: (params: any) => (
         <Stack alignItems="center" sx={{ height: 1, justifyContent: 'center' }}>
           <RowActionsMenu actions={[
-            { label: 'Edit', icon: 'solar:pen-bold', onClick: () => navigate(paths.dashboard.zoneMasterEdit(params.row.id)) },
-            { label: 'Delete', icon: 'solar:trash-bin-trash-bold', onClick: () => setDeleteId(params.row.id), color: 'error.main' },
+            ...(canEdit ? [{ label: 'Edit', icon: 'solar:pen-bold' as const, onClick: () => navigate(paths.dashboard.zoneMasterEdit(params.row.id)) }] : []),
+            ...(canDelete ? [{ label: 'Delete', icon: 'solar:trash-bin-trash-bold' as const, onClick: () => setDeleteId(params.row.id), color: 'error.main' as const }] : []),
           ]} />
         </Stack>
       ),
-    },
+    }] : []),
   ];
 
   return (
@@ -89,21 +143,51 @@ export default function ZoneListPage() {
       <Helmet><title>Zones - {CONFIG.appName}</title></Helmet>
       <PageContainer>
         <PageHeader title="Zones" description="Manage geographic zones and regions" action={
-          <Button variant="contained" startIcon={<Iconify icon="solar:add-circle-bold" />} onClick={() => navigate(paths.dashboard.zoneMasterCreate)}>
-            Create Zone
-          </Button>
+          canCreate ? (
+            <Button variant="contained" startIcon={<Iconify icon="solar:add-circle-bold" />} onClick={() => navigate(paths.dashboard.zoneMasterCreate)}>
+              Create Zone
+            </Button>
+          ) : null
         } />
+
         <Card sx={{ overflow: 'hidden' }}>
-          <DataTable columns={columns} rows={data} getRowId={(r) => r.id} />
+          {isError ? (
+            <Box sx={{ p: 4, textAlign: 'center' }}>
+              <Alert severity="error">Failed to load zones: {(error as Error)?.message || 'Unknown error'}</Alert>
+            </Box>
+          ) : !isLoading && zones.length === 0 && !search ? (
+            <EmptyState
+              icon="solar:map-point-bold-duotone"
+              title="No Zones Created"
+              description="Create your first geographic zone to get started"
+            />
+          ) : (
+            <DataTable
+              columns={columns}
+              rows={zones}
+              getRowId={(r) => r.id}
+              loading={isLoading}
+              paginationMode="server"
+              paginationModel={paginationModel}
+              onPaginationModelChange={setPaginationModel}
+              rowCount={meta?.total ?? 0}
+              onSearchChange={handleSearchChange}
+              searchValue={search}
+              searchPlaceholder="Search zones by name..."
+              filterOptions={filterOptions}
+            />
+          )}
         </Card>
       </PageContainer>
 
-      <Dialog open={!!deleteId} onClose={() => setDeleteId(null)} maxWidth="xs">
+      <Dialog open={deleteId !== null} onClose={() => setDeleteId(null)} maxWidth="xs">
         <DialogTitle>Confirm Delete</DialogTitle>
         <DialogContent>Are you sure you want to delete this zone?</DialogContent>
         <DialogActions>
           <Button onClick={() => setDeleteId(null)} color="inherit">Cancel</Button>
-          <Button onClick={handleDelete} color="error" variant="contained">Delete</Button>
+          <Button onClick={handleDelete} color="error" variant="contained" disabled={isDeleting}>
+            {isDeleting ? 'Deleting...' : 'Delete'}
+          </Button>
         </DialogActions>
       </Dialog>
     </>

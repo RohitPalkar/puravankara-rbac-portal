@@ -16,11 +16,15 @@ import { CONFIG } from 'src/config-global';
 import { PageContainer, PageHeader } from 'src/components/page-layout';
 import { Iconify } from 'src/components/iconify';
 import { paths } from 'src/routes/paths';
-import { useZoneById, useCreateZone, useUpdateZone } from 'src/services/hooks/use-geography';
+import {
+  useDepartmentById,
+  useCreateDepartment,
+  useUpdateDepartment,
+} from 'src/services/hooks/use-organization';
 import { useMyPermissions } from 'src/services/hooks/use-permissions';
-import type { CreateZoneRequest, UpdateZoneRequest } from 'src/services/types/geography';
+import type { CreateDepartmentRequest, UpdateDepartmentRequest } from 'src/services/types/organization';
 
-function hasZonePermission(
+function hasDepartmentPermission(
   permissions: { projects: { modules: { subModules: { name: string; actions: { code: string; allowed: boolean }[] }[] }[] }[] } | undefined,
   action: string
 ): boolean {
@@ -28,27 +32,28 @@ function hasZonePermission(
   return permissions.projects.some((project) =>
     project.modules.some((mod) =>
       mod.subModules.some((sub) =>
-        sub.name === 'ZONES' && sub.actions.some((a) => a.code === action && a.allowed)
+        sub.name === 'DEPARTMENTS' && sub.actions.some((a) => a.code === action && a.allowed)
       )
     )
   );
 }
 
-export default function ZoneFormPage() {
+export default function DepartmentFormPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const isEdit = Boolean(id);
-  const zoneId = id ? Number(id) : undefined;
+  const departmentId = id ? Number(id) : undefined;
 
   const { data: permissions } = useMyPermissions();
-  const canCreate = useMemo(() => hasZonePermission(permissions, 'CREATE'), [permissions]);
-  const canEdit = useMemo(() => hasZonePermission(permissions, 'EDIT'), [permissions]);
+  const canCreate = useMemo(() => hasDepartmentPermission(permissions, 'CREATE'), [permissions]);
+  const canEdit = useMemo(() => hasDepartmentPermission(permissions, 'EDIT'), [permissions]);
 
-  const { data: zoneData, isLoading: isFetching, isError: isFetchError } = useZoneById(zoneId ?? 0);
-  const { mutateAsync: createZone, isPending: isCreating } = useCreateZone();
-  const { mutateAsync: updateZone, isPending: isUpdating } = useUpdateZone();
+  const { data: deptData, isLoading: isFetching, isError: isFetchError } = useDepartmentById(departmentId ?? 0);
+  const { mutateAsync: createDepartment, isPending: isCreating } = useCreateDepartment();
+  const { mutateAsync: updateDepartment, isPending: isUpdating } = useUpdateDepartment();
 
   const [name, setName] = useState('');
+  const [maxHierarchyLevels, setMaxHierarchyLevels] = useState<number>(4);
   const [isActive, setIsActive] = useState(true);
   const [showSuccess, setShowSuccess] = useState(false);
   const [nameError, setNameError] = useState('');
@@ -56,50 +61,51 @@ export default function ZoneFormPage() {
   const saving = isCreating || isUpdating;
 
   useEffect(() => {
-    if (zoneData) {
-      setName(zoneData.name);
-      setIsActive(zoneData.isActive);
+    if (deptData) {
+      setName(deptData.name);
+      setMaxHierarchyLevels(deptData.maxHierarchyLevels);
+      setIsActive(deptData.isActive);
     }
-  }, [zoneData]);
+  }, [deptData]);
 
   const handleSave = useCallback(async () => {
     if (!name.trim()) {
-      setNameError('Zone name is required');
+      setNameError('Department name is required');
       return;
     }
     setNameError('');
 
     try {
-      if (isEdit && zoneId) {
-        const payload: UpdateZoneRequest = { name: name.trim() };
-        if (isActive !== zoneData?.isActive) payload.isActive = isActive;
-        await updateZone({ id: zoneId, data: payload });
+      if (isEdit && departmentId) {
+        const payload: UpdateDepartmentRequest = { name: name.trim(), maxHierarchyLevels };
+        if (isActive !== deptData?.isActive) payload.isActive = isActive;
+        await updateDepartment({ id: departmentId, data: payload });
       } else {
-        await createZone({ name: name.trim(), isActive } as CreateZoneRequest);
+        await createDepartment({ name: name.trim(), maxHierarchyLevels, isActive } as CreateDepartmentRequest);
       }
       setShowSuccess(true);
-      setTimeout(() => navigate(paths.dashboard.zoneMaster), 1200);
+      setTimeout(() => navigate(paths.dashboard.departmentMaster), 1200);
     } catch {
       // error handled by query cache invalidation
     }
-  }, [name, isActive, isEdit, zoneId, zoneData, createZone, updateZone, navigate]);
+  }, [name, maxHierarchyLevels, isActive, isEdit, departmentId, deptData, createDepartment, updateDepartment, navigate]);
 
   if (isEdit && isFetching) {
     return (
       <PageContainer>
-        <PageHeader title="Edit Zone" />
+        <PageHeader title="Edit Department" />
         <Card sx={{ p: 4, textAlign: 'center' }}><CircularProgress /></Card>
       </PageContainer>
     );
   }
 
-  if (isEdit && (isFetchError || (!isFetching && !zoneData))) {
+  if (isEdit && (isFetchError || (!isFetching && !deptData))) {
     return (
       <PageContainer>
-        <PageHeader title="Zone Not Found" description="The requested zone does not exist" />
+        <PageHeader title="Department Not Found" description="The requested department does not exist" />
         <Card sx={{ p: 4, textAlign: 'center' }}>
-          <Typography variant="body1" color="text.secondary">Zone with ID &quot;{id}&quot; not found.</Typography>
-          <Button onClick={() => navigate(paths.dashboard.zoneMaster)} sx={{ mt: 2 }}>Back to Zones</Button>
+          <Typography variant="body1" color="text.secondary">Department with ID &quot;{id}&quot; not found.</Typography>
+          <Button onClick={() => navigate(paths.dashboard.departmentMaster)} sx={{ mt: 2 }}>Back to Departments</Button>
         </Card>
       </PageContainer>
     );
@@ -110,8 +116,8 @@ export default function ZoneFormPage() {
       <PageContainer>
         <PageHeader title="Access Denied" />
         <Card sx={{ p: 4, textAlign: 'center' }}>
-          <Typography variant="body1" color="error">You do not have permission to edit zones.</Typography>
-          <Button onClick={() => navigate(paths.dashboard.zoneMaster)} sx={{ mt: 2 }}>Back to Zones</Button>
+          <Typography variant="body1" color="error">You do not have permission to edit departments.</Typography>
+          <Button onClick={() => navigate(paths.dashboard.departmentMaster)} sx={{ mt: 2 }}>Back to Departments</Button>
         </Card>
       </PageContainer>
     );
@@ -122,8 +128,8 @@ export default function ZoneFormPage() {
       <PageContainer>
         <PageHeader title="Access Denied" />
         <Card sx={{ p: 4, textAlign: 'center' }}>
-          <Typography variant="body1" color="error">You do not have permission to create zones.</Typography>
-          <Button onClick={() => navigate(paths.dashboard.zoneMaster)} sx={{ mt: 2 }}>Back to Zones</Button>
+          <Typography variant="body1" color="error">You do not have permission to create departments.</Typography>
+          <Button onClick={() => navigate(paths.dashboard.departmentMaster)} sx={{ mt: 2 }}>Back to Departments</Button>
         </Card>
       </PageContainer>
     );
@@ -131,25 +137,34 @@ export default function ZoneFormPage() {
 
   return (
     <>
-      <Helmet><title>{isEdit ? 'Edit Zone' : 'Create Zone'} - {CONFIG.appName}</title></Helmet>
+      <Helmet><title>{isEdit ? 'Edit Department' : 'Create Department'} - {CONFIG.appName}</title></Helmet>
       <PageContainer>
         <PageHeader
-          title={isEdit ? 'Edit Zone' : 'Create Zone'}
-          description={isEdit ? 'Update zone details' : 'Add a new geographic zone'}
+          title={isEdit ? 'Edit Department' : 'Create Department'}
+          description={isEdit ? 'Update department details' : 'Add a new organizational department'}
         />
 
         {saving && <LinearProgress />}
 
         <Card sx={{ p: 3 }}>
-          <Typography variant="subtitle1" sx={{ mb: 2.5 }}>Zone Details</Typography>
+          <Typography variant="subtitle1" sx={{ mb: 2.5 }}>Department Details</Typography>
           <Box display="grid" gridTemplateColumns={{ xs: '1fr', sm: '1fr 1fr' }} gap={2.5}>
             <TextField
-              label="Zone Name"
+              label="Department Name"
               value={name}
               onChange={(e) => { setName(e.target.value); setNameError(''); }}
               error={!!nameError}
               helperText={nameError}
               required
+              fullWidth
+            />
+            <TextField
+              label="Number of Levels"
+              type="number"
+              value={maxHierarchyLevels}
+              onChange={(e) => setMaxHierarchyLevels(Number(e.target.value))}
+              inputProps={{ min: 1, max: 10 }}
+              helperText="Defines the maximum hierarchy depth available for this department."
               fullWidth
             />
             <TextField
@@ -167,7 +182,7 @@ export default function ZoneFormPage() {
 
         <Box sx={{ position: 'sticky', bottom: 0, zIndex: 10, bgcolor: 'background.default', borderTop: '1px solid', borderColor: 'divider', py: 2, px: 0, mt: 3 }}>
           <Stack direction="row" spacing={1.5} justifyContent="flex-end">
-            <Button variant="outlined" onClick={() => navigate(paths.dashboard.zoneMaster)} size="large">
+            <Button variant="outlined" onClick={() => navigate(paths.dashboard.departmentMaster)} size="large">
               Cancel
             </Button>
             <Button variant="contained" startIcon={<Iconify icon="solar:check-circle-bold" />} onClick={handleSave} disabled={saving} size="large">
@@ -179,7 +194,7 @@ export default function ZoneFormPage() {
 
       <Snackbar open={showSuccess} autoHideDuration={2000} anchorOrigin={{ vertical: 'top', horizontal: 'center' }}>
         <Alert severity="success" variant="filled" sx={{ width: 1 }}>
-          Zone {isEdit ? 'updated' : 'created'} successfully
+          Department {isEdit ? 'updated' : 'created'} successfully
         </Alert>
       </Snackbar>
     </>
