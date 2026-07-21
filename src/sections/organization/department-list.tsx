@@ -13,6 +13,8 @@ import Card from '@mui/material/Card';
 import Box from '@mui/material/Box';
 import Alert from '@mui/material/Alert';
 import Chip from '@mui/material/Chip';
+import Typography from '@mui/material/Typography';
+import Popover from '@mui/material/Popover';
 import { CONFIG } from 'src/config-global';
 import { DataTable, type FilterOption } from 'src/components/data-table';
 import { EmptyState } from 'src/components/empty-state';
@@ -28,6 +30,28 @@ import { useMyPermissions } from 'src/services/hooks/use-permissions';
 
 const PAGE_SIZE = 20;
 const MAX_ZONE_CHIPS = 3;
+
+const chipSx = {
+  height: 32,
+  borderRadius: '8px',
+  fontSize: '13px',
+  fontWeight: 500,
+  border: '1px solid',
+  borderColor: 'divider',
+  '& .MuiChip-label': { px: 1.5 },
+};
+
+const overflowChipSx = {
+  height: 32,
+  borderRadius: '8px',
+  fontSize: '13px',
+  fontWeight: 600,
+  color: '#fff',
+  bgcolor: 'primary.main',
+  cursor: 'pointer',
+  '&:hover': { bgcolor: 'primary.dark' },
+  '& .MuiChip-label': { px: 1.5 },
+};
 
 function hasDepartmentPermission(
   permissions: { projects: { modules: { subModules: { name: string; actions: { code: string; allowed: boolean }[] }[] }[] }[] } | undefined,
@@ -107,35 +131,62 @@ export default function DepartmentListPage() {
     },
   ];
 
+function ZoneChipCell({ zones }: { zones?: string[] }) {
+  const visible = zones?.slice(0, MAX_ZONE_CHIPS) ?? [];
+  const remaining = zones?.slice(MAX_ZONE_CHIPS) ?? [];
+  const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
+
+  const handleClick = useCallback((e: React.MouseEvent<HTMLElement>) => {
+    setAnchorEl(e.currentTarget);
+  }, []);
+
+  const handleClose = useCallback(() => {
+    setAnchorEl(null);
+  }, []);
+
+  return (
+    <Box sx={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '8px', width: 1 }}>
+      {visible.map((name) => (
+        <Chip key={name} label={name} variant="outlined" sx={chipSx} />
+      ))}
+      {remaining.length > 0 && (
+        <>
+          <Chip label={`+${remaining.length}`} sx={overflowChipSx} onClick={handleClick} />
+          <Popover
+            open={Boolean(anchorEl)}
+            anchorEl={anchorEl}
+            onClose={handleClose}
+            anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
+            transformOrigin={{ vertical: 'top', horizontal: 'left' }}
+            slotProps={{ paper: { sx: { p: 1.5, minWidth: 160, maxHeight: 240 } } }}
+          >
+            <Stack spacing={0.5}>
+              {remaining.map((name) => (
+                <Typography key={name} variant="body2">{name}</Typography>
+              ))}
+            </Stack>
+          </Popover>
+        </>
+      )}
+      {(zones?.length ?? 0) === 0 && <span style={{ color: '#999' }}>—</span>}
+    </Box>
+  );
+}
+
   const columns: GridColDef[] = [
     { field: 'name', headerName: 'Department Name', flex: 1, minWidth: 180 },
     {
       field: 'zones',
       headerName: 'Zones',
       width: 240,
-      renderCell: (params) => {
-        const zones: string[] = params.value ?? [];
-        const visible = zones.slice(0, MAX_ZONE_CHIPS);
-        const remaining = zones.length - MAX_ZONE_CHIPS;
-        return (
-          <Stack direction="row" spacing={0.5} sx={{ flexWrap: 'wrap', gap: 0.5, py: 1 }}>
-            {visible.map((z) => (
-              <Chip key={z} label={z} size="small" variant="outlined" sx={{ height: 24 }} />
-            ))}
-            {remaining > 0 && (
-              <Chip label={`+${remaining}`} size="small" color="primary" variant="outlined" sx={{ height: 24 }} />
-            )}
-            {zones.length === 0 && <span style={{ color: '#999' }}>—</span>}
-          </Stack>
-        );
-      },
+      renderCell: (params) => <ZoneChipCell zones={params.value} />,
     },
     {
       field: 'levels',
       headerName: 'Levels',
       width: 80,
       renderCell: (params) => (
-        <Chip label={params.value ?? params.row.maxHierarchyLevels} size="small" sx={{ height: 24 }} />
+        <Chip label={params.value ?? params.row.maxHierarchyLevels} sx={chipSx} />
       ),
     },
     {

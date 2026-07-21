@@ -131,6 +131,7 @@ export function DataTable({
             onChange={handleSearchChange}
             sx={{ flex: 1, maxWidth: 360 }}
             InputProps={{
+              sx: { height: 40 },
               startAdornment: <Iconify icon="solar:magnifer-bold" width={18} style={{ marginRight: 8, opacity: 0.5 }} />,
             }}
           />
@@ -142,6 +143,7 @@ export function DataTable({
               color="inherit"
               startIcon={<Iconify icon="solar:filter-bold" width={16} />}
               onClick={filterPopover.onOpen}
+              sx={{ height: 40 }}
             >
               Filters
             </Button>
@@ -184,6 +186,7 @@ export function DataTable({
               color="inherit"
               startIcon={<Iconify icon="solar:columns-3-bold" width={16} />}
               onClick={columnsPopover.onOpen}
+              sx={{ height: 40 }}
             >
               Columns
             </Button>
@@ -222,10 +225,43 @@ export function DataTable({
           autoHeight
           sx={{
             ...(dataGridSx || {}),
+            borderRadius: 2,
+            '& .MuiDataGrid-main': { borderRadius: 2 },
+            '& .MuiDataGrid-columnHeaders': {
+              borderBottom: '1px solid',
+              borderColor: 'divider',
+              bgcolor: 'grey.50',
+            },
+            '& .MuiDataGrid-columnHeader': {
+              px: 3,
+              py: 2,
+            },
+            '& .MuiDataGrid-columnHeaderTitle': {
+              fontWeight: 600,
+              fontSize: '0.875rem',
+              color: 'text.secondary',
+              letterSpacing: '0.01em',
+            },
+            '& .MuiDataGrid-cell': {
+              px: 3,
+              py: '18px',
+              display: 'flex',
+              alignItems: 'center',
+              fontSize: '0.875rem',
+              '&:focus': { outline: 'none' },
+              '&:focus-within': { outline: 'none' },
+            },
             '& .MuiDataGrid-row': {
+              minHeight: '72px !important',
               cursor: onRowClick ? 'pointer' : 'default',
+              '&:hover': { bgcolor: 'action.hover' },
+              '&.Mui-selected': { bgcolor: 'primary.lighter' },
               ...(dataGridSx?.['& .MuiDataGrid-row'] || {}),
             },
+            '& .MuiDataGrid-cell--textLeft': { justifyContent: 'flex-start' },
+            '& .MuiDataGrid-cell--textCenter': { justifyContent: 'center' },
+            '& .MuiDataGrid-cell--textRight': { justifyContent: 'flex-end' },
+            '& .MuiDataGrid-withBorder': { borderColor: 'divider' },
           } as any}
         />
       </Box>
