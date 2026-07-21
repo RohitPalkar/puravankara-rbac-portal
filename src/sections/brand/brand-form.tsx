@@ -220,18 +220,6 @@ export default function BrandFormPage() {
     );
   }
 
-  if (isEdit && !canEdit) {
-    return (
-      <PageContainer>
-        <PageHeader title="Access Denied" />
-        <Card sx={{ p: 4, textAlign: 'center' }}>
-          <Typography variant="body1" color="error">You do not have permission to edit brands.</Typography>
-          <Button onClick={() => navigate(paths.dashboard.brandMaster)} sx={{ mt: 2 }}>Back to Brands</Button>
-        </Card>
-      </PageContainer>
-    );
-  }
-
   if (!isEdit && !canCreate) {
     return (
       <PageContainer>
