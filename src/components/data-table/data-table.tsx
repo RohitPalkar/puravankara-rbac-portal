@@ -44,6 +44,7 @@ type Props = {
   dataGridSx?: Record<string, any>;
   groupHeaders?: GroupHeader[];
   hideColumnsButton?: boolean;
+  columnHeaderHeight?: number;
 };
 
 export function DataTable({
@@ -65,6 +66,7 @@ export function DataTable({
   dataGridSx,
   groupHeaders,
   hideColumnsButton,
+  columnHeaderHeight,
 }: Props) {
   const [localSearch, setLocalSearch] = useState('');
   const [filters, setFilters] = useState<Record<string, string>>({});
@@ -279,6 +281,7 @@ export function DataTable({
           {...(isServerSide && onPaginationModelChange ? { onPaginationModelChange } : {})}
           {...(isServerSide && rowCount !== undefined ? { rowCount } : {})}
           {...(getRowHeight ? { getRowHeight } : {})}
+          {...(columnHeaderHeight ? { columnHeaderHeight } : {})}
           initialState={isServerSide ? undefined : { pagination: { paginationModel: { pageSize: 10 } } }}
           pageSizeOptions={[5, 10, 25]}
           disableRowSelectionOnClick

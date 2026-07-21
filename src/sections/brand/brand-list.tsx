@@ -1,4 +1,4 @@
-import type { GridColDef, GridPaginationModel } from '@mui/x-data-grid';
+import type { GridColDef, GridPaginationModel, GridColumnHeaderParams } from '@mui/x-data-grid';
 
 import { Helmet } from 'react-helmet-async';
 import { useNavigate } from 'react-router-dom';
@@ -10,6 +10,7 @@ import Card from '@mui/material/Card';
 import Alert from '@mui/material/Alert';
 import Button from '@mui/material/Button';
 import IconButton from '@mui/material/IconButton';
+import Typography from '@mui/material/Typography';
 
 import { paths } from 'src/routes/paths';
 
@@ -18,7 +19,6 @@ import { queryKeys } from 'src/services/api/query-keys';
 import { brandService } from 'src/services/services/brand.service';
 import { useMyPermissions } from 'src/services/hooks/use-permissions';
 
-import type { GroupHeader } from 'src/components/data-table';
 import { DataTable } from 'src/components/data-table';
 import { EmptyState } from 'src/components/empty-state';
 import { Iconify } from 'src/components/iconify';
@@ -77,17 +77,42 @@ export default function BrandListPage() {
     setPaginationModel((prev) => ({ ...prev, page: 0 }));
   }, []);
 
-  const groupHeaders: GroupHeader[] = useMemo(() => [
-    { label: 'RERA', fields: ['reraRegularizationPercentage', 'reraQualificationPercentage'] },
-    { label: 'RTM', fields: ['rtmRegularizationPercentage', 'rtmQualificationPercentage'] },
-  ], []);
+  const groupMap: Record<string, string> = {
+    reraRegularizationPercentage: 'RERA',
+    reraQualificationPercentage: 'RERA',
+    rtmRegularizationPercentage: 'RTM',
+    rtmQualificationPercentage: 'RTM',
+  };
+
+  function renderBrandHeader(params: GridColumnHeaderParams) {
+    const group = groupMap[params.field];
+    return (
+      <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', width: 1 }}>
+        {group ? (
+          <>
+            <Typography sx={{ fontWeight: 700, fontSize: '0.65rem', lineHeight: 1.1, color: 'text.secondary', letterSpacing: '0.04em', mb: 0.25 }}>
+              {group}
+            </Typography>
+            <Typography sx={{ fontWeight: 600, fontSize: '0.75rem', lineHeight: 1.2, color: 'text.secondary' }}>
+              {params.colDef.headerName}
+            </Typography>
+          </>
+        ) : (
+          <Typography sx={{ fontWeight: 600, fontSize: '0.75rem', lineHeight: 1.2, color: 'text.secondary' }}>
+            {params.colDef.headerName}
+          </Typography>
+        )}
+      </Box>
+    );
+  }
 
   const columns: GridColDef[] = [
-    { field: 'brandName', headerName: 'Brand Name', width: 260 },
+    { field: 'brandName', headerName: 'Brand Name', width: 280, renderHeader: renderBrandHeader },
     {
       field: 'salaryMultiplier',
       headerName: 'Salary Multiplier',
-      width: 130,
+      width: 120,
+      renderHeader: renderBrandHeader,
       align: 'center',
       headerAlign: 'center',
       valueFormatter: (value: number) => `${value}x`,
@@ -95,33 +120,37 @@ export default function BrandListPage() {
     {
       field: 'reraRegularizationPercentage',
       headerName: 'Regularisation %',
-      width: 165,
+      width: 120,
       align: 'center',
       headerAlign: 'center',
+      renderHeader: renderBrandHeader,
       valueFormatter: (value: number | null) => (value != null ? `${value}%` : '—'),
     },
     {
       field: 'reraQualificationPercentage',
       headerName: 'Qualification',
-      width: 165,
+      width: 120,
       align: 'center',
       headerAlign: 'center',
+      renderHeader: renderBrandHeader,
       valueFormatter: (value: number | null) => (value != null ? `${value}%` : '—'),
     },
     {
       field: 'rtmRegularizationPercentage',
       headerName: 'Regularisation %',
-      width: 175,
+      width: 120,
       align: 'center',
       headerAlign: 'center',
+      renderHeader: renderBrandHeader,
       valueFormatter: (value: number | null) => (value != null ? `${value}%` : '—'),
     },
     {
       field: 'rtmQualificationPercentage',
       headerName: 'Qualification',
-      width: 165,
+      width: 120,
       align: 'center',
       headerAlign: 'center',
+      renderHeader: renderBrandHeader,
       valueFormatter: (value: number | null) => (value != null ? `${value}%` : '—'),
     },
     ...(canEdit ? [{
@@ -176,8 +205,8 @@ export default function BrandListPage() {
               onSearchChange={handleSearchChange}
               searchValue={search}
               searchPlaceholder="Search by brand name"
-              groupHeaders={groupHeaders}
               hideColumnsButton
+              columnHeaderHeight={56}
             />
           )}
         </Card>
