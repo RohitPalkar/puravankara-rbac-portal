@@ -83,11 +83,11 @@ export default function BrandListPage() {
   ], []);
 
   const columns: GridColDef[] = [
-    { field: 'brandName', headerName: 'Brand Name', width: 220 },
+    { field: 'brandName', headerName: 'Brand Name', width: 260 },
     {
       field: 'salaryMultiplier',
       headerName: 'Salary Multiplier',
-      width: 140,
+      width: 130,
       align: 'center',
       headerAlign: 'center',
       valueFormatter: (value: number) => `${value}x`,
@@ -95,7 +95,7 @@ export default function BrandListPage() {
     {
       field: 'reraRegularizationPercentage',
       headerName: 'Regularisation %',
-      width: 175,
+      width: 165,
       align: 'center',
       headerAlign: 'center',
       valueFormatter: (value: number | null) => (value != null ? `${value}%` : '—'),
@@ -103,7 +103,7 @@ export default function BrandListPage() {
     {
       field: 'reraQualificationPercentage',
       headerName: 'Qualification',
-      width: 175,
+      width: 165,
       align: 'center',
       headerAlign: 'center',
       valueFormatter: (value: number | null) => (value != null ? `${value}%` : '—'),
@@ -119,7 +119,7 @@ export default function BrandListPage() {
     {
       field: 'rtmQualificationPercentage',
       headerName: 'Qualification',
-      width: 175,
+      width: 165,
       align: 'center',
       headerAlign: 'center',
       valueFormatter: (value: number | null) => (value != null ? `${value}%` : '—'),

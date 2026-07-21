@@ -256,8 +256,8 @@ export default function BrandFormPage() {
         {saving && <LinearProgress />}
 
         <Card sx={{ p: 4 }}>
-          {/* 1. Brand Information */}
-          <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 3 }}>Brand Information</Typography>
+          <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 3 }}>Brand Details</Typography>
+
           <Box display="grid" gridTemplateColumns="1fr 1fr" gap={3}>
             <TextField
               label="Brand Name"
@@ -276,41 +276,26 @@ export default function BrandFormPage() {
             />
           </Box>
 
-          <Divider sx={{ my: 4 }} />
-
-          {/* 2. Razorpay */}
-          <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 3 }}>Razorpay</Typography>
-          <Box display="grid" gridTemplateColumns="1fr 1fr" gap={3}>
+          <Box display="grid" gridTemplateColumns="1fr 1fr" gap={3} sx={{ mt: 3 }}>
             <TextField label="Merchant ID" value={razorpayMerchantId} onChange={(e) => setRazorpayMerchantId(e.target.value)} />
             <TextField label="Secret Key" value={razorpaySecretKey} onChange={(e) => setRazorpaySecretKey(e.target.value)} type="password" />
           </Box>
 
-          <Divider sx={{ my: 4 }} />
-
-          {/* 3. Easebuzz */}
-          <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 3 }}>Easebuzz</Typography>
-
-          <Typography variant="subtitle2" sx={{ mb: 2, color: 'text.secondary' }}>Booking</Typography>
-          <Box display="grid" gridTemplateColumns="1fr 1fr" gap={3}>
-            <TextField label="Salt" value={easebuzzBookingSalt} onChange={(e) => setEasebuzzBookingSalt(e.target.value)} />
-            <TextField label="Key" value={easebuzzBookingKey} onChange={(e) => setEasebuzzBookingKey(e.target.value)} />
-            <TextField label="Sub Merchant ID" value={easebuzzBookingSubMerchantId} onChange={(e) => setEasebuzzBookingSubMerchantId(e.target.value)} />
+          <Box display="grid" gridTemplateColumns="1fr 1fr" gap={3} sx={{ mt: 3 }}>
+            <TextField label="Booking Salt" value={easebuzzBookingSalt} onChange={(e) => setEasebuzzBookingSalt(e.target.value)} />
+            <TextField label="Booking Key" value={easebuzzBookingKey} onChange={(e) => setEasebuzzBookingKey(e.target.value)} />
+            <TextField label="Booking Sub Merchant ID" value={easebuzzBookingSubMerchantId} onChange={(e) => setEasebuzzBookingSubMerchantId(e.target.value)} />
             <Box />
           </Box>
 
-          <Typography variant="subtitle2" sx={{ mt: 3, mb: 2, color: 'text.secondary' }}>Milestone</Typography>
-          <Box display="grid" gridTemplateColumns="1fr 1fr" gap={3}>
-            <TextField label="Salt" value={easebuzzMilestoneSalt} onChange={(e) => setEasebuzzMilestoneSalt(e.target.value)} />
-            <TextField label="Key" value={easebuzzMilestoneKey} onChange={(e) => setEasebuzzMilestoneKey(e.target.value)} />
-            <TextField label="Sub Merchant ID" value={easebuzzMilestoneSubMerchantId} onChange={(e) => setEasebuzzMilestoneSubMerchantId(e.target.value)} />
+          <Box display="grid" gridTemplateColumns="1fr 1fr" gap={3} sx={{ mt: 3 }}>
+            <TextField label="Milestone Salt" value={easebuzzMilestoneSalt} onChange={(e) => setEasebuzzMilestoneSalt(e.target.value)} />
+            <TextField label="Milestone Key" value={easebuzzMilestoneKey} onChange={(e) => setEasebuzzMilestoneKey(e.target.value)} />
+            <TextField label="Milestone Sub Merchant ID" value={easebuzzMilestoneSubMerchantId} onChange={(e) => setEasebuzzMilestoneSubMerchantId(e.target.value)} />
             <Box />
           </Box>
 
-          <Divider sx={{ my: 4 }} />
-
-          {/* 4. Business Information */}
-          <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 3 }}>Business Information</Typography>
-          <Box display="grid" gridTemplateColumns="1fr 1fr" gap={3}>
+          <Box display="grid" gridTemplateColumns="1fr 1fr" gap={3} sx={{ mt: 3 }}>
             <TextField label="Billing Name" value={billingName} onChange={(e) => setBillingName(e.target.value)} />
             <TextField label="PAN Number" value={panNumber} onChange={(e) => setPanNumber(e.target.value.toUpperCase())} inputProps={{ maxLength: 10 }} />
             <TextField label="GSTIN" value={gstin} onChange={(e) => setGstin(e.target.value.toUpperCase())} inputProps={{ maxLength: 15 }} />
