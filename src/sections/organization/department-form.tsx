@@ -344,15 +344,15 @@ export default function DepartmentFormPage() {
               disabled={formDisabled}
             />
             <TextField
-              label="No. of Levels *"
-              type="number"
+              label="No. of Levels"
+              type="text"
+              inputMode="numeric"
               value={numberOfLevels}
               onChange={(e) => {
                 const val = parseInt(e.target.value, 10);
                 if (!Number.isNaN(val) && val >= 1 && val <= 10) setNumberOfLevels(val);
                 setLevelsError('');
               }}
-              inputProps={{ min: 1, max: 10 }}
               disabled={formDisabled}
               error={!!levelsError}
               helperText={levelsError || '1-10'}
@@ -439,7 +439,7 @@ export default function DepartmentFormPage() {
                     error={!!hierarchyErrors[hl.levelNumber]}
                     helperText={hierarchyErrors[hl.levelNumber]}
                     size="small"
-                    sx={{ width: 300 }}
+                    sx={{ flex: 1 }}
                   />
                 </Box>
               ))}
