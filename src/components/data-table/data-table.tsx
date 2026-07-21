@@ -20,6 +20,11 @@ export type FilterOption = {
   options: { value: string; label: string }[];
 };
 
+export type GroupHeader = {
+  label: string;
+  fields: string[];
+};
+
 type Props = {
   columns: GridColDef[];
   rows: any[];
@@ -37,6 +42,8 @@ type Props = {
   searchValue?: string;
   getRowHeight?: () => number | 'auto';
   dataGridSx?: Record<string, any>;
+  groupHeaders?: GroupHeader[];
+  hideColumnsButton?: boolean;
 };
 
 export function DataTable({
@@ -56,6 +63,8 @@ export function DataTable({
   searchValue,
   getRowHeight,
   dataGridSx,
+  groupHeaders,
+  hideColumnsButton,
 }: Props) {
   const [localSearch, setLocalSearch] = useState('');
   const [filters, setFilters] = useState<Record<string, string>>({});
@@ -120,6 +129,32 @@ export function DataTable({
 
   const hasActiveFilters = Object.values(filters).some((v) => v);
 
+  const groupHeaderSections = useMemo(() => {
+    if (!groupHeaders || groupHeaders.length === 0) return null;
+    const cols = columns.filter((c) => !hiddenColumns.has(c.field));
+    const sections: { label: string | null; width: number | string }[] = [];
+    for (let i = 0; i < cols.length; i++) {
+      const col = cols[i];
+      const group = groupHeaders.find((g) => g.fields.includes(col.field));
+      const isFirstInGroup = group && col.field === group.fields[0];
+      if (isFirstInGroup) {
+        const groupFields = group.fields;
+        let totalWidth = 0;
+        for (const f of groupFields) {
+          const c = cols.find((cl) => cl.field === f);
+          if (c) totalWidth += typeof c.width === 'number' ? c.width : 150;
+        }
+        if (totalWidth > 0) {
+          sections.push({ label: group.label, width: totalWidth });
+        }
+      } else if (!group) {
+        const w = typeof col.width === 'number' ? col.width : 150;
+        sections.push({ label: null, width: w });
+      }
+    }
+    return sections.length > 0 ? sections : null;
+  }, [groupHeaders, columns, hiddenColumns]);
+
   return (
     <Card sx={{ overflow: 'hidden' }}>
       <Box sx={{ borderBottom: '1px solid', borderColor: 'divider' }}>
@@ -129,7 +164,7 @@ export function DataTable({
             placeholder={searchPlaceholder}
             value={onSearchChange ? (searchValue ?? '') : localSearch}
             onChange={handleSearchChange}
-            sx={{ flex: 1, maxWidth: 360 }}
+            sx={{ flex: 1 }}
             InputProps={{
               sx: { height: 40 },
               startAdornment: <Iconify icon="solar:magnifer-bold" width={18} style={{ marginRight: 8, opacity: 0.5 }} />,
@@ -180,31 +215,58 @@ export function DataTable({
               </Stack>
             </CustomPopover>
 
-            <Button
-              size="small"
-              variant="text"
-              color="inherit"
-              startIcon={<Iconify icon="solar:columns-3-bold" width={16} />}
-              onClick={columnsPopover.onOpen}
-              sx={{ height: 40 }}
-            >
-              Columns
-            </Button>
-            <CustomPopover open={columnsPopover.open} anchorEl={columnsPopover.anchorEl} onClose={columnsPopover.onClose}>
-              <Stack sx={{ p: 1, minWidth: 160 }}>
-                {visibleColumns.map((col) => (
-                  <MenuItem key={col.field} onClick={() => handleToggleColumn(col.field)}>
-                    <ListItemIcon>
-                      <Checkbox size="small" checked={!hiddenColumns.has(col.field)} />
-                    </ListItemIcon>
-                    <ListItemText primary={col.headerName || col.field} />
-                  </MenuItem>
-                ))}
-              </Stack>
-            </CustomPopover>
+            {!hideColumnsButton && (
+              <>
+                <Button
+                  size="small"
+                  variant="text"
+                  color="inherit"
+                  startIcon={<Iconify icon="solar:columns-3-bold" width={16} />}
+                  onClick={columnsPopover.onOpen}
+                  sx={{ height: 40 }}
+                >
+                  Columns
+                </Button>
+                <CustomPopover open={columnsPopover.open} anchorEl={columnsPopover.anchorEl} onClose={columnsPopover.onClose}>
+                  <Stack sx={{ p: 1, minWidth: 160 }}>
+                    {visibleColumns.map((col) => (
+                      <MenuItem key={col.field} onClick={() => handleToggleColumn(col.field)}>
+                        <ListItemIcon>
+                          <Checkbox size="small" checked={!hiddenColumns.has(col.field)} />
+                        </ListItemIcon>
+                        <ListItemText primary={col.headerName || col.field} />
+                      </MenuItem>
+                    ))}
+                  </Stack>
+                </CustomPopover>
+              </>
+            )}
           </Stack>
         </Stack>
       </Box>
+
+      {groupHeaderSections && (
+        <Box sx={{ display: 'flex', borderBottom: '1px solid', borderColor: 'divider' }}>
+          {groupHeaderSections.map((section, i) => (
+            <Box
+              key={i}
+              sx={{
+                width: section.width,
+                py: 1.5,
+                textAlign: 'center',
+                fontWeight: 600,
+                fontSize: '0.875rem',
+                color: 'text.secondary',
+                borderRight: i < groupHeaderSections.length - 1 ? '1px solid' : 'none',
+                borderColor: 'divider',
+                bgcolor: 'grey.50',
+              }}
+            >
+              {section.label ?? ''}
+            </Box>
+          ))}
+        </Box>
+      )}
 
       <Box sx={{ overflowX: 'auto' }}>
         <DataGrid

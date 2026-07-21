@@ -9,6 +9,7 @@ import Box from '@mui/material/Box';
 import Card from '@mui/material/Card';
 import Alert from '@mui/material/Alert';
 import Button from '@mui/material/Button';
+import IconButton from '@mui/material/IconButton';
 
 import { paths } from 'src/routes/paths';
 
@@ -17,10 +18,10 @@ import { queryKeys } from 'src/services/api/query-keys';
 import { brandService } from 'src/services/services/brand.service';
 import { useMyPermissions } from 'src/services/hooks/use-permissions';
 
-import { Iconify } from 'src/components/iconify';
+import type { GroupHeader } from 'src/components/data-table';
 import { DataTable } from 'src/components/data-table';
 import { EmptyState } from 'src/components/empty-state';
-import { RowActionsMenu } from 'src/components/row-actions';
+import { Iconify } from 'src/components/iconify';
 import { PageHeader, PageContainer } from 'src/components/page-layout';
 
 const PAGE_SIZE = 20;
@@ -76,8 +77,13 @@ export default function BrandListPage() {
     setPaginationModel((prev) => ({ ...prev, page: 0 }));
   }, []);
 
+  const groupHeaders: GroupHeader[] = useMemo(() => [
+    { label: 'RERA', fields: ['reraRegularizationPercentage', 'reraQualificationPercentage'] },
+    { label: 'RTM', fields: ['rtmRegularizationPercentage', 'rtmQualificationPercentage'] },
+  ], []);
+
   const columns: GridColDef[] = [
-    { field: 'brandName', headerName: 'Brand Name', flex: 1, minWidth: 160 },
+    { field: 'brandName', headerName: 'Brand Name', width: 220 },
     {
       field: 'salaryMultiplier',
       headerName: 'Salary Multiplier',
@@ -88,32 +94,32 @@ export default function BrandListPage() {
     },
     {
       field: 'reraRegularizationPercentage',
-      headerName: 'RERA Regularization %',
-      width: 180,
+      headerName: 'Regularization %',
+      width: 175,
       align: 'center',
       headerAlign: 'center',
       valueFormatter: (value: number | null) => (value != null ? `${value}%` : '—'),
     },
     {
       field: 'reraQualificationPercentage',
-      headerName: 'RERA Qualification %',
-      width: 180,
+      headerName: 'Qualification %',
+      width: 175,
       align: 'center',
       headerAlign: 'center',
       valueFormatter: (value: number | null) => (value != null ? `${value}%` : '—'),
     },
     {
       field: 'rtmRegularizationPercentage',
-      headerName: 'RTM Regularization %',
-      width: 180,
+      headerName: 'Regularization %',
+      width: 175,
       align: 'center',
       headerAlign: 'center',
       valueFormatter: (value: number | null) => (value != null ? `${value}%` : '—'),
     },
     {
       field: 'rtmQualificationPercentage',
-      headerName: 'RTM Qualification %',
-      width: 180,
+      headerName: 'Qualification %',
+      width: 175,
       align: 'center',
       headerAlign: 'center',
       valueFormatter: (value: number | null) => (value != null ? `${value}%` : '—'),
@@ -127,9 +133,9 @@ export default function BrandListPage() {
       align: 'center' as const,
       renderCell: (params: any) => (
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 1 }}>
-          <RowActionsMenu actions={[
-            { label: 'Edit', icon: 'solar:pen-bold' as const, onClick: () => navigate(paths.dashboard.brandMasterEdit(params.row.id)) },
-          ]} />
+          <IconButton onClick={() => navigate(paths.dashboard.brandMasterEdit(params.row.id))}>
+            <Iconify icon="solar:pen-bold" width={18} />
+          </IconButton>
         </Box>
       ),
     }] : []),
@@ -170,6 +176,8 @@ export default function BrandListPage() {
               onSearchChange={handleSearchChange}
               searchValue={search}
               searchPlaceholder="Search brands by name..."
+              groupHeaders={groupHeaders}
+              hideColumnsButton
             />
           )}
         </Card>
