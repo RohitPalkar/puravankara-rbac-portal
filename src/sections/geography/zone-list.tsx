@@ -1,41 +1,48 @@
-import { useState, useCallback, useMemo } from 'react';
+import type { GridColDef, GridPaginationModel } from '@mui/x-data-grid';
+
 import { Helmet } from 'react-helmet-async';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import type { GridColDef, GridPaginationModel } from '@mui/x-data-grid';
-import Button from '@mui/material/Button';
+import { useRef, useMemo, useState, useEffect, useCallback } from 'react';
+
+import Box from '@mui/material/Box';
+import Card from '@mui/material/Card';
+import Chip from '@mui/material/Chip';
 import Stack from '@mui/material/Stack';
+import Alert from '@mui/material/Alert';
+import Button from '@mui/material/Button';
 import Dialog from '@mui/material/Dialog';
+import Tooltip from '@mui/material/Tooltip';
+import Typography from '@mui/material/Typography';
 import DialogTitle from '@mui/material/DialogTitle';
 import DialogContent from '@mui/material/DialogContent';
 import DialogActions from '@mui/material/DialogActions';
-import Card from '@mui/material/Card';
-import Box from '@mui/material/Box';
-import Alert from '@mui/material/Alert';
-import Chip from '@mui/material/Chip';
-import Typography from '@mui/material/Typography';
-import Popover from '@mui/material/Popover';
-import { CONFIG } from 'src/config-global';
-import { DataTable, type FilterOption } from 'src/components/data-table';
-import { EmptyState } from 'src/components/empty-state';
-import { Label } from 'src/components/label';
-import { Iconify } from 'src/components/iconify';
-import { RowActionsMenu } from 'src/components/row-actions';
-import { PageContainer, PageHeader } from 'src/components/page-layout';
+
 import { paths } from 'src/routes/paths';
+
+import { CONFIG } from 'src/config-global';
 import { queryKeys } from 'src/services/api/query-keys';
-import { zoneService } from 'src/services/services/geography.service';
 import { useDeleteZone } from 'src/services/hooks/use-geography';
+import { zoneService } from 'src/services/services/geography.service';
 import { useMyPermissions } from 'src/services/hooks/use-permissions';
 
+import { Label } from 'src/components/label';
+import { Iconify } from 'src/components/iconify';
+import { EmptyState } from 'src/components/empty-state';
+import { RowActionsMenu } from 'src/components/row-actions';
+import { PageHeader, PageContainer } from 'src/components/page-layout';
+import { DataTable, type FilterOption } from 'src/components/data-table';
+
 const PAGE_SIZE = 20;
-const MAX_VISIBLE_CITIES = 4;
+
+const CHIP_PADDING = 26; // label px:1.5 (24) + border 1px each side (2)
 
 const chipSx = {
   height: 32,
   borderRadius: '8px',
   fontSize: '13px',
   fontWeight: 500,
+  flexShrink: 0,
   border: '1px solid',
   borderColor: 'divider',
   '& .MuiChip-label': { px: 1.5 },
@@ -46,6 +53,7 @@ const overflowChipSx = {
   borderRadius: '8px',
   fontSize: '13px',
   fontWeight: 600,
+  flexShrink: 0,
   color: '#fff',
   bgcolor: 'primary.main',
   cursor: 'pointer',
@@ -68,41 +76,95 @@ function hasZonePermission(
 }
 
 function CitiesChipCell({ cities }: { cities?: string[] }) {
-  const visible = cities?.slice(0, MAX_VISIBLE_CITIES) ?? [];
-  const remaining = cities?.slice(MAX_VISIBLE_CITIES) ?? [];
-  const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const measurerRef = useRef<((text: string, weight?: number) => number) | null>(null);
+  const [containerWidth, setContainerWidth] = useState(0);
 
-  const handleClick = useCallback((e: React.MouseEvent<HTMLElement>) => {
-    setAnchorEl(e.currentTarget);
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return undefined;
+    const observer = new ResizeObserver((entries) => {
+      entries.forEach((entry) => {
+        setContainerWidth(entry.contentRect.width);
+      });
+    });
+    observer.observe(el);
+    return () => observer.disconnect();
   }, []);
 
-  const handleClose = useCallback(() => {
-    setAnchorEl(null);
+  const measureText = useCallback((text: string, weight: number = 500): number => {
+    if (!measurerRef.current) {
+      const canvas = document.createElement('canvas');
+      measurerRef.current = (t: string, w: number = 500) => {
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return t.length * 7.5;
+        ctx.font = `${w} 13px "DM Sans", "Inter", "Public Sans", system-ui, sans-serif`;
+        return ctx.measureText(t).width;
+      };
+    }
+    return measurerRef.current(text, weight);
   }, []);
+
+  const chipWidths = useMemo(() => {
+    if (!cities) return [];
+    return cities.map((name) => measureText(name, 500) + CHIP_PADDING);
+  }, [cities, measureText]);
+
+  const overflowChipWidth = useMemo(() => {
+    if (!cities || cities.length === 0) return 0;
+    const text = `+${cities.length}`;
+    return measureText(text, 600) + CHIP_PADDING;
+  }, [cities, measureText]);
+
+  const { visible, remaining } = useMemo(() => {
+    if (!cities || cities.length === 0 || containerWidth === 0) {
+      return { visible: cities ?? [], remaining: [] };
+    }
+
+    const gap = 8;
+    const totalWidth = chipWidths.reduce((sum, w, i) => sum + w + (i > 0 ? gap : 0), 0);
+
+    if (totalWidth <= containerWidth) {
+      return { visible: cities, remaining: [] };
+    }
+
+    let available = containerWidth - overflowChipWidth - gap;
+    let count = 0;
+
+    for (let i = 0; i < cities.length; i += 1) {
+      const needed = chipWidths[i] + (i > 0 ? gap : 0);
+      if (needed > available) break;
+      available -= needed;
+      count += 1;
+    }
+
+    if (count === 0) count = 1;
+
+    return { visible: cities.slice(0, count), remaining: cities.slice(count) };
+  }, [cities, containerWidth, chipWidths, overflowChipWidth]);
+
+  if (!cities || cities.length === 0) return null;
 
   return (
-    <Box sx={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '8px', width: 1 }}>
+    <Box ref={containerRef} sx={{ display: 'flex', alignItems: 'center', gap: 1, width: 1, overflow: 'hidden' }}>
       {visible.map((name) => (
         <Chip key={name} label={name} variant="outlined" sx={chipSx} />
       ))}
       {remaining.length > 0 && (
-        <>
-          <Chip label={`+${remaining.length}`} sx={overflowChipSx} onClick={handleClick} />
-          <Popover
-            open={Boolean(anchorEl)}
-            anchorEl={anchorEl}
-            onClose={handleClose}
-            anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
-            transformOrigin={{ vertical: 'top', horizontal: 'left' }}
-            slotProps={{ paper: { sx: { p: 1.5, minWidth: 160, maxHeight: 240 } } }}
-          >
-            <Stack spacing={0.5}>
-              {remaining.map((name) => (
-                <Typography key={name} variant="body2">{name}</Typography>
-              ))}
-            </Stack>
-          </Popover>
-        </>
+        <Tooltip
+          title={
+            <Box sx={{ maxHeight: 300, overflowY: 'auto', py: 0.5 }}>
+              <Stack spacing={0.5}>
+                {remaining.map((name) => (
+                  <Typography key={name} variant="body2">{name}</Typography>
+                ))}
+              </Stack>
+            </Box>
+          }
+          arrow
+        >
+          <Chip label={`+${remaining.length}`} sx={overflowChipSx} />
+        </Tooltip>
       )}
     </Box>
   );
@@ -113,7 +175,7 @@ export default function ZoneListPage() {
   const [deleteId, setDeleteId] = useState<number | null>(null);
   const [paginationModel, setPaginationModel] = useState<GridPaginationModel>({ page: 0, pageSize: PAGE_SIZE });
   const [search, setSearch] = useState('');
-  const [statusFilter, setStatusFilter] = useState('');
+  const [statusFilter] = useState('');
 
   const { data: permissions } = useMyPermissions();
 
