@@ -264,6 +264,7 @@ export default function BrandFormPage() {
               error={!!brandNameError}
               helperText={brandNameError}
               required
+              placeholder="Enter Brand Name"
             />
             <TextField
               label="Salary Multiplier"
@@ -271,48 +272,46 @@ export default function BrandFormPage() {
               onChange={(e) => setSalaryMultiplier(Number(e.target.value))}
               type="number"
               inputProps={{ step: 0.1, min: 0 }}
+              placeholder="e.g. 1.5"
             />
           </Box>
 
           <Box display="grid" gridTemplateColumns="1fr 1fr" gap={3} sx={{ mt: 3 }}>
-            <TextField label="RazorPay Merchant ID (Booking)" value={razorpayMerchantId} onChange={(e) => setRazorpayMerchantId(e.target.value)} />
-            <TextField label="RazorPay Secret Key (Booking)" value={razorpaySecretKey} onChange={(e) => setRazorpaySecretKey(e.target.value)} type="password" />
+            <TextField label="RazorPay Merchant ID (Booking)" value={razorpayMerchantId} onChange={(e) => setRazorpayMerchantId(e.target.value)} placeholder="Enter RazorPay Merchant ID" />
+            <TextField label="RazorPay Secret Key (Booking)" value={razorpaySecretKey} onChange={(e) => setRazorpaySecretKey(e.target.value)} type="password" placeholder="Enter RazorPay Secret Key" />
           </Box>
 
           <Box display="grid" gridTemplateColumns="1fr 1fr" gap={3} sx={{ mt: 3 }}>
-            <TextField label="Easebuzz Salt (Booking)" value={easebuzzBookingSalt} onChange={(e) => setEasebuzzBookingSalt(e.target.value)} />
-            <TextField label="Easebuzz Key (Booking)" value={easebuzzBookingKey} onChange={(e) => setEasebuzzBookingKey(e.target.value)} />
+            <TextField label="Easebuzz Salt (Booking)" value={easebuzzBookingSalt} onChange={(e) => setEasebuzzBookingSalt(e.target.value)} placeholder="Enter Easebuzz Booking Salt" />
+            <TextField label="Easebuzz Key (Booking)" value={easebuzzBookingKey} onChange={(e) => setEasebuzzBookingKey(e.target.value)} placeholder="Enter Easebuzz Booking Key" />
           </Box>
 
           <Box display="grid" gridTemplateColumns="1fr 1fr" gap={3} sx={{ mt: 3 }}>
-            <TextField label="Easebuzz Salt (Milestone)" value={easebuzzMilestoneSalt} onChange={(e) => setEasebuzzMilestoneSalt(e.target.value)} />
-            <TextField label="Easebuzz Key (Milestone)" value={easebuzzMilestoneKey} onChange={(e) => setEasebuzzMilestoneKey(e.target.value)} />
+            <TextField label="Easebuzz Salt (Milestone)" value={easebuzzMilestoneSalt} onChange={(e) => setEasebuzzMilestoneSalt(e.target.value)} placeholder="Enter Easebuzz Milestone Salt" />
+            <TextField label="Easebuzz Key (Milestone)" value={easebuzzMilestoneKey} onChange={(e) => setEasebuzzMilestoneKey(e.target.value)} placeholder="Enter Easebuzz Milestone Key" />
           </Box>
 
           <Box display="grid" gridTemplateColumns="1fr 1fr" gap={3} sx={{ mt: 3 }}>
-            <TextField label="Easebuzz Sub-Merchant ID (Booking)" value={easebuzzBookingSubMerchantId} onChange={(e) => setEasebuzzBookingSubMerchantId(e.target.value)} />
-            <TextField label="Easebuzz Sub-Merchant ID (Milestone)" value={easebuzzMilestoneSubMerchantId} onChange={(e) => setEasebuzzMilestoneSubMerchantId(e.target.value)} />
+            <TextField label="Easebuzz sub-merchant ID (Booking)" value={easebuzzBookingSubMerchantId} onChange={(e) => setEasebuzzBookingSubMerchantId(e.target.value)} placeholder="Enter Easebuzz sub-merchant ID" />
+            <TextField label="Easebuzz sub-merchant ID (Milestone)" value={easebuzzMilestoneSubMerchantId} onChange={(e) => setEasebuzzMilestoneSubMerchantId(e.target.value)} placeholder="Enter Easebuzz sub-merchant ID" />
           </Box>
 
           <Divider sx={{ my: 4 }} />
 
           <Box display="grid" gridTemplateColumns="1fr 1fr" gap={3}>
-            <TextField label="Billing Name" value={billingName} onChange={(e) => setBillingName(e.target.value)} />
-            <TextField label="PAN Number" value={panNumber} onChange={(e) => setPanNumber(e.target.value.toUpperCase())} inputProps={{ maxLength: 10 }} />
-            <TextField label="GSTIN" value={gstin} onChange={(e) => setGstin(e.target.value.toUpperCase())} inputProps={{ maxLength: 15 }} />
-            <TextField label="Address Line 1" value={address1} onChange={(e) => setAddress1(e.target.value)} />
-            <TextField label="Address Line 2" value={address2} onChange={(e) => setAddress2(e.target.value)} />
-            <TextField label="PIN Code" value={pinCode} onChange={(e) => setPinCode(e.target.value)} inputProps={{ maxLength: 6 }} />
-          </Box>
-
-          <Box sx={{ mt: 1.5 }}>
-            <Typography variant="caption" color="text.disabled">(Hidden) City · State · Country</Typography>
+            <TextField label="Billing Name" value={billingName} onChange={(e) => setBillingName(e.target.value)} placeholder="Enter Billing Name" />
+            <TextField label="PAN No." value={panNumber} onChange={(e) => setPanNumber(e.target.value.toUpperCase())} inputProps={{ maxLength: 10 }} placeholder="Enter PAN Number" />
+            <TextField label="GSTIN" value={gstin} onChange={(e) => setGstin(e.target.value.toUpperCase())} inputProps={{ maxLength: 15 }} placeholder="Enter GSTIN" />
+            <TextField label="Address Line 1" value={address1} onChange={(e) => setAddress1(e.target.value)} placeholder="Enter Address" />
+            <TextField label="Address Line 2" value={address2} onChange={(e) => setAddress2(e.target.value)} placeholder="Enter Address" />
+            <TextField label="PIN Code" value={pinCode} onChange={(e) => setPinCode(e.target.value)} inputProps={{ maxLength: 6 }} placeholder="Enter PIN Code" />
           </Box>
 
           <Divider sx={{ my: 4 }} />
 
           {/* Brand Logo */}
-          <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 3 }}>Brand Logo</Typography>
+          <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>Brand Logo</Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>Project Elevation Image</Typography>
 
           <Box
             sx={{
@@ -388,6 +387,7 @@ export default function BrandFormPage() {
                   onChange={(e) => setReraRegularizationPercentage(Number(e.target.value))}
                   type="number"
                   inputProps={{ min: 0, max: 100 }}
+                  placeholder="0.0"
                 />
                 <TextField
                   label="Payable"
@@ -395,6 +395,7 @@ export default function BrandFormPage() {
                   onChange={(e) => setReraQualificationPercentage(Number(e.target.value))}
                   type="number"
                   inputProps={{ min: 0, max: 100 }}
+                  placeholder="0.0"
                 />
               </Box>
               <TextField
@@ -403,6 +404,7 @@ export default function BrandFormPage() {
                 onChange={(e) => setMaximumRegularizationDays(Number(e.target.value))}
                 type="number"
                 inputProps={{ min: 0 }}
+                placeholder="Enter Days"
                 fullWidth
               />
             </Box>
@@ -420,6 +422,7 @@ export default function BrandFormPage() {
                   onChange={(e) => setRtmRegularizationPercentage(Number(e.target.value))}
                   type="number"
                   inputProps={{ min: 0, max: 100 }}
+                  placeholder="0.0"
                 />
                 <TextField
                   label="Payable"
@@ -427,6 +430,7 @@ export default function BrandFormPage() {
                   onChange={(e) => setRtmQualificationPercentage(Number(e.target.value))}
                   type="number"
                   inputProps={{ min: 0, max: 100 }}
+                  placeholder="0.0"
                 />
               </Box>
               <TextField
@@ -435,6 +439,7 @@ export default function BrandFormPage() {
                 onChange={(e) => setRegularizationStartDate(e.target.value)}
                 type="date"
                 InputLabelProps={{ shrink: true }}
+                placeholder="Select Date"
                 fullWidth
               />
             </Box>
