@@ -344,7 +344,7 @@ export default function DepartmentFormPage() {
               disabled={formDisabled}
             />
             <TextField
-              label="No. of Levels"
+              label="No. of Levels *"
               type="number"
               value={numberOfLevels}
               onChange={(e) => {
@@ -356,11 +356,7 @@ export default function DepartmentFormPage() {
               disabled={formDisabled}
               error={!!levelsError}
               helperText={levelsError || '1-10'}
-              onKeyDown={(e) => {
-                if (!/^\d$/.test(e.key) && e.key !== 'Backspace' && e.key !== 'Delete' && e.key !== 'Tab' && e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') {
-                  e.preventDefault();
-                }
-              }}
+              required
             />
             <Autocomplete
               options={activeUsers}
@@ -414,7 +410,16 @@ export default function DepartmentFormPage() {
 
         {levelsGenerated && hierarchyLevels.length > 0 && (
           <Card sx={{ p: 3, mb: 3 }}>
-            <Typography variant="subtitle1" sx={{ mb: 3 }}>Level Mapping</Typography>
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3 }}>
+              <Typography variant="subtitle1">Level Mapping</Typography>
+              <Button
+                variant="text"
+                size="small"
+                onClick={() => setLevelsGenerated(false)}
+              >
+                Edit
+              </Button>
+            </Box>
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
               {hierarchyLevels.map((hl) => (
                 <Box key={hl.levelNumber} sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
