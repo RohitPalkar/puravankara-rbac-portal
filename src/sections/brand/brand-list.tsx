@@ -81,6 +81,8 @@ function renderBrandHeader(params: GridColumnHeaderParams) {
           fontSize: '0.8125rem',
           lineHeight: 1.2,
           color: 'text.secondary',
+          whiteSpace: 'nowrap',
+          overflow: 'visible',
         }}
       >
         {params.colDef.headerName}
@@ -135,11 +137,12 @@ export default function BrandListPage() {
   }, {} as Record<string, any>);
 
   const columns: GridColDef[] = [
-    { field: 'brandName', headerName: 'Brand Name', width: 420, renderHeader: renderBrandHeader },
+    { field: 'brandName', headerName: 'Brand Name', flex: 4, minWidth: 220, renderHeader: renderBrandHeader },
     {
       field: 'salaryMultiplier',
       headerName: 'Salary Multiplier',
-      width: 276,
+      flex: 2,
+      minWidth: 160,
       renderHeader: renderBrandHeader,
       align: 'center',
       headerAlign: 'center',
@@ -148,7 +151,8 @@ export default function BrandListPage() {
     {
       field: 'reraRegularizationPercentage',
       headerName: 'Regularisation %',
-      width: 96,
+      minWidth: 144,
+      flex: 1,
       align: 'center',
       headerAlign: 'center',
       renderHeader: renderBrandHeader,
@@ -157,7 +161,8 @@ export default function BrandListPage() {
     {
       field: 'reraQualificationPercentage',
       headerName: 'Qualification',
-      width: 96,
+      minWidth: 144,
+      flex: 1,
       align: 'center',
       headerAlign: 'center',
       renderHeader: renderBrandHeader,
@@ -166,7 +171,8 @@ export default function BrandListPage() {
     {
       field: 'rtmRegularizationPercentage',
       headerName: 'Regularisation %',
-      width: 96,
+      minWidth: 144,
+      flex: 1,
       align: 'center',
       headerAlign: 'center',
       renderHeader: renderBrandHeader,
@@ -175,7 +181,8 @@ export default function BrandListPage() {
     {
       field: 'rtmQualificationPercentage',
       headerName: 'Qualification',
-      width: 96,
+      minWidth: 144,
+      flex: 1,
       align: 'center',
       headerAlign: 'center',
       renderHeader: renderBrandHeader,
@@ -184,7 +191,7 @@ export default function BrandListPage() {
     ...(canEdit ? [{
       field: 'actions' as const,
       headerName: '',
-      width: 80,
+      width: 64,
       sortable: false,
       disableColumnMenu: true,
       align: 'center' as const,
@@ -243,11 +250,11 @@ export default function BrandListPage() {
                   bgcolor: 'grey.100',
                 },
                 '& .MuiDataGrid-columnHeader': {
-                  px: 3,
+                  px: 1.5,
                   py: 2.5,
                 },
                 '& .MuiDataGrid-cell': {
-                  px: 3,
+                  px: 1.5,
                   py: '24px',
                   display: 'flex',
                   alignItems: 'center',
