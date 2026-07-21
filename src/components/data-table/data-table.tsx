@@ -133,17 +133,16 @@ export function DataTable({
     if (!groupHeaders || groupHeaders.length === 0) return null;
     const cols = columns.filter((c) => !hiddenColumns.has(c.field));
     const sections: { label: string | null; width: number | string }[] = [];
-    for (let i = 0; i < cols.length; i++) {
-      const col = cols[i];
+    cols.forEach((col) => {
       const group = groupHeaders.find((g) => g.fields.includes(col.field));
       const isFirstInGroup = group && col.field === group.fields[0];
       if (isFirstInGroup) {
         const groupFields = group.fields;
         let totalWidth = 0;
-        for (const f of groupFields) {
+        groupFields.forEach((f) => {
           const c = cols.find((cl) => cl.field === f);
           if (c) totalWidth += typeof c.width === 'number' ? c.width : 150;
-        }
+        });
         if (totalWidth > 0) {
           sections.push({ label: group.label, width: totalWidth });
         }
@@ -151,7 +150,7 @@ export function DataTable({
         const w = typeof col.width === 'number' ? col.width : 150;
         sections.push({ label: null, width: w });
       }
-    }
+    });
     return sections.length > 0 ? sections : null;
   }, [groupHeaders, columns, hiddenColumns]);
 
