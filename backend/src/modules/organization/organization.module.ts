@@ -3,6 +3,8 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { Department } from './entities/department.entity';
 import { Role } from './entities/role.entity';
 import { DepartmentRole } from './entities/department-role.entity';
+import { DepartmentHierarchyLevel } from './entities/department-hierarchy-level.entity';
+import { DepartmentZoneMapping } from './entities/department-zone-mapping.entity';
 import {
   DepartmentService,
   RoleService,
@@ -15,7 +17,15 @@ import {
 import { DepartmentRoleController } from './controllers/department-role.controller';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Department, Role, DepartmentRole])],
+  imports: [
+    TypeOrmModule.forFeature([
+      Department,
+      Role,
+      DepartmentRole,
+      DepartmentHierarchyLevel,
+      DepartmentZoneMapping,
+    ]),
+  ],
   controllers: [DepartmentController, RoleController, DepartmentRoleController],
   providers: [DepartmentService, RoleService, DepartmentRoleService],
   exports: [TypeOrmModule],

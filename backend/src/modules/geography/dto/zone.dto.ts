@@ -29,12 +29,18 @@ export class CreateZoneDto {
   @Type(() => Number)
   salaryCapping?: number;
 
-  @ApiPropertyOptional({ example: '2026-07-20', description: 'Start date (YYYY-MM-DD)' })
+  @ApiPropertyOptional({
+    example: '2026-07-20',
+    description: 'Start date (YYYY-MM-DD)',
+  })
   @IsOptional()
   @IsDateString()
   startDate?: string;
 
-  @ApiPropertyOptional({ example: '2026-12-31', description: 'End date (YYYY-MM-DD)' })
+  @ApiPropertyOptional({
+    example: '2026-12-31',
+    description: 'End date (YYYY-MM-DD)',
+  })
   @IsOptional()
   @IsDateString()
   endDate?: string;
@@ -64,12 +70,18 @@ export class UpdateZoneDto {
   @Type(() => Number)
   salaryCapping?: number;
 
-  @ApiPropertyOptional({ example: '2026-07-20', description: 'Start date (YYYY-MM-DD)' })
+  @ApiPropertyOptional({
+    example: '2026-07-20',
+    description: 'Start date (YYYY-MM-DD)',
+  })
   @IsOptional()
   @IsDateString()
   startDate?: string;
 
-  @ApiPropertyOptional({ example: '2026-12-31', description: 'End date (YYYY-MM-DD)' })
+  @ApiPropertyOptional({
+    example: '2026-12-31',
+    description: 'End date (YYYY-MM-DD)',
+  })
   @IsOptional()
   @IsDateString()
   endDate?: string;

@@ -4,6 +4,8 @@ import { queryKeys } from '../api/query-keys';
 import { departmentService, roleService, departmentRoleService } from '../services/organization.service';
 import type {
   Department,
+  DepartmentListItem,
+  DepartmentDetail,
   CreateDepartmentRequest,
   UpdateDepartmentRequest,
   Role,
@@ -28,6 +30,27 @@ export const {
   updateFn: departmentService.update,
   deleteFn: departmentService.delete,
 });
+
+export function useDepartmentListV2(params?: Record<string, unknown>) {
+  return useQuery({
+    queryKey: [...queryKeys.departments.list(params)],
+    queryFn: async () => {
+      const res = await departmentService.list(params as any);
+      return { data: res.data as unknown as DepartmentListItem[], meta: res.meta };
+    },
+  });
+}
+
+export function useDepartmentByIdV2(id: number) {
+  return useQuery({
+    queryKey: queryKeys.departments.byId(id),
+    queryFn: async () => {
+      const res = await departmentService.byId(id);
+      return res.data as unknown as DepartmentDetail;
+    },
+    enabled: !!id,
+  });
+}
 
 export const {
   useList: useRoleList,

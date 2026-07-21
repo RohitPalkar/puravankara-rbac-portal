@@ -12,7 +12,7 @@ import DialogActions from '@mui/material/DialogActions';
 import Card from '@mui/material/Card';
 import Box from '@mui/material/Box';
 import Alert from '@mui/material/Alert';
-import dayjs from 'dayjs';
+import Chip from '@mui/material/Chip';
 import { CONFIG } from 'src/config-global';
 import { DataTable, type FilterOption } from 'src/components/data-table';
 import { EmptyState } from 'src/components/empty-state';
@@ -27,6 +27,7 @@ import { useDeleteDepartment } from 'src/services/hooks/use-organization';
 import { useMyPermissions } from 'src/services/hooks/use-permissions';
 
 const PAGE_SIZE = 20;
+const MAX_ZONE_CHIPS = 3;
 
 function hasDepartmentPermission(
   permissions: { projects: { modules: { subModules: { name: string; actions: { code: string; allowed: boolean }[] }[] }[] }[] } | undefined,
@@ -107,24 +108,51 @@ export default function DepartmentListPage() {
   ];
 
   const columns: GridColDef[] = [
-    { field: 'id', headerName: 'ID', width: 60 },
     { field: 'name', headerName: 'Department Name', flex: 1, minWidth: 180 },
-    { field: 'maxHierarchyLevels', headerName: 'Levels', width: 90 },
     {
-      field: 'isActive', headerName: 'Status', width: 100,
+      field: 'zones',
+      headerName: 'Zones',
+      width: 240,
+      renderCell: (params) => {
+        const zones: string[] = params.value ?? [];
+        const visible = zones.slice(0, MAX_ZONE_CHIPS);
+        const remaining = zones.length - MAX_ZONE_CHIPS;
+        return (
+          <Stack direction="row" spacing={0.5} sx={{ flexWrap: 'wrap', gap: 0.5, py: 1 }}>
+            {visible.map((z) => (
+              <Chip key={z} label={z} size="small" variant="outlined" sx={{ height: 24 }} />
+            ))}
+            {remaining > 0 && (
+              <Chip label={`+${remaining}`} size="small" color="primary" variant="outlined" sx={{ height: 24 }} />
+            )}
+            {zones.length === 0 && <span style={{ color: '#999' }}>—</span>}
+          </Stack>
+        );
+      },
+    },
+    {
+      field: 'levels',
+      headerName: 'Levels',
+      width: 80,
+      renderCell: (params) => (
+        <Chip label={params.value ?? params.row.maxHierarchyLevels} size="small" sx={{ height: 24 }} />
+      ),
+    },
+    {
+      field: 'departmentAdminId',
+      headerName: 'Department Admin',
+      width: 170,
+      renderCell: (params) => params.value ?? '—',
+    },
+    {
+      field: 'isActive',
+      headerName: 'Status',
+      width: 100,
       renderCell: (params) => (
         <Label color={params.value ? 'success' : 'default'}>
           {params.value ? 'Active' : 'Inactive'}
         </Label>
       ),
-    },
-    {
-      field: 'createdAt', headerName: 'Created Date', width: 130,
-      valueFormatter: (value) => value ? dayjs(value).format('DD MMM YYYY') : '-',
-    },
-    {
-      field: 'updatedAt', headerName: 'Updated Date', width: 130,
-      valueFormatter: (value) => value ? dayjs(value).format('DD MMM YYYY') : '-',
     },
     ...(canEdit || canDelete ? [{
       field: 'actions' as const, headerName: '', width: 60, sortable: false, disableColumnMenu: true,

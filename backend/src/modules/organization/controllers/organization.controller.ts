@@ -1,4 +1,14 @@
-import { Controller, Get, Query } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Patch,
+  Delete,
+  Body,
+  Param,
+  Query,
+  ParseIntPipe,
+} from '@nestjs/common';
 import {
   ApiBearerAuth,
   ApiOperation,
@@ -23,20 +33,57 @@ import { BaseController } from '../../../common/crud/base.controller';
 @ApiTags('Organization - Departments')
 @ApiBearerAuth()
 @Controller('departments')
-export class DepartmentController extends BaseController<
-  Department,
-  CreateDepartmentDto,
-  UpdateDepartmentDto
-> {
-  constructor(private readonly departmentService: DepartmentService) {
-    super(departmentService, 'Department');
-  }
+export class DepartmentController {
+  constructor(private readonly departmentService: DepartmentService) {}
 
   @Get()
-  @ApiOperation({ summary: 'List all departments' })
+  @ApiOperation({
+    summary: 'List all departments with zones and hierarchy info',
+  })
   @ApiResponse({ status: 200, description: 'Paginated list of departments' })
   async findAll(@Query() query: QueryDepartmentDto) {
-    return this.departmentService.findAll(query, ['name']);
+    return this.departmentService.findAll(query);
+  }
+
+  @Get(':id')
+  @ApiOperation({
+    summary: 'Get department detail with zones and hierarchy levels',
+  })
+  @ApiResponse({ status: 200, description: 'Department detail found' })
+  @ApiResponse({ status: 404, description: 'Department not found' })
+  async findById(@Param('id', ParseIntPipe) id: number) {
+    return this.departmentService.findById(id);
+  }
+
+  @Post()
+  @ApiOperation({
+    summary: 'Create a department with zone mappings and hierarchy levels',
+  })
+  @ApiResponse({ status: 201, description: 'Department created' })
+  async create(@Body() dto: CreateDepartmentDto) {
+    return this.departmentService.create(dto);
+  }
+
+  @Patch(':id')
+  @ApiOperation({
+    summary: 'Update department with zone mappings and hierarchy levels',
+  })
+  @ApiResponse({ status: 200, description: 'Department updated' })
+  @ApiResponse({ status: 404, description: 'Department not found' })
+  async update(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: UpdateDepartmentDto,
+  ) {
+    return this.departmentService.update(id, dto);
+  }
+
+  @Delete(':id')
+  @ApiOperation({ summary: 'Soft delete department' })
+  @ApiResponse({ status: 200, description: 'Department deleted' })
+  @ApiResponse({ status: 404, description: 'Department not found' })
+  async remove(@Param('id', ParseIntPipe) id: number) {
+    await this.departmentService.remove(id);
+    return { message: 'Department deleted successfully' };
   }
 }
 
