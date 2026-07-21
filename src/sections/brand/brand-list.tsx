@@ -103,6 +103,7 @@ export default function BrandListPage() {
 
   const canCreate = useMemo(() => hasBrandPermission(permissions, 'CREATE'), [permissions]);
   const canEdit = useMemo(() => hasBrandPermission(permissions, 'EDIT'), [permissions]);
+  const canDelete = useMemo(() => hasBrandPermission(permissions, 'DELETE'), [permissions]);
 
   const { mutateAsync: deleteBrand, isPending: isDeleting } = useDeleteBrand();
 
@@ -203,7 +204,7 @@ export default function BrandListPage() {
       renderHeader: renderBrandHeader,
       valueFormatter: (value: number | null) => (value != null ? `${value}%` : '—'),
     },
-    ...(canEdit ? [{
+    ...(canEdit || canDelete ? [{
       field: 'actions' as const,
       headerName: '',
       width: 96,
@@ -213,12 +214,16 @@ export default function BrandListPage() {
       renderHeader: renderBrandHeader,
       renderCell: (params: any) => (
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 1, gap: 0.5 }}>
-          <IconButton onClick={() => navigate(paths.dashboard.brandMasterEdit(params.row.id))}>
-            <Iconify icon="solar:pen-bold" width={18} />
-          </IconButton>
-          <IconButton onClick={() => setDeleteId(params.row.id)}>
-            <Iconify icon="solar:trash-bin-trash-bold" width={18} />
-          </IconButton>
+          {canEdit && (
+            <IconButton onClick={() => navigate(paths.dashboard.brandMasterEdit(params.row.id))}>
+              <Iconify icon="solar:pen-bold" width={18} />
+            </IconButton>
+          )}
+          {canDelete && (
+            <IconButton onClick={() => setDeleteId(params.row.id)}>
+              <Iconify icon="solar:trash-bin-trash-bold" width={18} />
+            </IconButton>
+          )}
         </Box>
       ),
     }] : []),
