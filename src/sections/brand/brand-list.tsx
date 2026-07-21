@@ -102,8 +102,6 @@ export default function BrandListPage() {
   const { data: permissions } = useMyPermissions();
 
   const canCreate = useMemo(() => hasBrandPermission(permissions, 'CREATE'), [permissions]);
-  const canEdit = useMemo(() => hasBrandPermission(permissions, 'EDIT'), [permissions]);
-  const canDelete = useMemo(() => hasBrandPermission(permissions, 'DELETE'), [permissions]);
 
   const { mutateAsync: deleteBrand, isPending: isDeleting } = useDeleteBrand();
 
@@ -204,19 +202,19 @@ export default function BrandListPage() {
       renderHeader: renderBrandHeader,
       valueFormatter: (value: number | null) => (value != null ? `${value}%` : '—'),
     },
-    ...(canEdit || canDelete ? [{
+    {
       field: 'actions' as const, headerName: '', width: 64, sortable: false, disableColumnMenu: true,
       align: 'center' as const,
       renderHeader: renderBrandHeader,
       renderCell: (params: any) => (
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 1 }}>
           <RowActionsMenu actions={[
-            ...(canEdit ? [{ label: 'Edit', icon: 'solar:pen-bold' as const, onClick: () => navigate(paths.dashboard.brandMasterEdit(params.row.id)) }] : []),
-            ...(canDelete ? [{ label: 'Delete', icon: 'solar:trash-bin-trash-bold' as const, onClick: () => setDeleteId(params.row.id), color: 'error.main' as const }] : []),
+            { label: 'Edit', icon: 'solar:pen-bold' as const, onClick: () => navigate(paths.dashboard.brandMasterEdit(params.row.id)) },
+            { label: 'Delete', icon: 'solar:trash-bin-trash-bold' as const, onClick: () => setDeleteId(params.row.id), color: 'error.main' as const },
           ]} />
         </Box>
       ),
-    }] : []),
+    },
   ];
 
   return (
