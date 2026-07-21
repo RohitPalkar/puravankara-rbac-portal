@@ -1,7 +1,6 @@
 import { useState, useCallback, useEffect, useMemo } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { useParams, useNavigate } from 'react-router-dom';
-import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import Button from '@mui/material/Button';
 import Card from '@mui/material/Card';
@@ -290,14 +289,40 @@ export default function DepartmentFormPage() {
       <PageContainer>
         <PageHeader
           title={isEdit ? 'Edit Department' : 'Create Department'}
-          description={isEdit ? 'Update department details, zones, and hierarchy' : 'Add a new organizational department with zone mapping and hierarchy levels'}
+          description={isEdit ? 'Update department details' : 'Add a new organizational department'}
         />
 
         {saving && <LinearProgress />}
 
+        {/* === Card 1: Department Details === */}
         <Card sx={{ p: 3, mb: 3 }}>
-          <Typography variant="subtitle1" sx={{ mb: 2.5 }}>Department Details</Typography>
-          <Box display="grid" gridTemplateColumns={{ xs: '1fr', sm: '1fr 1fr' }} gap={2.5}>
+          <Typography variant="subtitle1" sx={{ mb: 3 }}>Department Details</Typography>
+
+          <Box display="grid" gridTemplateColumns="1fr 1fr" gap={3}>
+            <Autocomplete
+              multiple
+              options={zoneOptions}
+              getOptionLabel={(option) => option.name}
+              value={zoneOptions.filter((z) => selectedZoneIds.includes(z.id))}
+              onChange={(_, newValue) => {
+                setSelectedZoneIds(newValue.map((v) => v.id));
+                setZoneError('');
+              }}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  label="Zone"
+                  placeholder="Select zones"
+                  error={!!zoneError}
+                  helperText={zoneError}
+                />
+              )}
+              renderTags={(value, getTagProps) =>
+                value.map((option, index) => (
+                  <Chip label={option.name} size="small" {...getTagProps({ index })} />
+                ))
+              }
+            />
             <TextField
               label="Department Name"
               value={name}
@@ -305,10 +330,9 @@ export default function DepartmentFormPage() {
               error={!!nameError}
               helperText={nameError}
               required
-              fullWidth
             />
             <TextField
-              label="Number of Levels"
+              label="No. of Levels"
               type="number"
               value={numberOfLevels}
               onChange={(e) => {
@@ -318,131 +342,94 @@ export default function DepartmentFormPage() {
               }}
               inputProps={{ min: 1, max: 10 }}
               error={!!levelsError}
-              helperText={levelsError || 'Defines the hierarchy depth (1-10)'}
-              fullWidth
+              helperText={levelsError || '1-10'}
+            />
+            <Autocomplete
+              options={activeUsers}
+              getOptionLabel={(option: any) => `${option.name} (${option.empId})`}
+              value={activeUsers.find((u: any) => u.empId === departmentAdminId) ?? null}
+              onChange={(_, newValue) => {
+                setDepartmentAdminId(newValue ? (newValue as any).empId : null);
+                setAdminError('');
+              }}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  label="Department Admin"
+                  placeholder="Select admin"
+                  error={!!adminError}
+                  helperText={adminError}
+                />
+              )}
             />
           </Box>
-        </Card>
 
-        <Card sx={{ p: 3, mb: 3 }}>
-          <Typography variant="subtitle1" sx={{ mb: 2.5 }}>Zone Mapping</Typography>
-          <Autocomplete
-            multiple
-            options={zoneOptions}
-            getOptionLabel={(option) => option.name}
-            value={zoneOptions.filter((z) => selectedZoneIds.includes(z.id))}
-            onChange={(_, newValue) => {
-              setSelectedZoneIds(newValue.map((v) => v.id));
-              setZoneError('');
-            }}
-            renderInput={(params) => (
+          {isEdit && (
+            <Box sx={{ mt: 3 }}>
               <TextField
-                {...params}
-                label="Select Zones"
-                placeholder="Choose zones..."
-                error={!!zoneError}
-                helperText={zoneError || 'Select one or more zones for this department'}
-              />
-            )}
-            renderTags={(value, getTagProps) =>
-              value.map((option, index) => (
-                <Chip label={option.name} size="small" {...getTagProps({ index })} />
-              ))
-            }
-            fullWidth
-          />
-        </Card>
-
-        <Card sx={{ p: 3, mb: 3 }}>
-          <Typography variant="subtitle1" sx={{ mb: 2.5 }}>Department Admin</Typography>
-          <Autocomplete
-            options={activeUsers}
-            getOptionLabel={(option: any) => `${option.name} (${option.empId})`}
-            value={activeUsers.find((u: any) => u.empId === departmentAdminId) ?? null}
-            onChange={(_, newValue) => {
-              setDepartmentAdminId(newValue ? (newValue as any).empId : null);
-              setAdminError('');
-            }}
-            renderInput={(params) => (
-              <TextField
-                {...params}
-                label="Select Department Admin"
-                placeholder="Choose admin..."
-                error={!!adminError}
-                helperText={adminError || 'Only active users are shown'}
-              />
-            )}
-            fullWidth
-          />
-        </Card>
-
-        <Card sx={{ p: 3, mb: 3 }}>
-          <Typography variant="subtitle1" sx={{ mb: 1 }}>Hierarchy Levels</Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-            Set the number of levels above, then click Generate to create role name fields for each level.
-          </Typography>
-
-          <Button
-            variant="contained"
-            startIcon={<Iconify icon="solar:refresh-circle-bold" />}
-            onClick={handleGenerateHierarchy}
-            disabled={numberOfLevels < 1 || numberOfLevels > 10}
-            sx={{ mb: 3 }}
-          >
-            Generate Hierarchy Levels
-          </Button>
-
-          {levelsGenerated && hierarchyLevels.length > 0 && (
-            <Box display="grid" gridTemplateColumns={{ xs: '1fr', sm: '1fr 1fr' }} gap={2}>
-              {hierarchyLevels.map((hl) => (
-                <TextField
-                  key={hl.levelNumber}
-                  label={`Level ${hl.levelNumber}`}
-                  placeholder="Enter role name"
-                  value={hl.roleName}
-                  onChange={(e) => handleRoleNameChange(hl.levelNumber, e.target.value)}
-                  error={!!hierarchyErrors[hl.levelNumber]}
-                  helperText={hierarchyErrors[hl.levelNumber] || `Role name for Level ${hl.levelNumber}`}
-                  size="small"
-                  fullWidth
-                />
-              ))}
+                select
+                label="Status"
+                value={isActive ? 'active' : 'inactive'}
+                onChange={(e) => setIsActive(e.target.value === 'active')}
+                sx={{ width: 300 }}
+              >
+                <MenuItem value="active">Active</MenuItem>
+                <MenuItem value="inactive">Inactive</MenuItem>
+              </TextField>
             </Box>
           )}
 
-          {!levelsGenerated && (
-            <Typography variant="body2" color="text.disabled" sx={{ py: 2, textAlign: 'center' }}>
-              Click Generate to create the level fields
-            </Typography>
-          )}
+          <Box sx={{ textAlign: 'center', mt: 3 }}>
+            <Button
+              variant="contained"
+              onClick={handleGenerateHierarchy}
+              disabled={numberOfLevels < 1 || numberOfLevels > 10}
+              sx={{ minWidth: 280 }}
+            >
+              Generate Hierarchy Levels
+            </Button>
+          </Box>
         </Card>
 
-        {isEdit && (
+        {/* === Card 2: Level Mapping (appears only after Generate) === */}
+        {levelsGenerated && hierarchyLevels.length > 0 && (
           <Card sx={{ p: 3, mb: 3 }}>
-            <Typography variant="subtitle1" sx={{ mb: 2.5 }}>Status</Typography>
-            <TextField
-              select
-              label="Status"
-              value={isActive ? 'active' : 'inactive'}
-              onChange={(e) => setIsActive(e.target.value === 'active')}
-              fullWidth
-              sx={{ maxWidth: 300 }}
-            >
-              <MenuItem value="active">Active</MenuItem>
-              <MenuItem value="inactive">Inactive</MenuItem>
-            </TextField>
+            <Typography variant="subtitle1" sx={{ mb: 3 }}>Level Mapping</Typography>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
+              {hierarchyLevels.map((hl) => (
+                <Box key={hl.levelNumber} sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                  <Typography
+                    variant="body1"
+                    sx={{ minWidth: 72, fontWeight: 500, color: 'text.secondary' }}
+                  >
+                    Level {hl.levelNumber}
+                  </Typography>
+                  <Typography variant="body1" sx={{ color: 'text.disabled', minWidth: 24 }}>
+                    &gt;&gt;
+                  </Typography>
+                  <TextField
+                    placeholder="Enter Role Name"
+                    value={hl.roleName}
+                    onChange={(e) => handleRoleNameChange(hl.levelNumber, e.target.value)}
+                    error={!!hierarchyErrors[hl.levelNumber]}
+                    helperText={hierarchyErrors[hl.levelNumber]}
+                    size="small"
+                    sx={{ width: 300 }}
+                  />
+                </Box>
+              ))}
+            </Box>
           </Card>
         )}
 
-        <Box sx={{ position: 'sticky', bottom: 0, zIndex: 10, bgcolor: 'background.default', borderTop: '1px solid', borderColor: 'divider', py: 2, px: 0, mt: 3 }}>
-          <Stack direction="row" spacing={1.5} justifyContent="flex-end">
-            <Button variant="outlined" onClick={() => navigate(paths.dashboard.departmentMaster)} size="large">
-              Cancel
-            </Button>
-            <Button variant="contained" startIcon={<Iconify icon="solar:check-circle-bold" />} onClick={handleSave} disabled={saving} size="large">
-              {saving ? 'Saving...' : 'Save'}
-            </Button>
-          </Stack>
+        {/* === Footer Actions === */}
+        <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1.5, py: 2 }}>
+          <Button variant="outlined" onClick={() => navigate(paths.dashboard.departmentMaster)} size="large">
+            Cancel
+          </Button>
+          <Button variant="contained" startIcon={<Iconify icon="solar:check-circle-bold" />} onClick={handleSave} disabled={saving} size="large">
+            {saving ? 'Saving...' : 'Save'}
+          </Button>
         </Box>
       </PageContainer>
 
