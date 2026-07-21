@@ -14,6 +14,7 @@ import Box from '@mui/material/Box';
 import Alert from '@mui/material/Alert';
 import Chip from '@mui/material/Chip';
 import Typography from '@mui/material/Typography';
+import Tooltip from '@mui/material/Tooltip';
 import Popover from '@mui/material/Popover';
 import { CONFIG } from 'src/config-global';
 import { DataTable, type FilterOption } from 'src/components/data-table';
@@ -64,6 +65,48 @@ function hasDepartmentPermission(
         sub.name === 'DEPARTMENTS' && sub.actions.some((a) => a.code === action && a.allowed)
       )
     )
+  );
+}
+
+function ZoneChipCell({ zones }: { zones?: string[] }) {
+  const visible = zones?.slice(0, MAX_ZONE_CHIPS) ?? [];
+  const remaining = zones?.slice(MAX_ZONE_CHIPS) ?? [];
+  const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
+
+  const handleClick = useCallback((e: React.MouseEvent<HTMLElement>) => {
+    setAnchorEl(e.currentTarget);
+  }, []);
+
+  const handleClose = useCallback(() => {
+    setAnchorEl(null);
+  }, []);
+
+  return (
+    <Box sx={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '8px', width: 1 }}>
+      {visible.map((name) => (
+        <Chip key={name} label={name} variant="outlined" sx={chipSx} />
+      ))}
+      {remaining.length > 0 && (
+        <>
+          <Chip label={`+${remaining.length}`} sx={overflowChipSx} onClick={handleClick} />
+          <Popover
+            open={Boolean(anchorEl)}
+            anchorEl={anchorEl}
+            onClose={handleClose}
+            anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
+            transformOrigin={{ vertical: 'top', horizontal: 'left' }}
+            slotProps={{ paper: { sx: { p: 1.5, minWidth: 160, maxHeight: 240 } } }}
+          >
+            <Stack spacing={0.5}>
+              {remaining.map((name) => (
+                <Typography key={name} variant="body2">{name}</Typography>
+              ))}
+            </Stack>
+          </Popover>
+        </>
+      )}
+      {(zones?.length ?? 0) === 0 && <span style={{ color: '#999' }}>—</span>}
+    </Box>
   );
 }
 
@@ -131,89 +174,85 @@ export default function DepartmentListPage() {
     },
   ];
 
-function ZoneChipCell({ zones }: { zones?: string[] }) {
-  const visible = zones?.slice(0, MAX_ZONE_CHIPS) ?? [];
-  const remaining = zones?.slice(MAX_ZONE_CHIPS) ?? [];
-  const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
-
-  const handleClick = useCallback((e: React.MouseEvent<HTMLElement>) => {
-    setAnchorEl(e.currentTarget);
-  }, []);
-
-  const handleClose = useCallback(() => {
-    setAnchorEl(null);
-  }, []);
-
-  return (
-    <Box sx={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '8px', width: 1 }}>
-      {visible.map((name) => (
-        <Chip key={name} label={name} variant="outlined" sx={chipSx} />
-      ))}
-      {remaining.length > 0 && (
-        <>
-          <Chip label={`+${remaining.length}`} sx={overflowChipSx} onClick={handleClick} />
-          <Popover
-            open={Boolean(anchorEl)}
-            anchorEl={anchorEl}
-            onClose={handleClose}
-            anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
-            transformOrigin={{ vertical: 'top', horizontal: 'left' }}
-            slotProps={{ paper: { sx: { p: 1.5, minWidth: 160, maxHeight: 240 } } }}
-          >
-            <Stack spacing={0.5}>
-              {remaining.map((name) => (
-                <Typography key={name} variant="body2">{name}</Typography>
-              ))}
-            </Stack>
-          </Popover>
-        </>
-      )}
-      {(zones?.length ?? 0) === 0 && <span style={{ color: '#999' }}>—</span>}
-    </Box>
-  );
-}
-
   const columns: GridColDef[] = [
-    { field: 'name', headerName: 'Department Name', flex: 1, minWidth: 180 },
+    {
+      field: 'name',
+      headerName: 'Department Name',
+      flex: 3,
+      minWidth: 150,
+      renderCell: (params) => (
+        <Tooltip title={params.value} placement="top-start">
+          <Typography
+            variant="body2"
+            noWrap
+            sx={{ overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 1 }}
+          >
+            {params.value}
+          </Typography>
+        </Tooltip>
+      ),
+    },
     {
       field: 'zones',
       headerName: 'Zones',
-      width: 240,
+      flex: 2.4,
+      minWidth: 180,
       renderCell: (params) => <ZoneChipCell zones={params.value} />,
     },
     {
       field: 'levels',
       headerName: 'Levels',
-      width: 80,
-      renderCell: (params) => (
-        <Chip label={params.value ?? params.row.maxHierarchyLevels} sx={chipSx} />
-      ),
+      flex: 1,
+      minWidth: 100,
+      align: 'center',
+      headerAlign: 'center',
+      renderCell: (params) => {
+        const val = params.value ?? params.row.maxHierarchyLevels;
+        return (
+          <Typography variant="body2" fontWeight={600}>
+            {val} {val === 1 ? 'Level' : 'Levels'}
+          </Typography>
+        );
+      },
     },
     {
       field: 'departmentAdminId',
       headerName: 'Department Admin',
-      width: 170,
-      renderCell: (params) => params.value ?? '—',
+      flex: 2,
+      minWidth: 160,
+      renderCell: (params) => (
+        <Typography variant="body2" noWrap sx={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>
+          {params.value || '—'}
+        </Typography>
+      ),
     },
     {
       field: 'isActive',
       headerName: 'Status',
-      width: 100,
+      flex: 1,
+      minWidth: 90,
+      align: 'center',
+      headerAlign: 'center',
       renderCell: (params) => (
-        <Label color={params.value ? 'success' : 'default'}>
+        <Label color={params.value ? 'success' : 'default'} sx={{ height: 32, px: 1.5 }}>
           {params.value ? 'Active' : 'Inactive'}
         </Label>
       ),
     },
     ...(canEdit || canDelete ? [{
-      field: 'actions' as const, headerName: '', width: 60, sortable: false, disableColumnMenu: true,
+      field: 'actions' as const,
+      headerName: '',
+      width: 64,
+      sortable: false,
+      disableColumnMenu: true,
+      align: 'center' as const,
       renderCell: (params: any) => (
-        <Stack alignItems="center" sx={{ height: 1, justifyContent: 'center' }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 1 }}>
           <RowActionsMenu actions={[
             ...(canEdit ? [{ label: 'Edit', icon: 'solar:pen-bold' as const, onClick: () => navigate(paths.dashboard.departmentMasterEdit(params.row.id)) }] : []),
             ...(canDelete ? [{ label: 'Delete', icon: 'solar:trash-bin-trash-bold' as const, onClick: () => setDeleteId(params.row.id), color: 'error.main' as const }] : []),
           ]} />
-        </Stack>
+        </Box>
       ),
     }] : []),
   ];

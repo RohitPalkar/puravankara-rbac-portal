@@ -39,6 +39,10 @@ function hasDepartmentPermission(
   );
 }
 
+function sanitizeNumericInput(value: string): string {
+  return value.replace(/[^0-9]/g, '');
+}
+
 export default function DepartmentFormPage() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -81,6 +85,7 @@ export default function DepartmentFormPage() {
 
   const [name, setName] = useState('');
   const [numberOfLevels, setNumberOfLevels] = useState<number>(3);
+  const [levelsInputValue, setLevelsInputValue] = useState('3');
   const [selectedZoneIds, setSelectedZoneIds] = useState<number[]>([]);
   const [departmentAdminId, setDepartmentAdminId] = useState<string | null>(null);
   const [isActive, setIsActive] = useState(true);
@@ -99,11 +104,16 @@ export default function DepartmentFormPage() {
 
   const formDisabled = levelsGenerated;
 
+  const zoneSelected = selectedZoneIds.length > 0;
+  const levelsValid = numberOfLevels >= 1 && numberOfLevels <= 20;
+  const canGenerate = zoneSelected && levelsValid;
+
   useEffect(() => {
     if (deptData) {
       const d = deptData as unknown as DepartmentDetail;
       setName(d.name);
       setNumberOfLevels(d.maxHierarchyLevels);
+      setLevelsInputValue(String(d.maxHierarchyLevels));
       setIsActive(d.isActive);
       setDepartmentAdminId(d.departmentAdminId);
       setSelectedZoneIds(d.zones?.map((z) => z.zoneId) ?? []);
@@ -122,10 +132,32 @@ export default function DepartmentFormPage() {
     }
   }, [deptData]);
 
+  const handleLevelsChange = useCallback((raw: string) => {
+    const sanitized = sanitizeNumericInput(raw);
+    setLevelsInputValue(sanitized || '');
+    const num = parseInt(sanitized, 10);
+    if (!Number.isNaN(num) && num >= 1 && num <= 20) {
+      setNumberOfLevels(num);
+      setLevelsError('');
+    } else if (sanitized === '' || sanitized === '0') {
+      setNumberOfLevels(0);
+    }
+  }, []);
+
+  const handleLevelsBlur = useCallback(() => {
+    if (numberOfLevels < 1) {
+      setLevelsError('Minimum 1 hierarchy level is required.');
+    } else if (numberOfLevels > 20) {
+      setLevelsError('Maximum 20 hierarchy levels are allowed.');
+    } else {
+      setLevelsError('');
+    }
+  }, [numberOfLevels]);
+
   const handleGenerateHierarchy = useCallback(() => {
     const count = numberOfLevels;
-    if (count < 1 || count > 10) {
-      setLevelsError('Number of Levels must be between 1 and 10');
+    if (count < 1 || count > 20) {
+      setLevelsError('Maximum 20 hierarchy levels are allowed.');
       return;
     }
     setLevelsError('');
@@ -179,8 +211,8 @@ export default function DepartmentFormPage() {
       setAdminError('');
     }
 
-    if (numberOfLevels < 1 || numberOfLevels > 10 || !Number.isInteger(numberOfLevels)) {
-      setLevelsError('Number of Levels must be an integer between 1 and 10');
+    if (numberOfLevels < 1 || numberOfLevels > 20 || !Number.isInteger(numberOfLevels)) {
+      setLevelsError('Maximum 20 hierarchy levels are allowed.');
       valid = false;
     } else {
       setLevelsError('');
@@ -347,16 +379,18 @@ export default function DepartmentFormPage() {
               label="No. of Levels"
               type="text"
               inputMode="numeric"
-              value={numberOfLevels}
-              onChange={(e) => {
-                const val = parseInt(e.target.value, 10);
-                if (!Number.isNaN(val) && val >= 1 && val <= 10) setNumberOfLevels(val);
-                setLevelsError('');
-              }}
+              placeholder="Enter number of levels"
+              value={levelsInputValue}
+              onChange={(e) => handleLevelsChange(e.target.value)}
+              onBlur={handleLevelsBlur}
               disabled={formDisabled}
               error={!!levelsError}
-              helperText={levelsError || '1-10'}
+              helperText={levelsError}
               required
+              sx={{
+                '& input[type="text"]::-webkit-outer-spin-button': { display: 'none' },
+                '& input[type="text"]::-webkit-inner-spin-button': { display: 'none' },
+              }}
             />
             <Autocomplete
               options={activeUsers}
@@ -399,7 +433,7 @@ export default function DepartmentFormPage() {
               <Button
                 variant="contained"
                 onClick={handleGenerateHierarchy}
-                disabled={numberOfLevels < 1 || numberOfLevels > 10}
+                disabled={!canGenerate}
                 sx={{ minWidth: 280 }}
               >
                 Generate Hierarchy Levels
