@@ -286,6 +286,7 @@ export function DataTable({
           pageSizeOptions={[5, 10, 25]}
           disableRowSelectionOnClick
           disableColumnMenu
+          disableColumnResize
           autoHeight
           sx={{
             borderRadius: 0,
