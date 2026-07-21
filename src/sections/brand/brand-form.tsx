@@ -256,8 +256,6 @@ export default function BrandFormPage() {
         {saving && <LinearProgress />}
 
         <Card sx={{ p: 4 }}>
-          <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 3 }}>Brand Details</Typography>
-
           <Box display="grid" gridTemplateColumns="1fr 1fr" gap={3}>
             <TextField
               label="Brand Name"
@@ -277,25 +275,28 @@ export default function BrandFormPage() {
           </Box>
 
           <Box display="grid" gridTemplateColumns="1fr 1fr" gap={3} sx={{ mt: 3 }}>
-            <TextField label="Merchant ID" value={razorpayMerchantId} onChange={(e) => setRazorpayMerchantId(e.target.value)} />
-            <TextField label="Secret Key" value={razorpaySecretKey} onChange={(e) => setRazorpaySecretKey(e.target.value)} type="password" />
+            <TextField label="RazorPay Merchant ID (Booking)" value={razorpayMerchantId} onChange={(e) => setRazorpayMerchantId(e.target.value)} />
+            <TextField label="RazorPay Secret Key (Booking)" value={razorpaySecretKey} onChange={(e) => setRazorpaySecretKey(e.target.value)} type="password" />
           </Box>
 
           <Box display="grid" gridTemplateColumns="1fr 1fr" gap={3} sx={{ mt: 3 }}>
-            <TextField label="Booking Salt" value={easebuzzBookingSalt} onChange={(e) => setEasebuzzBookingSalt(e.target.value)} />
-            <TextField label="Booking Key" value={easebuzzBookingKey} onChange={(e) => setEasebuzzBookingKey(e.target.value)} />
-            <TextField label="Booking Sub Merchant ID" value={easebuzzBookingSubMerchantId} onChange={(e) => setEasebuzzBookingSubMerchantId(e.target.value)} />
-            <Box />
+            <TextField label="Easebuzz Salt (Booking)" value={easebuzzBookingSalt} onChange={(e) => setEasebuzzBookingSalt(e.target.value)} />
+            <TextField label="Easebuzz Key (Booking)" value={easebuzzBookingKey} onChange={(e) => setEasebuzzBookingKey(e.target.value)} />
           </Box>
 
           <Box display="grid" gridTemplateColumns="1fr 1fr" gap={3} sx={{ mt: 3 }}>
-            <TextField label="Milestone Salt" value={easebuzzMilestoneSalt} onChange={(e) => setEasebuzzMilestoneSalt(e.target.value)} />
-            <TextField label="Milestone Key" value={easebuzzMilestoneKey} onChange={(e) => setEasebuzzMilestoneKey(e.target.value)} />
-            <TextField label="Milestone Sub Merchant ID" value={easebuzzMilestoneSubMerchantId} onChange={(e) => setEasebuzzMilestoneSubMerchantId(e.target.value)} />
-            <Box />
+            <TextField label="Easebuzz Salt (Milestone)" value={easebuzzMilestoneSalt} onChange={(e) => setEasebuzzMilestoneSalt(e.target.value)} />
+            <TextField label="Easebuzz Key (Milestone)" value={easebuzzMilestoneKey} onChange={(e) => setEasebuzzMilestoneKey(e.target.value)} />
           </Box>
 
           <Box display="grid" gridTemplateColumns="1fr 1fr" gap={3} sx={{ mt: 3 }}>
+            <TextField label="Easebuzz Sub-Merchant ID (Booking)" value={easebuzzBookingSubMerchantId} onChange={(e) => setEasebuzzBookingSubMerchantId(e.target.value)} />
+            <TextField label="Easebuzz Sub-Merchant ID (Milestone)" value={easebuzzMilestoneSubMerchantId} onChange={(e) => setEasebuzzMilestoneSubMerchantId(e.target.value)} />
+          </Box>
+
+          <Divider sx={{ my: 4 }} />
+
+          <Box display="grid" gridTemplateColumns="1fr 1fr" gap={3}>
             <TextField label="Billing Name" value={billingName} onChange={(e) => setBillingName(e.target.value)} />
             <TextField label="PAN Number" value={panNumber} onChange={(e) => setPanNumber(e.target.value.toUpperCase())} inputProps={{ maxLength: 10 }} />
             <TextField label="GSTIN" value={gstin} onChange={(e) => setGstin(e.target.value.toUpperCase())} inputProps={{ maxLength: 15 }} />
@@ -304,9 +305,13 @@ export default function BrandFormPage() {
             <TextField label="PIN Code" value={pinCode} onChange={(e) => setPinCode(e.target.value)} inputProps={{ maxLength: 6 }} />
           </Box>
 
+          <Box sx={{ mt: 1.5 }}>
+            <Typography variant="caption" color="text.disabled">(Hidden) City · State · Country</Typography>
+          </Box>
+
           <Divider sx={{ my: 4 }} />
 
-          {/* 5. Brand Logo */}
+          {/* Brand Logo */}
           <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 3 }}>Brand Logo</Typography>
 
           <Box
@@ -314,7 +319,7 @@ export default function BrandFormPage() {
               border: '2px dashed',
               borderColor: logoUrl ? 'primary.main' : 'divider',
               borderRadius: 2,
-              p: 3,
+              p: 2.5,
               textAlign: 'center',
               bgcolor: logoUrl ? 'primary.lighter' : 'grey.50',
               cursor: 'pointer',
@@ -329,60 +334,48 @@ export default function BrandFormPage() {
             <input ref={fileInputRef} type="file" accept="image/*" hidden onChange={handleLogoUpload} />
 
             {logoUrl ? (
-              <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
-                <Avatar src={logoUrl} sx={{ width: 80, height: 80, borderRadius: 2 }} />
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 2 }}>
+                <Avatar src={logoUrl} sx={{ width: 40, height: 40, borderRadius: 1 }} />
+                <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 500 }}>
+                  {logoUrl.split('/').pop() || 'logo.png'}
+                </Typography>
               </Box>
             ) : (
-              <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1 }}>
-                <Iconify icon="solar:gallery-add-bold" width={40} sx={{ color: 'text.disabled' }} />
-                <Typography variant="body2" color="text.secondary">
-                  Click to upload brand logo
-                </Typography>
-                <Typography variant="caption" color="text.disabled">
-                  Supported formats: PNG, JPG, SVG. Max 2MB.
-                </Typography>
-              </Box>
+              <Typography variant="body2" color="text.secondary">
+                Click to upload brand logo
+              </Typography>
             )}
           </Box>
 
+          <Box sx={{ mt: 1.5 }}>
+            <Typography variant="caption" color="text.disabled">JPEG, PNG, JPG, SVG (Max 10 MB)</Typography>
+          </Box>
+
           {logoUrl && (
-            <Box sx={{ mt: 2 }}>
-              <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-                {logoUrl.split('/').pop() || 'logo.png'}
-              </Typography>
-              <Stack direction="row" spacing={1}>
-                <Button
-                  size="small"
-                  variant="outlined"
-                  startIcon={<Iconify icon="solar:cloud-upload-bold" width= {16} />}
-                  onClick={() => fileInputRef.current?.click()}
-                >
-                  {logoUrl ? 'Replace' : 'Upload'}
-                </Button>
-                <Button
-                  size="small"
-                  variant="outlined"
-                  color="error"
-                  startIcon={<Iconify icon="solar:trash-bin-trash-bold" width={16} />}
-                  onClick={handleRemoveLogo}
-                >
-                  Delete
-                </Button>
-                <Button
-                  size="small"
-                  variant="outlined"
-                  startIcon={<Iconify icon="solar:eye-bold" width={16} />}
-                  onClick={handleViewLogo}
-                >
-                  View
-                </Button>
-              </Stack>
-            </Box>
+            <Stack direction="row" spacing={1} sx={{ mt: 2, justifyContent: 'flex-end' }}>
+              <Button
+                size="small"
+                variant="outlined"
+                color="error"
+                startIcon={<Iconify icon="solar:trash-bin-trash-bold" width={16} />}
+                onClick={handleRemoveLogo}
+              >
+                Delete
+              </Button>
+              <Button
+                size="small"
+                variant="outlined"
+                startIcon={<Iconify icon="solar:eye-bold" width={16} />}
+                onClick={handleViewLogo}
+              >
+                View
+              </Button>
+            </Stack>
           )}
 
           <Divider sx={{ my: 4 }} />
 
-          {/* 6. Incentive Criteria */}
+          {/* Incentive Criteria */}
           <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 3 }}>Incentive Criteria</Typography>
           <Box sx={{ display: 'flex', gap: 3 }}>
             {/* Left: RERA */}
@@ -449,7 +442,7 @@ export default function BrandFormPage() {
 
           <Divider sx={{ my: 4 }} />
 
-          {/* 7. Terms & Conditions */}
+          {/* Terms & Conditions */}
           <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 3 }}>Terms &amp; Conditions</Typography>
           <Box sx={{ '& .ql-editor': { minHeight: 180 } }}>
             <ReactQuill
