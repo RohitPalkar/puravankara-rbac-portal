@@ -225,8 +225,7 @@ export function DataTable({
           autoHeight
           sx={{
             ...(dataGridSx || {}),
-            borderRadius: 2,
-            '& .MuiDataGrid-main': { borderRadius: 2 },
+            borderRadius: 0,
             '& .MuiDataGrid-columnHeaders': {
               borderBottom: '1px solid',
               borderColor: 'divider',
