@@ -135,11 +135,11 @@ export default function BrandListPage() {
   }, {} as Record<string, any>);
 
   const columns: GridColDef[] = [
-    { field: 'brandName', headerName: 'Brand Name', width: 300, renderHeader: renderBrandHeader },
+    { field: 'brandName', headerName: 'Brand Name', width: 320, renderHeader: renderBrandHeader },
     {
       field: 'salaryMultiplier',
       headerName: 'Salary Multiplier',
-      width: 180,
+      width: 192,
       renderHeader: renderBrandHeader,
       align: 'center',
       headerAlign: 'center',
@@ -148,7 +148,7 @@ export default function BrandListPage() {
     {
       field: 'reraRegularizationPercentage',
       headerName: 'Regularisation %',
-      width: 125,
+      width: 120,
       align: 'center',
       headerAlign: 'center',
       renderHeader: renderBrandHeader,
@@ -157,7 +157,7 @@ export default function BrandListPage() {
     {
       field: 'reraQualificationPercentage',
       headerName: 'Qualification',
-      width: 125,
+      width: 120,
       align: 'center',
       headerAlign: 'center',
       renderHeader: renderBrandHeader,
@@ -166,7 +166,7 @@ export default function BrandListPage() {
     {
       field: 'rtmRegularizationPercentage',
       headerName: 'Regularisation %',
-      width: 125,
+      width: 120,
       align: 'center',
       headerAlign: 'center',
       renderHeader: renderBrandHeader,
@@ -175,7 +175,7 @@ export default function BrandListPage() {
     {
       field: 'rtmQualificationPercentage',
       headerName: 'Qualification',
-      width: 125,
+      width: 120,
       align: 'center',
       headerAlign: 'center',
       renderHeader: renderBrandHeader,
@@ -184,7 +184,7 @@ export default function BrandListPage() {
     ...(canEdit ? [{
       field: 'actions' as const,
       headerName: '',
-      width: 64,
+      width: 80,
       sortable: false,
       disableColumnMenu: true,
       align: 'center' as const,
