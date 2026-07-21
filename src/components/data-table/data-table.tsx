@@ -36,6 +36,7 @@ type Props = {
   onSearchChange?: (value: string) => void;
   searchValue?: string;
   getRowHeight?: () => number | 'auto';
+  dataGridSx?: Record<string, any>;
 };
 
 export function DataTable({
@@ -54,6 +55,7 @@ export function DataTable({
   onSearchChange,
   searchValue,
   getRowHeight,
+  dataGridSx,
 }: Props) {
   const [localSearch, setLocalSearch] = useState('');
   const [filters, setFilters] = useState<Record<string, string>>({});
@@ -219,8 +221,12 @@ export function DataTable({
           disableColumnMenu
           autoHeight
           sx={{
-            '& .MuiDataGrid-row': { cursor: onRowClick ? 'pointer' : 'default' },
-          }}
+            ...(dataGridSx || {}),
+            '& .MuiDataGrid-row': {
+              cursor: onRowClick ? 'pointer' : 'default',
+              ...(dataGridSx?.['& .MuiDataGrid-row'] || {}),
+            },
+          } as any}
         />
       </Box>
     </Card>

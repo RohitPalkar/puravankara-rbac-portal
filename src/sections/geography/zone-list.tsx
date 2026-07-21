@@ -13,8 +13,8 @@ import Card from '@mui/material/Card';
 import Box from '@mui/material/Box';
 import Alert from '@mui/material/Alert';
 import Chip from '@mui/material/Chip';
-import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
+import Popover from '@mui/material/Popover';
 import { CONFIG } from 'src/config-global';
 import { DataTable, type FilterOption } from 'src/components/data-table';
 import { EmptyState } from 'src/components/empty-state';
@@ -31,6 +31,28 @@ import { useMyPermissions } from 'src/services/hooks/use-permissions';
 const PAGE_SIZE = 20;
 const MAX_VISIBLE_CITIES = 4;
 
+const chipSx = {
+  height: 32,
+  borderRadius: '8px',
+  fontSize: '13px',
+  fontWeight: 500,
+  border: '1px solid',
+  borderColor: 'divider',
+  '& .MuiChip-label': { px: 1.5 },
+};
+
+const overflowChipSx = {
+  height: 32,
+  borderRadius: '8px',
+  fontSize: '13px',
+  fontWeight: 600,
+  color: '#fff',
+  bgcolor: 'primary.main',
+  cursor: 'pointer',
+  '&:hover': { bgcolor: 'primary.dark' },
+  '& .MuiChip-label': { px: 1.5 },
+};
+
 function hasZonePermission(
   permissions: { projects: { modules: { subModules: { name: string; actions: { code: string; allowed: boolean }[] }[] }[] }[] } | undefined,
   action: string
@@ -45,20 +67,18 @@ function hasZonePermission(
   );
 }
 
-const chipSx = {
-  height: 32,
-  px: 0,
-  borderRadius: '8px',
-  border: '1px solid',
-  borderColor: 'divider',
-  fontSize: '14px',
-  fontWeight: 500,
-  '& .MuiChip-label': { px: 1.5 },
-};
-
 function CitiesChipCell({ cities }: { cities?: string[] }) {
   const visible = cities?.slice(0, MAX_VISIBLE_CITIES) ?? [];
   const remaining = cities?.slice(MAX_VISIBLE_CITIES) ?? [];
+  const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
+
+  const handleClick = useCallback((e: React.MouseEvent<HTMLElement>) => {
+    setAnchorEl(e.currentTarget);
+  }, []);
+
+  const handleClose = useCallback(() => {
+    setAnchorEl(null);
+  }, []);
 
   return (
     <Box sx={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '8px', width: 1 }}>
@@ -66,18 +86,23 @@ function CitiesChipCell({ cities }: { cities?: string[] }) {
         <Chip key={name} label={name} variant="outlined" sx={chipSx} />
       ))}
       {remaining.length > 0 && (
-        <Tooltip
-          title={
-            <Stack spacing={0.3}>
+        <>
+          <Chip label={`+${remaining.length}`} sx={overflowChipSx} onClick={handleClick} />
+          <Popover
+            open={Boolean(anchorEl)}
+            anchorEl={anchorEl}
+            onClose={handleClose}
+            anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
+            transformOrigin={{ vertical: 'top', horizontal: 'left' }}
+            slotProps={{ paper: { sx: { p: 1.5, minWidth: 160, maxHeight: 240 } } }}
+          >
+            <Stack spacing={0.5}>
               {remaining.map((name) => (
-                <Typography key={name} variant="caption">{name}</Typography>
+                <Typography key={name} variant="body2">{name}</Typography>
               ))}
             </Stack>
-          }
-          arrow
-        >
-          <Chip label={`+${remaining.length}`} sx={{ ...chipSx, bgcolor: 'action.hover', borderColor: 'divider' }} />
-        </Tooltip>
+          </Popover>
+        </>
       )}
     </Box>
   );
@@ -148,32 +173,43 @@ export default function ZoneListPage() {
   ];
 
   const columns: GridColDef[] = [
-    { field: 'name', headerName: 'Zone Name', flex: 1, minWidth: 180 },
+    {
+      field: 'name', headerName: 'Zone Name', flex: 1, minWidth: 180,
+      renderCell: (params) => (
+        <Typography variant="body2" fontWeight={500} sx={{ pl: 1.5 }}>
+          {params.value}
+        </Typography>
+      ),
+    },
     {
       field: 'citiesMapped', headerName: 'Cities Mapped', minWidth: 320, flex: 1,
       renderCell: (params) => <CitiesChipCell cities={params.value} />,
     },
     {
-      field: 'salaryCapping', headerName: 'Salary Capping', width: 130,
-      renderCell: (params) => params.row.salaryCappingLabel ?? `${params.value}x`,
+      field: 'salaryCapping', headerName: 'Salary Capping', width: 120,
+      renderCell: (params) => (
+        <Typography variant="body2" fontWeight={500} color="text.secondary">
+          {params.row.salaryCappingLabel ?? `${params.value}x`}
+        </Typography>
+      ),
     },
     {
-      field: 'isActive', headerName: 'Status', width: 90,
+      field: 'isActive', headerName: 'Status', width: 100,
       renderCell: (params) => (
-        <Label color={params.value ? 'success' : 'default'}>
+        <Label color={params.value ? 'success' : 'default'} sx={{ height: 32, px: 1.5 }}>
           {params.value ? 'Active' : 'Inactive'}
         </Label>
       ),
     },
     ...(canEdit || canDelete ? [{
-      field: 'actions' as const, headerName: '', width: 60, sortable: false, disableColumnMenu: true,
+      field: 'actions' as const, headerName: '', width: 64, sortable: false, disableColumnMenu: true,
       renderCell: (params: any) => (
-        <Stack alignItems="center" sx={{ height: 1, justifyContent: 'center' }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 1 }}>
           <RowActionsMenu actions={[
             ...(canEdit ? [{ label: 'Edit', icon: 'solar:pen-bold' as const, onClick: () => navigate(paths.dashboard.zoneMasterEdit(params.row.id)) }] : []),
             ...(canDelete ? [{ label: 'Delete', icon: 'solar:trash-bin-trash-bold' as const, onClick: () => setDeleteId(params.row.id), color: 'error.main' as const }] : []),
           ]} />
-        </Stack>
+        </Box>
       ),
     }] : []),
   ];
@@ -215,7 +251,26 @@ export default function ZoneListPage() {
               searchValue={search}
               searchPlaceholder="Search zones by name..."
               filterOptions={filterOptions}
-              getRowHeight={() => 88}
+              getRowHeight={() => 'auto'}
+              dataGridSx={{
+                '& .MuiDataGrid-row': { minHeight: '80px !important' },
+                '& .MuiDataGrid-cell': {
+                  py: 1.5,
+                  display: 'flex',
+                  alignItems: 'center',
+                },
+                '& .MuiDataGrid-columnHeader': {
+                  py: 1.5,
+                  px: 2,
+                },
+                '& .MuiDataGrid-columnHeaderTitle': {
+                  fontWeight: 600,
+                  fontSize: '0.8125rem',
+                  color: 'text.secondary',
+                  letterSpacing: '0.02em',
+                  textTransform: 'uppercase',
+                },
+              }}
             />
           )}
         </Card>
