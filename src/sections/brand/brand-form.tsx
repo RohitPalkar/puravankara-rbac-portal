@@ -13,6 +13,7 @@ import Stack from '@mui/material/Stack';
 import Alert from '@mui/material/Alert';
 import Button from '@mui/material/Button';
 import Avatar from '@mui/material/Avatar';
+import Divider from '@mui/material/Divider';
 import Snackbar from '@mui/material/Snackbar';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
@@ -135,6 +136,15 @@ export default function BrandFormPage() {
     }
   }, []);
 
+  const handleViewLogo = useCallback(() => {
+    if (logoUrl) window.open(logoUrl, '_blank');
+  }, [logoUrl]);
+
+  const handleRemoveLogo = useCallback(() => {
+    setLogoUrl('');
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  }, []);
+
   const buildPayload = useCallback((): CreateBrandRequest => ({
     brandName: brandName.trim(),
     salaryMultiplier,
@@ -245,157 +255,228 @@ export default function BrandFormPage() {
 
         {saving && <LinearProgress />}
 
-        <Stack spacing={3}>
+        <Card sx={{ p: 4 }}>
           {/* 1. Brand Information */}
-          <Card sx={{ p: 3 }}>
-            <Typography variant="subtitle1" sx={{ mb: 2.5 }}>Brand Information</Typography>
-            <Box display="grid" gridTemplateColumns={{ xs: '1fr', sm: '1fr 1fr' }} gap={2.5}>
-              <TextField
-                label="Brand Name"
-                value={brandName}
-                onChange={(e) => { setBrandName(e.target.value); setBrandNameError(''); }}
-                error={!!brandNameError}
-                helperText={brandNameError}
-                required
-              />
-              <TextField
-                label="Salary Multiplier"
-                value={salaryMultiplier}
-                onChange={(e) => setSalaryMultiplier(Number(e.target.value))}
-                type="number"
-                inputProps={{ step: 0.1, min: 0 }}
-              />
-            </Box>
-          </Card>
+          <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 3 }}>Brand Information</Typography>
+          <Box display="grid" gridTemplateColumns="1fr 1fr" gap={3}>
+            <TextField
+              label="Brand Name"
+              value={brandName}
+              onChange={(e) => { setBrandName(e.target.value); setBrandNameError(''); }}
+              error={!!brandNameError}
+              helperText={brandNameError}
+              required
+            />
+            <TextField
+              label="Salary Multiplier"
+              value={salaryMultiplier}
+              onChange={(e) => setSalaryMultiplier(Number(e.target.value))}
+              type="number"
+              inputProps={{ step: 0.1, min: 0 }}
+            />
+          </Box>
+
+          <Divider sx={{ my: 4 }} />
 
           {/* 2. Razorpay */}
-          <Card sx={{ p: 3 }}>
-            <Typography variant="subtitle1" sx={{ mb: 2.5 }}>Razorpay</Typography>
-            <Box display="grid" gridTemplateColumns={{ xs: '1fr', sm: '1fr 1fr' }} gap={2.5}>
-              <TextField label="Merchant ID" value={razorpayMerchantId} onChange={(e) => setRazorpayMerchantId(e.target.value)} />
-              <TextField label="Secret Key" value={razorpaySecretKey} onChange={(e) => setRazorpaySecretKey(e.target.value)} type="password" />
-            </Box>
-          </Card>
+          <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 3 }}>Razorpay</Typography>
+          <Box display="grid" gridTemplateColumns="1fr 1fr" gap={3}>
+            <TextField label="Merchant ID" value={razorpayMerchantId} onChange={(e) => setRazorpayMerchantId(e.target.value)} />
+            <TextField label="Secret Key" value={razorpaySecretKey} onChange={(e) => setRazorpaySecretKey(e.target.value)} type="password" />
+          </Box>
+
+          <Divider sx={{ my: 4 }} />
 
           {/* 3. Easebuzz */}
-          <Card sx={{ p: 3 }}>
-            <Typography variant="subtitle1" sx={{ mb: 2.5 }}>Easebuzz</Typography>
-            <Box display="grid" gridTemplateColumns={{ xs: '1fr', sm: '1fr 1fr' }} gap={2.5}>
-              <Typography variant="subtitle2" sx={{ gridColumn: { xs: '1', sm: '1 / -1' } }}>Booking</Typography>
-              <TextField label="Salt" value={easebuzzBookingSalt} onChange={(e) => setEasebuzzBookingSalt(e.target.value)} />
-              <TextField label="Key" value={easebuzzBookingKey} onChange={(e) => setEasebuzzBookingKey(e.target.value)} />
-              <TextField label="Sub Merchant ID" value={easebuzzBookingSubMerchantId} onChange={(e) => setEasebuzzBookingSubMerchantId(e.target.value)} />
-              <Typography variant="subtitle2" sx={{ gridColumn: { xs: '1', sm: '1 / -1' } }}>Milestone</Typography>
-              <TextField label="Salt" value={easebuzzMilestoneSalt} onChange={(e) => setEasebuzzMilestoneSalt(e.target.value)} />
-              <TextField label="Key" value={easebuzzMilestoneKey} onChange={(e) => setEasebuzzMilestoneKey(e.target.value)} />
-              <TextField label="Sub Merchant ID" value={easebuzzMilestoneSubMerchantId} onChange={(e) => setEasebuzzMilestoneSubMerchantId(e.target.value)} />
-            </Box>
-          </Card>
+          <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 3 }}>Easebuzz</Typography>
+
+          <Typography variant="subtitle2" sx={{ mb: 2, color: 'text.secondary' }}>Booking</Typography>
+          <Box display="grid" gridTemplateColumns="1fr 1fr" gap={3}>
+            <TextField label="Salt" value={easebuzzBookingSalt} onChange={(e) => setEasebuzzBookingSalt(e.target.value)} />
+            <TextField label="Key" value={easebuzzBookingKey} onChange={(e) => setEasebuzzBookingKey(e.target.value)} />
+            <TextField label="Sub Merchant ID" value={easebuzzBookingSubMerchantId} onChange={(e) => setEasebuzzBookingSubMerchantId(e.target.value)} />
+            <Box />
+          </Box>
+
+          <Typography variant="subtitle2" sx={{ mt: 3, mb: 2, color: 'text.secondary' }}>Milestone</Typography>
+          <Box display="grid" gridTemplateColumns="1fr 1fr" gap={3}>
+            <TextField label="Salt" value={easebuzzMilestoneSalt} onChange={(e) => setEasebuzzMilestoneSalt(e.target.value)} />
+            <TextField label="Key" value={easebuzzMilestoneKey} onChange={(e) => setEasebuzzMilestoneKey(e.target.value)} />
+            <TextField label="Sub Merchant ID" value={easebuzzMilestoneSubMerchantId} onChange={(e) => setEasebuzzMilestoneSubMerchantId(e.target.value)} />
+            <Box />
+          </Box>
+
+          <Divider sx={{ my: 4 }} />
 
           {/* 4. Business Information */}
-          <Card sx={{ p: 3 }}>
-            <Typography variant="subtitle1" sx={{ mb: 2.5 }}>Business Information</Typography>
-            <Box display="grid" gridTemplateColumns={{ xs: '1fr', sm: '1fr 1fr' }} gap={2.5}>
-              <TextField label="Billing Name" value={billingName} onChange={(e) => setBillingName(e.target.value)} />
-              <TextField label="PAN Number" value={panNumber} onChange={(e) => setPanNumber(e.target.value.toUpperCase())} inputProps={{ maxLength: 10 }} />
-              <TextField label="GSTIN" value={gstin} onChange={(e) => setGstin(e.target.value.toUpperCase())} inputProps={{ maxLength: 15 }} />
-              <TextField label="Address Line 1" value={address1} onChange={(e) => setAddress1(e.target.value)} sx={{ gridColumn: { xs: '1', sm: '1 / -1' } }} />
-              <TextField label="Address Line 2" value={address2} onChange={(e) => setAddress2(e.target.value)} sx={{ gridColumn: { xs: '1', sm: '1 / -1' } }} />
-              <TextField label="PIN Code" value={pinCode} onChange={(e) => setPinCode(e.target.value)} inputProps={{ maxLength: 6 }} />
-            </Box>
-          </Card>
+          <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 3 }}>Business Information</Typography>
+          <Box display="grid" gridTemplateColumns="1fr 1fr" gap={3}>
+            <TextField label="Billing Name" value={billingName} onChange={(e) => setBillingName(e.target.value)} />
+            <TextField label="PAN Number" value={panNumber} onChange={(e) => setPanNumber(e.target.value.toUpperCase())} inputProps={{ maxLength: 10 }} />
+            <TextField label="GSTIN" value={gstin} onChange={(e) => setGstin(e.target.value.toUpperCase())} inputProps={{ maxLength: 15 }} />
+            <TextField label="Address Line 1" value={address1} onChange={(e) => setAddress1(e.target.value)} />
+            <TextField label="Address Line 2" value={address2} onChange={(e) => setAddress2(e.target.value)} />
+            <TextField label="PIN Code" value={pinCode} onChange={(e) => setPinCode(e.target.value)} inputProps={{ maxLength: 6 }} />
+          </Box>
+
+          <Divider sx={{ my: 4 }} />
 
           {/* 5. Brand Logo */}
-          <Card sx={{ p: 3 }}>
-            <Typography variant="subtitle1" sx={{ mb: 2.5 }}>Brand Logo</Typography>
-            <Box display="flex" alignItems="center" gap={2}>
-              <Avatar src={logoUrl || undefined} sx={{ width: 64, height: 64, bgcolor: 'grey.300' }}>
-                <Iconify icon="solar:gallery-bold" width={28} />
-              </Avatar>
-              <Button variant="outlined" component="span" onClick={() => fileInputRef.current?.click()}>
-                {logoUrl ? 'Replace' : 'Upload Logo'}
-              </Button>
-              <input ref={fileInputRef} type="file" accept="image/*" hidden onChange={handleLogoUpload} />
-              {logoUrl && (
-                <Button size="small" color="error" onClick={() => setLogoUrl('')}>Remove</Button>
-              )}
+          <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 3 }}>Brand Logo</Typography>
+
+          <Box
+            sx={{
+              border: '2px dashed',
+              borderColor: logoUrl ? 'primary.main' : 'divider',
+              borderRadius: 2,
+              p: 3,
+              textAlign: 'center',
+              bgcolor: logoUrl ? 'primary.lighter' : 'grey.50',
+              cursor: 'pointer',
+              transition: 'all 0.2s',
+              '&:hover': {
+                borderColor: 'primary.main',
+                bgcolor: 'primary.lighter',
+              },
+            }}
+            onClick={() => fileInputRef.current?.click()}
+          >
+            <input ref={fileInputRef} type="file" accept="image/*" hidden onChange={handleLogoUpload} />
+
+            {logoUrl ? (
+              <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
+                <Avatar src={logoUrl} sx={{ width: 80, height: 80, borderRadius: 2 }} />
+              </Box>
+            ) : (
+              <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1 }}>
+                <Iconify icon="solar:gallery-add-bold" width={40} sx={{ color: 'text.disabled' }} />
+                <Typography variant="body2" color="text.secondary">
+                  Click to upload brand logo
+                </Typography>
+                <Typography variant="caption" color="text.disabled">
+                  Supported formats: PNG, JPG, SVG. Max 2MB.
+                </Typography>
+              </Box>
+            )}
+          </Box>
+
+          {logoUrl && (
+            <Box sx={{ mt: 2 }}>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                {logoUrl.split('/').pop() || 'logo.png'}
+              </Typography>
+              <Stack direction="row" spacing={1}>
+                <Button
+                  size="small"
+                  variant="outlined"
+                  startIcon={<Iconify icon="solar:cloud-upload-bold" width= {16} />}
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  {logoUrl ? 'Replace' : 'Upload'}
+                </Button>
+                <Button
+                  size="small"
+                  variant="outlined"
+                  color="error"
+                  startIcon={<Iconify icon="solar:trash-bin-trash-bold" width={16} />}
+                  onClick={handleRemoveLogo}
+                >
+                  Delete
+                </Button>
+                <Button
+                  size="small"
+                  variant="outlined"
+                  startIcon={<Iconify icon="solar:eye-bold" width={16} />}
+                  onClick={handleViewLogo}
+                >
+                  View
+                </Button>
+              </Stack>
             </Box>
-          </Card>
+          )}
+
+          <Divider sx={{ my: 4 }} />
 
           {/* 6. Incentive Criteria */}
-          <Card sx={{ p: 3 }}>
-            <Typography variant="subtitle1" sx={{ mb: 2.5 }}>Incentive Criteria</Typography>
-            <Box display="grid" gridTemplateColumns={{ xs: '1fr', sm: '1fr 1fr' }} gap={3}>
-              <Card variant="outlined" sx={{ p: 2.5 }}>
-                <Typography variant="subtitle2" sx={{ mb: 2, color: 'text.secondary' }}>RERA</Typography>
-                <Stack spacing={2.5}>
-                  <TextField
-                    label="Regularization %"
-                    value={reraRegularizationPercentage}
-                    onChange={(e) => setReraRegularizationPercentage(Number(e.target.value))}
-                    type="number"
-                    inputProps={{ min: 0, max: 100 }}
-                  />
-                  <TextField
-                    label="Qualification %"
-                    value={reraQualificationPercentage}
-                    onChange={(e) => setReraQualificationPercentage(Number(e.target.value))}
-                    type="number"
-                    inputProps={{ min: 0, max: 100 }}
-                  />
-                  <TextField
-                    label="Maximum Regularization Days"
-                    value={maximumRegularizationDays}
-                    onChange={(e) => setMaximumRegularizationDays(Number(e.target.value))}
-                    type="number"
-                    inputProps={{ min: 0 }}
-                  />
-                </Stack>
-              </Card>
-              <Card variant="outlined" sx={{ p: 2.5 }}>
-                <Typography variant="subtitle2" sx={{ mb: 2, color: 'text.secondary' }}>RTM</Typography>
-                <Stack spacing={2.5}>
-                  <TextField
-                    label="Regularization %"
-                    value={rtmRegularizationPercentage}
-                    onChange={(e) => setRtmRegularizationPercentage(Number(e.target.value))}
-                    type="number"
-                    inputProps={{ min: 0, max: 100 }}
-                  />
-                  <TextField
-                    label="Qualification %"
-                    value={rtmQualificationPercentage}
-                    onChange={(e) => setRtmQualificationPercentage(Number(e.target.value))}
-                    type="number"
-                    inputProps={{ min: 0, max: 100 }}
-                  />
-                  <TextField
-                    label="Regularization Start Date"
-                    value={regularizationStartDate}
-                    onChange={(e) => setRegularizationStartDate(e.target.value)}
-                    type="date"
-                    InputLabelProps={{ shrink: true }}
-                  />
-                </Stack>
-              </Card>
-            </Box>
-          </Card>
-
-          {/* 7. Terms & Conditions */}
-          <Card sx={{ p: 3 }}>
-            <Typography variant="subtitle1" sx={{ mb: 2.5 }}>Terms &amp; Conditions</Typography>
-            <Box sx={{ '& .ql-editor': { minHeight: 180 } }}>
-              <ReactQuill
-                value={termsAndConditions}
-                onChange={setTermsAndConditions}
-                modules={quillModules}
-                placeholder="Enter terms and conditions..."
+          <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 3 }}>Incentive Criteria</Typography>
+          <Box sx={{ display: 'flex', gap: 3 }}>
+            {/* Left: RERA */}
+            <Box sx={{ flex: 1 }}>
+              <Typography variant="subtitle2" sx={{ mb: 2.5, color: 'text.secondary' }}>RERA / Under Construction</Typography>
+              <Box display="grid" gridTemplateColumns="1fr 1fr" gap={2.5} sx={{ mb: 2.5 }}>
+                <TextField
+                  label="Regularization %"
+                  value={reraRegularizationPercentage}
+                  onChange={(e) => setReraRegularizationPercentage(Number(e.target.value))}
+                  type="number"
+                  inputProps={{ min: 0, max: 100 }}
+                />
+                <TextField
+                  label="Payable"
+                  value={reraQualificationPercentage}
+                  onChange={(e) => setReraQualificationPercentage(Number(e.target.value))}
+                  type="number"
+                  inputProps={{ min: 0, max: 100 }}
+                />
+              </Box>
+              <TextField
+                label="Maximum Regularization Days"
+                value={maximumRegularizationDays}
+                onChange={(e) => setMaximumRegularizationDays(Number(e.target.value))}
+                type="number"
+                inputProps={{ min: 0 }}
+                fullWidth
               />
             </Box>
-          </Card>
-        </Stack>
 
-        <Box sx={{ position: 'sticky', bottom: 0, zIndex: 10, bgcolor: 'background.default', borderTop: '1px solid', borderColor: 'divider', py: 2, px: 0, mt: 3 }}>
+            {/* Vertical Divider */}
+            <Box sx={{ width: '1px', bgcolor: 'divider', flexShrink: 0 }} />
+
+            {/* Right: RTM */}
+            <Box sx={{ flex: 1 }}>
+              <Typography variant="subtitle2" sx={{ mb: 2.5, color: 'text.secondary' }}>RTM / OC Received</Typography>
+              <Box display="grid" gridTemplateColumns="1fr 1fr" gap={2.5} sx={{ mb: 2.5 }}>
+                <TextField
+                  label="Regularization %"
+                  value={rtmRegularizationPercentage}
+                  onChange={(e) => setRtmRegularizationPercentage(Number(e.target.value))}
+                  type="number"
+                  inputProps={{ min: 0, max: 100 }}
+                />
+                <TextField
+                  label="Payable"
+                  value={rtmQualificationPercentage}
+                  onChange={(e) => setRtmQualificationPercentage(Number(e.target.value))}
+                  type="number"
+                  inputProps={{ min: 0, max: 100 }}
+                />
+              </Box>
+              <TextField
+                label="Regularization Start Date"
+                value={regularizationStartDate}
+                onChange={(e) => setRegularizationStartDate(e.target.value)}
+                type="date"
+                InputLabelProps={{ shrink: true }}
+                fullWidth
+              />
+            </Box>
+          </Box>
+
+          <Divider sx={{ my: 4 }} />
+
+          {/* 7. Terms & Conditions */}
+          <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 3 }}>Terms &amp; Conditions</Typography>
+          <Box sx={{ '& .ql-editor': { minHeight: 180 } }}>
+            <ReactQuill
+              value={termsAndConditions}
+              onChange={setTermsAndConditions}
+              modules={quillModules}
+              placeholder="Enter terms and conditions..."
+            />
+          </Box>
+        </Card>
+
+        <Box sx={{ position: 'sticky', bottom: 0, zIndex: 10, bgcolor: 'background.default', borderTop: '1px solid', borderColor: 'divider', py: 2, px: 0 }}>
           <Stack direction="row" spacing={1.5} justifyContent="flex-end">
             <Button variant="outlined" onClick={() => navigate(paths.dashboard.brandMaster)} size="large">
               Cancel
