@@ -1,122 +1,209 @@
-import type { Phase } from 'src/types';
+import type { CreatePhaseRequest, UpdatePhaseRequest } from 'src/services/types/phase';
 
+import dayjs from 'dayjs';
 import { Helmet } from 'react-helmet-async';
-import { useMemo, useState, useCallback } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useMemo, useState, useEffect, useCallback } from 'react';
 
 import Box from '@mui/material/Box';
 import Card from '@mui/material/Card';
 import Stack from '@mui/material/Stack';
 import Alert from '@mui/material/Alert';
 import Button from '@mui/material/Button';
-import Dialog from '@mui/material/Dialog';
-import Switch from '@mui/material/Switch';
+import MenuItem from '@mui/material/MenuItem';
 import Snackbar from '@mui/material/Snackbar';
 import TextField from '@mui/material/TextField';
-import MenuItem from '@mui/material/MenuItem';
 import Typography from '@mui/material/Typography';
-import DialogTitle from '@mui/material/DialogTitle';
-import DialogContent from '@mui/material/DialogContent';
-import DialogActions from '@mui/material/DialogActions';
-import FormControlLabel from '@mui/material/FormControlLabel';
 import LinearProgress from '@mui/material/LinearProgress';
+import CircularProgress from '@mui/material/CircularProgress';
 
 import { paths } from 'src/routes/paths';
 
 import { CONFIG } from 'src/config-global';
-import { mockBrands, mockCities, mockProjects, mockPhases } from 'src/services/mock-data';
+import { queryKeys } from 'src/services/api/query-keys';
+import { brandService } from 'src/services/services/brand.service';
+import { cityService } from 'src/services/services/geography.service';
+import { useMyPermissions } from 'src/services/hooks/use-permissions';
+import { projectService } from 'src/services/services/project.service';
+import { usePhaseById, useCreatePhase, useUpdatePhase } from 'src/services/hooks/use-phases';
 
 import { Iconify } from 'src/components/iconify';
-import { FormSection } from 'src/components/form-section';
 import { PageHeader, PageContainer } from 'src/components/page-layout';
+
+function hasPhasePermission(
+  permissions: { projects: { modules: { subModules: { name: string; actions: { code: string; allowed: boolean }[] }[] }[] }[] } | undefined,
+  action: string
+): boolean {
+  if (!permissions) return false;
+  return permissions.projects.some((project) =>
+    project.modules.some((mod) =>
+      mod.subModules.some((sub) =>
+        sub.name === 'PHASES' && sub.actions.some((a) => a.code === action && a.allowed)
+      )
+    )
+  );
+}
 
 export default function PhaseFormPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const isEdit = Boolean(id);
+  const phaseId = id ? Number(id) : undefined;
 
-  const [phaseData] = useState<Phase | undefined>(
-    isEdit ? mockPhases.find((p) => p.id === id) : undefined
-  );
+  const { data: permissions } = useMyPermissions();
+  const canCreate = useMemo(() => hasPhasePermission(permissions, 'CREATE'), [permissions]);
 
-  const [brandId, setBrandId] = useState(phaseData?.brandId ?? '');
-  const [cityId, setCityId] = useState(phaseData?.cityId ?? '');
-  const [projectId, setProjectId] = useState(phaseData?.projectId ?? '');
-  const [phaseName, setPhaseName] = useState(phaseData?.phaseName ?? '');
-  const [sfdcPhaseName, setSfdcPhaseName] = useState(phaseData?.sfdcPhaseName ?? '');
-  const [sfdcBlockName, setSfdcBlockName] = useState(phaseData?.sfdcBlockName ?? '');
-  const [possessionDate, setPossessionDate] = useState(phaseData?.possessionDate ?? '');
-  const [agreementExecutionPercentage, setAgreementExecutionPercentage] = useState(phaseData?.agreementExecutionPercentage ?? 0);
-  const [bookingGatewayId, setBookingGatewayId] = useState(phaseData?.bookingGatewayId ?? '');
-  const [milestoneGatewayId, setMilestoneGatewayId] = useState(phaseData?.milestoneGatewayId ?? '');
-  const [launchEnabled, setLaunchEnabled] = useState(phaseData?.launchEnabled ?? false);
-  const [launchStartDate, setLaunchStartDate] = useState(phaseData?.launchStartDate ?? '');
-  const [launchEndDate, setLaunchEndDate] = useState(phaseData?.launchEndDate ?? '');
-  const [sustenanceEnabled, setSustenanceEnabled] = useState(phaseData?.sustenanceEnabled ?? false);
-  const [sustenanceDate, setSustenanceDate] = useState(phaseData?.sustenanceDate ?? '');
+  const { data: phaseData, isLoading: isFetching, isError: isFetchError } = usePhaseById(phaseId ?? 0);
+  const { mutateAsync: createPhase, isPending: isCreating } = useCreatePhase();
+  const { mutateAsync: updatePhase, isPending: isUpdating } = useUpdatePhase();
 
-  const [saving, setSaving] = useState(false);
+  const [brandId, setBrandId] = useState<number | ''>('');
+  const [cityId, setCityId] = useState<number | ''>('');
+  const [projectId, setProjectId] = useState<number | ''>('');
+  const [phaseName, setPhaseName] = useState('');
+  const [sfdcPhaseName, setSfdcPhaseName] = useState('');
+  const [sfdcBlockName, setSfdcBlockName] = useState('');
+  const [possessionDate, setPossessionDate] = useState('');
+  const [agreementExecutionPercentage, setAgreementExecutionPercentage] = useState<number>(0);
+  const [bookingGatewayId, setBookingGatewayId] = useState('');
+  const [milestoneGatewayId, setMilestoneGatewayId] = useState('');
   const [showSuccess, setShowSuccess] = useState(false);
   const [phaseNameError, setPhaseNameError] = useState('');
-  const [showLaunchDialog, setShowLaunchDialog] = useState(false);
+  const [sfdcPhaseNameError, setSfdcPhaseNameError] = useState('');
+  const [possessionDateError, setPossessionDateError] = useState('');
 
-  const citiesForBrand = useMemo(
-    () => brandId ? mockCities : [],
-    [brandId]
-  );
+  const saving = isCreating || isUpdating;
 
-  const projectsForCity = useMemo(
-    () => cityId ? mockProjects : [],
-    [cityId]
-  );
+  const { data: allBrands } = useQuery({
+    queryKey: queryKeys.brands.list({}),
+    queryFn: async () => {
+      const res = await brandService.list({});
+      return res.data;
+    },
+  });
 
-  const handleSave = useCallback(() => {
-    if (!phaseName.trim()) {
-      setPhaseNameError('Phase name is required');
-      return;
+  const { data: allProjects } = useQuery({
+    queryKey: queryKeys.projects.list({}),
+    queryFn: async () => {
+      const res = await projectService.list({});
+      return res.data;
+    },
+  });
+
+  const { data: allCities } = useQuery({
+    queryKey: queryKeys.cities.list({}),
+    queryFn: async () => {
+      const res = await cityService.list({});
+      return res.data;
+    },
+  });
+
+  useEffect(() => {
+    if (phaseData) {
+      setBrandId(phaseData.brandId);
+      setCityId(phaseData.cityId);
+      setProjectId(phaseData.projectId);
+      setPhaseName(phaseData.phaseName);
+      setSfdcPhaseName(phaseData.sfdcPhaseName);
+      setSfdcBlockName(phaseData.sfdcBlockName ?? '');
+      setPossessionDate(phaseData.possessionDate ? dayjs(phaseData.possessionDate).format('YYYY-MM-DD') : '');
+      setAgreementExecutionPercentage(phaseData.agreementExecutionPercentage ?? 0);
+      setBookingGatewayId(phaseData.bookingGatewayId?.toString() ?? '');
+      setMilestoneGatewayId(phaseData.milestoneGatewayId?.toString() ?? '');
     }
-    setPhaseNameError('');
+  }, [phaseData]);
 
-    setSaving(true);
-    setTimeout(() => {
-      const brand = mockBrands.find((b) => b.id === brandId);
-      const city = mockCities.find((c) => c.id === cityId);
-      const project = mockProjects.find((p) => p.id === projectId);
+  const filteredProjects = useMemo(() => {
+    if (!allProjects || !brandId) return [];
+    return allProjects.filter((p) => p.brandId === brandId);
+  }, [allProjects, brandId]);
 
-      if (isEdit && phaseData) {
-        Object.assign(phaseData, {
-          brandId, brandName: brand?.brandName, cityId, cityName: city?.name,
-          projectId, projectName: project?.name, phaseName: phaseName.trim(),
-          sfdcPhaseName, sfdcBlockName, possessionDate, agreementExecutionPercentage,
-          bookingGatewayId, milestoneGatewayId, launchEnabled, launchStartDate, launchEndDate,
-          sustenanceEnabled, sustenanceDate, updatedAt: new Date().toISOString(),
-        });
+  const filteredCities = useMemo(() => {
+    if (!allCities || !projectId) return [];
+    const project = allProjects?.find((p) => p.id === projectId);
+    if (!project) return [];
+    return allCities.filter((c) => c.id === project.cityId);
+  }, [allCities, allProjects, projectId]);
+
+  const handleBrandChange = useCallback((value: string) => {
+    const num = Number(value);
+    setBrandId(num || '');
+    setProjectId('');
+    setCityId('');
+  }, []);
+
+  const handleProjectChange = useCallback((value: string) => {
+    const num = Number(value);
+    setProjectId(num || '');
+    setCityId('');
+  }, []);
+
+  const validate = useCallback((): boolean => {
+    let valid = true;
+    if (!phaseName.trim()) { setPhaseNameError('Phase name is required'); valid = false; } else { setPhaseNameError(''); }
+    if (!sfdcPhaseName.trim()) { setSfdcPhaseNameError('SFDC phase name is required'); valid = false; } else { setSfdcPhaseNameError(''); }
+    if (!possessionDate) { setPossessionDateError('Possession date is required'); valid = false; } else { setPossessionDateError(''); }
+    return valid;
+  }, [phaseName, sfdcPhaseName, possessionDate]);
+
+  const buildPayload = useCallback((): CreatePhaseRequest => ({
+    brandId: brandId as number,
+    cityId: cityId as number,
+    projectId: projectId as number,
+    phaseName: phaseName.trim(),
+    sfdcPhaseName: sfdcPhaseName.trim(),
+    sfdcBlockName: sfdcBlockName.trim() || undefined,
+    possessionDate,
+    agreementExecutionPercentage: agreementExecutionPercentage || undefined,
+    bookingGatewayId: bookingGatewayId ? Number(bookingGatewayId) : undefined,
+    milestoneGatewayId: milestoneGatewayId ? Number(milestoneGatewayId) : undefined,
+    isActive: true,
+  }), [brandId, cityId, projectId, phaseName, sfdcPhaseName, sfdcBlockName, possessionDate, agreementExecutionPercentage, bookingGatewayId, milestoneGatewayId]);
+
+  const handleSave = useCallback(async () => {
+    if (!validate()) return;
+
+    try {
+      if (isEdit && phaseId) {
+        await updatePhase({ id: phaseId, data: buildPayload() as UpdatePhaseRequest });
       } else {
-        mockPhases.unshift({
-          id: String(Date.now()),
-          brandId, brandName: brand?.brandName ?? '', cityId, cityName: city?.name ?? '',
-          projectId, projectName: project?.name ?? '', phaseName: phaseName.trim(),
-          sfdcPhaseName, sfdcBlockName, possessionDate, agreementExecutionPercentage,
-          bookingGatewayId, milestoneGatewayId, launchEnabled, launchStartDate, launchEndDate,
-          sustenanceEnabled, sustenanceDate, status: 'active', createdBy: 'Rohit Palkar',
-          createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(),
-        });
+        await createPhase(buildPayload());
       }
-
-      setSaving(false);
       setShowSuccess(true);
       setTimeout(() => navigate(paths.dashboard.phaseMaster), 1200);
-    }, 800);
-  }, [brandId, cityId, projectId, phaseName, sfdcPhaseName, sfdcBlockName, possessionDate,
-    agreementExecutionPercentage, bookingGatewayId, milestoneGatewayId, launchEnabled,
-    launchStartDate, launchEndDate, sustenanceEnabled, sustenanceDate, isEdit, phaseData, navigate]);
+    } catch {
+      // error handled by query cache invalidation
+    }
+  }, [validate, isEdit, phaseId, buildPayload, createPhase, updatePhase, navigate]);
 
-  if (isEdit && !phaseData) {
+  if (isEdit && isFetching) {
+    return (
+      <PageContainer>
+        <PageHeader title="Edit Phase" />
+        <Card sx={{ p: 4, textAlign: 'center' }}><CircularProgress /></Card>
+      </PageContainer>
+    );
+  }
+
+  if (isEdit && (isFetchError || (!isFetching && !phaseData))) {
     return (
       <PageContainer>
         <PageHeader title="Phase Not Found" description="The requested phase does not exist" />
         <Card sx={{ p: 4, textAlign: 'center' }}>
           <Typography variant="body1" color="text.secondary">Phase with ID &quot;{id}&quot; not found.</Typography>
+          <Button onClick={() => navigate(paths.dashboard.phaseMaster)} sx={{ mt: 2 }}>Back to Phases</Button>
+        </Card>
+      </PageContainer>
+    );
+  }
+
+  if (!isEdit && !canCreate) {
+    return (
+      <PageContainer>
+        <PageHeader title="Access Denied" />
+        <Card sx={{ p: 4, textAlign: 'center' }}>
+          <Typography variant="body1" color="error">You do not have permission to create phases.</Typography>
           <Button onClick={() => navigate(paths.dashboard.phaseMaster)} sx={{ mt: 2 }}>Back to Phases</Button>
         </Card>
       </PageContainer>
@@ -129,58 +216,108 @@ export default function PhaseFormPage() {
       <PageContainer>
         <PageHeader
           title={isEdit ? 'Edit Phase' : 'Create Phase'}
-          description={isEdit ? 'Update phase details and launch configuration' : 'Add a new project phase'}
+          description={isEdit ? 'Update phase details' : 'Add a new project phase'}
         />
 
         {saving && <LinearProgress />}
 
-        <Stack spacing={3}>
-          <Card sx={{ p: 3 }}>
-            <FormSection title="Phase Details" description="Basic phase information">
-              <TextField label="Brand" value={brandId} onChange={(e) => { setBrandId(e.target.value); setCityId(''); setProjectId(''); }} select required fullWidth>
-                {mockBrands.map((b) => <MenuItem key={b.id} value={b.id}>{b.brandName}</MenuItem>)}
-              </TextField>
-              <TextField label="City" value={cityId} onChange={(e) => { setCityId(e.target.value); setProjectId(''); }} select required disabled={!brandId} fullWidth>
-                {citiesForBrand.map((c) => <MenuItem key={c.id} value={c.id}>{c.name}</MenuItem>)}
-              </TextField>
-              <TextField label="Project" value={projectId} onChange={(e) => setProjectId(e.target.value)} select required disabled={!cityId} fullWidth>
-                {projectsForCity.map((p) => <MenuItem key={p.id} value={p.id}>{p.name}</MenuItem>)}
-              </TextField>
-              <TextField label="Phase Name" value={phaseName} onChange={(e) => { setPhaseName(e.target.value); setPhaseNameError(''); }} error={!!phaseNameError} helperText={phaseNameError} required fullWidth />
-              <TextField label="SFDC Phase Name" value={sfdcPhaseName} onChange={(e) => setSfdcPhaseName(e.target.value)} required fullWidth />
-              <TextField label="SFDC Block Name" value={sfdcBlockName} onChange={(e) => setSfdcBlockName(e.target.value)} fullWidth />
-              <TextField label="Possession Date" value={possessionDate} onChange={(e) => setPossessionDate(e.target.value)} type="date" InputLabelProps={{ shrink: true }} required fullWidth />
-              <TextField label="Agreement Execution at X% AV" value={agreementExecutionPercentage} onChange={(e) => setAgreementExecutionPercentage(Number(e.target.value))} type="number" inputProps={{ min: 0, max: 100 }} fullWidth />
-            </FormSection>
-          </Card>
-
-          <Card sx={{ p: 3 }}>
-            <FormSection title="Payment Gateway Configuration" description="Easebuzz merchant IDs for booking and milestone payments">
-              <TextField label="Easebuzz Booking Merchant ID" value={bookingGatewayId} onChange={(e) => setBookingGatewayId(e.target.value)} fullWidth />
-              <TextField label="Easebuzz Milestone Merchant ID" value={milestoneGatewayId} onChange={(e) => setMilestoneGatewayId(e.target.value)} fullWidth />
-            </FormSection>
-          </Card>
-
-          <Card sx={{ p: 3 }}>
-            <Stack spacing={2.5}>
-              <Stack spacing={0.5}>
-                <Typography variant="subtitle1">Launch Configuration</Typography>
-                <Typography variant="body2" color="text.secondary">Configure launch availability for this phase</Typography>
-              </Stack>
-              <FormControlLabel control={<Switch checked={launchEnabled} onChange={(e) => { setLaunchEnabled(e.target.checked); if (!e.target.checked) { setLaunchStartDate(''); setLaunchEndDate(''); } }} />} label="Launch Enabled" />
-              {launchEnabled && (
-                <Stack direction="row" spacing={2.5} sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' } }}>
-                  <TextField label="Launch Start Date" value={launchStartDate} onChange={(e) => setLaunchStartDate(e.target.value)} type="date" InputLabelProps={{ shrink: true }} required={launchEnabled} fullWidth />
-                  <TextField label="Launch End Date" value={launchEndDate} onChange={(e) => setLaunchEndDate(e.target.value)} type="date" InputLabelProps={{ shrink: true }} required={launchEnabled} fullWidth />
-                </Stack>
-              )}
-              <FormControlLabel control={<Switch checked={sustenanceEnabled} onChange={(e) => setSustenanceEnabled(e.target.checked)} />} label="Sustenance Enabled" />
-              {sustenanceEnabled && (
-                <TextField label="Sustenance Date" value={sustenanceDate} onChange={(e) => setSustenanceDate(e.target.value)} type="date" InputLabelProps={{ shrink: true }} fullWidth sx={{ maxWidth: 300 }} />
-              )}
-            </Stack>
-          </Card>
-        </Stack>
+        <Card sx={{ p: 4 }}>
+          <Box display="grid" gridTemplateColumns={{ xs: '1fr', sm: '1fr 1fr' }} gap={3}>
+            <TextField
+              label="Brand"
+              value={brandId}
+              onChange={(e) => handleBrandChange(e.target.value)}
+              select
+              required
+              fullWidth
+            >
+              {allBrands?.map((b) => (
+                <MenuItem key={b.id} value={b.id}>{b.brandName}</MenuItem>
+              ))}
+            </TextField>
+            <TextField
+              label="City"
+              value={cityId}
+              onChange={(e) => setCityId(Number(e.target.value) || '')}
+              select
+              required
+              disabled={!projectId}
+              fullWidth
+            >
+              {filteredCities.map((c) => (
+                <MenuItem key={c.id} value={c.id}>{c.name}</MenuItem>
+              ))}
+            </TextField>
+            <TextField
+              label="Project"
+              value={projectId}
+              onChange={(e) => handleProjectChange(e.target.value)}
+              select
+              required
+              disabled={!brandId}
+              fullWidth
+            >
+              {filteredProjects.map((p) => (
+                <MenuItem key={p.id} value={p.id}>{p.name}</MenuItem>
+              ))}
+            </TextField>
+            <TextField
+              label="Phase Name"
+              value={phaseName}
+              onChange={(e) => { setPhaseName(e.target.value); setPhaseNameError(''); }}
+              error={!!phaseNameError}
+              helperText={phaseNameError}
+              required
+              fullWidth
+            />
+            <TextField
+              label="SFDC Phase Name"
+              value={sfdcPhaseName}
+              onChange={(e) => { setSfdcPhaseName(e.target.value); setSfdcPhaseNameError(''); }}
+              error={!!sfdcPhaseNameError}
+              helperText={sfdcPhaseNameError}
+              required
+              fullWidth
+            />
+            <TextField
+              label="SFDC Block Name"
+              value={sfdcBlockName}
+              onChange={(e) => setSfdcBlockName(e.target.value)}
+              fullWidth
+            />
+            <TextField
+              label="Possession Date"
+              type="date"
+              value={possessionDate}
+              onChange={(e) => { setPossessionDate(e.target.value); setPossessionDateError(''); }}
+              error={!!possessionDateError}
+              helperText={possessionDateError}
+              InputLabelProps={{ shrink: true }}
+              required
+              fullWidth
+            />
+            <TextField
+              label="Agreement Execution at X% AV"
+              value={agreementExecutionPercentage}
+              onChange={(e) => setAgreementExecutionPercentage(Number(e.target.value))}
+              type="number"
+              inputProps={{ min: 0, max: 100 }}
+              fullWidth
+            />
+            <TextField
+              label="Easebuzz Booking Merchant ID"
+              value={bookingGatewayId}
+              onChange={(e) => setBookingGatewayId(e.target.value)}
+              fullWidth
+            />
+            <TextField
+              label="Easebuzz Milestone Merchant ID"
+              value={milestoneGatewayId}
+              onChange={(e) => setMilestoneGatewayId(e.target.value)}
+              fullWidth
+            />
+          </Box>
+        </Card>
 
         <Box sx={{ position: 'sticky', bottom: 0, zIndex: 10, bgcolor: 'background.default', borderTop: '1px solid', borderColor: 'divider', py: 2, px: 0, mt: 3 }}>
           <Stack direction="row" spacing={1.5} justifyContent="flex-end">
@@ -199,25 +336,6 @@ export default function PhaseFormPage() {
           Phase {isEdit ? 'updated' : 'created'} successfully
         </Alert>
       </Snackbar>
-
-      <Dialog open={showLaunchDialog} onClose={() => setShowLaunchDialog(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>Edit Launch Period</DialogTitle>
-        <DialogContent>
-          <Stack spacing={2.5} sx={{ mt: 1 }}>
-            <FormControlLabel control={<Switch checked={launchEnabled} onChange={(e) => setLaunchEnabled(e.target.checked)} />} label="Enable Launch" />
-            {launchEnabled && (
-              <Stack direction="row" spacing={2}>
-                <TextField label="Start Date" value={launchStartDate} onChange={(e) => setLaunchStartDate(e.target.value)} type="date" InputLabelProps={{ shrink: true }} fullWidth />
-                <TextField label="End Date" value={launchEndDate} onChange={(e) => setLaunchEndDate(e.target.value)} type="date" InputLabelProps={{ shrink: true }} fullWidth />
-              </Stack>
-            )}
-          </Stack>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setShowLaunchDialog(false)} color="inherit">Cancel</Button>
-          <Button onClick={() => setShowLaunchDialog(false)} variant="contained">Apply</Button>
-        </DialogActions>
-      </Dialog>
     </>
   );
 }
