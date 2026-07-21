@@ -94,7 +94,7 @@ export default function BrandListPage() {
     },
     {
       field: 'reraRegularizationPercentage',
-      headerName: 'Regularization %',
+      headerName: 'Regularisation %',
       width: 175,
       align: 'center',
       headerAlign: 'center',
@@ -102,7 +102,7 @@ export default function BrandListPage() {
     },
     {
       field: 'reraQualificationPercentage',
-      headerName: 'Qualification %',
+      headerName: 'Qualification',
       width: 175,
       align: 'center',
       headerAlign: 'center',
@@ -110,7 +110,7 @@ export default function BrandListPage() {
     },
     {
       field: 'rtmRegularizationPercentage',
-      headerName: 'Regularization %',
+      headerName: 'Regularisation %',
       width: 175,
       align: 'center',
       headerAlign: 'center',
@@ -118,7 +118,7 @@ export default function BrandListPage() {
     },
     {
       field: 'rtmQualificationPercentage',
-      headerName: 'Qualification %',
+      headerName: 'Qualification',
       width: 175,
       align: 'center',
       headerAlign: 'center',
@@ -175,7 +175,7 @@ export default function BrandListPage() {
               rowCount={meta?.total ?? 0}
               onSearchChange={handleSearchChange}
               searchValue={search}
-              searchPlaceholder="Search brands by name..."
+              searchPlaceholder="Search by brand name"
               groupHeaders={groupHeaders}
               hideColumnsButton
             />
