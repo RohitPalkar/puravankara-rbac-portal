@@ -141,18 +141,22 @@ export default function DepartmentFormPage() {
       setLevelsError('');
     } else if (sanitized === '' || sanitized === '0') {
       setNumberOfLevels(0);
+    } else if (!Number.isNaN(num) && num > 20) {
+      setLevelsError('Maximum 20 hierarchy levels are allowed.');
     }
   }, []);
 
   const handleLevelsBlur = useCallback(() => {
-    if (numberOfLevels < 1) {
-      setLevelsError('Minimum 1 hierarchy level is required.');
-    } else if (numberOfLevels > 20) {
-      setLevelsError('Maximum 20 hierarchy levels are allowed.');
-    } else {
-      setLevelsError('');
+    const num = parseInt(levelsInputValue, 10);
+    if (!Number.isNaN(num) && (num < 1 || num > 20)) {
+      setLevelsInputValue(String(numberOfLevels));
+      if (num > 20) {
+        setLevelsError('Maximum 20 hierarchy levels are allowed.');
+      } else {
+        setLevelsError('Minimum 1 hierarchy level is required.');
+      }
     }
-  }, [numberOfLevels]);
+  }, [levelsInputValue, numberOfLevels]);
 
   const handleGenerateHierarchy = useCallback(() => {
     const count = numberOfLevels;

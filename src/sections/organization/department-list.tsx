@@ -210,7 +210,7 @@ export default function DepartmentListPage() {
         const val = params.value ?? params.row.maxHierarchyLevels;
         return (
           <Typography variant="body2" fontWeight={600}>
-            {val} {val === 1 ? 'Level' : 'Levels'}
+            {val}
           </Typography>
         );
       },
