@@ -26,7 +26,6 @@ import { paths } from 'src/routes/paths';
 import { CONFIG } from 'src/config-global';
 import { queryKeys } from 'src/services/api/query-keys';
 import { phaseService } from 'src/services/services/phase.service';
-import { useMyPermissions } from 'src/services/hooks/use-permissions';
 import { useDeletePhase, useUpdateLaunch } from 'src/services/hooks/use-phases';
 
 import { Label } from 'src/components/label';
@@ -38,20 +37,6 @@ import { ConfirmDialog } from 'src/components/confirm-dialog';
 import { PageHeader, PageContainer } from 'src/components/page-layout';
 
 const PAGE_SIZE = 20;
-
-function hasPhasePermission(
-  permissions: { projects: { modules: { subModules: { name: string; actions: { code: string; allowed: boolean }[] }[] }[] }[] } | undefined,
-  action: string
-): boolean {
-  if (!permissions) return false;
-  return permissions.projects.some((project) =>
-    project.modules.some((mod) =>
-      mod.subModules.some((sub) =>
-        sub.name === 'PHASES' && sub.actions.some((a) => a.code === action && a.allowed)
-      )
-    )
-  );
-}
 
 type LaunchDialogMode = 'edit' | 'skip';
 
@@ -65,12 +50,6 @@ export default function PhaseListPage() {
   const [launchMode, setLaunchMode] = useState<LaunchDialogMode>('edit');
   const [launchStartDate, setLaunchStartDate] = useState('');
   const [launchEndDate, setLaunchEndDate] = useState('');
-
-  const { data: permissions } = useMyPermissions();
-
-  const canCreate = useMemo(() => hasPhasePermission(permissions, 'CREATE'), [permissions]);
-  const canEdit = useMemo(() => hasPhasePermission(permissions, 'EDIT'), [permissions]);
-  const canLaunch = useMemo(() => hasPhasePermission(permissions, 'LAUNCH'), [permissions]);
 
   const { mutateAsync: deletePhase, isPending: isDeleting } = useDeletePhase();
   const { mutateAsync: updateLaunch, isPending: isLaunching } = useUpdateLaunch();
@@ -182,8 +161,8 @@ export default function PhaseListPage() {
       renderCell: (params) => (
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 1 }}>
           <RowActionsMenu actions={[
-            ...(canEdit ? [{ label: 'Edit', icon: 'solar:pen-bold' as const, onClick: () => navigate(paths.dashboard.phaseMasterEdit(params.row.id)) }] : []),
-            ...(canLaunch ? [{ label: 'Launch Phase', icon: 'solar:rocket-bold' as const, onClick: () => handleOpenLaunch(params.row as Phase) }] : []),
+            { label: 'Edit', icon: 'solar:pen-bold' as const, onClick: () => navigate(paths.dashboard.phaseMasterEdit(params.row.id)) },
+            { label: 'Launch Phase', icon: 'solar:rocket-bold' as const, onClick: () => handleOpenLaunch(params.row as Phase) },
             { label: 'Delete', icon: 'solar:trash-bin-trash-bold' as const, onClick: () => setDeleteId(params.row.id), color: 'error.main' as const },
           ]} />
         </Box>
@@ -196,11 +175,9 @@ export default function PhaseListPage() {
       <Helmet><title>Phases - {CONFIG.appName}</title></Helmet>
       <PageContainer>
         <PageHeader title="Phase" description="Manage project phases and launch configurations" action={
-          canCreate ? (
-            <Button variant="contained" startIcon={<Iconify icon="solar:add-circle-bold" />} onClick={() => navigate(paths.dashboard.phaseMasterCreate)}>
-              Create Phase
-            </Button>
-          ) : null
+          <Button variant="contained" startIcon={<Iconify icon="solar:add-circle-bold" />} onClick={() => navigate(paths.dashboard.phaseMasterCreate)}>
+            Create Phase
+          </Button>
         } />
         <Card sx={{ overflow: 'hidden' }}>
           {isError ? (
