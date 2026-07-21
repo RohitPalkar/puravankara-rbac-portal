@@ -29,7 +29,7 @@ import { useDeleteZone } from 'src/services/hooks/use-geography';
 import { useMyPermissions } from 'src/services/hooks/use-permissions';
 
 const PAGE_SIZE = 20;
-const MAX_VISIBLE_CITIES = 5;
+const MAX_VISIBLE_CITIES = 4;
 
 function hasZonePermission(
   permissions: { projects: { modules: { subModules: { name: string; actions: { code: string; allowed: boolean }[] }[] }[] }[] } | undefined,
@@ -45,14 +45,25 @@ function hasZonePermission(
   );
 }
 
+const chipSx = {
+  height: 32,
+  px: 0,
+  borderRadius: '8px',
+  border: '1px solid',
+  borderColor: 'divider',
+  fontSize: '14px',
+  fontWeight: 500,
+  '& .MuiChip-label': { px: 1.5 },
+};
+
 function CitiesChipCell({ cities }: { cities?: string[] }) {
   const visible = cities?.slice(0, MAX_VISIBLE_CITIES) ?? [];
   const remaining = cities?.slice(MAX_VISIBLE_CITIES) ?? [];
 
   return (
-    <Stack direction="row" spacing={0.5} alignItems="center" sx={{ flexWrap: 'wrap', gap: 0.5, height: 1, alignContent: 'center' }}>
+    <Box sx={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '8px', width: 1 }}>
       {visible.map((name) => (
-        <Chip key={name} label={name} size="small" variant="outlined" sx={{ height: 22, '& .MuiChip-label': { fontSize: '0.75rem', px: 0.8 } }} />
+        <Chip key={name} label={name} variant="outlined" sx={chipSx} />
       ))}
       {remaining.length > 0 && (
         <Tooltip
@@ -65,10 +76,10 @@ function CitiesChipCell({ cities }: { cities?: string[] }) {
           }
           arrow
         >
-          <Chip label={`+${remaining.length} more`} size="small" color="primary" variant="outlined" sx={{ height: 22, '& .MuiChip-label': { fontSize: '0.75rem', px: 0.8 } }} />
+          <Chip label={`+${remaining.length}`} sx={{ ...chipSx, bgcolor: 'action.hover', borderColor: 'divider' }} />
         </Tooltip>
       )}
-    </Stack>
+    </Box>
   );
 }
 
@@ -139,8 +150,12 @@ export default function ZoneListPage() {
   const columns: GridColDef[] = [
     { field: 'name', headerName: 'Zone Name', flex: 1, minWidth: 180 },
     {
-      field: 'citiesMapped', headerName: 'Cities Mapped', minWidth: 280, flex: 1,
+      field: 'citiesMapped', headerName: 'Cities Mapped', minWidth: 320, flex: 1,
       renderCell: (params) => <CitiesChipCell cities={params.value} />,
+    },
+    {
+      field: 'salaryCapping', headerName: 'Salary Capping', width: 130,
+      renderCell: (params) => params.row.salaryCappingLabel ?? `${params.value}x`,
     },
     {
       field: 'isActive', headerName: 'Status', width: 90,
@@ -200,6 +215,7 @@ export default function ZoneListPage() {
               searchValue={search}
               searchPlaceholder="Search zones by name..."
               filterOptions={filterOptions}
+              getRowHeight={() => 88}
             />
           )}
         </Card>

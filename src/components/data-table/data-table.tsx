@@ -35,6 +35,7 @@ type Props = {
   rowCount?: number;
   onSearchChange?: (value: string) => void;
   searchValue?: string;
+  getRowHeight?: () => number | 'auto';
 };
 
 export function DataTable({
@@ -52,6 +53,7 @@ export function DataTable({
   rowCount,
   onSearchChange,
   searchValue,
+  getRowHeight,
 }: Props) {
   const [localSearch, setLocalSearch] = useState('');
   const [filters, setFilters] = useState<Record<string, string>>({});
@@ -210,6 +212,7 @@ export function DataTable({
           {...(isServerSide && paginationModel ? { paginationModel } : {})}
           {...(isServerSide && onPaginationModelChange ? { onPaginationModelChange } : {})}
           {...(isServerSide && rowCount !== undefined ? { rowCount } : {})}
+          {...(getRowHeight ? { getRowHeight } : {})}
           initialState={isServerSide ? undefined : { pagination: { paginationModel: { pageSize: 10 } } }}
           pageSizeOptions={[5, 10, 25]}
           disableRowSelectionOnClick
