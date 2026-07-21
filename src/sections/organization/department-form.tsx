@@ -87,6 +87,7 @@ export default function DepartmentFormPage() {
   const [hierarchyLevels, setHierarchyLevels] = useState<DepartmentHierarchyLevelInput[]>([]);
   const [levelsGenerated, setLevelsGenerated] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [saveError, setSaveError] = useState('');
 
   const [nameError, setNameError] = useState('');
   const [zoneError, setZoneError] = useState('');
@@ -95,6 +96,8 @@ export default function DepartmentFormPage() {
   const [hierarchyErrors, setHierarchyErrors] = useState<Record<number, string>>({});
 
   const saving = isCreating || isUpdating;
+
+  const formDisabled = levelsGenerated;
 
   useEffect(() => {
     if (deptData) {
@@ -207,6 +210,7 @@ export default function DepartmentFormPage() {
 
   const handleSave = useCallback(async () => {
     if (!validate()) return;
+    setSaveError('');
 
     try {
       if (isEdit && departmentId) {
@@ -233,8 +237,9 @@ export default function DepartmentFormPage() {
       }
       setShowSuccess(true);
       setTimeout(() => navigate(paths.dashboard.departmentMaster), 1200);
-    } catch {
-      // error handled by query cache invalidation
+    } catch (err: any) {
+      const msg = err?.response?.data?.message?.[0] || err?.message || 'Failed to save department';
+      setSaveError(msg);
     }
   }, [isEdit, departmentId, name, numberOfLevels, departmentAdminId, selectedZoneIds, hierarchyLevels, isActive, validate, createDepartment, updateDepartment, navigate]);
 
@@ -294,7 +299,12 @@ export default function DepartmentFormPage() {
 
         {saving && <LinearProgress />}
 
-        {/* === Card 1: Department Details === */}
+        {saveError && (
+          <Alert severity="error" sx={{ mb: 2 }} onClose={() => setSaveError('')}>
+            {saveError}
+          </Alert>
+        )}
+
         <Card sx={{ p: 3, mb: 3 }}>
           <Typography variant="subtitle1" sx={{ mb: 3 }}>Department Details</Typography>
 
@@ -308,6 +318,7 @@ export default function DepartmentFormPage() {
                 setSelectedZoneIds(newValue.map((v) => v.id));
                 setZoneError('');
               }}
+              disabled={formDisabled}
               renderInput={(params) => (
                 <TextField
                   {...params}
@@ -330,6 +341,7 @@ export default function DepartmentFormPage() {
               error={!!nameError}
               helperText={nameError}
               required
+              disabled={formDisabled}
             />
             <TextField
               label="No. of Levels"
@@ -337,12 +349,18 @@ export default function DepartmentFormPage() {
               value={numberOfLevels}
               onChange={(e) => {
                 const val = parseInt(e.target.value, 10);
-                if (!Number.isNaN(val)) setNumberOfLevels(val);
+                if (!Number.isNaN(val) && val >= 1 && val <= 10) setNumberOfLevels(val);
                 setLevelsError('');
               }}
               inputProps={{ min: 1, max: 10 }}
+              disabled={formDisabled}
               error={!!levelsError}
               helperText={levelsError || '1-10'}
+              onKeyDown={(e) => {
+                if (!/^\d$/.test(e.key) && e.key !== 'Backspace' && e.key !== 'Delete' && e.key !== 'Tab' && e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') {
+                  e.preventDefault();
+                }
+              }}
             />
             <Autocomplete
               options={activeUsers}
@@ -352,6 +370,7 @@ export default function DepartmentFormPage() {
                 setDepartmentAdminId(newValue ? (newValue as any).empId : null);
                 setAdminError('');
               }}
+              disabled={formDisabled}
               renderInput={(params) => (
                 <TextField
                   {...params}
@@ -379,19 +398,20 @@ export default function DepartmentFormPage() {
             </Box>
           )}
 
-          <Box sx={{ textAlign: 'center', mt: 3 }}>
-            <Button
-              variant="contained"
-              onClick={handleGenerateHierarchy}
-              disabled={numberOfLevels < 1 || numberOfLevels > 10}
-              sx={{ minWidth: 280 }}
-            >
-              Generate Hierarchy Levels
-            </Button>
-          </Box>
+          {!levelsGenerated && (
+            <Box sx={{ textAlign: 'center', mt: 3 }}>
+              <Button
+                variant="contained"
+                onClick={handleGenerateHierarchy}
+                disabled={numberOfLevels < 1 || numberOfLevels > 10}
+                sx={{ minWidth: 280 }}
+              >
+                Generate Hierarchy Levels
+              </Button>
+            </Box>
+          )}
         </Card>
 
-        {/* === Card 2: Level Mapping (appears only after Generate) === */}
         {levelsGenerated && hierarchyLevels.length > 0 && (
           <Card sx={{ p: 3, mb: 3 }}>
             <Typography variant="subtitle1" sx={{ mb: 3 }}>Level Mapping</Typography>
@@ -422,7 +442,6 @@ export default function DepartmentFormPage() {
           </Card>
         )}
 
-        {/* === Footer Actions === */}
         <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1.5, py: 2 }}>
           <Button variant="outlined" onClick={() => navigate(paths.dashboard.departmentMaster)} size="large">
             Cancel
