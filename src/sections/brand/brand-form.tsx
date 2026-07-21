@@ -1,52 +1,36 @@
-import { useState, useCallback, useEffect, useMemo, useRef } from 'react';
+import 'react-quill/dist/quill.snow.css';
+
+import type { CreateBrandRequest, UpdateBrandRequest } from 'src/services/types/brand';
+
+import ReactQuill from 'react-quill';
 import { Helmet } from 'react-helmet-async';
 import { useParams, useNavigate } from 'react-router-dom';
-import Stack from '@mui/material/Stack';
-import Typography from '@mui/material/Typography';
-import Button from '@mui/material/Button';
-import Card from '@mui/material/Card';
-import TextField from '@mui/material/TextField';
-import MenuItem from '@mui/material/MenuItem';
-import Alert from '@mui/material/Alert';
-import Snackbar from '@mui/material/Snackbar';
-import LinearProgress from '@mui/material/LinearProgress';
+import { useRef, useMemo, useState, useEffect, useCallback } from 'react';
+
 import Box from '@mui/material/Box';
+import Card from '@mui/material/Card';
+import Stack from '@mui/material/Stack';
+import Alert from '@mui/material/Alert';
+import Button from '@mui/material/Button';
 import Avatar from '@mui/material/Avatar';
-import IconButton from '@mui/material/IconButton';
+import Snackbar from '@mui/material/Snackbar';
+import TextField from '@mui/material/TextField';
+import Typography from '@mui/material/Typography';
+import LinearProgress from '@mui/material/LinearProgress';
 import CircularProgress from '@mui/material/CircularProgress';
-import ReactQuill from 'react-quill';
-import 'react-quill/dist/quill.snow.css';
-import { CONFIG } from 'src/config-global';
-import { PageContainer, PageHeader } from 'src/components/page-layout';
-import { Iconify } from 'src/components/iconify';
+
 import { paths } from 'src/routes/paths';
+
+import { CONFIG } from 'src/config-global';
+import { useMyPermissions } from 'src/services/hooks/use-permissions';
 import {
   useBrandById,
   useCreateBrand,
   useUpdateBrand,
 } from 'src/services/hooks/use-brands';
-import { useMyPermissions } from 'src/services/hooks/use-permissions';
-import type { CreateBrandRequest, UpdateBrandRequest } from 'src/services/types/brand';
 
-const INDIAN_STATES = [
-  'Andhra Pradesh', 'Arunachal Pradesh', 'Assam', 'Bihar', 'Chhattisgarh',
-  'Goa', 'Gujarat', 'Haryana', 'Himachal Pradesh', 'Jharkhand',
-  'Karnataka', 'Kerala', 'Madhya Pradesh', 'Maharashtra', 'Manipur',
-  'Meghalaya', 'Mizoram', 'Nagaland', 'Odisha', 'Punjab',
-  'Rajasthan', 'Sikkim', 'Tamil Nadu', 'Telangana', 'Tripura',
-  'Uttar Pradesh', 'Uttarakhand', 'West Bengal',
-];
-
-const MAJOR_CITIES = [
-  'Ahmedabad', 'Bengaluru', 'Bhopal', 'Chandigarh', 'Chennai',
-  'Coimbatore', 'Delhi', 'Faridabad', 'Ghaziabad', 'Gurugram',
-  'Guwahati', 'Hyderabad', 'Indore', 'Jaipur', 'Jodhpur',
-  'Kochi', 'Kolkata', 'Kozhikode', 'Lucknow', 'Ludhiana',
-  'Madurai', 'Mangaluru', 'Mumbai', 'Nagpur', 'Nashik',
-  'Navi Mumbai', 'Noida', 'Patna', 'Pune', 'Raipur',
-  'Rajkot', 'Ranchi', 'Surat', 'Thane', 'Thiruvananthapuram',
-  'Vadodara', 'Varanasi', 'Vijayawada', 'Visakhapatnam',
-];
+import { Iconify } from 'src/components/iconify';
+import { PageHeader, PageContainer } from 'src/components/page-layout';
 
 function hasBrandPermission(
   permissions: { projects: { modules: { subModules: { name: string; actions: { code: string; allowed: boolean }[] }[] }[] }[] } | undefined,
@@ -87,16 +71,6 @@ export default function BrandFormPage() {
   const { mutateAsync: updateBrand, isPending: isUpdating } = useUpdateBrand();
 
   const [brandName, setBrandName] = useState('');
-  const [billingName, setBillingName] = useState('');
-  const [address1, setAddress1] = useState('');
-  const [address2, setAddress2] = useState('');
-  const [city, setCity] = useState('');
-  const [state, setState] = useState('');
-  const [country, setCountry] = useState('India');
-  const [pinCode, setPinCode] = useState('');
-  const [panNumber, setPanNumber] = useState('');
-  const [gstin, setGstin] = useState('');
-  const [logoUrl, setLogoUrl] = useState('');
   const [salaryMultiplier, setSalaryMultiplier] = useState(1);
   const [razorpayMerchantId, setRazorpayMerchantId] = useState('');
   const [razorpaySecretKey, setRazorpaySecretKey] = useState('');
@@ -106,6 +80,13 @@ export default function BrandFormPage() {
   const [easebuzzMilestoneSalt, setEasebuzzMilestoneSalt] = useState('');
   const [easebuzzMilestoneKey, setEasebuzzMilestoneKey] = useState('');
   const [easebuzzMilestoneSubMerchantId, setEasebuzzMilestoneSubMerchantId] = useState('');
+  const [billingName, setBillingName] = useState('');
+  const [panNumber, setPanNumber] = useState('');
+  const [gstin, setGstin] = useState('');
+  const [address1, setAddress1] = useState('');
+  const [address2, setAddress2] = useState('');
+  const [pinCode, setPinCode] = useState('');
+  const [logoUrl, setLogoUrl] = useState('');
   const [reraRegularizationPercentage, setReraRegularizationPercentage] = useState(5);
   const [reraQualificationPercentage, setReraQualificationPercentage] = useState(80);
   const [maximumRegularizationDays, setMaximumRegularizationDays] = useState(30);
@@ -113,7 +94,6 @@ export default function BrandFormPage() {
   const [rtmQualificationPercentage, setRtmQualificationPercentage] = useState(90);
   const [regularizationStartDate, setRegularizationStartDate] = useState('');
   const [termsAndConditions, setTermsAndConditions] = useState('');
-  const [isActive, setIsActive] = useState(true);
   const [showSuccess, setShowSuccess] = useState(false);
   const [brandNameError, setBrandNameError] = useState('');
 
@@ -122,16 +102,6 @@ export default function BrandFormPage() {
   useEffect(() => {
     if (brandData) {
       setBrandName(brandData.brandName);
-      setBillingName(brandData.billingName ?? '');
-      setAddress1(brandData.address1 ?? '');
-      setAddress2(brandData.address2 ?? '');
-      setCity(brandData.city ?? '');
-      setState(brandData.state ?? '');
-      setCountry(brandData.country ?? 'India');
-      setPinCode(brandData.pinCode ?? '');
-      setPanNumber(brandData.panNumber ?? '');
-      setGstin(brandData.gstin ?? '');
-      setLogoUrl(brandData.logoUrl ?? '');
       setSalaryMultiplier(brandData.salaryMultiplier);
       setRazorpayMerchantId(brandData.razorpayMerchantId ?? '');
       setRazorpaySecretKey(brandData.razorpaySecretKey ?? '');
@@ -141,6 +111,13 @@ export default function BrandFormPage() {
       setEasebuzzMilestoneSalt(brandData.easebuzzMilestoneSalt ?? '');
       setEasebuzzMilestoneKey(brandData.easebuzzMilestoneKey ?? '');
       setEasebuzzMilestoneSubMerchantId(brandData.easebuzzMilestoneSubMerchantId ?? '');
+      setBillingName(brandData.billingName ?? '');
+      setPanNumber(brandData.panNumber ?? '');
+      setGstin(brandData.gstin ?? '');
+      setAddress1(brandData.address1 ?? '');
+      setAddress2(brandData.address2 ?? '');
+      setPinCode(brandData.pinCode ?? '');
+      setLogoUrl(brandData.logoUrl ?? '');
       setReraRegularizationPercentage(brandData.reraRegularizationPercentage ?? 5);
       setReraQualificationPercentage(brandData.reraQualificationPercentage ?? 80);
       setMaximumRegularizationDays(brandData.maximumRegularizationDays ?? 30);
@@ -148,7 +125,6 @@ export default function BrandFormPage() {
       setRtmQualificationPercentage(brandData.rtmQualificationPercentage ?? 90);
       setRegularizationStartDate(brandData.regularizationStartDate ?? '');
       setTermsAndConditions(brandData.termsAndConditions ?? '');
-      setIsActive(brandData.isActive);
     }
   }, [brandData]);
 
@@ -161,16 +137,6 @@ export default function BrandFormPage() {
 
   const buildPayload = useCallback((): CreateBrandRequest => ({
     brandName: brandName.trim(),
-    billingName: billingName.trim() || undefined,
-    address1: address1.trim() || undefined,
-    address2: address2.trim() || undefined,
-    city: city.trim() || undefined,
-    state: state.trim() || undefined,
-    country: country.trim() || undefined,
-    pinCode: pinCode.trim() || undefined,
-    panNumber: panNumber.trim() || undefined,
-    gstin: gstin.trim() || undefined,
-    logoUrl: logoUrl || undefined,
     salaryMultiplier,
     razorpayMerchantId: razorpayMerchantId.trim() || undefined,
     razorpaySecretKey: razorpaySecretKey.trim() || undefined,
@@ -180,6 +146,13 @@ export default function BrandFormPage() {
     easebuzzMilestoneSalt: easebuzzMilestoneSalt.trim() || undefined,
     easebuzzMilestoneKey: easebuzzMilestoneKey.trim() || undefined,
     easebuzzMilestoneSubMerchantId: easebuzzMilestoneSubMerchantId.trim() || undefined,
+    billingName: billingName.trim() || undefined,
+    panNumber: panNumber.trim() || undefined,
+    gstin: gstin.trim() || undefined,
+    address1: address1.trim() || undefined,
+    address2: address2.trim() || undefined,
+    pinCode: pinCode.trim() || undefined,
+    logoUrl: logoUrl || undefined,
     reraRegularizationPercentage: reraRegularizationPercentage || undefined,
     reraQualificationPercentage: reraQualificationPercentage || undefined,
     maximumRegularizationDays: maximumRegularizationDays || undefined,
@@ -187,12 +160,13 @@ export default function BrandFormPage() {
     rtmQualificationPercentage: rtmQualificationPercentage || undefined,
     regularizationStartDate: regularizationStartDate || undefined,
     termsAndConditions: termsAndConditions || undefined,
-    isActive,
-  }), [brandName, billingName, address1, address2, city, state, country, pinCode, panNumber, gstin, logoUrl, salaryMultiplier,
-    razorpayMerchantId, razorpaySecretKey, easebuzzBookingSalt, easebuzzBookingKey, easebuzzBookingSubMerchantId,
+    isActive: true,
+  }), [brandName, salaryMultiplier, razorpayMerchantId, razorpaySecretKey,
+    easebuzzBookingSalt, easebuzzBookingKey, easebuzzBookingSubMerchantId,
     easebuzzMilestoneSalt, easebuzzMilestoneKey, easebuzzMilestoneSubMerchantId,
+    billingName, panNumber, gstin, address1, address2, pinCode, logoUrl,
     reraRegularizationPercentage, reraQualificationPercentage, maximumRegularizationDays,
-    rtmRegularizationPercentage, rtmQualificationPercentage, regularizationStartDate, termsAndConditions, isActive]);
+    rtmRegularizationPercentage, rtmQualificationPercentage, regularizationStartDate, termsAndConditions]);
 
   const handleSave = useCallback(async () => {
     if (!brandName.trim()) {
@@ -272,94 +246,144 @@ export default function BrandFormPage() {
         {saving && <LinearProgress />}
 
         <Stack spacing={3}>
-          {/* General */}
+          {/* 1. Brand Information */}
           <Card sx={{ p: 3 }}>
-            <Typography variant="subtitle1" sx={{ mb: 2.5 }}>General Information</Typography>
+            <Typography variant="subtitle1" sx={{ mb: 2.5 }}>Brand Information</Typography>
             <Box display="grid" gridTemplateColumns={{ xs: '1fr', sm: '1fr 1fr' }} gap={2.5}>
-              <TextField label="Brand Name" value={brandName} onChange={(e) => { setBrandName(e.target.value); setBrandNameError(''); }} error={!!brandNameError} helperText={brandNameError} required />
+              <TextField
+                label="Brand Name"
+                value={brandName}
+                onChange={(e) => { setBrandName(e.target.value); setBrandNameError(''); }}
+                error={!!brandNameError}
+                helperText={brandNameError}
+                required
+              />
+              <TextField
+                label="Salary Multiplier"
+                value={salaryMultiplier}
+                onChange={(e) => setSalaryMultiplier(Number(e.target.value))}
+                type="number"
+                inputProps={{ step: 0.1, min: 0 }}
+              />
+            </Box>
+          </Card>
+
+          {/* 2. Razorpay */}
+          <Card sx={{ p: 3 }}>
+            <Typography variant="subtitle1" sx={{ mb: 2.5 }}>Razorpay</Typography>
+            <Box display="grid" gridTemplateColumns={{ xs: '1fr', sm: '1fr 1fr' }} gap={2.5}>
+              <TextField label="Merchant ID" value={razorpayMerchantId} onChange={(e) => setRazorpayMerchantId(e.target.value)} />
+              <TextField label="Secret Key" value={razorpaySecretKey} onChange={(e) => setRazorpaySecretKey(e.target.value)} type="password" />
+            </Box>
+          </Card>
+
+          {/* 3. Easebuzz */}
+          <Card sx={{ p: 3 }}>
+            <Typography variant="subtitle1" sx={{ mb: 2.5 }}>Easebuzz</Typography>
+            <Box display="grid" gridTemplateColumns={{ xs: '1fr', sm: '1fr 1fr' }} gap={2.5}>
+              <Typography variant="subtitle2" sx={{ gridColumn: { xs: '1', sm: '1 / -1' } }}>Booking</Typography>
+              <TextField label="Salt" value={easebuzzBookingSalt} onChange={(e) => setEasebuzzBookingSalt(e.target.value)} />
+              <TextField label="Key" value={easebuzzBookingKey} onChange={(e) => setEasebuzzBookingKey(e.target.value)} />
+              <TextField label="Sub Merchant ID" value={easebuzzBookingSubMerchantId} onChange={(e) => setEasebuzzBookingSubMerchantId(e.target.value)} />
+              <Typography variant="subtitle2" sx={{ gridColumn: { xs: '1', sm: '1 / -1' } }}>Milestone</Typography>
+              <TextField label="Salt" value={easebuzzMilestoneSalt} onChange={(e) => setEasebuzzMilestoneSalt(e.target.value)} />
+              <TextField label="Key" value={easebuzzMilestoneKey} onChange={(e) => setEasebuzzMilestoneKey(e.target.value)} />
+              <TextField label="Sub Merchant ID" value={easebuzzMilestoneSubMerchantId} onChange={(e) => setEasebuzzMilestoneSubMerchantId(e.target.value)} />
+            </Box>
+          </Card>
+
+          {/* 4. Business Information */}
+          <Card sx={{ p: 3 }}>
+            <Typography variant="subtitle1" sx={{ mb: 2.5 }}>Business Information</Typography>
+            <Box display="grid" gridTemplateColumns={{ xs: '1fr', sm: '1fr 1fr' }} gap={2.5}>
               <TextField label="Billing Name" value={billingName} onChange={(e) => setBillingName(e.target.value)} />
-              <TextField label="Address Line 1" value={address1} onChange={(e) => setAddress1(e.target.value)} sx={{ gridColumn: { xs: '1', sm: '1 / -1' } }} />
-              <TextField label="Address Line 2" value={address2} onChange={(e) => setAddress2(e.target.value)} sx={{ gridColumn: { xs: '1', sm: '1 / -1' } }} />
-              <TextField label="City" value={city} onChange={(e) => setCity(e.target.value)} select>
-                {MAJOR_CITIES.map((c) => <MenuItem key={c} value={c}>{c}</MenuItem>)}
-              </TextField>
-              <TextField label="State" value={state} onChange={(e) => setState(e.target.value)} select>
-                {INDIAN_STATES.map((s) => <MenuItem key={s} value={s}>{s}</MenuItem>)}
-              </TextField>
-              <TextField label="Country" value={country} onChange={(e) => setCountry(e.target.value)} select>
-                <MenuItem value="India">India</MenuItem>
-              </TextField>
-              <TextField label="PIN Code" value={pinCode} onChange={(e) => setPinCode(e.target.value)} inputProps={{ maxLength: 6 }} />
               <TextField label="PAN Number" value={panNumber} onChange={(e) => setPanNumber(e.target.value.toUpperCase())} inputProps={{ maxLength: 10 }} />
               <TextField label="GSTIN" value={gstin} onChange={(e) => setGstin(e.target.value.toUpperCase())} inputProps={{ maxLength: 15 }} />
+              <TextField label="Address Line 1" value={address1} onChange={(e) => setAddress1(e.target.value)} sx={{ gridColumn: { xs: '1', sm: '1 / -1' } }} />
+              <TextField label="Address Line 2" value={address2} onChange={(e) => setAddress2(e.target.value)} sx={{ gridColumn: { xs: '1', sm: '1 / -1' } }} />
+              <TextField label="PIN Code" value={pinCode} onChange={(e) => setPinCode(e.target.value)} inputProps={{ maxLength: 6 }} />
             </Box>
           </Card>
 
-          {/* Branding */}
+          {/* 5. Brand Logo */}
           <Card sx={{ p: 3 }}>
-            <Typography variant="subtitle1" sx={{ mb: 2.5 }}>Branding</Typography>
-            <Stack spacing={2.5}>
-              <Box display="flex" alignItems="center" gap={2}>
-                <Avatar src={logoUrl || undefined} sx={{ width: 64, height: 64, bgcolor: 'grey.300' }}>
-                  <Iconify icon="solar:gallery-bold" width={28} />
-                </Avatar>
-                <Button variant="outlined" component="span" onClick={() => fileInputRef.current?.click()}>
-                  Upload Logo
-                </Button>
-                <input ref={fileInputRef} type="file" accept="image/*" hidden onChange={handleLogoUpload} />
-                {logoUrl && (
-                  <Button size="small" color="error" onClick={() => setLogoUrl('')}>Remove</Button>
-                )}
-              </Box>
-              <TextField label="Salary Multiplier" value={salaryMultiplier} onChange={(e) => setSalaryMultiplier(Number(e.target.value))} type="number" inputProps={{ step: 0.1, min: 0.01, max: 100 }} />
-            </Stack>
-          </Card>
-
-          {/* Financial */}
-          <Card sx={{ p: 3 }}>
-            <Typography variant="subtitle1" sx={{ mb: 2.5 }}>Financial — Razorpay</Typography>
-            <Box display="grid" gridTemplateColumns={{ xs: '1fr', sm: '1fr 1fr' }} gap={2.5}>
-              <TextField label="Razorpay Merchant ID" value={razorpayMerchantId} onChange={(e) => setRazorpayMerchantId(e.target.value)} />
-              <TextField label="Razorpay Secret Key" value={razorpaySecretKey} onChange={(e) => setRazorpaySecretKey(e.target.value)} type="password" />
+            <Typography variant="subtitle1" sx={{ mb: 2.5 }}>Brand Logo</Typography>
+            <Box display="flex" alignItems="center" gap={2}>
+              <Avatar src={logoUrl || undefined} sx={{ width: 64, height: 64, bgcolor: 'grey.300' }}>
+                <Iconify icon="solar:gallery-bold" width={28} />
+              </Avatar>
+              <Button variant="outlined" component="span" onClick={() => fileInputRef.current?.click()}>
+                {logoUrl ? 'Replace' : 'Upload Logo'}
+              </Button>
+              <input ref={fileInputRef} type="file" accept="image/*" hidden onChange={handleLogoUpload} />
+              {logoUrl && (
+                <Button size="small" color="error" onClick={() => setLogoUrl('')}>Remove</Button>
+              )}
             </Box>
           </Card>
 
-          {/* Payment */}
+          {/* 6. Incentive Criteria */}
           <Card sx={{ p: 3 }}>
-            <Typography variant="subtitle1" sx={{ mb: 2.5 }}>Payment Gateway — Easebuzz</Typography>
-            <Box display="grid" gridTemplateColumns={{ xs: '1fr', sm: '1fr 1fr' }} gap={2.5}>
-              <Typography variant="subtitle2" sx={{ gridColumn: { xs: '1', sm: '1 / -1' } }}>Booking Payments</Typography>
-              <TextField label="Booking Salt" value={easebuzzBookingSalt} onChange={(e) => setEasebuzzBookingSalt(e.target.value)} />
-              <TextField label="Booking Key" value={easebuzzBookingKey} onChange={(e) => setEasebuzzBookingKey(e.target.value)} />
-              <TextField label="Booking Sub-Merchant ID" value={easebuzzBookingSubMerchantId} onChange={(e) => setEasebuzzBookingSubMerchantId(e.target.value)} />
-              <Typography variant="subtitle2" sx={{ gridColumn: { xs: '1', sm: '1 / -1' } }}>Milestone Payments</Typography>
-              <TextField label="Milestone Salt" value={easebuzzMilestoneSalt} onChange={(e) => setEasebuzzMilestoneSalt(e.target.value)} />
-              <TextField label="Milestone Key" value={easebuzzMilestoneKey} onChange={(e) => setEasebuzzMilestoneKey(e.target.value)} />
-              <TextField label="Milestone Sub-Merchant ID" value={easebuzzMilestoneSubMerchantId} onChange={(e) => setEasebuzzMilestoneSubMerchantId(e.target.value)} />
+            <Typography variant="subtitle1" sx={{ mb: 2.5 }}>Incentive Criteria</Typography>
+            <Box display="grid" gridTemplateColumns={{ xs: '1fr', sm: '1fr 1fr' }} gap={3}>
+              <Card variant="outlined" sx={{ p: 2.5 }}>
+                <Typography variant="subtitle2" sx={{ mb: 2, color: 'text.secondary' }}>RERA</Typography>
+                <Stack spacing={2.5}>
+                  <TextField
+                    label="Regularization %"
+                    value={reraRegularizationPercentage}
+                    onChange={(e) => setReraRegularizationPercentage(Number(e.target.value))}
+                    type="number"
+                    inputProps={{ min: 0, max: 100 }}
+                  />
+                  <TextField
+                    label="Qualification %"
+                    value={reraQualificationPercentage}
+                    onChange={(e) => setReraQualificationPercentage(Number(e.target.value))}
+                    type="number"
+                    inputProps={{ min: 0, max: 100 }}
+                  />
+                  <TextField
+                    label="Maximum Regularization Days"
+                    value={maximumRegularizationDays}
+                    onChange={(e) => setMaximumRegularizationDays(Number(e.target.value))}
+                    type="number"
+                    inputProps={{ min: 0 }}
+                  />
+                </Stack>
+              </Card>
+              <Card variant="outlined" sx={{ p: 2.5 }}>
+                <Typography variant="subtitle2" sx={{ mb: 2, color: 'text.secondary' }}>RTM</Typography>
+                <Stack spacing={2.5}>
+                  <TextField
+                    label="Regularization %"
+                    value={rtmRegularizationPercentage}
+                    onChange={(e) => setRtmRegularizationPercentage(Number(e.target.value))}
+                    type="number"
+                    inputProps={{ min: 0, max: 100 }}
+                  />
+                  <TextField
+                    label="Qualification %"
+                    value={rtmQualificationPercentage}
+                    onChange={(e) => setRtmQualificationPercentage(Number(e.target.value))}
+                    type="number"
+                    inputProps={{ min: 0, max: 100 }}
+                  />
+                  <TextField
+                    label="Regularization Start Date"
+                    value={regularizationStartDate}
+                    onChange={(e) => setRegularizationStartDate(e.target.value)}
+                    type="date"
+                    InputLabelProps={{ shrink: true }}
+                  />
+                </Stack>
+              </Card>
             </Box>
           </Card>
 
-          {/* Compliance */}
+          {/* 7. Terms & Conditions */}
           <Card sx={{ p: 3 }}>
-            <Typography variant="subtitle1" sx={{ mb: 2.5 }}>Compliance</Typography>
-            <Box display="grid" gridTemplateColumns={{ xs: '1fr', sm: '1fr 1fr' }} gap={2.5}>
-              <TextField label="RERA Regularization (%)" value={reraRegularizationPercentage} onChange={(e) => setReraRegularizationPercentage(Number(e.target.value))} type="number" inputProps={{ min: 0, max: 100 }} />
-              <TextField label="RERA Qualification (%)" value={reraQualificationPercentage} onChange={(e) => setReraQualificationPercentage(Number(e.target.value))} type="number" inputProps={{ min: 0, max: 100 }} />
-              <TextField label="Max Regularization Days" value={maximumRegularizationDays} onChange={(e) => setMaximumRegularizationDays(Number(e.target.value))} type="number" inputProps={{ min: 0 }} />
-              <TextField label="RTM Regularization (%)" value={rtmRegularizationPercentage} onChange={(e) => setRtmRegularizationPercentage(Number(e.target.value))} type="number" inputProps={{ min: 0, max: 100 }} />
-              <TextField label="RTM Qualification (%)" value={rtmQualificationPercentage} onChange={(e) => setRtmQualificationPercentage(Number(e.target.value))} type="number" inputProps={{ min: 0, max: 100 }} />
-              <TextField label="Regularization Start Date" value={regularizationStartDate} onChange={(e) => setRegularizationStartDate(e.target.value)} type="date" InputLabelProps={{ shrink: true }} />
-              <TextField select label="Status" value={isActive ? 'active' : 'inactive'} onChange={(e) => setIsActive(e.target.value === 'active')}>
-                <MenuItem value="active">Active</MenuItem>
-                <MenuItem value="inactive">Inactive</MenuItem>
-              </TextField>
-            </Box>
-          </Card>
-
-          {/* Legal */}
-          <Card sx={{ p: 3 }}>
-            <Typography variant="subtitle1" sx={{ mb: 2.5 }}>Legal</Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>Terms &amp; Conditions</Typography>
+            <Typography variant="subtitle1" sx={{ mb: 2.5 }}>Terms &amp; Conditions</Typography>
             <Box sx={{ '& .ql-editor': { minHeight: 180 } }}>
               <ReactQuill
                 value={termsAndConditions}

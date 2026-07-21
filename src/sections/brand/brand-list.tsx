@@ -1,30 +1,27 @@
-import { useState, useCallback, useMemo } from 'react';
+import type { GridColDef, GridPaginationModel } from '@mui/x-data-grid';
+
 import { Helmet } from 'react-helmet-async';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import type { GridColDef, GridPaginationModel } from '@mui/x-data-grid';
-import Button from '@mui/material/Button';
-import Stack from '@mui/material/Stack';
-import Dialog from '@mui/material/Dialog';
-import DialogTitle from '@mui/material/DialogTitle';
-import DialogContent from '@mui/material/DialogContent';
-import DialogActions from '@mui/material/DialogActions';
-import Card from '@mui/material/Card';
+import { useMemo, useState, useCallback } from 'react';
+
 import Box from '@mui/material/Box';
+import Card from '@mui/material/Card';
 import Alert from '@mui/material/Alert';
-import dayjs from 'dayjs';
-import { CONFIG } from 'src/config-global';
-import { DataTable, type FilterOption } from 'src/components/data-table';
-import { EmptyState } from 'src/components/empty-state';
-import { Label } from 'src/components/label';
-import { Iconify } from 'src/components/iconify';
-import { RowActionsMenu } from 'src/components/row-actions';
-import { PageContainer, PageHeader } from 'src/components/page-layout';
+import Button from '@mui/material/Button';
+
 import { paths } from 'src/routes/paths';
+
+import { CONFIG } from 'src/config-global';
 import { queryKeys } from 'src/services/api/query-keys';
 import { brandService } from 'src/services/services/brand.service';
-import { useDeleteBrand } from 'src/services/hooks/use-brands';
 import { useMyPermissions } from 'src/services/hooks/use-permissions';
+
+import { Iconify } from 'src/components/iconify';
+import { DataTable } from 'src/components/data-table';
+import { EmptyState } from 'src/components/empty-state';
+import { RowActionsMenu } from 'src/components/row-actions';
+import { PageHeader, PageContainer } from 'src/components/page-layout';
 
 const PAGE_SIZE = 20;
 
@@ -44,16 +41,13 @@ function hasBrandPermission(
 
 export default function BrandListPage() {
   const navigate = useNavigate();
-  const [deleteId, setDeleteId] = useState<number | null>(null);
   const [paginationModel, setPaginationModel] = useState<GridPaginationModel>({ page: 0, pageSize: PAGE_SIZE });
   const [search, setSearch] = useState('');
-  const [statusFilter, setStatusFilter] = useState(''); // eslint-disable-line @typescript-eslint/no-unused-vars
 
   const { data: permissions } = useMyPermissions();
 
   const canCreate = useMemo(() => hasBrandPermission(permissions, 'CREATE'), [permissions]);
   const canEdit = useMemo(() => hasBrandPermission(permissions, 'EDIT'), [permissions]);
-  const canDelete = useMemo(() => hasBrandPermission(permissions, 'DELETE'), [permissions]);
 
   const queryParams = useMemo(() => {
     const params: Record<string, unknown> = {
@@ -63,9 +57,8 @@ export default function BrandListPage() {
       sortOrder: 'DESC',
     };
     if (search) params.search = search;
-    if (statusFilter) params.isActive = statusFilter === 'active';
     return params;
-  }, [search, statusFilter, paginationModel]);
+  }, [search, paginationModel]);
 
   const { data: response, isLoading, isError, error } = useQuery({
     queryKey: [...queryKeys.brands.list(queryParams as Record<string, unknown>)],
@@ -78,70 +71,66 @@ export default function BrandListPage() {
   const brands = response?.data ?? [];
   const meta = response?.meta;
 
-  const { mutateAsync: deleteBrand, isPending: isDeleting } = useDeleteBrand();
-
-  const handleDelete = useCallback(async () => {
-    if (deleteId === null) return;
-    try {
-      await deleteBrand(deleteId);
-      setDeleteId(null);
-    } catch {
-      // handled by query cache invalidation
-    }
-  }, [deleteId, deleteBrand]);
-
   const handleSearchChange = useCallback((value: string) => {
     setSearch(value);
     setPaginationModel((prev) => ({ ...prev, page: 0 }));
   }, []);
 
-  const handleFiltersChange = useCallback((filters: Record<string, string>) => {
-    setStatusFilter(filters.isActive ?? '');
-    setPaginationModel((prev) => ({ ...prev, page: 0 }));
-  }, []);
-
-  const filterOptions: FilterOption[] = [
-    {
-      key: 'isActive',
-      label: 'Status',
-      options: [
-        { value: 'active', label: 'Active' },
-        { value: 'inactive', label: 'Inactive' },
-      ],
-    },
-  ];
-
   const columns: GridColDef[] = [
-    { field: 'id', headerName: 'ID', width: 60 },
     { field: 'brandName', headerName: 'Brand Name', flex: 1, minWidth: 160 },
-    { field: 'billingName', headerName: 'Billing Name', width: 200 },
-    { field: 'city', headerName: 'City', width: 130 },
-    { field: 'state', headerName: 'State', width: 130 },
     {
-      field: 'salaryMultiplier', headerName: 'Salary Mult.', width: 110,
+      field: 'salaryMultiplier',
+      headerName: 'Salary Multiplier',
+      width: 140,
+      align: 'center',
+      headerAlign: 'center',
       valueFormatter: (value: number) => `${value}x`,
     },
     {
-      field: 'isActive', headerName: 'Status', width: 100,
-      renderCell: (params) => (
-        <Label color={params.value ? 'success' : 'default'}>
-          {params.value ? 'Active' : 'Inactive'}
-        </Label>
-      ),
+      field: 'reraRegularizationPercentage',
+      headerName: 'RERA Regularization %',
+      width: 180,
+      align: 'center',
+      headerAlign: 'center',
+      valueFormatter: (value: number | null) => (value != null ? `${value}%` : '—'),
     },
     {
-      field: 'createdAt', headerName: 'Created Date', width: 130,
-      valueFormatter: (value) => value ? dayjs(value).format('DD MMM YYYY') : '-',
+      field: 'reraQualificationPercentage',
+      headerName: 'RERA Qualification %',
+      width: 180,
+      align: 'center',
+      headerAlign: 'center',
+      valueFormatter: (value: number | null) => (value != null ? `${value}%` : '—'),
     },
-    ...(canEdit || canDelete ? [{
-      field: 'actions' as const, headerName: '', width: 60, sortable: false, disableColumnMenu: true,
+    {
+      field: 'rtmRegularizationPercentage',
+      headerName: 'RTM Regularization %',
+      width: 180,
+      align: 'center',
+      headerAlign: 'center',
+      valueFormatter: (value: number | null) => (value != null ? `${value}%` : '—'),
+    },
+    {
+      field: 'rtmQualificationPercentage',
+      headerName: 'RTM Qualification %',
+      width: 180,
+      align: 'center',
+      headerAlign: 'center',
+      valueFormatter: (value: number | null) => (value != null ? `${value}%` : '—'),
+    },
+    ...(canEdit ? [{
+      field: 'actions' as const,
+      headerName: '',
+      width: 60,
+      sortable: false,
+      disableColumnMenu: true,
+      align: 'center' as const,
       renderCell: (params: any) => (
-        <Stack alignItems="center" sx={{ height: 1, justifyContent: 'center' }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 1 }}>
           <RowActionsMenu actions={[
-            ...(canEdit ? [{ label: 'Edit', icon: 'solar:pen-bold' as const, onClick: () => navigate(paths.dashboard.brandMasterEdit(params.row.id)) }] : []),
-            ...(canDelete ? [{ label: 'Delete', icon: 'solar:trash-bin-trash-bold' as const, onClick: () => setDeleteId(params.row.id), color: 'error.main' as const }] : []),
+            { label: 'Edit', icon: 'solar:pen-bold' as const, onClick: () => navigate(paths.dashboard.brandMasterEdit(params.row.id)) },
           ]} />
-        </Stack>
+        </Box>
       ),
     }] : []),
   ];
@@ -181,23 +170,10 @@ export default function BrandListPage() {
               onSearchChange={handleSearchChange}
               searchValue={search}
               searchPlaceholder="Search brands by name..."
-              filterOptions={filterOptions}
-              onFiltersChange={handleFiltersChange}
             />
           )}
         </Card>
       </PageContainer>
-
-      <Dialog open={deleteId !== null} onClose={() => setDeleteId(null)} maxWidth="xs">
-        <DialogTitle>Confirm Delete</DialogTitle>
-        <DialogContent>Are you sure you want to delete this brand?</DialogContent>
-        <DialogActions>
-          <Button onClick={() => setDeleteId(null)} color="inherit">Cancel</Button>
-          <Button onClick={handleDelete} color="error" variant="contained" disabled={isDeleting}>
-            {isDeleting ? 'Deleting...' : 'Delete'}
-          </Button>
-        </DialogActions>
-      </Dialog>
     </>
   );
 }
