@@ -18,11 +18,13 @@ import { CONFIG } from 'src/config-global';
 import { queryKeys } from 'src/services/api/query-keys';
 import { brandService } from 'src/services/services/brand.service';
 import { useMyPermissions } from 'src/services/hooks/use-permissions';
+import { useDeleteBrand } from 'src/services/hooks/use-brands';
 
 import { DataTable } from 'src/components/data-table';
 import { EmptyState } from 'src/components/empty-state';
 import { Iconify } from 'src/components/iconify';
 import { PageHeader, PageContainer } from 'src/components/page-layout';
+import { ConfirmDialog } from 'src/components/confirm-dialog';
 
 const PAGE_SIZE = 20;
 
@@ -95,11 +97,24 @@ export default function BrandListPage() {
   const navigate = useNavigate();
   const [paginationModel, setPaginationModel] = useState<GridPaginationModel>({ page: 0, pageSize: PAGE_SIZE });
   const [search, setSearch] = useState('');
+  const [deleteId, setDeleteId] = useState<number | null>(null);
 
   const { data: permissions } = useMyPermissions();
 
   const canCreate = useMemo(() => hasBrandPermission(permissions, 'CREATE'), [permissions]);
   const canEdit = useMemo(() => hasBrandPermission(permissions, 'EDIT'), [permissions]);
+
+  const { mutateAsync: deleteBrand, isPending: isDeleting } = useDeleteBrand();
+
+  const handleDelete = useCallback(async () => {
+    if (deleteId === null) return;
+    try {
+      await deleteBrand(deleteId);
+      setDeleteId(null);
+    } catch {
+      // handled by query cache invalidation
+    }
+  }, [deleteId, deleteBrand]);
 
   const queryParams = useMemo(() => {
     const params: Record<string, unknown> = {
@@ -191,15 +206,18 @@ export default function BrandListPage() {
     ...(canEdit ? [{
       field: 'actions' as const,
       headerName: '',
-      width: 64,
+      width: 96,
       sortable: false,
       disableColumnMenu: true,
       align: 'center' as const,
       renderHeader: renderBrandHeader,
       renderCell: (params: any) => (
-        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 1 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 1, gap: 0.5 }}>
           <IconButton onClick={() => navigate(paths.dashboard.brandMasterEdit(params.row.id))}>
             <Iconify icon="solar:pen-bold" width={18} />
+          </IconButton>
+          <IconButton onClick={() => setDeleteId(params.row.id)}>
+            <Iconify icon="solar:trash-bin-trash-bold" width={18} />
           </IconButton>
         </Box>
       ),
@@ -274,6 +292,16 @@ export default function BrandListPage() {
           )}
         </Card>
       </PageContainer>
+
+      <ConfirmDialog
+        open={deleteId !== null}
+        title="Delete Brand"
+        message="Are you sure you want to delete this brand? This action cannot be undone."
+        confirmLabel={isDeleting ? 'Deleting...' : 'Delete'}
+        loading={isDeleting}
+        onConfirm={handleDelete}
+        onCancel={() => setDeleteId(null)}
+      />
     </>
   );
 }
