@@ -26,6 +26,15 @@ import { PageHeader, PageContainer } from 'src/components/page-layout';
 
 const PAGE_SIZE = 20;
 
+const groupMap: Record<string, string> = {
+  reraRegularizationPercentage: 'RERA',
+  reraQualificationPercentage: 'RERA',
+  rtmRegularizationPercentage: 'RTM',
+  rtmQualificationPercentage: 'RTM',
+};
+
+const groupDividerFields = ['salaryMultiplier', 'reraQualificationPercentage', 'rtmQualificationPercentage'];
+
 function hasBrandPermission(
   permissions: { projects: { modules: { subModules: { name: string; actions: { code: string; allowed: boolean }[] }[] }[] }[] } | undefined,
   action: string
@@ -37,6 +46,46 @@ function hasBrandPermission(
         sub.name === 'BRANDS' && sub.actions.some((a) => a.code === action && a.allowed)
       )
     )
+  );
+}
+
+function renderBrandHeader(params: GridColumnHeaderParams) {
+  const group = groupMap[params.field];
+  return (
+    <Box
+      sx={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        width: 1,
+        height: 1,
+        gap: 1,
+      }}
+    >
+      <Typography
+        sx={{
+          fontWeight: 700,
+          fontSize: '0.75rem',
+          lineHeight: 1.1,
+          color: 'text.secondary',
+          letterSpacing: '0.06em',
+          textTransform: 'uppercase',
+        }}
+      >
+        {group ?? ''}
+      </Typography>
+      <Typography
+        sx={{
+          fontWeight: 600,
+          fontSize: '0.8125rem',
+          lineHeight: 1.2,
+          color: 'text.secondary',
+        }}
+      >
+        {params.colDef.headerName}
+      </Typography>
+    </Box>
   );
 }
 
@@ -77,41 +126,20 @@ export default function BrandListPage() {
     setPaginationModel((prev) => ({ ...prev, page: 0 }));
   }, []);
 
-  const groupMap: Record<string, string> = {
-    reraRegularizationPercentage: 'RERA',
-    reraQualificationPercentage: 'RERA',
-    rtmRegularizationPercentage: 'RTM',
-    rtmQualificationPercentage: 'RTM',
-  };
-
-  function renderBrandHeader(params: GridColumnHeaderParams) {
-    const group = groupMap[params.field];
-    return (
-      <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', width: 1 }}>
-        {group ? (
-          <>
-            <Typography sx={{ fontWeight: 700, fontSize: '0.65rem', lineHeight: 1.1, color: 'text.secondary', letterSpacing: '0.04em', mb: 0.25 }}>
-              {group}
-            </Typography>
-            <Typography sx={{ fontWeight: 600, fontSize: '0.75rem', lineHeight: 1.2, color: 'text.secondary' }}>
-              {params.colDef.headerName}
-            </Typography>
-          </>
-        ) : (
-          <Typography sx={{ fontWeight: 600, fontSize: '0.75rem', lineHeight: 1.2, color: 'text.secondary' }}>
-            {params.colDef.headerName}
-          </Typography>
-        )}
-      </Box>
-    );
-  }
+  const dividerSx = groupDividerFields.reduce((acc, field) => {
+    acc[`& .MuiDataGrid-columnHeader[data-field="${field}"], & .MuiDataGrid-cell[data-field="${field}"]`] = {
+      borderRight: '2px solid',
+      borderColor: 'divider',
+    };
+    return acc;
+  }, {} as Record<string, any>);
 
   const columns: GridColDef[] = [
-    { field: 'brandName', headerName: 'Brand Name', width: 280, renderHeader: renderBrandHeader },
+    { field: 'brandName', headerName: 'Brand Name', width: 300, renderHeader: renderBrandHeader },
     {
       field: 'salaryMultiplier',
       headerName: 'Salary Multiplier',
-      width: 120,
+      width: 180,
       renderHeader: renderBrandHeader,
       align: 'center',
       headerAlign: 'center',
@@ -120,7 +148,7 @@ export default function BrandListPage() {
     {
       field: 'reraRegularizationPercentage',
       headerName: 'Regularisation %',
-      width: 120,
+      width: 125,
       align: 'center',
       headerAlign: 'center',
       renderHeader: renderBrandHeader,
@@ -129,7 +157,7 @@ export default function BrandListPage() {
     {
       field: 'reraQualificationPercentage',
       headerName: 'Qualification',
-      width: 120,
+      width: 125,
       align: 'center',
       headerAlign: 'center',
       renderHeader: renderBrandHeader,
@@ -138,7 +166,7 @@ export default function BrandListPage() {
     {
       field: 'rtmRegularizationPercentage',
       headerName: 'Regularisation %',
-      width: 120,
+      width: 125,
       align: 'center',
       headerAlign: 'center',
       renderHeader: renderBrandHeader,
@@ -147,7 +175,7 @@ export default function BrandListPage() {
     {
       field: 'rtmQualificationPercentage',
       headerName: 'Qualification',
-      width: 120,
+      width: 125,
       align: 'center',
       headerAlign: 'center',
       renderHeader: renderBrandHeader,
@@ -156,10 +184,11 @@ export default function BrandListPage() {
     ...(canEdit ? [{
       field: 'actions' as const,
       headerName: '',
-      width: 60,
+      width: 64,
       sortable: false,
       disableColumnMenu: true,
       align: 'center' as const,
+      renderHeader: renderBrandHeader,
       renderCell: (params: any) => (
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 1 }}>
           <IconButton onClick={() => navigate(paths.dashboard.brandMasterEdit(params.row.id))}>
@@ -206,7 +235,34 @@ export default function BrandListPage() {
               searchValue={search}
               searchPlaceholder="Search by brand name"
               hideColumnsButton
-              columnHeaderHeight={56}
+              columnHeaderHeight={76}
+              dataGridSx={{
+                '& .MuiDataGrid-columnHeaders': {
+                  borderBottom: '2px solid',
+                  borderColor: 'divider',
+                  bgcolor: 'grey.100',
+                },
+                '& .MuiDataGrid-columnHeader': {
+                  px: 3,
+                  py: 2.5,
+                },
+                '& .MuiDataGrid-cell': {
+                  px: 3,
+                  py: '24px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  fontSize: '0.875rem',
+                  '&:focus': { outline: 'none' },
+                  '&:focus-within': { outline: 'none' },
+                },
+                '& .MuiDataGrid-row': {
+                  minHeight: '72px !important',
+                  cursor: 'default' as any,
+                  '&:hover': { bgcolor: 'action.hover' },
+                  '&.Mui-selected': { bgcolor: 'primary.lighter' },
+                },
+                ...dividerSx,
+              }}
             />
           )}
         </Card>

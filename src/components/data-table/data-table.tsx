@@ -167,7 +167,7 @@ export function DataTable({
             onChange={handleSearchChange}
             sx={{ flex: 1 }}
             InputProps={{
-              sx: { height: 40 },
+              sx: { height: 44 },
               startAdornment: <Iconify icon="solar:magnifer-bold" width={18} style={{ marginRight: 8, opacity: 0.5 }} />,
             }}
           />
@@ -288,7 +288,6 @@ export function DataTable({
           disableColumnMenu
           autoHeight
           sx={{
-            ...(dataGridSx || {}),
             borderRadius: 0,
             '& .MuiDataGrid-columnHeaders': {
               borderBottom: '1px solid',
@@ -325,6 +324,7 @@ export function DataTable({
             '& .MuiDataGrid-cell--textCenter': { justifyContent: 'center' },
             '& .MuiDataGrid-cell--textRight': { justifyContent: 'flex-end' },
             '& .MuiDataGrid-withBorder': { borderColor: 'divider' },
+            ...(dataGridSx || {}),
           } as any}
         />
       </Box>
