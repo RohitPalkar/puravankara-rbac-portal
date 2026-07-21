@@ -9,7 +9,6 @@ import Box from '@mui/material/Box';
 import Card from '@mui/material/Card';
 import Alert from '@mui/material/Alert';
 import Button from '@mui/material/Button';
-import IconButton from '@mui/material/IconButton';
 import Typography from '@mui/material/Typography';
 
 import { paths } from 'src/routes/paths';
@@ -25,6 +24,7 @@ import { EmptyState } from 'src/components/empty-state';
 import { Iconify } from 'src/components/iconify';
 import { PageHeader, PageContainer } from 'src/components/page-layout';
 import { ConfirmDialog } from 'src/components/confirm-dialog';
+import { RowActionsMenu } from 'src/components/row-actions';
 
 const PAGE_SIZE = 20;
 
@@ -205,25 +205,15 @@ export default function BrandListPage() {
       valueFormatter: (value: number | null) => (value != null ? `${value}%` : '—'),
     },
     ...(canEdit || canDelete ? [{
-      field: 'actions' as const,
-      headerName: '',
-      width: 96,
-      sortable: false,
-      disableColumnMenu: true,
+      field: 'actions' as const, headerName: '', width: 64, sortable: false, disableColumnMenu: true,
       align: 'center' as const,
       renderHeader: renderBrandHeader,
       renderCell: (params: any) => (
-        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 1, gap: 0.5 }}>
-          {canEdit && (
-            <IconButton onClick={() => navigate(paths.dashboard.brandMasterEdit(params.row.id))}>
-              <Iconify icon="solar:pen-bold" width={18} />
-            </IconButton>
-          )}
-          {canDelete && (
-            <IconButton onClick={() => setDeleteId(params.row.id)}>
-              <Iconify icon="solar:trash-bin-trash-bold" width={18} />
-            </IconButton>
-          )}
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 1 }}>
+          <RowActionsMenu actions={[
+            ...(canEdit ? [{ label: 'Edit', icon: 'solar:pen-bold' as const, onClick: () => navigate(paths.dashboard.brandMasterEdit(params.row.id)) }] : []),
+            ...(canDelete ? [{ label: 'Delete', icon: 'solar:trash-bin-trash-bold' as const, onClick: () => setDeleteId(params.row.id), color: 'error.main' as const }] : []),
+          ]} />
         </Box>
       ),
     }] : []),
