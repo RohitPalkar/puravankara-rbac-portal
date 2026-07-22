@@ -14,7 +14,6 @@ import Button from '@mui/material/Button';
 import MenuItem from '@mui/material/MenuItem';
 import Snackbar from '@mui/material/Snackbar';
 import TextField from '@mui/material/TextField';
-import Typography from '@mui/material/Typography';
 import LinearProgress from '@mui/material/LinearProgress';
 import CircularProgress from '@mui/material/CircularProgress';
 
@@ -24,35 +23,17 @@ import { CONFIG } from 'src/config-global';
 import { queryKeys } from 'src/services/api/query-keys';
 import { brandService } from 'src/services/services/brand.service';
 import { cityService } from 'src/services/services/geography.service';
-import { useMyPermissions } from 'src/services/hooks/use-permissions';
 import { projectService } from 'src/services/services/project.service';
 import { usePhaseById, useCreatePhase, useUpdatePhase } from 'src/services/hooks/use-phases';
 
 import { Iconify } from 'src/components/iconify';
 import { PageHeader, PageContainer } from 'src/components/page-layout';
 
-function hasPhasePermission(
-  permissions: { projects: { modules: { subModules: { name: string; actions: { code: string; allowed: boolean }[] }[] }[] }[] } | undefined,
-  action: string
-): boolean {
-  if (!permissions) return false;
-  return permissions.projects.some((project) =>
-    project.modules.some((mod) =>
-      mod.subModules.some((sub) =>
-        sub.name === 'PHASES' && sub.actions.some((a) => a.code === action && a.allowed)
-      )
-    )
-  );
-}
-
 export default function PhaseFormPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const isEdit = Boolean(id);
   const phaseId = id ? Number(id) : undefined;
-
-  const { data: permissions } = useMyPermissions();
-  const canCreate = useMemo(() => hasPhasePermission(permissions, 'CREATE'), [permissions]);
 
   const { data: phaseData, isLoading: isFetching, isError: isFetchError } = usePhaseById(phaseId ?? 0);
   const { mutateAsync: createPhase, isPending: isCreating } = useCreatePhase();
@@ -190,21 +171,9 @@ export default function PhaseFormPage() {
     return (
       <PageContainer>
         <PageHeader title="Phase Not Found" description="The requested phase does not exist" />
-        <Card sx={{ p: 4, textAlign: 'center' }}>
-          <Typography variant="body1" color="text.secondary">Phase with ID &quot;{id}&quot; not found.</Typography>
-          <Button onClick={() => navigate(paths.dashboard.phaseMaster)} sx={{ mt: 2 }}>Back to Phases</Button>
-        </Card>
-      </PageContainer>
-    );
-  }
-
-  if (!isEdit && !canCreate) {
-    return (
-      <PageContainer>
-        <PageHeader title="Access Denied" />
-        <Card sx={{ p: 4, textAlign: 'center' }}>
-          <Typography variant="body1" color="error">You do not have permission to create phases.</Typography>
-          <Button onClick={() => navigate(paths.dashboard.phaseMaster)} sx={{ mt: 2 }}>Back to Phases</Button>
+        <Card sx={{ p: 4, textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
+          <Box component="span" sx={{ color: 'text.secondary' }}>Phase with ID &quot;{id}&quot; not found.</Box>
+          <Button onClick={() => navigate(paths.dashboard.phaseMaster)} variant="outlined">Back to Phases</Button>
         </Card>
       </PageContainer>
     );
