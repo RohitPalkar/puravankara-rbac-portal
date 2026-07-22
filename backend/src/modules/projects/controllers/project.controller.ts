@@ -4,6 +4,7 @@ import {
   Post,
   Body,
   Patch,
+  Delete,
   Param,
   ParseIntPipe,
   Query,
@@ -12,12 +13,11 @@ import {
   ApiBearerAuth,
   ApiTags,
   ApiOperation,
-  ApiQuery,
 } from '@nestjs/swagger';
 import { ProjectService } from '../services/project.service';
 import { CreateProjectDto, UpdateProjectDto } from '../dto/project.dto';
+import { QueryProjectDto } from '../dto/query-project.dto';
 import { Project } from '../entities/project.entity';
-import { PaginatedResult } from '../../../common/crud/crud.interface';
 
 @ApiTags('Projects')
 @ApiBearerAuth()
@@ -27,16 +27,11 @@ export class ProjectController {
 
   @Get()
   @ApiOperation({ summary: 'Get all projects (paginated)' })
-  @ApiQuery({ name: 'page', required: false })
-  @ApiQuery({ name: 'limit', required: false })
   async findAll(
-    @Query('page') page?: string,
-    @Query('limit') limit?: string,
-  ): Promise<PaginatedResult<Project>> {
-    return this.projectService.findAll({
-      page: page ? parseInt(page, 10) : 1,
-      limit: limit ? parseInt(limit, 10) : 100,
-    });
+    @Query() query: QueryProjectDto,
+  ): Promise<{ items: Project[]; total: number }> {
+    const result = await this.projectService.findAll(query);
+    return { items: result.data, total: result.meta.total };
   }
 
   @Get(':id')
@@ -60,5 +55,11 @@ export class ProjectController {
     @Body() dto: UpdateProjectDto,
   ): Promise<Project> {
     return this.projectService.update(id, dto);
+  }
+
+  @Delete(':id')
+  @ApiOperation({ summary: 'Soft delete project' })
+  async remove(@Param('id', ParseIntPipe) id: number): Promise<void> {
+    await this.projectService.remove(id);
   }
 }

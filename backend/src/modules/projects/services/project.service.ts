@@ -24,6 +24,62 @@ export class ProjectService extends BaseService<Project> {
     super(repository);
   }
 
+  async findAll(
+    query: PaginationQuery = { page: 1, limit: 100 },
+  ): Promise<PaginatedResult<Project>> {
+    const { page = 1, limit = 100, search, sortBy = 'createdAt', sortOrder = 'DESC', ...filters } = query;
+    const qb = this.repository.createQueryBuilder('project')
+      .leftJoinAndSelect('project.brand', 'brand')
+      .leftJoinAndSelect('project.city', 'city')
+      .where('project.deleted_at IS NULL');
+
+    if (search) {
+      qb.andWhere(
+        '(project.name ILIKE :search OR project.sfdc_project_name ILIKE :search OR project.codename ILIKE :search)',
+        { search: `%${search}%` },
+      );
+    }
+
+    if (filters.isActive !== undefined) {
+      qb.andWhere('project.is_active = :isActive', { isActive: filters.isActive });
+    }
+
+    const sortMap: Record<string, string> = {
+      name: 'project.name',
+      createdAt: 'project.created_at',
+      updatedAt: 'project.updated_at',
+    };
+    const orderCol = sortMap[sortBy] || 'project.created_at';
+    qb.orderBy(orderCol, sortOrder);
+
+    qb.skip((page - 1) * limit).take(limit);
+
+    const [data, total] = await qb.getManyAndCount();
+
+    return {
+      data,
+      meta: { page, limit, total, totalPages: Math.ceil(total / limit) },
+    };
+  }
+
+  async findById(id: number | string): Promise<Project> {
+    const entity = await this.repository.findOne({
+      where: { id } as any,
+      relations: {
+        paymentGateways: true,
+        incentiveRules: true,
+        brand: true,
+        city: true,
+      },
+    });
+
+    if (!entity || entity.deletedAt) {
+      throw new NotFoundException('Project not found');
+    }
+
+    return entity;
+  }
+
   async create(dto: any): Promise<Project> {
     const { paymentGateways, incentiveRules, ...projectData } =
       dto as CreateProjectDto;
@@ -94,40 +150,9 @@ export class ProjectService extends BaseService<Project> {
     });
   }
 
-  async findAll(
-    query: PaginationQuery = { page: 1, limit: 100 },
-    searchableFields: string[] = [],
-    defaultSort: string = 'createdAt',
-  ): Promise<PaginatedResult<Project>> {
-    const { page = 1, limit = 100 } = query;
-    const [data, total] = await this.repository.findAndCount({
-      relations: { brand: true, city: true },
-      order: { [defaultSort]: 'DESC' },
-      skip: (page - 1) * limit,
-      take: limit,
-    });
-
-    return {
-      data,
-      meta: { page, limit, total, totalPages: Math.ceil(total / limit) },
-    };
-  }
-
-  async findById(id: number | string): Promise<Project> {
-    const entity = await this.repository.findOne({
-      where: { id } as any,
-      relations: {
-        paymentGateways: true,
-        incentiveRules: true,
-        brand: true,
-        city: true,
-      },
-    });
-
-    if (!entity || (entity as any).deletedAt) {
-      throw new NotFoundException('Project not found');
-    }
-
-    return entity;
+  async remove(id: number): Promise<void> {
+    const project = await this.findById(id);
+    project.deletedAt = new Date() as any;
+    await this.repository.save(project);
   }
 }

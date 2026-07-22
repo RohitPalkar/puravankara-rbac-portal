@@ -84,11 +84,11 @@ export class IncentiveRuleDto {
 }
 
 export class CreateProjectDto {
-  @ApiProperty()
+  @ApiPropertyOptional()
+  @IsOptional()
   @IsInt()
-  @IsNotEmpty()
   @Type(() => Number)
-  brandId: number;
+  brandId?: number;
 
   @ApiProperty()
   @IsInt()
@@ -104,7 +104,7 @@ export class CreateProjectDto {
   @ApiPropertyOptional()
   @IsOptional()
   @IsString()
-  billingName?: string;
+  billingEntityName?: string;
 
   @ApiPropertyOptional()
   @IsOptional()
@@ -115,7 +115,7 @@ export class CreateProjectDto {
   @ApiPropertyOptional()
   @IsOptional()
   @IsString()
-  gstin?: string;
+  billingGstin?: string;
 
   @ApiPropertyOptional()
   @IsOptional()
@@ -136,12 +136,12 @@ export class CreateProjectDto {
   @ApiPropertyOptional()
   @IsOptional()
   @IsString()
-  projectImage?: string;
+  projectImagePath?: string;
 
   @ApiPropertyOptional()
   @IsOptional()
   @IsString()
-  jvLogo?: string;
+  jvImagePath?: string;
 
   @ApiPropertyOptional()
   @IsOptional()
@@ -162,6 +162,10 @@ export class CreateProjectDto {
   @IsOptional()
   @IsBoolean()
   isActive?: boolean;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  extendedMetadata?: Record<string, any>;
 
   @ApiPropertyOptional({ type: [PaymentGatewayDto] })
   @IsOptional()
@@ -200,7 +204,7 @@ export class UpdateProjectDto {
   @ApiPropertyOptional()
   @IsOptional()
   @IsString()
-  billingName?: string;
+  billingEntityName?: string;
 
   @ApiPropertyOptional()
   @IsOptional()
@@ -211,7 +215,7 @@ export class UpdateProjectDto {
   @ApiPropertyOptional()
   @IsOptional()
   @IsString()
-  gstin?: string;
+  billingGstin?: string;
 
   @ApiPropertyOptional()
   @IsOptional()
@@ -232,12 +236,12 @@ export class UpdateProjectDto {
   @ApiPropertyOptional()
   @IsOptional()
   @IsString()
-  projectImage?: string;
+  projectImagePath?: string;
 
   @ApiPropertyOptional()
   @IsOptional()
   @IsString()
-  jvLogo?: string;
+  jvImagePath?: string;
 
   @ApiPropertyOptional()
   @IsOptional()
@@ -258,6 +262,10 @@ export class UpdateProjectDto {
   @IsOptional()
   @IsBoolean()
   isActive?: boolean;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  extendedMetadata?: Record<string, any>;
 
   @ApiPropertyOptional({ type: [PaymentGatewayDto] })
   @IsOptional()

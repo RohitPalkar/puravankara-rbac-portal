@@ -25,10 +25,10 @@ export class Project extends AppBaseEntity {
   name: string;
 
   @Column({ name: 'billing_entity_name', nullable: true })
-  billingName: string;
+  billingEntityName: string;
 
   @Column({ name: 'billing_gstin', nullable: true })
-  gstin: string;
+  billingGstin: string;
 
   @Column({ name: 'pan_number', nullable: true })
   panNumber: string;
@@ -43,10 +43,10 @@ export class Project extends AppBaseEntity {
   pinCode: string;
 
   @Column({ name: 'project_image', nullable: true })
-  projectImage: string;
+  projectImagePath: string;
 
   @Column({ name: 'jv_logo', nullable: true })
-  jvLogo: string;
+  jvImagePath: string;
 
   @Column({ name: 'sfdc_project_name', nullable: true })
   sfdcProjectName: string;
