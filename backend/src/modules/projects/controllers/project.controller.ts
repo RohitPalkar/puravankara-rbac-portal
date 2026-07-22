@@ -29,9 +29,8 @@ export class ProjectController {
   @ApiOperation({ summary: 'Get all projects (paginated)' })
   async findAll(
     @Query() query: QueryProjectDto,
-  ): Promise<{ items: Project[]; total: number }> {
-    const result = await this.projectService.findAll(query);
-    return { items: result.data, total: result.meta.total };
+  ) {
+    return this.projectService.findAll(query);
   }
 
   @Get(':id')

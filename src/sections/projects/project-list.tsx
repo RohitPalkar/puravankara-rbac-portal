@@ -33,7 +33,7 @@ const groupMap: Record<string, string> = {
   rtmQualificationPercentage: 'RTM',
 };
 
-const groupDividerFields = ['salaryMultiplier', 'reraQualificationPercentage', 'rtmQualificationPercentage'];
+const groupDividerFields = ['reraQualificationPercentage', 'rtmQualificationPercentage'];
 
 function renderBrandHeader(params: GridColumnHeaderParams) {
   const group = groupMap[params.field];
@@ -171,16 +171,6 @@ export default function ProjectListPage() {
       renderHeader: renderBrandHeader,
       valueGetter: (_value: any, row: Project) => getIncentiveValue(row.incentiveRules, 'RTM', 'payablePercentage'),
       valueFormatter: (value: number | null) => (value != null ? `${value}%` : '—'),
-    },
-    {
-      field: 'salaryMultiplier',
-      headerName: 'Salary Multiplier',
-      flex: 2,
-      minWidth: 140,
-      renderHeader: renderBrandHeader,
-      align: 'center',
-      headerAlign: 'center',
-      valueFormatter: (value: number) => `${value}x`,
     },
     {
       field: 'actions', headerName: '', width: 64, sortable: false, disableColumnMenu: true,
