@@ -38,7 +38,6 @@ export default function ChannelPartnerListPage() {
   }, [deleteId]);
 
   const columns: GridColDef[] = [
-    { field: 'id', headerName: 'ID', width: 60 },
     { field: 'cpId', headerName: 'CP ID', width: 120 },
     { field: 'cpName', headerName: 'CP Name', flex: 1, minWidth: 180 },
     { field: 'cpTypeName', headerName: 'CP Type', width: 140 },

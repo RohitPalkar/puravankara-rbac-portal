@@ -99,11 +99,11 @@ export default function ChannelPartnerFormPage() {
 
         <Card sx={{ p: 3 }}>
           <FormSection title="Basic Details" description="Channel partner identity and enrollment period">
+            <TextField label="CP Name" value={cpName} onChange={(e) => { setCpName(e.target.value); setCpNameError(''); }} error={!!cpNameError} helperText={cpNameError} required fullWidth />
+            <TextField label="CP ID" value={cpId} onChange={(e) => setCpId(e.target.value)} required fullWidth />
             <TextField label="CP Type" value={cpTypeId} onChange={(e) => setCpTypeId(e.target.value)} select required fullWidth>
               {mockChannelPartnerTypes.map((t) => <MenuItem key={t.id} value={t.id}>{t.name}</MenuItem>)}
             </TextField>
-            <TextField label="CP ID" value={cpId} onChange={(e) => setCpId(e.target.value)} required fullWidth />
-            <TextField label="CP Name" value={cpName} onChange={(e) => { setCpName(e.target.value); setCpNameError(''); }} error={!!cpNameError} helperText={cpNameError} required fullWidth />
             <TextField label="Start Date" value={startDate} onChange={(e) => setStartDate(e.target.value)} type="date" InputLabelProps={{ shrink: true }} required fullWidth />
             <TextField label="End Date" value={endDate} onChange={(e) => setEndDate(e.target.value)} type="date" InputLabelProps={{ shrink: true }} fullWidth />
           </FormSection>
