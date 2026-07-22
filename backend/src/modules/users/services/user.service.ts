@@ -61,6 +61,20 @@ export class UserService {
     private readonly compilerService: PermissionCompilerService,
   ) {}
 
+  async fetchEmployee(
+    employeeId: string,
+  ): Promise<{ employeeName: string; email: string; mobile: string }> {
+    const user = await this.repository.findOne({
+      where: { empId: employeeId, deletedAt: null },
+    });
+    if (!user) throw new NotFoundException('No employee found in SAP');
+    return {
+      employeeName: user.name,
+      email: user.email,
+      mobile: '',
+    };
+  }
+
   async findAll(query: PaginationQuery): Promise<PaginatedResult<User>> {
     const {
       page = 1,
@@ -69,10 +83,14 @@ export class UserService {
       sortBy = 'createdAt',
       sortOrder = 'DESC',
     } = query;
-    const where: any = { deletedAt: null };
+    const where: any = { deletedAt: null, isActive: true };
 
     if (search) {
-      where.name = { $ilike: `%${search}%` };
+      where.$or = [
+        { name: { $ilike: `%${search}%` } },
+        { empId: { $ilike: `%${search}%` } },
+        { email: { $ilike: `%${search}%` } },
+      ];
     }
 
     const [data, total] = await this.repository.findAndCount({

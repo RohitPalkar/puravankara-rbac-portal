@@ -54,26 +54,9 @@ export class UserController {
   }
 
   @Post('fetch-employee')
-  @ApiOperation({ summary: 'Mock SAP fetch - returns employee details by ID' })
+  @ApiOperation({ summary: 'Fetch employee details from database by ID' })
   async fetchEmployee(@Body('employeeId') employeeId: string) {
-    const mockDb: Record<
-      string,
-      { employeeName: string; email: string; mobile: string }
-    > = {
-      PPL06414: {
-        employeeName: 'Rohit Palkar',
-        email: 'rohit@puravankara.com',
-        mobile: '9876543210',
-      },
-      PPL06415: {
-        employeeName: 'Priya Sharma',
-        email: 'priya@puravankara.com',
-        mobile: '9876543211',
-      },
-    };
-    const result = mockDb[employeeId];
-    if (!result) throw new NotFoundException('No employee found in SAP');
-    return result;
+    return this.userService.fetchEmployee(employeeId);
   }
 
   @Post()

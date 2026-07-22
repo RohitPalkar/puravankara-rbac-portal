@@ -18,6 +18,7 @@ import Autocomplete from '@mui/material/Autocomplete';
 
 import { userService } from 'src/services/services/user.service';
 import { useUserGroupList } from 'src/services/hooks/use-user-groups';
+import { useDepartmentList, useRoleList } from 'src/services/hooks/use-organization';
 
 import type { BasicInfoData } from './basic-information-step';
 
@@ -29,6 +30,15 @@ export interface OrganisationData {
   userGroupId?: number;
   effectiveFrom: string;
   effectiveTill?: string;
+}
+
+interface UserSearchResult {
+  empId: string;
+  name: string;
+  email: string;
+  departmentName?: string;
+  roleName?: string;
+  id?: string;
 }
 
 export interface OrganisationReviewStepHandle {
@@ -53,6 +63,8 @@ function todayString(): string {
 export default forwardRef<OrganisationReviewStepHandle, Props>(
   ({ step1Data, step2Data, onNavigateStep }: Props, ref) => {
     const { data: userGroups } = useUserGroupList();
+    const { data: departments } = useDepartmentList();
+    const { data: roles } = useRoleList();
 
     const [employmentStatus, setEmploymentStatus] = useState<'Active' | 'Inactive'>('Active');
     const [reportingManagerId, setReportingManagerId] = useState('');
@@ -136,16 +148,22 @@ export default forwardRef<OrganisationReviewStepHandle, Props>(
     const moduleTreeData = step2Data;
     const basicData = step1Data;
 
-    const selectedDepartment = '';
-    const selectedPrimaryRole = '';
-    const selectedSecondaryRole = '';
+    const selectedDepartment = step2Data?.departmentId
+      ? (departments ?? []).find((d: any) => d.id === step2Data.departmentId)?.name ?? `ID: ${step2Data.departmentId}`
+      : '';
+    const selectedPrimaryRole = step2Data?.primaryRoleId
+      ? (roles ?? []).find((r: any) => r.id === step2Data.primaryRoleId)?.name ?? `ID: ${step2Data.primaryRoleId}`
+      : '';
+    const selectedSecondaryRole = step2Data?.secondaryRoleId
+      ? (roles ?? []).find((r: any) => r.id === step2Data.secondaryRoleId)?.name ?? `ID: ${step2Data.secondaryRoleId}`
+      : '';
 
     return (
       <Stack spacing={2} sx={{ p: 3 }}>
         {/* ORGANISATION FORM */}
         <Typography variant="subtitle1" sx={{ mb: 1 }}>Organisation Details</Typography>
 
-        <Box display="grid" gridTemplateColumns={{ xs: '1fr', sm: '1fr 1fr' }} gap={2.5} sx={{ maxWidth: 680 }}>
+        <Box display="grid" gridTemplateColumns={{ xs: '1fr', sm: '1fr 1fr' }} gap={2.5} sx={{ maxWidth: 900 }}>
           <FormControl>
             <InputLabel>Employment Status *</InputLabel>
             <Select
@@ -174,11 +192,11 @@ export default forwardRef<OrganisationReviewStepHandle, Props>(
 
           <Autocomplete
             options={searchUsers as any[]}
-            getOptionLabel={(option: any) => `${option.name} (${option.empId})`}
-            isOptionEqualToValue={(o: any, v: any) => o.id === v.id}
-            value={reportingManagerId ? (searchUsers as any[]).find((u: any) => u.id === reportingManagerId) ?? null : null}
-            onChange={(_, value: any) => {
-              setReportingManagerId(value?.id ?? '');
+            getOptionLabel={(option: UserSearchResult) => `${option.name} (${option.empId})`}
+            isOptionEqualToValue={(o: UserSearchResult, v: UserSearchResult) => o.empId === v.empId}
+            value={reportingManagerId ? (searchUsers as UserSearchResult[]).find((u) => u.empId === reportingManagerId) ?? null : null}
+            onChange={(_, value: UserSearchResult | null) => {
+              setReportingManagerId(value?.empId ?? '');
               setReportingMgrName(value?.name ?? '');
               setErrors([]);
             }}
@@ -186,16 +204,26 @@ export default forwardRef<OrganisationReviewStepHandle, Props>(
             renderInput={(params) => (
               <TextField {...params} label="Reporting Manager *" size="medium" />
             )}
+            renderOption={(props, option: UserSearchResult) => (
+              <li {...props}>
+                <Box>
+                  <Typography variant="body2" fontWeight={600}>{option.name}</Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    {option.empId}{option.departmentName ? ` | ${option.departmentName}` : ''}{option.roleName ? ` | ${option.roleName}` : ''}
+                  </Typography>
+                </Box>
+              </li>
+            )}
             noOptionsText="Start typing to search users"
           />
 
           <Autocomplete
             options={searchTeamLeads as any[]}
-            getOptionLabel={(option: any) => `${option.name} (${option.empId})`}
-            isOptionEqualToValue={(o: any, v: any) => o.id === v.id}
-            value={teamLeadId ? (searchTeamLeads as any[]).find((u: any) => u.id === teamLeadId) ?? null : null}
-            onChange={(_, value: any) => {
-              setTeamLeadId(value?.id ?? '');
+            getOptionLabel={(option: UserSearchResult) => `${option.name} (${option.empId})`}
+            isOptionEqualToValue={(o: UserSearchResult, v: UserSearchResult) => o.empId === v.empId}
+            value={teamLeadId ? (searchTeamLeads as UserSearchResult[]).find((u) => u.empId === teamLeadId) ?? null : null}
+            onChange={(_, value: UserSearchResult | null) => {
+              setTeamLeadId(value?.empId ?? '');
               setTeamLeadName(value?.name ?? '');
               setErrors([]);
             }}
@@ -203,22 +231,42 @@ export default forwardRef<OrganisationReviewStepHandle, Props>(
             renderInput={(params) => (
               <TextField {...params} label="Team Lead (Optional)" size="medium" />
             )}
+            renderOption={(props, option: UserSearchResult) => (
+              <li {...props}>
+                <Box>
+                  <Typography variant="body2" fontWeight={600}>{option.name}</Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    {option.empId}{option.departmentName ? ` | ${option.departmentName}` : ''}{option.roleName ? ` | ${option.roleName}` : ''}
+                  </Typography>
+                </Box>
+              </li>
+            )}
             noOptionsText="Start typing to search users"
           />
 
           <Autocomplete
             options={searchDeptAdmins as any[]}
-            getOptionLabel={(option: any) => `${option.name} (${option.empId})`}
-            isOptionEqualToValue={(o: any, v: any) => o.id === v.id}
-            value={departmentAdminId ? (searchDeptAdmins as any[]).find((u: any) => u.id === departmentAdminId) ?? null : null}
-            onChange={(_, value: any) => {
-              setDepartmentAdminId(value?.id ?? '');
+            getOptionLabel={(option: UserSearchResult) => `${option.name} (${option.empId})`}
+            isOptionEqualToValue={(o: UserSearchResult, v: UserSearchResult) => o.empId === v.empId}
+            value={departmentAdminId ? (searchDeptAdmins as UserSearchResult[]).find((u) => u.empId === departmentAdminId) ?? null : null}
+            onChange={(_, value: UserSearchResult | null) => {
+              setDepartmentAdminId(value?.empId ?? '');
               setDeptAdminName(value?.name ?? '');
               setErrors([]);
             }}
             onInputChange={(_, val) => setDepartmentAdminSearch(val)}
             renderInput={(params) => (
               <TextField {...params} label="Department Admin *" size="medium" />
+            )}
+            renderOption={(props, option: UserSearchResult) => (
+              <li {...props}>
+                <Box>
+                  <Typography variant="body2" fontWeight={600}>{option.name}</Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    {option.empId}{option.departmentName ? ` | ${option.departmentName}` : ''}{option.roleName ? ` | ${option.roleName}` : ''}
+                  </Typography>
+                </Box>
+              </li>
             )}
             noOptionsText="Start typing to search users"
           />

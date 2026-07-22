@@ -64,20 +64,32 @@ export interface CreateModuleActionRequest {
 
 export type UpdateModuleActionRequest = Partial<CreateModuleActionRequest>;
 
+export interface ActionGroupNode {
+  id: number;
+  name: string;
+  code: string;
+  displayOrder: number;
+  actions: ActionNode[];
+}
+
+export interface ActionNode {
+  id: number;
+  code: string;
+  name: string;
+  label: string;
+  displayOrder: number;
+}
+
+export interface SubModuleTreeNode {
+  id: number;
+  name: string;
+  displayOrder: number;
+  actionGroups: ActionGroupNode[];
+}
+
 export interface ModuleTreeNode {
   id: number;
   name: string;
   code: string;
-  isActive: boolean;
-  subModules: {
-    id: number;
-    name: string;
-    isActive: boolean;
-    actions: {
-      id: number;
-      code: string;
-      label: string;
-      isActive: boolean;
-    }[];
-  }[];
+  subModules: SubModuleTreeNode[];
 }

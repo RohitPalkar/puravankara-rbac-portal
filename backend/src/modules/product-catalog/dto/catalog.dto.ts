@@ -13,6 +13,11 @@ export class CreateModuleDto {
   @IsNotEmpty()
   name: string;
 
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  code?: string;
+
   @ApiPropertyOptional({ default: true })
   @IsOptional()
   @IsBoolean()
@@ -25,6 +30,11 @@ export class UpdateModuleDto {
   @IsString()
   @IsNotEmpty()
   name?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  code?: string;
 
   @ApiPropertyOptional()
   @IsOptional()
@@ -42,6 +52,11 @@ export class CreateSubModuleDto {
   @IsString()
   @IsNotEmpty()
   name: string;
+
+  @ApiPropertyOptional({ default: 0 })
+  @IsOptional()
+  @IsInt()
+  displayOrder?: number;
 
   @ApiPropertyOptional({ default: true })
   @IsOptional()
@@ -63,11 +78,76 @@ export class UpdateSubModuleDto {
 
   @ApiPropertyOptional()
   @IsOptional()
+  @IsInt()
+  displayOrder?: number;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsBoolean()
+  isActive?: boolean;
+}
+
+export class CreateActionGroupDto {
+  @ApiProperty()
+  @IsInt()
+  @IsNotEmpty()
+  subModuleId: number;
+
+  @ApiProperty()
+  @IsString()
+  @IsNotEmpty()
+  name: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  code?: string;
+
+  @ApiPropertyOptional({ default: 0 })
+  @IsOptional()
+  @IsInt()
+  displayOrder?: number;
+
+  @ApiPropertyOptional({ default: true })
+  @IsOptional()
+  @IsBoolean()
+  isActive?: boolean;
+}
+
+export class UpdateActionGroupDto {
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsInt()
+  subModuleId?: number;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  @IsNotEmpty()
+  name?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  code?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsInt()
+  displayOrder?: number;
+
+  @ApiPropertyOptional()
+  @IsOptional()
   @IsBoolean()
   isActive?: boolean;
 }
 
 export class CreateActionDto {
+  @ApiProperty()
+  @IsInt()
+  @IsNotEmpty()
+  actionGroupId: number;
+
   @ApiProperty()
   @IsString()
   @IsNotEmpty()
@@ -76,7 +156,17 @@ export class CreateActionDto {
   @ApiProperty()
   @IsString()
   @IsNotEmpty()
-  label: string;
+  name: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  label?: string;
+
+  @ApiPropertyOptional({ default: 0 })
+  @IsOptional()
+  @IsInt()
+  displayOrder?: number;
 
   @ApiPropertyOptional({ default: true })
   @IsOptional()
@@ -87,6 +177,11 @@ export class CreateActionDto {
 export class UpdateActionDto {
   @ApiPropertyOptional()
   @IsOptional()
+  @IsInt()
+  actionGroupId?: number;
+
+  @ApiPropertyOptional()
+  @IsOptional()
   @IsString()
   @IsNotEmpty()
   code?: string;
@@ -95,7 +190,17 @@ export class UpdateActionDto {
   @IsOptional()
   @IsString()
   @IsNotEmpty()
+  name?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
   label?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsInt()
+  displayOrder?: number;
 
   @ApiPropertyOptional()
   @IsOptional()

@@ -25,19 +25,15 @@ interface Props {
 }
 
 function buildDefaultProfile(moduleTree: ModuleTreeNode[]): RolePermissionProfile {
-  return moduleTree
-    .filter((m) => m.isActive)
-    .map((m) => ({
-      moduleId: m.id,
-      subModules: m.subModules
-        .filter((sm) => sm.isActive)
-        .map((sm) => ({
-          subModuleId: sm.id,
-          enabled: false,
-          accessType: 'all' as const,
-          projectIds: [],
-        })),
-    }));
+  return moduleTree.map((m) => ({
+    moduleId: m.id,
+    subModules: m.subModules.map((sm) => ({
+      subModuleId: sm.id,
+      enabled: false,
+      accessType: 'all' as const,
+      projectIds: [],
+    })),
+  }));
 }
 
 function updateModuleInProfile(

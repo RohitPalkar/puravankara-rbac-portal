@@ -28,7 +28,7 @@ import { useZoneList } from 'src/services/hooks/use-geography';
 import { userService } from 'src/services/services/user.service';
 import { useModuleTree } from 'src/services/hooks/use-product-catalog';
 import { projectService } from 'src/services/services/project.service';
-import { useRoleList, useDepartmentList } from 'src/services/hooks/use-organization';
+import { useRoleList, useDepartmentList, useDepartmentRoleList } from 'src/services/hooks/use-organization';
 
 import { PermissionProfile } from './permission-profile';
 
@@ -79,6 +79,7 @@ export default forwardRef<ProjectMappingStepHandle, Props>(({ initialData }: Pro
   const { data: zones } = useZoneList();
   const { data: departments } = useDepartmentList();
   const { data: roles } = useRoleList();
+  const { data: deptRoles } = useDepartmentRoleList();
   const { data: moduleTree } = useModuleTree();
   const { data: allProjects } = useQuery({
     queryKey: queryKeys.projects.list({}),
@@ -116,6 +117,34 @@ export default forwardRef<ProjectMappingStepHandle, Props>(({ initialData }: Pro
   const activeRoles = useMemo(() => roles ?? [], [roles]);
   const projects = useMemo(() => allProjects ?? [], [allProjects]);
   const locations = useMemo(() => allLocations ?? [], [allLocations]);
+
+  const deptRoleMap = useMemo(() => {
+    const map = new Map<number, number[]>();
+    (deptRoles ?? []).forEach((dr: { departmentId: number; roleId: number }) => {
+      const list = map.get(dr.departmentId) ?? [];
+      list.push(dr.roleId);
+      map.set(dr.departmentId, list);
+    });
+    return map;
+  }, [deptRoles]);
+
+  const rolesForPrimaryDept = useMemo(
+    () => activeRoles.filter((r) => {
+      if (!departmentId) return true;
+      const allowed = deptRoleMap.get(departmentId as number) ?? [];
+      return allowed.includes(r.id);
+    }),
+    [activeRoles, departmentId, deptRoleMap],
+  );
+
+  const rolesForSecondaryDept = useMemo(
+    () => activeRoles.filter((r) => {
+      if (!secondaryDepartmentId) return true;
+      const allowed = deptRoleMap.get(secondaryDepartmentId as number) ?? [];
+      return allowed.includes(r.id);
+    }),
+    [activeRoles, secondaryDepartmentId, deptRoleMap],
+  );
 
   const projectIdsByZone = useMemo(() => {
     if (zoneIds.length === 0) return new Set<number>();
@@ -234,7 +263,7 @@ export default forwardRef<ProjectMappingStepHandle, Props>(({ initialData }: Pro
         </Alert>
       )}
 
-      <Box display="grid" gridTemplateColumns={{ xs: '1fr', sm: '1fr 1fr' }} gap={2.5} sx={{ maxWidth: 680 }}>
+      <Box display="grid" gridTemplateColumns={{ xs: '1fr', sm: '1fr 1fr' }} gap={2.5} sx={{ maxWidth: 900 }}>
         <FormControl>
           <InputLabel>Zone *</InputLabel>
           <Select
@@ -264,7 +293,15 @@ export default forwardRef<ProjectMappingStepHandle, Props>(({ initialData }: Pro
           <Select
             value={departmentId}
             label="Department *"
-            onChange={(e) => { setDepartmentId(e.target.value as number); setErrList([]); }}
+            onChange={(e) => {
+              const newDeptId = e.target.value as number;
+              setDepartmentId(newDeptId);
+              const allowedRoles = deptRoleMap.get(newDeptId) ?? [];
+              if (primaryRoleId && !allowedRoles.includes(primaryRoleId as number)) {
+                setPrimaryRoleId('');
+              }
+              setErrList([]);
+            }}
           >
             {(departments ?? []).map((dept: Department) => (
               <MenuItem key={dept.id} value={dept.id}>{dept.name}</MenuItem>
@@ -279,7 +316,7 @@ export default forwardRef<ProjectMappingStepHandle, Props>(({ initialData }: Pro
             label="Primary Role *"
             onChange={(e) => { setPrimaryRoleId(e.target.value as number); setErrList([]); }}
           >
-            {(roles ?? []).map((role: Role) => (
+            {rolesForPrimaryDept.map((role: Role) => (
               <MenuItem key={role.id} value={role.id}>{role.name}</MenuItem>
             ))}
           </Select>
@@ -290,7 +327,15 @@ export default forwardRef<ProjectMappingStepHandle, Props>(({ initialData }: Pro
           <Select
             value={secondaryDepartmentId}
             label="Secondary Department (Optional)"
-            onChange={(e) => { setSecondaryDepartmentId(e.target.value as number); setErrList([]); }}
+            onChange={(e) => {
+              const newDeptId = e.target.value as number;
+              setSecondaryDepartmentId(newDeptId);
+              const allowedRoles = newDeptId ? (deptRoleMap.get(newDeptId) ?? []) : [];
+              if (secondaryRoleId && !allowedRoles.includes(secondaryRoleId as number)) {
+                setSecondaryRoleId('');
+              }
+              setErrList([]);
+            }}
           >
             <MenuItem value="">None</MenuItem>
             {(departments ?? []).map((dept: Department) => (
@@ -307,7 +352,7 @@ export default forwardRef<ProjectMappingStepHandle, Props>(({ initialData }: Pro
             onChange={(e) => { setSecondaryRoleId(e.target.value as number); setErrList([]); }}
           >
             <MenuItem value="">None</MenuItem>
-            {(roles ?? []).map((role: Role) => (
+            {rolesForSecondaryDept.map((role: Role) => (
               <MenuItem key={role.id} value={role.id}>{role.name}</MenuItem>
             ))}
           </Select>
@@ -337,8 +382,18 @@ export default forwardRef<ProjectMappingStepHandle, Props>(({ initialData }: Pro
           renderInput={(params) => (
             <TextField {...params} label="Search Employee Name / Employee ID" size="medium" />
           )}
+          renderOption={(props, option: any) => (
+            <li {...props}>
+              <Box>
+                <Typography variant="body2" fontWeight={600}>{option.name}</Typography>
+                <Typography variant="caption" color="text.secondary">
+                  {option.empId} | {option.departmentName ?? option.departmentId ?? ''}{option.roleName ? ` | ${option.roleName}` : ''}
+                </Typography>
+              </Box>
+            </li>
+          )}
           noOptionsText="Start typing to search users"
-          sx={{ maxWidth: 400 }}
+          sx={{ maxWidth: 680 }}
         />
       )}
 

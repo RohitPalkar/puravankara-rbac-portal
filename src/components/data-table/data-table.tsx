@@ -269,7 +269,7 @@ export function DataTable({
         </Box>
       )}
 
-      <Box sx={{ overflowX: 'auto' }}>
+      <Box sx={{ overflowX: 'auto', overflowY: 'hidden' }}>
         <DataGrid
           rows={isServerSide ? rows : filteredRows}
           columns={processedColumns}
@@ -290,32 +290,33 @@ export function DataTable({
           autoHeight
           sx={{
             borderRadius: 0,
+            minWidth: processedColumns.reduce((sum, col) => sum + (typeof col.width === 'number' ? col.width : 150), 0),
             '& .MuiDataGrid-columnHeaders': {
               borderBottom: '1px solid',
               borderColor: 'divider',
               bgcolor: 'grey.50',
             },
             '& .MuiDataGrid-columnHeader': {
-              px: 3,
-              py: 2,
+              px: 2,
+              py: 1,
             },
             '& .MuiDataGrid-columnHeaderTitle': {
               fontWeight: 600,
-              fontSize: '0.875rem',
+              fontSize: '0.8125rem',
               color: 'text.secondary',
               letterSpacing: '0.01em',
             },
             '& .MuiDataGrid-cell': {
-              px: 3,
-              py: '18px',
+              px: 2,
+              py: '10px',
               display: 'flex',
               alignItems: 'center',
-              fontSize: '0.875rem',
+              fontSize: '0.8125rem',
               '&:focus': { outline: 'none' },
               '&:focus-within': { outline: 'none' },
             },
             '& .MuiDataGrid-row': {
-              minHeight: '72px !important',
+              minHeight: '52px !important',
               cursor: onRowClick ? 'pointer' : 'default',
               '&:hover': { bgcolor: 'action.hover' },
               '&.Mui-selected': { bgcolor: 'primary.lighter' },

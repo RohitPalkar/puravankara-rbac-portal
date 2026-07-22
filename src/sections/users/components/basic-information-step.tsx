@@ -161,22 +161,22 @@ export default forwardRef<BasicInformationStepHandle, Props>(({ initialData }: P
             </InputAdornment>
           ),
         }}
-        sx={{ maxWidth: 500 }}
+        sx={{ maxWidth: 800 }}
       />
 
       {sapStatus === 'found' && (
-        <Alert severity="success" sx={{ mt: 2, maxWidth: 680 }}>
+        <Alert severity="success" sx={{ mt: 2, maxWidth: 900 }}>
           Employee details fetched successfully.
         </Alert>
       )}
 
       {sapStatus === 'not-found' && (
-        <Alert severity="info" sx={{ mt: 2, maxWidth: 680 }}>
+        <Alert severity="info" sx={{ mt: 2, maxWidth: 900 }}>
           No employee found in SAP. Please enter employee details manually.
         </Alert>
       )}
 
-      <Box display="grid" gridTemplateColumns={{ xs: '1fr', sm: '1fr 1fr' }} gap={2.5} sx={{ mt: 3, maxWidth: 680 }}>
+      <Box display="grid" gridTemplateColumns={{ xs: '1fr', sm: '1fr 1fr' }} gap={2.5} sx={{ mt: 3, maxWidth: 900 }}>
         <TextField
           label="Employee Name"
           value={employeeName}

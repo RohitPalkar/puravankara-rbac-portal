@@ -138,9 +138,7 @@ export default function ChannelPartnerListPage() {
               searchValue={search}
               searchPlaceholder="Search by CP name..."
               dataGridSx={{
-                '& .MuiDataGrid-row': { minHeight: '72px !important', cursor: 'default' as any },
-                '& .MuiDataGrid-cell': { py: 1.5, display: 'flex', alignItems: 'center' },
-                '& .MuiDataGrid-columnHeader': { py: 1.5, px: 2 },
+                '& .MuiDataGrid-row': { cursor: 'default' as any },
               }}
             />
           )}

@@ -3,6 +3,7 @@ import { ApiBearerAuth, ApiTags, ApiOperation } from '@nestjs/swagger';
 import {
   ModuleCatalogService,
   SubModuleCatalogService,
+  ActionGroupCatalogService,
   ActionCatalogService,
   ModuleActionCatalogService,
 } from '../services/catalog.service';
@@ -11,6 +12,8 @@ import {
   UpdateModuleDto,
   CreateSubModuleDto,
   UpdateSubModuleDto,
+  CreateActionGroupDto,
+  UpdateActionGroupDto,
   CreateActionDto,
   UpdateActionDto,
   CreateModuleActionDto,
@@ -18,6 +21,7 @@ import {
 } from '../dto/catalog.dto';
 import { Module as ModuleEntity } from '../entities/module.entity';
 import { SubModule } from '../entities/sub-module.entity';
+import { ActionGroup } from '../entities/action-group.entity';
 import { Action } from '../entities/action.entity';
 import { ModuleAction } from '../entities/module-action.entity';
 import { BaseController } from '../../../common/crud/base.controller';
@@ -35,7 +39,7 @@ export class ModuleController extends BaseController<
   }
 
   @Get('tree')
-  @ApiOperation({ summary: 'Get module tree with sub-modules and actions' })
+  @ApiOperation({ summary: 'Get module tree with sub-modules, action groups, and actions' })
   async getTree() {
     return this.svc.getTree();
   }
@@ -51,6 +55,19 @@ export class SubModuleController extends BaseController<
 > {
   constructor(private readonly svc: SubModuleCatalogService) {
     super(svc, 'SubModule');
+  }
+}
+
+@ApiTags('Product Catalog - Action Groups')
+@ApiBearerAuth()
+@Controller('action-groups')
+export class ActionGroupController extends BaseController<
+  ActionGroup,
+  CreateActionGroupDto,
+  UpdateActionGroupDto
+> {
+  constructor(private readonly svc: ActionGroupCatalogService) {
+    super(svc, 'ActionGroup');
   }
 }
 
