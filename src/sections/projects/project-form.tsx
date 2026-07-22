@@ -32,6 +32,7 @@ import { CONFIG } from 'src/config-global';
 import { queryKeys } from 'src/services/api/query-keys';
 import { brandService } from 'src/services/services/brand.service';
 import { cityService } from 'src/services/services/geography.service';
+import { phaseService } from 'src/services/services/phase.service';
 import { useProjectById, useCreateProject, useUpdateProject } from 'src/services/hooks/use-projects';
 
 import { Iconify } from 'src/components/iconify';
@@ -71,6 +72,7 @@ export default function ProjectFormPage() {
   const [jvLogo, setJvLogo] = useState('');
   const [sfdcProjectName, setSfdcProjectName] = useState('');
   const [codename, setCodename] = useState('');
+  const [phaseId, setPhaseId] = useState<number | ''>('');
   const [nameError, setNameError] = useState('');
   const [brandIdError, setBrandIdError] = useState('');
   const [cityIdError, setCityIdError] = useState('');
@@ -119,22 +121,31 @@ export default function ProjectFormPage() {
     },
   });
 
+  const { data: allPhases } = useQuery({
+    queryKey: queryKeys.phases.list({}),
+    queryFn: async () => {
+      const res = await phaseService.list({});
+      return res.data;
+    },
+  });
+
   // Populate form on edit
   useEffect(() => {
     if (!projectData) return;
     setBrandId(projectData.brandId);
     setCityId(projectData.cityId);
     setName(projectData.name);
-    setBillingName(projectData.billingName ?? '');
+    setBillingName(projectData.billingEntityName ?? '');
     setPanNumber(projectData.panNumber ?? '');
-    setGstin(projectData.gstin ?? '');
+    setGstin(projectData.billingGstin ?? '');
     setAddress1(projectData.address1 ?? '');
     setAddress2(projectData.address2 ?? '');
     setPinCode(projectData.pinCode ?? '');
-    setProjectImage(projectData.projectImage ?? '');
-    setJvLogo(projectData.jvLogo ?? '');
+    setProjectImage(projectData.projectImagePath ?? '');
+    setJvLogo(projectData.jvImagePath ?? '');
     setSfdcProjectName(projectData.sfdcProjectName ?? '');
     setCodename(projectData.codename ?? '');
+    setPhaseId((projectData.extendedMetadata?.phaseId as number) ?? '');
 
     // Payment gateways
     const rp = projectData.paymentGateways?.find((g) => g.gatewayType === 'RAZORPAY');
@@ -237,21 +248,22 @@ export default function ProjectFormPage() {
     brandId: brandId as number,
     cityId: cityId as number,
     name: name.trim(),
-    billingName: billingName.trim() || undefined,
+    billingEntityName: billingName.trim() || undefined,
     panNumber: panNumber.trim().toUpperCase() || undefined,
-    gstin: gstin.trim().toUpperCase() || undefined,
+    billingGstin: gstin.trim().toUpperCase() || undefined,
     address1: address1.trim() || undefined,
     address2: address2.trim() || undefined,
     pinCode: pinCode.trim() || undefined,
-    projectImage: projectImage || undefined,
-    jvLogo: jvLogo || undefined,
+    projectImagePath: projectImage || undefined,
+    jvImagePath: jvLogo || undefined,
     sfdcProjectName: sfdcProjectName.trim() || undefined,
     codename: codename.trim() || undefined,
     termsHtml: termsHtml || undefined,
+    extendedMetadata: phaseId ? { phaseId } : undefined,
     paymentGateways: buildGateways(),
     incentiveRules: buildIncentives(),
     isActive: true,
-  }), [brandId, cityId, name, billingName, panNumber, gstin, address1, address2, pinCode, projectImage, jvLogo, sfdcProjectName, codename, termsHtml, buildGateways, buildIncentives]);
+  }), [brandId, cityId, name, billingName, panNumber, gstin, address1, address2, pinCode, projectImage, jvLogo, sfdcProjectName, codename, termsHtml, phaseId, buildGateways, buildIncentives]);
 
   const handleSave = useCallback(async () => {
     if (!validate()) return;
@@ -312,6 +324,10 @@ export default function ProjectFormPage() {
               {filteredCities?.map((c) => <MenuItem key={c.id} value={c.id}>{c.name}</MenuItem>)}
             </TextField>
             <TextField label="Project Name" value={name} onChange={(e) => { setName(e.target.value); setNameError(''); }} error={!!nameError} helperText={nameError} required placeholder="Enter project name" fullWidth />
+            <TextField label="Phase" value={phaseId} onChange={(e) => setPhaseId(Number(e.target.value) || '')} select fullWidth>
+              <MenuItem value="">None</MenuItem>
+              {allPhases?.map((p) => <MenuItem key={p.id} value={p.id}>{p.phaseName}</MenuItem>)}
+            </TextField>
             <TextField label="Billing Name" value={billingName} onChange={(e) => setBillingName(e.target.value)} placeholder="Enter Name" fullWidth />
             <TextField label="PAN No." value={panNumber} onChange={(e) => setPanNumber(e.target.value.toUpperCase())} inputProps={{ maxLength: 10 }} placeholder="Enter PAN no." fullWidth />
             <TextField label="GSTIN" value={gstin} onChange={(e) => setGstin(e.target.value.toUpperCase())} inputProps={{ maxLength: 15 }} placeholder="Enter GSTIN" fullWidth />
