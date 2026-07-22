@@ -6,6 +6,7 @@ import {
   BadRequestException,
   Logger,
 } from '@nestjs/common';
+import { ProfileType } from '../../../common/enums';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, DataSource, In } from 'typeorm';
 import { User } from '../entities/user.entity';
@@ -24,6 +25,10 @@ import {
   UpdateUserDto,
   CreateUserFullDto,
 } from '../dto/user.dto';
+import { PermissionProfile } from '../../permissions/entities/permission-profile.entity';
+import { PermissionProfileModule } from '../../permissions/entities/permission-profile-module.entity';
+import { PermissionProfileSubModule } from '../../permissions/entities/permission-profile-sub-module.entity';
+import { PermissionProfileProject } from '../../permissions/entities/permission-profile-project.entity';
 import { PermissionCompilerService } from '../../permissions/services/permission-compiler.service';
 import { NotificationService } from '../../notifications/services/notification.service';
 
@@ -44,7 +49,16 @@ export class UserService {
     readonly userAuthRepository: Repository<UserAuth>,
     @InjectRepository(UserProjectAccess)
     readonly userProjectAccessRepository: Repository<UserProjectAccess>,
+    @InjectRepository(PermissionProfile)
+    readonly profileRepo: Repository<PermissionProfile>,
+    @InjectRepository(PermissionProfileModule)
+    readonly profileModuleRepo: Repository<PermissionProfileModule>,
+    @InjectRepository(PermissionProfileSubModule)
+    readonly profileSubModuleRepo: Repository<PermissionProfileSubModule>,
+    @InjectRepository(PermissionProfileProject)
+    readonly profileProjectRepo: Repository<PermissionProfileProject>,
     private readonly dataSource: DataSource,
+    private readonly compilerService: PermissionCompilerService,
   ) {}
 
   async findAll(query: PaginationQuery): Promise<PaginatedResult<User>> {
@@ -129,13 +143,38 @@ export class UserService {
     };
   }
 
-  async findById(id: string): Promise<User> {
+  async findById(id: string): Promise<User & { profiles?: PermissionProfile[] }> {
     const user = await this.repository.findOne({
       where: { empId: id },
       relations: { department: true },
     });
     if (!user || user.deletedAt) throw new NotFoundException('User not found');
-    return user;
+
+    const profiles = await this.profileRepo.find({
+      where: { userId: id },
+      relations: {
+        department: true,
+        role: true,
+        buddyUser: true,
+        modules: {
+          module: true,
+          subModules: {
+            subModule: true,
+            projects: { project: true },
+          },
+        },
+      },
+      order: { createdAt: 'ASC' },
+    });
+
+    // Sort modules by displayOrder for consistent frontend rendering
+    for (const profile of profiles) {
+      if (profile.modules) {
+        profile.modules.sort((a, b) => a.displayOrder - b.displayOrder);
+      }
+    }
+
+    return { ...user, profiles };
   }
 
   async create(
@@ -198,7 +237,7 @@ export class UserService {
     return required.join('');
   }
 
-  async update(id: string, dto: UpdateUserDto): Promise<User> {
+  async update(id: string, dto: UpdateUserDto): Promise<User & { profiles?: PermissionProfile[] }> {
     const user = await this.findById(id);
     if (dto.email && dto.email !== user.email) {
       const existing = await this.repository.findOne({
@@ -207,7 +246,81 @@ export class UserService {
       if (existing) throw new ConflictException('Email already in use');
     }
     Object.assign(user, dto);
-    return this.repository.save(user);
+    await this.repository.save(user);
+
+    // Handle profile updates
+    if (dto.profiles) {
+      await this.profileRepo.delete({ userId: id });
+
+      const deptRolePairs = new Set<string>();
+      for (const profileDto of dto.profiles) {
+        // Validate buddy RM requires department + role
+        if (profileDto.profileType === ProfileType.BUDDY_RM) {
+          if (!profileDto.departmentId || !profileDto.roleId) {
+            throw new BadRequestException('Buddy RM profile requires departmentId and roleId');
+          }
+          if (profileDto.buddyUserId === id) {
+            throw new BadRequestException('Buddy RM cannot be the same user');
+          }
+        }
+
+        // Validate no duplicate dept+role across profiles
+        if (profileDto.departmentId && profileDto.roleId) {
+          const pair = `${profileDto.departmentId}:${profileDto.roleId}`;
+          if (deptRolePairs.has(pair)) {
+            throw new BadRequestException(`Duplicate department+role assignment: department ${profileDto.departmentId}, role ${profileDto.roleId}`);
+          }
+          deptRolePairs.add(pair);
+        }
+
+        const profile = this.profileRepo.create({
+          userId: id,
+          profileType: profileDto.profileType,
+          departmentId: profileDto.departmentId ?? null,
+          roleId: profileDto.roleId ?? null,
+          buddyUserId: profileDto.buddyUserId ?? null,
+          displayName: profileDto.displayName ?? null,
+          status: profileDto.status ?? 'ACTIVE',
+        });
+        const savedProfile = await this.profileRepo.save(profile);
+
+        if (profileDto.modules?.length) {
+          for (const modDto of profileDto.modules) {
+            const ppm = this.profileModuleRepo.create({
+              profileId: savedProfile.id,
+              moduleId: modDto.moduleId,
+              displayOrder: modDto.displayOrder ?? 0,
+            });
+            const savedMod = await this.profileModuleRepo.save(ppm);
+
+            if (modDto.subModules?.length) {
+              for (const smDto of modDto.subModules) {
+                const ppsm = this.profileSubModuleRepo.create({
+                  profileModuleId: savedMod.id,
+                  subModuleId: smDto.subModuleId,
+                  inheritFutureProjects: smDto.inheritFutureProjects ?? false,
+                });
+                const savedSm = await this.profileSubModuleRepo.save(ppsm);
+
+                if (smDto.projects?.length) {
+                  for (const projDto of smDto.projects) {
+                    const ppp = this.profileProjectRepo.create({
+                      profileSubModuleId: savedSm.id,
+                      projectId: projDto.projectId,
+                      selectedBy: projDto.selectedBy ?? 'SYSTEM',
+                    });
+                    await this.profileProjectRepo.save(ppp);
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+
+    const result = await this.findById(id);
+    return result;
   }
 
   async remove(id: string): Promise<void> {
@@ -221,6 +334,7 @@ export class UserService {
     roles: UserRole[];
     zones: UserZone[];
     reportingLines: UserReportingLine[];
+    profiles: PermissionProfile[];
   }> {
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
@@ -245,42 +359,46 @@ export class UserService {
       const savedUser = await queryRunner.manager.save(user);
 
       const roles: UserRole[] = [];
-
-      const primaryRole = queryRunner.manager.create(UserRole, {
-        userId: savedUser.empId,
-        departmentId: dto.basic.departmentId,
-        roleId: dto.organization.primaryRole,
-        assignedBy: 'SYSTEM',
-        assignedAt: new Date(),
-      });
-      roles.push(await queryRunner.manager.save(primaryRole));
-
-      if (dto.organization.secondaryRoles?.length) {
-        for (const roleId of dto.organization.secondaryRoles) {
-          const sr = queryRunner.manager.create(UserRole, {
-            userId: savedUser.empId,
-            departmentId: dto.basic.departmentId,
-            roleId,
-            assignedBy: 'SYSTEM',
-            assignedAt: new Date(),
-          });
-          roles.push(await queryRunner.manager.save(sr));
-        }
-      }
-
       const zones: UserZone[] = [];
-      if (dto.organization.zones?.length) {
-        for (const zoneId of dto.organization.zones) {
-          const uz = queryRunner.manager.create(UserZone, {
-            userId: savedUser.empId,
-            zoneId,
-            assignedAt: new Date(),
-          });
-          zones.push(await queryRunner.manager.save(uz));
+      const reportingLines: UserReportingLine[] = [];
+      const profiles: PermissionProfile[] = [];
+
+      // Create legacy user_roles for backward compatibility
+      if (!dto.profiles?.length) {
+        const primaryRole = queryRunner.manager.create(UserRole, {
+          userId: savedUser.empId,
+          departmentId: dto.basic.departmentId,
+          roleId: dto.organization.primaryRole,
+          assignedBy: 'SYSTEM',
+          assignedAt: new Date(),
+        });
+        roles.push(await queryRunner.manager.save(primaryRole));
+
+        if (dto.organization.secondaryRoles?.length) {
+          for (const roleId of dto.organization.secondaryRoles) {
+            const sr = queryRunner.manager.create(UserRole, {
+              userId: savedUser.empId,
+              departmentId: dto.basic.departmentId,
+              roleId,
+              assignedBy: 'SYSTEM',
+              assignedAt: new Date(),
+            });
+            roles.push(await queryRunner.manager.save(sr));
+          }
+        }
+
+        if (dto.organization.zones?.length) {
+          for (const zoneId of dto.organization.zones) {
+            const uz = queryRunner.manager.create(UserZone, {
+              userId: savedUser.empId,
+              zoneId,
+              assignedAt: new Date(),
+            });
+            zones.push(await queryRunner.manager.save(uz));
+          }
         }
       }
 
-      const reportingLines: UserReportingLine[] = [];
       if (dto.organization.reporting?.length) {
         for (const entry of dto.organization.reporting) {
           const rl = queryRunner.manager.create(UserReportingLine, {
@@ -293,9 +411,116 @@ export class UserService {
         }
       }
 
+      // Create permission profiles
+      if (dto.profiles?.length) {
+        const deptRolePairs = new Set<string>();
+        for (const profileDto of dto.profiles) {
+          // Validate buddy RM requires department + role
+          if (profileDto.profileType === ProfileType.BUDDY_RM) {
+            if (!profileDto.departmentId || !profileDto.roleId) {
+              throw new BadRequestException('Buddy RM profile requires departmentId and roleId');
+            }
+            if (profileDto.buddyUserId === savedUser.empId) {
+              throw new BadRequestException('Buddy RM cannot be the same user');
+            }
+          }
+
+          // Validate no duplicate dept+role across profiles
+          if (profileDto.departmentId && profileDto.roleId) {
+            const pair = `${profileDto.departmentId}:${profileDto.roleId}`;
+            if (deptRolePairs.has(pair)) {
+              throw new BadRequestException(`Duplicate department+role assignment: department ${profileDto.departmentId}, role ${profileDto.roleId}`);
+            }
+            deptRolePairs.add(pair);
+          }
+
+          const profile = queryRunner.manager.create(PermissionProfile, {
+            userId: savedUser.empId,
+            profileType: profileDto.profileType,
+            departmentId: profileDto.departmentId ?? null,
+            roleId: profileDto.roleId ?? null,
+            buddyUserId: profileDto.buddyUserId ?? null,
+            displayName: profileDto.displayName ?? null,
+            status: profileDto.status ?? 'ACTIVE',
+          });
+          const savedProfile = await queryRunner.manager.save(profile);
+
+          // Create user_role entries for backward compat
+          if (profileDto.roleId && profileDto.departmentId) {
+            const ur = queryRunner.manager.create(UserRole, {
+              userId: savedUser.empId,
+              departmentId: profileDto.departmentId,
+              roleId: profileDto.roleId,
+              assignedBy: 'SYSTEM',
+              assignedAt: new Date(),
+            });
+            roles.push(await queryRunner.manager.save(ur));
+          }
+
+          // Create module → subModule → project tree
+          if (profileDto.modules?.length) {
+            for (const modDto of profileDto.modules) {
+              const ppm = queryRunner.manager.create(PermissionProfileModule, {
+                profileId: savedProfile.id,
+                moduleId: modDto.moduleId,
+                displayOrder: modDto.displayOrder ?? 0,
+              });
+              const savedMod = await queryRunner.manager.save(ppm);
+
+              if (modDto.subModules?.length) {
+                for (const smDto of modDto.subModules) {
+                  const ppsm = queryRunner.manager.create(PermissionProfileSubModule, {
+                    profileModuleId: savedMod.id,
+                    subModuleId: smDto.subModuleId,
+                    inheritFutureProjects: smDto.inheritFutureProjects ?? false,
+                  });
+                  const savedSm = await queryRunner.manager.save(ppsm);
+
+                  if (smDto.projects?.length) {
+                    for (const projDto of smDto.projects) {
+                      const ppp = queryRunner.manager.create(PermissionProfileProject, {
+                        profileSubModuleId: savedSm.id,
+                        projectId: projDto.projectId,
+                        selectedBy: projDto.selectedBy ?? 'SYSTEM',
+                      });
+                      await queryRunner.manager.save(ppp);
+                    }
+                  }
+                }
+              }
+            }
+          }
+
+          profiles.push(savedProfile);
+        }
+      }
+
       await queryRunner.commitTransaction();
 
-      return { user: savedUser, roles, zones, reportingLines };
+      // Trigger permission compilation
+      if (profiles.length > 0) {
+        const projectIds = new Set<number>();
+        for (const p of profiles) {
+          const fullProfile = await this.profileRepo.findOne({
+            where: { id: p.id },
+            relations: { modules: { subModules: { projects: true } } },
+          });
+          if (fullProfile?.modules) {
+            for (const mod of fullProfile.modules) {
+              for (const sm of mod.subModules) {
+                for (const proj of sm.projects) {
+                  projectIds.add(proj.projectId);
+                }
+              }
+            }
+          }
+        }
+        for (const pid of projectIds) {
+          this.compilerService.compileAndSave(savedUser.empId, pid).catch(() => {});
+        }
+      }
+
+      return { user: savedUser, roles, zones, reportingLines, profiles };
     } catch (err) {
       await queryRunner.rollbackTransaction();
       this.logger.error(

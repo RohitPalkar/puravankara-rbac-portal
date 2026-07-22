@@ -17,6 +17,10 @@ import { Module } from '../../product-catalog/entities/module.entity';
 import { SubModule } from '../../product-catalog/entities/sub-module.entity';
 import { Action } from '../../product-catalog/entities/action.entity';
 import { PermissionCacheService } from './permission-cache.service';
+import { PermissionProfile } from '../entities/permission-profile.entity';
+import { PermissionProfileModule } from '../entities/permission-profile-module.entity';
+import { PermissionProfileSubModule } from '../entities/permission-profile-sub-module.entity';
+import { PermissionProfileProject } from '../entities/permission-profile-project.entity';
 
 interface FeatureMatrixModule {
   id: number;
@@ -63,6 +67,14 @@ export class PermissionCompilerService {
     private readonly subModuleRepo: Repository<SubModule>,
     @InjectRepository(Action)
     private readonly actionRepo: Repository<Action>,
+    @InjectRepository(PermissionProfile)
+    private readonly profileRepo: Repository<PermissionProfile>,
+    @InjectRepository(PermissionProfileModule)
+    private readonly profileModuleRepo: Repository<PermissionProfileModule>,
+    @InjectRepository(PermissionProfileSubModule)
+    private readonly profileSubModuleRepo: Repository<PermissionProfileSubModule>,
+    @InjectRepository(PermissionProfileProject)
+    private readonly profileProjectRepo: Repository<PermissionProfileProject>,
     private readonly cacheService: PermissionCacheService,
   ) {}
 
@@ -288,6 +300,34 @@ export class PermissionCompilerService {
     return roles.some((ur) => ur.role.name === 'SUPER_ADMIN');
   }
 
+  private async getProfileProjectIdsForModule(
+    userId: string,
+    moduleId: number,
+  ): Promise<number[]> {
+    const profiles = await this.profileRepo.find({
+      where: { userId },
+      relations: { modules: { subModules: { projects: true } } },
+    });
+
+    const projectIds = new Set<number>();
+    let hasInheritAll = false;
+    for (const profile of profiles) {
+      for (const mod of profile.modules ?? []) {
+        if (mod.moduleId === moduleId) {
+          for (const sm of mod.subModules ?? []) {
+            if (sm.inheritFutureProjects) hasInheritAll = true;
+            for (const proj of sm.projects ?? []) {
+              projectIds.add(proj.projectId);
+            }
+          }
+        }
+      }
+    }
+    // If any sub-module has inherit_future_projects, return sentinel -1 meaning "all projects"
+    if (hasInheritAll) return [-1];
+    return [...projectIds];
+  }
+
   private async hasModuleAccess(
     userId: string,
     projectId: number,
@@ -314,6 +354,9 @@ export class PermissionCompilerService {
       });
       if (tp) return true;
     }
+
+    const profileProjectIds = await this.getProfileProjectIdsForModule(userId, moduleId);
+    if (profileProjectIds.includes(projectId) || profileProjectIds.includes(-1)) return true;
 
     return false;
   }
@@ -344,6 +387,12 @@ export class PermissionCompilerService {
       for (const tp of tpPerms) actionIds.add(tp.actionId);
     }
 
+    const profileProjectIds = await this.getProfileProjectIdsForModule(userId, moduleId);
+    if (profileProjectIds.includes(projectId) || profileProjectIds.includes(-1)) {
+      const allActions = await this.actionRepo.find({ where: { isActive: true } });
+      for (const a of allActions) actionIds.add(a.id);
+    }
+
     const overrides = await this.upoRepo.find({
       where: { userId, projectId, moduleId },
     });
@@ -357,6 +406,33 @@ export class PermissionCompilerService {
     return this.actionRepo.find({
       where: { id: In([...actionIds]), isActive: true },
     });
+  }
+
+  private async hasProfileSubModuleProject(
+    userId: string,
+    projectId: number,
+    moduleId: number,
+    subModuleId: number,
+  ): Promise<boolean> {
+    const profiles = await this.profileRepo.find({
+      where: { userId },
+      relations: { modules: { subModules: { projects: true } } },
+    });
+
+    for (const profile of profiles) {
+      for (const mod of profile.modules ?? []) {
+        if (mod.moduleId !== moduleId) continue;
+        for (const sm of mod.subModules ?? []) {
+          if (sm.subModuleId !== subModuleId) continue;
+          // inherit_future_projects grants access to all projects
+          if (sm.inheritFutureProjects) return true;
+          for (const proj of sm.projects ?? []) {
+            if (proj.projectId === projectId) return true;
+          }
+        }
+      }
+    }
+    return false;
   }
 
   private async resolveSubModuleActions(
@@ -389,6 +465,14 @@ export class PermissionCompilerService {
         where: { templateId: In(templateIds), moduleId, subModuleId },
       });
       for (const tp of tpPerms) actionIds.add(tp.actionId);
+    }
+
+    const hasProfileAccess = await this.hasProfileSubModuleProject(
+      userId, projectId, moduleId, subModuleId,
+    );
+    if (hasProfileAccess) {
+      const allActions = await this.actionRepo.find({ where: { isActive: true } });
+      for (const a of allActions) actionIds.add(a.id);
     }
 
     const overrides = await this.upoRepo.find({

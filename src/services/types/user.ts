@@ -82,3 +82,39 @@ export interface UserZone {
   zoneId: number;
   zoneName?: string;
 }
+
+export interface SubModuleProjectMapping {
+  subModuleId: number;
+  enabled: boolean;
+  accessType: 'all' | 'selected';
+  projectIds: number[];
+}
+
+export interface ModuleProjectMapping {
+  moduleId: number;
+  subModules: SubModuleProjectMapping[];
+}
+
+export type RolePermissionProfile = ModuleProjectMapping[];
+
+export interface UserPermissionProfile {
+  roleId?: number;
+  departmentId?: number;
+  buddyUserId?: string;
+  permissions: RolePermissionProfile;
+}
+
+export interface ProjectMappingData {
+  zoneIds: number[];
+  departmentId: number;
+  primaryRoleId: number;
+  secondaryDepartmentId?: number;
+  secondaryRoleId?: number;
+  assignBuddyRm: boolean;
+  buddyRmUserId?: string;
+  profiles: {
+    primary: UserPermissionProfile;
+    secondary?: UserPermissionProfile;
+    buddyRm?: UserPermissionProfile;
+  };
+}

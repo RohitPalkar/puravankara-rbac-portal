@@ -1,27 +1,32 @@
-import { useState, useCallback } from 'react';
+import type { Status } from 'src/types';
+
+import { useState } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { useParams, useNavigate } from 'react-router-dom';
-import Tabs from '@mui/material/Tabs';
+
 import Tab from '@mui/material/Tab';
-import Card from '@mui/material/Card';
-import Stack from '@mui/material/Stack';
-import Typography from '@mui/material/Typography';
-import Button from '@mui/material/Button';
 import Box from '@mui/material/Box';
-import TextField from '@mui/material/TextField';
-import MenuItem from '@mui/material/MenuItem';
+import Tabs from '@mui/material/Tabs';
+import Card from '@mui/material/Card';
 import Chip from '@mui/material/Chip';
-import Checkbox from '@mui/material/Checkbox';
-import FormControlLabel from '@mui/material/FormControlLabel';
-import FormGroup from '@mui/material/FormGroup';
+import Stack from '@mui/material/Stack';
+import Button from '@mui/material/Button';
 import Divider from '@mui/material/Divider';
-import type { Status } from 'src/types';
-import { CONFIG } from 'src/config-global';
-import { PageContainer, PageHeader } from 'src/components/page-layout';
-import { Iconify } from 'src/components/iconify';
-import { PermissionTree, type PermissionSelection } from 'src/components/permission-tree';
-import { mockUsers, mockDepartments, mockRoles, mockProjects, mockZones, mockModules, mockSubModules, mockActions } from 'src/services/mock-data';
+import MenuItem from '@mui/material/MenuItem';
+import Checkbox from '@mui/material/Checkbox';
+import TextField from '@mui/material/TextField';
+import FormGroup from '@mui/material/FormGroup';
+import Typography from '@mui/material/Typography';
+import FormControlLabel from '@mui/material/FormControlLabel';
+
 import { paths } from 'src/routes/paths';
+
+import { CONFIG } from 'src/config-global';
+import { mockUsers, mockRoles, mockModules, mockActions, mockProjects, mockSubModules, mockDepartments } from 'src/services/mock-data';
+
+import { Iconify } from 'src/components/iconify';
+import { PageHeader, PageContainer } from 'src/components/page-layout';
+import { PermissionTree, type PermissionSelection } from 'src/components/permission-tree';
 
 const TABS = ['Profile', 'Project Access', 'Permissions'];
 const STATUS_OPTIONS = [

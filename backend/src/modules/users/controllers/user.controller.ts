@@ -16,6 +16,7 @@ import {
   UserRoleService,
   UserReportingLineService,
 } from '../services/user.service';
+import { UserMetadataService } from '../services/user-metadata.service';
 import {
   CreateUserDto,
   UpdateUserDto,
@@ -29,7 +30,16 @@ import { PaginationQueryDto } from '../../../common/dto/pagination-query.dto';
 @ApiBearerAuth()
 @Controller('users')
 export class UserController {
-  constructor(private readonly userService: UserService) {}
+  constructor(
+    private readonly userService: UserService,
+    private readonly metadataService: UserMetadataService,
+  ) {}
+
+  @Get('metadata')
+  @ApiOperation({ summary: 'Get all dropdown metadata for user management' })
+  async getMetadata() {
+    return this.metadataService.getMetadata();
+  }
 
   @Get()
   @ApiOperation({ summary: 'List all users' })

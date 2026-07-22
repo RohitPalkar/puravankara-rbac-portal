@@ -17,6 +17,12 @@ export enum EmploymentStatus {
   SERVING_NOTICE = 'SERVING_NOTICE',
 }
 
+export enum ProfileType {
+  PRIMARY = 'PRIMARY',
+  SECONDARY = 'SECONDARY',
+  BUDDY_RM = 'BUDDY_RM',
+}
+
 export enum AuthProvider {
   LOCAL = 'LOCAL',
   AZURE_AD = 'AZURE_AD',

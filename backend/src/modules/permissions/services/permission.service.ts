@@ -13,6 +13,7 @@ import { UserProjectGroup } from '../../project-access/entities/user-project-gro
 import { ProjectGroupProject } from '../../project-access/entities/project-group-project.entity';
 import { Module } from '../../product-catalog/entities/module.entity';
 import { SubModule } from '../../product-catalog/entities/sub-module.entity';
+import { ModuleAction } from '../../product-catalog/entities/module-action.entity';
 import { Action } from '../../product-catalog/entities/action.entity';
 import { PermissionCacheService } from './permission-cache.service';
 import { PermissionCompilerService } from './permission-compiler.service';
@@ -23,6 +24,10 @@ import {
   ExplainPermissionResponse,
   ExplainStep,
 } from '../dto/explain-permission.dto';
+import { PermissionProfile } from '../entities/permission-profile.entity';
+import { PermissionProfileModule } from '../entities/permission-profile-module.entity';
+import { PermissionProfileSubModule } from '../entities/permission-profile-sub-module.entity';
+import { PermissionProfileProject } from '../entities/permission-profile-project.entity';
 
 @Injectable()
 export class PermissionService {
@@ -53,8 +58,18 @@ export class PermissionService {
     private readonly moduleRepo: Repository<Module>,
     @InjectRepository(SubModule)
     private readonly subModuleRepo: Repository<SubModule>,
+    @InjectRepository(ModuleAction)
+    private readonly moduleActionRepo: Repository<ModuleAction>,
     @InjectRepository(Action)
     private readonly actionRepo: Repository<Action>,
+    @InjectRepository(PermissionProfile)
+    private readonly profileRepo: Repository<PermissionProfile>,
+    @InjectRepository(PermissionProfileModule)
+    private readonly profileModuleRepo: Repository<PermissionProfileModule>,
+    @InjectRepository(PermissionProfileSubModule)
+    private readonly profileSubModuleRepo: Repository<PermissionProfileSubModule>,
+    @InjectRepository(PermissionProfileProject)
+    private readonly profileProjectRepo: Repository<PermissionProfileProject>,
     private readonly cacheService: PermissionCacheService,
     private readonly compilerService: PermissionCompilerService,
   ) {}
@@ -150,6 +165,16 @@ export class PermissionService {
     );
     if (hasTemplatePermission) {
       return { allowed: true, source: 'template' };
+    }
+
+    const hasProfilePermission = await this.hasProfilePermission(
+      userId,
+      projectId,
+      module.id,
+      action.id,
+    );
+    if (hasProfilePermission) {
+      return { allowed: true, source: 'profile' };
     }
 
     return {
@@ -295,6 +320,26 @@ export class PermissionService {
       step: 'TEMPLATE_PERMISSION',
       result: false,
       message: 'No template-based permission found',
+    });
+
+    const hasProfilePermission = await this.hasProfilePermission(
+      userId,
+      projectId,
+      module.id,
+      action.id,
+    );
+    if (hasProfilePermission) {
+      explanation.push({
+        step: 'PROFILE_PERMISSION',
+        result: true,
+        message: 'Allowed through permission profile',
+      });
+      return { allowed: true, source: 'profile', explanation };
+    }
+    explanation.push({
+      step: 'PROFILE_PERMISSION',
+      result: false,
+      message: 'No profile-based permission found',
     });
 
     explanation.push({
@@ -600,6 +645,43 @@ export class PermissionService {
     return count > 0;
   }
 
+  private async hasProfilePermission(
+    userId: string,
+    projectId: number,
+    moduleId: number,
+    actionId: number,
+  ): Promise<boolean> {
+    const profiles = await this.profileRepo.find({
+      where: { userId },
+      relations: { modules: { subModules: { projects: true } } },
+    });
+    if (!profiles.length) return false;
+
+    const moduleActions = await this.moduleActionRepo.find({
+      where: { moduleId, actionId, isActive: true },
+    });
+    if (!moduleActions.length) return false;
+
+    const allowedSubModuleIds = moduleActions
+      .filter((ma) => ma.subModuleId)
+      .map((ma) => ma.subModuleId);
+
+    for (const profile of profiles) {
+      for (const mod of profile.modules ?? []) {
+        if (mod.moduleId !== moduleId) continue;
+        for (const sm of mod.subModules ?? []) {
+          if (allowedSubModuleIds.length > 0 && !allowedSubModuleIds.includes(sm.subModuleId)) continue;
+          // inherit_future_projects grants access to all projects
+          if (sm.inheritFutureProjects) return true;
+          for (const proj of sm.projects ?? []) {
+            if (proj.projectId === projectId) return true;
+          }
+        }
+      }
+    }
+    return false;
+  }
+
   private async getUserModulePermissionsNested(
     userId: string,
     projectId: number,
@@ -690,6 +772,12 @@ export class PermissionService {
           where: { userId, projectId, moduleId: mod.id },
         });
 
+        // Fetch profile-based module access
+        const profiles = await this.profileRepo.find({
+          where: { userId },
+          relations: { modules: { subModules: { projects: true } } },
+        });
+
         if (subModules.length > 0) {
           for (const sm of subModules) {
             const smRolePerms = rolePerms.filter(
@@ -712,6 +800,25 @@ export class PermissionService {
                 grantedActionIds.add(o.actionId);
             }
 
+            // Check profile-based access for this subModule + project
+            for (const profile of profiles) {
+              for (const pMod of profile.modules ?? []) {
+                if (pMod.moduleId !== mod.id) continue;
+                for (const pSm of pMod.subModules ?? []) {
+                  if (pSm.subModuleId !== sm.id) continue;
+                  if (pSm.inheritFutureProjects) {
+                    for (const a of allActions) grantedActionIds.add(a.id);
+                  } else {
+                    for (const pProj of pSm.projects ?? []) {
+                      if (pProj.projectId === projectId) {
+                        for (const a of allActions) grantedActionIds.add(a.id);
+                      }
+                    }
+                  }
+                }
+              }
+            }
+
             const actions = allActions
               .filter((a) => grantedActionIds.has(a.id))
               .map((a) => ({ code: a.code, label: a.label, allowed: true }));
@@ -728,6 +835,24 @@ export class PermissionService {
             if (o.permissionType === 'DENY')
               grantedActionIds.delete(o.actionId);
             if (o.permissionType === 'ALLOW') grantedActionIds.add(o.actionId);
+          }
+
+          // Check profile-based access for this module (no subModules)
+          for (const profile of profiles) {
+            for (const pMod of profile.modules ?? []) {
+              if (pMod.moduleId !== mod.id) continue;
+              for (const pSm of pMod.subModules ?? []) {
+                if (pSm.inheritFutureProjects) {
+                  for (const a of allActions) grantedActionIds.add(a.id);
+                } else {
+                  for (const pProj of pSm.projects ?? []) {
+                    if (pProj.projectId === projectId) {
+                      for (const a of allActions) grantedActionIds.add(a.id);
+                    }
+                  }
+                }
+              }
+            }
           }
 
           if (grantedActionIds.size > 0) {
