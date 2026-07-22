@@ -29,6 +29,7 @@ export class ProjectService extends BaseService<Project> {
   ): Promise<PaginatedResult<Project>> {
     const { page = 1, limit = 100, search, sortBy = 'createdAt', sortOrder = 'DESC', ...filters } = query;
     const qb = this.repository.createQueryBuilder('project')
+      .leftJoinAndSelect('project.incentiveRules', 'incentiveRule')
       .leftJoin('project.brand', 'brand')
       .leftJoin('project.city', 'city')
       .addSelect(['brand.id', 'brand.brandName'])
