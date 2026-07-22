@@ -1,13 +1,11 @@
 import { z as zod } from 'zod';
 import { useForm } from 'react-hook-form';
-import { useState, useCallback } from 'react';
+import { useState } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 
 import Box from '@mui/material/Box';
 import Link from '@mui/material/Link';
 import Alert from '@mui/material/Alert';
-import Stack from '@mui/material/Stack';
-import Tooltip from '@mui/material/Tooltip';
 import Checkbox from '@mui/material/Checkbox';
 import Typography from '@mui/material/Typography';
 import IconButton from '@mui/material/IconButton';
@@ -40,9 +38,6 @@ export const SignInSchema = zod.object({
     .min(6, { message: 'Password must be at least 6 characters!' }),
 });
 
-const DEMO_EMAIL = 'admin@puravankara.com';
-const DEMO_PASSWORD = 'Admin@123456';
-
 export function JwtSignInView() {
   const router = useRouter();
 
@@ -50,14 +45,11 @@ export function JwtSignInView() {
 
   const [errorMsg, setErrorMsg] = useState('');
 
-  const [copiedEmail, setCopiedEmail] = useState(false);
-  const [copiedPassword, setCopiedPassword] = useState(false);
-
   const password = useBoolean();
 
   const defaultValues = {
-    email: DEMO_EMAIL,
-    password: DEMO_PASSWORD,
+    email: '',
+    password: '',
   };
 
   const methods = useForm<SignInSchemaType>({
@@ -80,21 +72,6 @@ export function JwtSignInView() {
       setErrorMsg(typeof error === 'string' ? error : error.message);
     }
   });
-
-  const handleCopy = useCallback(async (text: string, type: 'email' | 'password') => {
-    try {
-      await navigator.clipboard.writeText(text);
-      if (type === 'email') {
-        setCopiedEmail(true);
-        setTimeout(() => setCopiedEmail(false), 2000);
-      } else {
-        setCopiedPassword(true);
-        setTimeout(() => setCopiedPassword(false), 2000);
-      }
-    } catch {
-      // clipboard not available
-    }
-  }, []);
 
   const renderHeader = (
     <Box
@@ -230,60 +207,6 @@ export function JwtSignInView() {
     </Box>
   );
 
-  const renderDemoBanner = (
-    <Box
-      sx={{
-        bgcolor: '#EEF2FF',
-        borderRadius: 1.5,
-        p: 2.5,
-      }}
-    >
-      <Typography variant="subtitle2" sx={{ color: '#2F3C98', mb: 1.5, fontWeight: 600 }}>
-        Demo Credentials
-      </Typography>
-      <Stack spacing={1}>
-        <Box display="flex" alignItems="center" justifyContent="space-between">
-          <Box>
-            <Typography variant="caption" sx={{ color: 'text.disabled', fontWeight: 500 }}>
-              Email
-            </Typography>
-            <Typography variant="body2" sx={{ color: 'text.primary', fontWeight: 500, mt: 0.25 }}>
-              {DEMO_EMAIL}
-            </Typography>
-          </Box>
-          <Tooltip title={copiedEmail ? 'Copied!' : 'Copy'}>
-            <IconButton
-              size="small"
-              onClick={() => handleCopy(DEMO_EMAIL, 'email')}
-              sx={{ color: copiedEmail ? 'success.main' : 'text.disabled' }}
-            >
-              <Iconify icon={copiedEmail ? 'solar:check-circle-bold' : 'solar:copy-bold'} width={18} />
-            </IconButton>
-          </Tooltip>
-        </Box>
-        <Box display="flex" alignItems="center" justifyContent="space-between">
-          <Box>
-            <Typography variant="caption" sx={{ color: 'text.disabled', fontWeight: 500 }}>
-              Password
-            </Typography>
-            <Typography variant="body2" sx={{ color: 'text.primary', fontWeight: 500, mt: 0.25 }}>
-              {DEMO_PASSWORD}
-            </Typography>
-          </Box>
-          <Tooltip title={copiedPassword ? 'Copied!' : 'Copy'}>
-            <IconButton
-              size="small"
-              onClick={() => handleCopy(DEMO_PASSWORD, 'password')}
-              sx={{ color: copiedPassword ? 'success.main' : 'text.disabled' }}
-            >
-              <Iconify icon={copiedPassword ? 'solar:check-circle-bold' : 'solar:copy-bold'} width={18} />
-            </IconButton>
-          </Tooltip>
-        </Box>
-      </Stack>
-    </Box>
-  );
-
   return (
     <Box sx={{ display: 'flex', height: '100vh', bgcolor: 'background.default' }}>
       {renderHeader}
@@ -313,8 +236,6 @@ export function JwtSignInView() {
               </Typography>
             </Box>
 
-            {renderDemoBanner}
-
             {!!errorMsg && (
               <Alert severity="error" onClose={() => setErrorMsg('')} sx={{ borderRadius: 1.5 }}>
                 {errorMsg}
@@ -324,13 +245,6 @@ export function JwtSignInView() {
             <Form methods={methods} onSubmit={onSubmit}>
               {renderForm}
             </Form>
-
-            <Typography
-              variant="caption"
-              sx={{ color: 'text.disabled', textAlign: 'center', display: 'block' }}
-            >
-              Connected to Development Server
-            </Typography>
           </Stack>
         </Box>
       </Box>
