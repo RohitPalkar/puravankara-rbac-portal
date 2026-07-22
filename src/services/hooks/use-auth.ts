@@ -10,7 +10,7 @@ export function useMe() {
     queryKey: queryKeys.auth.me,
     queryFn: async () => {
       const res = await authService.me();
-      return res.data;
+      return res.data.user;
     },
   });
 }
