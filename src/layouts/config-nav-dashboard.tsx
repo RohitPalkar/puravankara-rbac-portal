@@ -57,18 +57,17 @@ export function useNavData() {
     const dynamicItems = !permissionsReady ? [] : (moduleTree ?? [])
       .filter((mod) => allowedModuleIds.has(mod.id))
       .map((mod) => {
+        const moduleSlug = slugify(mod.code ?? mod.name);
         const subItems = mod.subModules
           .filter((sm) => allowedSubModuleIds.has(sm.id))
           .map((sm) => ({
             title: sm.name,
-            path: `${paths.dashboard.root}/modules/${slugify(mod.code ?? mod.name)}/${slugify(sm.name)}`,
+            path: paths.dashboard.modules.dashboard(moduleSlug),
           }));
 
         return {
           title: mod.name,
-          path: subItems.length > 0
-            ? subItems[0].path
-            : `${paths.dashboard.root}/modules/${slugify(mod.code ?? mod.name)}`,
+          path: paths.dashboard.modules.dashboard(moduleSlug),
           icon: ICONS.module,
           ...(subItems.length > 0 && { children: subItems }),
         };

@@ -7,8 +7,13 @@ export const _account = [
     icon: <Iconify icon="solar:user-id-bold-duotone" />,
   },
   {
-    label: 'Account settings',
+    label: 'Change Password',
     href: '#',
-    icon: <Iconify icon="solar:settings-bold-duotone" />,
+    icon: <Iconify icon="solar:lock-keyhole-bold-duotone" />,
+  },
+  {
+    label: 'Preferences',
+    href: '#',
+    icon: <Iconify icon="solar:tuning-2-bold-duotone" />,
   },
 ];

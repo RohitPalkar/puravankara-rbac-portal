@@ -76,5 +76,15 @@ export const paths = {
     // System
     auditLogs: `${ROOTS.DASHBOARD}/audit-logs`,
     notifications: `${ROOTS.DASHBOARD}/notifications`,
+    // Modules (RBAC Showcase)
+    modules: {
+      root: `${ROOTS.DASHBOARD}/modules`,
+      dashboard: (code: string) => `${ROOTS.DASHBOARD}/modules/${code}`,
+      list: (code: string) => `${ROOTS.DASHBOARD}/modules/${code}/list`,
+      new: (code: string) => `${ROOTS.DASHBOARD}/modules/${code}/new`,
+      view: (code: string, id: string | number) => `${ROOTS.DASHBOARD}/modules/${code}/${id}`,
+      edit: (code: string, id: string | number) => `${ROOTS.DASHBOARD}/modules/${code}/${id}/edit`,
+      delete: (code: string, id: string | number) => `${ROOTS.DASHBOARD}/modules/${code}/${id}/delete`,
+    },
   },
 };

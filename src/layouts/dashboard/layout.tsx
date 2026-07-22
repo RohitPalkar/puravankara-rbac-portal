@@ -23,6 +23,8 @@ import { HeaderSection } from '../core/header-section';
 import { StyledDivider, useNavColorVars } from './styles';
 import { AccountDrawer } from '../components/account-drawer';
 import { SettingsButton } from '../components/settings-button';
+import { FullscreenButton } from '../components/fullscreen-button';
+import { DashboardFooter } from '../components/dashboard-footer';
 import { useNavData } from '../config-nav-dashboard';
 
 export type DashboardLayoutProps = {
@@ -125,6 +127,7 @@ export function DashboardLayout({ sx, children, header, data }: DashboardLayoutP
             rightArea: (
               <Box display="flex" alignItems="center" gap={{ xs: 0, sm: 0.75 }}>
                 <Searchbar data={navData} />
+                <FullscreenButton />
                 <SettingsButton />
                 <AccountDrawer data={_account} />
               </Box>
@@ -148,7 +151,7 @@ export function DashboardLayout({ sx, children, header, data }: DashboardLayoutP
           />
         )
       }
-      footerSection={null}
+      footerSection={<DashboardFooter />}
       cssVars={{
         ...navColorVars.layout,
         '--layout-transition-easing': 'linear',
