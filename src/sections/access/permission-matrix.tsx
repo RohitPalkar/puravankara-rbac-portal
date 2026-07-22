@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react';
 import { Helmet } from 'react-helmet-async';
+import { useNavigate } from 'react-router-dom';
 import type { GridColDef } from '@mui/x-data-grid';
 import Button from '@mui/material/Button';
 import Stack from '@mui/material/Stack';
@@ -9,8 +10,6 @@ import DialogTitle from '@mui/material/DialogTitle';
 import DialogContent from '@mui/material/DialogContent';
 import DialogActions from '@mui/material/DialogActions';
 import Typography from '@mui/material/Typography';
-import Snackbar from '@mui/material/Snackbar';
-import Alert from '@mui/material/Alert';
 import dayjs from 'dayjs';
 import { DataTable } from 'src/components/data-table';
 import { Label } from 'src/components/label';
@@ -18,6 +17,7 @@ import { Iconify } from 'src/components/iconify';
 import { CONFIG } from 'src/config-global';
 import { PageContainer, PageHeader } from 'src/components/page-layout';
 import { RowActionsMenu } from 'src/components/row-actions';
+import { paths } from 'src/routes/paths';
 import { useRolePermissionsSummary } from 'src/services/hooks/use-permissions';
 
 interface RoleSummaryRow {
@@ -35,22 +35,28 @@ interface RoleSummaryRow {
 }
 
 export default function PermissionMatrixPage() {
+  const navigate = useNavigate();
   const { data: rows, isLoading } = useRolePermissionsSummary();
 
   const [deactivateId, setDeactivateId] = useState<number | null>(null);
-  const [comingSoon, setComingSoon] = useState('');
 
-  const handleEdit = useCallback(() => {
-    setComingSoon('Edit flow coming in next update');
-  }, []);
+  const handleEdit = useCallback(
+    (row: RoleSummaryRow) => {
+      navigate(paths.dashboard.permissionMatrixEdit(row.id));
+    },
+    [navigate],
+  );
 
-  const handleView = useCallback(() => {
-    setComingSoon('View flow coming in next update');
-  }, []);
+  const handleView = useCallback(
+    (row: RoleSummaryRow) => {
+      navigate(paths.dashboard.permissionMatrixView(row.id));
+    },
+    [navigate],
+  );
 
   const handleNew = useCallback(() => {
-    setComingSoon('Create Mapping wizard coming in next update');
-  }, []);
+    navigate(paths.dashboard.permissionMatrixNew);
+  }, [navigate]);
 
   const handleToggleStatus = useCallback(
     (row: RoleSummaryRow) => {
@@ -83,9 +89,9 @@ export default function PermissionMatrixPage() {
       renderCell: (params) => (
         <Stack alignItems="center" sx={{ height: 1, justifyContent: 'center' }}>
           <RowActionsMenu actions={[
-            { label: 'Edit', icon: 'solar:pen-bold', onClick: () => { handleEdit(); } },
+            { label: 'Edit', icon: 'solar:pen-bold', onClick: () => handleEdit(params.row as RoleSummaryRow) },
             { label: params.row.isActive ? 'Deactivate' : 'Activate', icon: params.row.isActive ? 'solar:forbidden-circle-bold' : 'solar:check-circle-bold', onClick: () => handleToggleStatus(params.row as RoleSummaryRow) },
-            { label: 'View', icon: 'solar:eye-bold', onClick: () => { handleView(); } },
+            { label: 'View', icon: 'solar:eye-bold', onClick: () => handleView(params.row as RoleSummaryRow) },
           ]} />
         </Stack>
       ),
@@ -123,11 +129,6 @@ export default function PermissionMatrixPage() {
         </DialogActions>
       </Dialog>
 
-      <Snackbar open={!!comingSoon} autoHideDuration={3000} onClose={() => setComingSoon('')} anchorOrigin={{ vertical: 'top', horizontal: 'center' }}>
-        <Alert severity="info" variant="filled" onClose={() => setComingSoon('')}>
-          {comingSoon}
-        </Alert>
-      </Snackbar>
     </>
   );
 }

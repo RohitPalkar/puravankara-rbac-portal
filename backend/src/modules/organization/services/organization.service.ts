@@ -29,6 +29,10 @@ export class DepartmentService {
     private readonly hierarchyRepo: Repository<DepartmentHierarchyLevel>,
     @InjectRepository(DepartmentZoneMapping)
     private readonly zoneMappingRepo: Repository<DepartmentZoneMapping>,
+    @InjectRepository(DepartmentRole)
+    private readonly deptRoleRepo: Repository<DepartmentRole>,
+    @InjectRepository(Role)
+    private readonly roleRepo: Repository<Role>,
     private readonly dependencyValidator: DependencyValidatorService,
     private readonly dataSource: DataSource,
   ) {}
@@ -242,6 +246,43 @@ export class DepartmentService {
       roleName: hl.roleName,
       displayOrder: hl.displayOrder,
     }));
+  }
+
+  async getRoleForHierarchyLevel(departmentId: number, levelNumber: number): Promise<any> {
+    const dept = await this.repository.findOne({
+      where: { id: departmentId, deletedAt: null },
+    });
+    if (!dept) {
+      throw new NotFoundException('Department not found');
+    }
+
+    const hierarchyLevel = await this.hierarchyRepo.findOne({
+      where: { departmentId, levelNumber, isActive: true },
+    });
+    if (!hierarchyLevel) {
+      throw new NotFoundException('Hierarchy level not found');
+    }
+
+    const role = await this.repository.manager
+      .createQueryBuilder()
+      .select('r.id', 'roleId')
+      .addSelect('r.name', 'roleName')
+      .from(Role, 'r')
+      .innerJoin('department_roles', 'dr', 'dr.role_id = r.id AND dr.department_id = :deptId', { deptId: departmentId })
+      .where('r.hierarchy_level_rank = :level', { level: levelNumber })
+      .andWhere('r.deletedAt IS NULL')
+      .andWhere('r.is_active = :active', { active: true })
+      .getRawOne();
+
+    if (!role) {
+      return { roleId: null, roleName: null, hierarchyLevel: `L${levelNumber}` };
+    }
+
+    return {
+      hierarchyLevel: `L${levelNumber}`,
+      roleName: role.roleName,
+      roleId: role.roleId,
+    };
   }
 
   async remove(id: number): Promise<void> {

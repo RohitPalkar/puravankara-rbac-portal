@@ -132,6 +132,7 @@ export const endpoints = {
     update: (id: number) => `${API_PREFIX}/departments/${id}`,
     delete: (id: number) => `${API_PREFIX}/departments/${id}`,
     hierarchyLevels: (id: number) => `${API_PREFIX}/departments/${id}/hierarchy-levels`,
+    roleForHierarchy: (id: number, levelNumber: number) => `${API_PREFIX}/departments/${id}/hierarchy-levels/${levelNumber}`,
   },
 
   roles: {

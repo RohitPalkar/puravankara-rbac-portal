@@ -96,6 +96,16 @@ export class DepartmentController {
     return this.departmentService.getHierarchyLevels(id);
   }
 
+  @Get(':id/hierarchy-levels/:levelNumber')
+  @ApiOperation({ summary: 'Get the role configured for a department + hierarchy level' })
+  @ApiResponse({ status: 200, description: 'Role found or null' })
+  async getRoleForHierarchyLevel(
+    @Param('id', ParseIntPipe) id: number,
+    @Param('levelNumber', ParseIntPipe) levelNumber: number,
+  ) {
+    return this.departmentService.getRoleForHierarchyLevel(id, levelNumber);
+  }
+
   @Delete(':id')
   @ApiOperation({ summary: 'Soft delete department' })
   @ApiResponse({ status: 200, description: 'Department deleted' })

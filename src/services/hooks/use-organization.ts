@@ -42,6 +42,17 @@ export function useDepartmentHierarchyLevels(departmentId: number | undefined) {
   });
 }
 
+export function useRoleForHierarchy(departmentId: number | undefined, levelNumber: number | undefined) {
+  return useQuery({
+    queryKey: [...queryKeys.departments.hierarchyLevels(departmentId!), String(levelNumber)],
+    queryFn: async () => {
+      const res = await departmentService.roleForHierarchy(departmentId!, levelNumber!);
+      return res.data;
+    },
+    enabled: !!departmentId && !!levelNumber,
+  });
+}
+
 export function useDepartmentListV2(params?: Record<string, unknown>) {
   return useQuery({
     queryKey: [...queryKeys.departments.list(params)],

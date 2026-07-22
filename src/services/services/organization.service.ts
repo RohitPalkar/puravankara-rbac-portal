@@ -24,6 +24,8 @@ export const departmentService = {
   ..._departmentCrud,
   hierarchyLevels: async (id: number): Promise<ApiResponse<any[]>> =>
     apiGet<any[]>(endpoints.departments.hierarchyLevels(id)),
+  roleForHierarchy: async (id: number, levelNumber: number): Promise<ApiResponse<{ hierarchyLevel: string; roleName: string | null; roleId: number | null }>> =>
+    apiGet<{ hierarchyLevel: string; roleName: string | null; roleId: number | null }>(endpoints.departments.roleForHierarchy(id, levelNumber)),
 };
 
 export const roleService = createCrudService<Role, CreateRoleRequest, UpdateRoleRequest>({
