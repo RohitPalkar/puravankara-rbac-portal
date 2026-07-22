@@ -98,7 +98,7 @@ export default function ChannelPartnerFormPage() {
         {saving && <LinearProgress />}
 
         <Card sx={{ p: 3 }}>
-          <FormSection title="Basic Details" description="Channel partner identity and enrollment period">
+          <FormSection title="Basic Details" >
             <TextField label="CP Name" value={cpName} onChange={(e) => { setCpName(e.target.value); setCpNameError(''); }} error={!!cpNameError} helperText={cpNameError} required fullWidth />
             <TextField label="CP ID" value={cpId} onChange={(e) => setCpId(e.target.value)} required fullWidth />
             <TextField label="CP Type" value={cpTypeId} onChange={(e) => setCpTypeId(e.target.value)} select required fullWidth>
