@@ -66,6 +66,9 @@ export const paths = {
     userRoleMapping: `${ROOTS.DASHBOARD}/user-role-mapping`,
     projectAssignment: `${ROOTS.DASHBOARD}/project-assignment`,
     permissionMatrix: `${ROOTS.DASHBOARD}/permission-matrix`,
+    permissionMatrixNew: `${ROOTS.DASHBOARD}/permission-matrix/new`,
+    permissionMatrixEdit: (id: number) => `${ROOTS.DASHBOARD}/permission-matrix/${id}/edit`,
+    permissionMatrixView: (id: number) => `${ROOTS.DASHBOARD}/permission-matrix/${id}`,
     // Workflow
     approvalConfig: `${ROOTS.DASHBOARD}/approval-config`,
     approvalInbox: `${ROOTS.DASHBOARD}/approval-inbox`,

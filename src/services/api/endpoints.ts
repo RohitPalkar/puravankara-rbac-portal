@@ -131,6 +131,7 @@ export const endpoints = {
     create: `${API_PREFIX}/departments`,
     update: (id: number) => `${API_PREFIX}/departments/${id}`,
     delete: (id: number) => `${API_PREFIX}/departments/${id}`,
+    hierarchyLevels: (id: number) => `${API_PREFIX}/departments/${id}/hierarchy-levels`,
   },
 
   roles: {
@@ -139,6 +140,12 @@ export const endpoints = {
     create: `${API_PREFIX}/roles`,
     update: (id: number) => `${API_PREFIX}/roles/${id}`,
     delete: (id: number) => `${API_PREFIX}/roles/${id}`,
+    permissionsSummary: `${API_PREFIX}/roles/permissions-summary`,
+    permissions: {
+      byRole: (roleId: number) => `${API_PREFIX}/roles/${roleId}/permissions`,
+      tree: (roleId: number) => `${API_PREFIX}/roles/${roleId}/permissions/tree`,
+      set: (roleId: number) => `${API_PREFIX}/roles/${roleId}/permissions`,
+    },
   },
 
   departmentRoles: {

@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { PermissionsModule } from '../permissions/permissions.module';
 import { Department } from './entities/department.entity';
 import { Role } from './entities/role.entity';
 import { DepartmentRole } from './entities/department-role.entity';
@@ -25,6 +26,7 @@ import { DepartmentRoleController } from './controllers/department-role.controll
       DepartmentHierarchyLevel,
       DepartmentZoneMapping,
     ]),
+    PermissionsModule,
   ],
   controllers: [DepartmentController, RoleController, DepartmentRoleController],
   providers: [DepartmentService, RoleService, DepartmentRoleService],

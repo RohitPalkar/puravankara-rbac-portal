@@ -7,6 +7,7 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, DataSource, ILike, FindOptionsWhere } from 'typeorm';
 import { Department } from '../entities/department.entity';
+import { DepartmentRole } from '../entities/department-role.entity';
 import { DepartmentHierarchyLevel } from '../entities/department-hierarchy-level.entity';
 import { DepartmentZoneMapping } from '../entities/department-zone-mapping.entity';
 import { Role } from '../entities/role.entity';
@@ -222,6 +223,27 @@ export class DepartmentService {
     }
   }
 
+  async getHierarchyLevels(departmentId: number): Promise<any[]> {
+    const dept = await this.repository.findOne({
+      where: { id: departmentId, deletedAt: null },
+    });
+    if (!dept) {
+      throw new NotFoundException('Department not found');
+    }
+
+    const levels = await this.hierarchyRepo.find({
+      where: { departmentId, isActive: true },
+      order: { levelNumber: 'ASC' },
+    });
+
+    return levels.map((hl) => ({
+      id: hl.id,
+      levelNumber: hl.levelNumber,
+      roleName: hl.roleName,
+      displayOrder: hl.displayOrder,
+    }));
+  }
+
   async remove(id: number): Promise<void> {
     await this.dependencyValidator.assertDepartmentDeletable(id);
     const dept = await this.repository.findOne({
@@ -302,9 +324,114 @@ export class RoleService extends BaseService<Role> {
     readonly repository: Repository<Role>,
     @InjectRepository(Department)
     private readonly deptRepo: Repository<Department>,
+    @InjectRepository(DepartmentRole)
+    private readonly deptRoleRepo: Repository<DepartmentRole>,
+    @InjectRepository(DepartmentHierarchyLevel)
+    private readonly hierarchyLevelRepo: Repository<DepartmentHierarchyLevel>,
     private readonly dependencyValidator: DependencyValidatorService,
   ) {
     super(repository);
+  }
+
+  async getPermissionsSummary(): Promise<any[]> {
+    const roles = await this.repository.find({
+      where: { deletedAt: null },
+      order: { name: 'ASC' },
+    });
+
+    const deptRoles = await this.deptRoleRepo.find({ relations: { department: true } });
+    const roleDeptMap = new Map<number, any>();
+    deptRoles.forEach((dr) => {
+      roleDeptMap.set(dr.roleId, dr.department);
+    });
+
+    const countRows: { role_id: number; module_count: string; permission_count: string }[] =
+      await this.repository.manager.query(
+        `SELECT
+           ra.role_id,
+           COUNT(DISTINCT ra.module_id) as module_count,
+           COUNT(ra.id) as permission_count
+         FROM role_action_permissions ra
+         GROUP BY ra.role_id`,
+      );
+    const countMap = new Map<number, { modules: number; permissions: number }>();
+    countRows.forEach((r) =>
+      countMap.set(Number(r.role_id), {
+        modules: Number(r.module_count),
+        permissions: Number(r.permission_count),
+      }),
+    );
+
+    return roles.map((role) => {
+      const dept = roleDeptMap.get(role.id);
+      const counts = countMap.get(role.id) ?? { modules: 0, permissions: 0 };
+      return {
+        id: role.id,
+        name: role.name,
+        hierarchyLevelRank: role.hierarchyLevelRank,
+        departmentId: dept?.id ?? null,
+        departmentName: dept?.name ?? null,
+        isActive: role.isActive,
+        isSystemRole: role.isSystemRole,
+        moduleCount: counts.modules,
+        permissionCount: counts.permissions,
+        createdAt: role.createdAt,
+        updatedAt: role.updatedAt,
+      };
+    });
+  }
+
+  async findAll(query: any, searchableFields: string[] = ['name']): Promise<any> {
+    const {
+      page = 1,
+      limit = 20,
+      search,
+      sortBy = 'createdAt',
+      sortOrder = 'DESC',
+      departmentId,
+      hierarchyLevelRank,
+      ...filters
+    } = query;
+
+    const qb = this.repository
+      .createQueryBuilder('role')
+      .where('role.deletedAt IS NULL');
+
+    if (search) {
+      qb.andWhere('role.name ILIKE :search', { search: `%${search}%` });
+    }
+
+    if (departmentId) {
+      qb.innerJoin(
+        'department_roles',
+        'dr',
+        'dr.role_id = role.id AND dr.department_id = :deptId',
+        { deptId: Number(departmentId) },
+      );
+    }
+
+    if (hierarchyLevelRank) {
+      qb.andWhere('role.hierarchy_level_rank = :level', {
+        level: Number(hierarchyLevelRank),
+      });
+    }
+
+    for (const [key, value] of Object.entries(filters)) {
+      if (value !== undefined && value !== '' && value !== null) {
+        qb.andWhere(`role.${key} = :${key}`, { [key]: value });
+      }
+    }
+
+    qb.orderBy(`role.${sortBy}`, sortOrder)
+      .skip((page - 1) * limit)
+      .take(limit);
+
+    const [data, total] = await qb.getManyAndCount();
+
+    return {
+      data,
+      meta: { page, limit, total, totalPages: Math.ceil(total / limit) },
+    };
   }
 
   async create(dto: CreateRoleDto): Promise<Role> {

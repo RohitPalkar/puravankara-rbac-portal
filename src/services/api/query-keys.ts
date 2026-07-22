@@ -80,12 +80,18 @@ export const queryKeys = {
     all: ['departments'] as const,
     list: (params?: Record<string, unknown>) => ['departments', 'list', params] as const,
     byId: (id: number) => ['departments', id] as const,
+    hierarchyLevels: (id: number) => ['departments', id, 'hierarchy-levels'] as const,
   },
 
   roles: {
     all: ['roles'] as const,
     list: (params?: Record<string, unknown>) => ['roles', 'list', params] as const,
     byId: (id: number) => ['roles', id] as const,
+    permissionsSummary: ['roles', 'permissions-summary'] as const,
+    permissions: {
+      byRole: (roleId: number) => ['roles', roleId, 'permissions'] as const,
+      tree: (roleId: number) => ['roles', roleId, 'permissions', 'tree'] as const,
+    },
   },
 
   departmentRoles: {

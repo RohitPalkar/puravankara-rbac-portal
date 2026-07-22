@@ -203,3 +203,50 @@ export function useDeletePermissionOverride() {
     },
   });
 }
+
+export function useRolePermissionsSummary() {
+  return useQuery({
+    queryKey: queryKeys.roles.permissionsSummary,
+    queryFn: async () => {
+      const res = await permissionService.rolePermissions.summary();
+      return res.data;
+    },
+  });
+}
+
+export function useRolePermissions(roleId: number | undefined) {
+  return useQuery({
+    queryKey: queryKeys.roles.permissions.byRole(roleId!),
+    queryFn: async () => {
+      const res = await permissionService.rolePermissions.byRole(roleId!);
+      return res.data;
+    },
+    enabled: !!roleId,
+  });
+}
+
+export function useRolePermissionsTree(roleId: number | undefined) {
+  return useQuery({
+    queryKey: queryKeys.roles.permissions.tree(roleId!),
+    queryFn: async () => {
+      const res = await permissionService.rolePermissions.tree(roleId!);
+      return res.data;
+    },
+    enabled: !!roleId,
+  });
+}
+
+export function useSetRolePermissions(roleId: number) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (actionIds: number[]) => {
+      const res = await permissionService.rolePermissions.set(roleId, { actionIds });
+      return res.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.roles.permissions.byRole(roleId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.roles.permissions.tree(roleId) });
+    },
+  });
+}

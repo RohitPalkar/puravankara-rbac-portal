@@ -1,4 +1,4 @@
-import { apiGet, apiPost, apiDelete } from '../api/client';
+import { apiGet, apiPost, apiPut, apiDelete } from '../api/client';
 import { createCrudService, createEntity } from '../api/crud';
 import { endpoints } from '../api/endpoints';
 import type { ApiResponse } from '../types/api';
@@ -106,5 +106,19 @@ export const permissionService = {
 
     delete: async (id: number): Promise<ApiResponse<void>> =>
       apiDelete<void>(endpoints.permissions.overrides.delete(id)),
+  },
+
+  rolePermissions: {
+    summary: async (): Promise<ApiResponse<any[]>> =>
+      apiGet<any[]>(endpoints.roles.permissionsSummary),
+
+    byRole: async (roleId: number): Promise<ApiResponse<{ roleId: number; actionIds: number[] }>> =>
+      apiGet<{ roleId: number; actionIds: number[] }>(endpoints.roles.permissions.byRole(roleId)),
+
+    tree: async (roleId: number): Promise<ApiResponse<any>> =>
+      apiGet<any>(endpoints.roles.permissions.tree(roleId)),
+
+    set: async (roleId: number, data: { actionIds: number[] }): Promise<ApiResponse<{ message: string }>> =>
+      apiPut<{ message: string }>(endpoints.roles.permissions.set(roleId), data),
   },
 };

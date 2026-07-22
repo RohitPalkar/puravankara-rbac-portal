@@ -1,6 +1,7 @@
 import {
   Controller,
   Get,
+  Put,
   Post,
   Patch,
   Delete,
@@ -14,7 +15,9 @@ import {
   ApiOperation,
   ApiResponse,
   ApiTags,
+  ApiProperty,
 } from '@nestjs/swagger';
+import { IsArray, IsInt } from 'class-validator';
 import {
   DepartmentService,
   RoleService,
@@ -29,6 +32,14 @@ import { QueryDepartmentDto } from '../dto/query-department.dto';
 import { Department } from '../entities/department.entity';
 import { Role } from '../entities/role.entity';
 import { BaseController } from '../../../common/crud/base.controller';
+import { RoleActionPermissionService } from '../../permissions/services/role-action-permission.service';
+
+class SetRolePermissionsDto {
+  @ApiProperty({ type: [Number] })
+  @IsArray()
+  @IsInt({ each: true })
+  actionIds: number[];
+}
 
 @ApiTags('Organization - Departments')
 @ApiBearerAuth()
@@ -77,6 +88,14 @@ export class DepartmentController {
     return this.departmentService.update(id, dto);
   }
 
+  @Get(':id/hierarchy-levels')
+  @ApiOperation({ summary: 'Get hierarchy levels for a department' })
+  @ApiResponse({ status: 200, description: 'Hierarchy levels found' })
+  @ApiResponse({ status: 404, description: 'Department not found' })
+  async getHierarchyLevels(@Param('id', ParseIntPipe) id: number) {
+    return this.departmentService.getHierarchyLevels(id);
+  }
+
   @Delete(':id')
   @ApiOperation({ summary: 'Soft delete department' })
   @ApiResponse({ status: 200, description: 'Department deleted' })
@@ -95,7 +114,39 @@ export class RoleController extends BaseController<
   CreateRoleDto,
   UpdateRoleDto
 > {
-  constructor(private readonly roleService: RoleService) {
+  constructor(
+    private readonly roleService: RoleService,
+    private readonly roleActionPermissionService: RoleActionPermissionService,
+  ) {
     super(roleService, 'Role');
+  }
+
+  @Get('permissions-summary')
+  @ApiOperation({ summary: 'Get all roles with department info and permission counts' })
+  async getPermissionsSummary() {
+    return this.roleService.getPermissionsSummary();
+  }
+
+  @Get(':roleId/permissions')
+  @ApiOperation({ summary: 'Get permission action IDs for a role' })
+  async getPermissions(@Param('roleId', ParseIntPipe) roleId: number) {
+    const actionIds = await this.roleActionPermissionService.findByRole(roleId);
+    return { roleId, actionIds };
+  }
+
+  @Get(':roleId/permissions/tree')
+  @ApiOperation({ summary: 'Get module tree with permission counts for a role' })
+  async getPermissionsTree(@Param('roleId', ParseIntPipe) roleId: number) {
+    return this.roleActionPermissionService.getTreeWithPermissions(roleId);
+  }
+
+  @Put(':roleId/permissions')
+  @ApiOperation({ summary: 'Replace all permissions for a role' })
+  async setPermissions(
+    @Param('roleId', ParseIntPipe) roleId: number,
+    @Body() dto: SetRolePermissionsDto,
+  ) {
+    await this.roleActionPermissionService.setByRole(roleId, dto.actionIds);
+    return { message: 'Permissions updated successfully' };
   }
 }

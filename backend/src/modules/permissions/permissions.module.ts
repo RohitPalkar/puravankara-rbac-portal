@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { RoleProjectPermission } from './entities/role-project-permission.entity';
+import { RoleActionPermission } from './entities/role-action-permission.entity';
 import { PermissionTemplate } from './entities/permission-template.entity';
 import { TemplatePermission } from './entities/template-permission.entity';
 import { UserPermissionTemplate } from './entities/user-permission-template.entity';
@@ -21,6 +22,7 @@ import { UserProjectGroup } from '../project-access/entities/user-project-group.
 import { ProjectGroupProject } from '../project-access/entities/project-group-project.entity';
 import { Module as ProductModule } from '../product-catalog/entities/module.entity';
 import { SubModule } from '../product-catalog/entities/sub-module.entity';
+import { ActionGroup } from '../product-catalog/entities/action-group.entity';
 import { ModuleAction } from '../product-catalog/entities/module-action.entity';
 import { Action } from '../product-catalog/entities/action.entity';
 import { PermissionService } from './services/permission.service';
@@ -29,6 +31,7 @@ import { PermissionTemplateService } from './services/permission-template.servic
 import { PermissionCacheService } from './services/permission-cache.service';
 import { PermissionCompilerService } from './services/permission-compiler.service';
 import { PermissionProfileService } from './services/permission-profile.service';
+import { RoleActionPermissionService } from './services/role-action-permission.service';
 import { PermissionGuard } from './guards/permission.guard';
 import { PermissionController } from './permission.controller';
 import { UserPermissionOverrideController } from './user-permission-override.controller';
@@ -40,6 +43,7 @@ import { RoleProjectPermissionService } from './services/role-project-permission
   imports: [
     TypeOrmModule.forFeature([
       RoleProjectPermission,
+      RoleActionPermission,
       PermissionTemplate,
       TemplatePermission,
       UserPermissionTemplate,
@@ -60,6 +64,7 @@ import { RoleProjectPermissionService } from './services/role-project-permission
       ProjectGroupProject,
       ProductModule,
       SubModule,
+      ActionGroup,
       ModuleAction,
       Action,
     ]),
@@ -75,6 +80,7 @@ import { RoleProjectPermissionService } from './services/role-project-permission
     UserPermissionOverrideService,
     PermissionTemplateService,
     RoleProjectPermissionService,
+    RoleActionPermissionService,
     PermissionCacheService,
     PermissionCompilerService,
     PermissionProfileService,
@@ -85,6 +91,7 @@ import { RoleProjectPermissionService } from './services/role-project-permission
     PermissionCacheService,
     PermissionCompilerService,
     PermissionGuard,
+    RoleActionPermissionService,
     TypeOrmModule,
   ],
 })

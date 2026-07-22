@@ -12,13 +12,19 @@ import type {
   DepartmentRole,
 } from '../types/organization';
 
-export const departmentService = createCrudService<Department, CreateDepartmentRequest, UpdateDepartmentRequest>({
+const _departmentCrud = createCrudService<Department, CreateDepartmentRequest, UpdateDepartmentRequest>({
   list: endpoints.departments.list,
   byId: endpoints.departments.byId,
   create: endpoints.departments.create,
   update: endpoints.departments.update,
   delete: endpoints.departments.delete,
 });
+
+export const departmentService = {
+  ..._departmentCrud,
+  hierarchyLevels: async (id: number): Promise<ApiResponse<any[]>> =>
+    apiGet<any[]>(endpoints.departments.hierarchyLevels(id)),
+};
 
 export const roleService = createCrudService<Role, CreateRoleRequest, UpdateRoleRequest>({
   list: endpoints.roles.list,

@@ -31,6 +31,17 @@ export const {
   deleteFn: departmentService.delete,
 });
 
+export function useDepartmentHierarchyLevels(departmentId: number | undefined) {
+  return useQuery({
+    queryKey: queryKeys.departments.hierarchyLevels(departmentId!),
+    queryFn: async () => {
+      const res = await departmentService.hierarchyLevels(departmentId!);
+      return res.data as { id: number; levelNumber: number; roleName: string; displayOrder: number }[];
+    },
+    enabled: !!departmentId,
+  });
+}
+
 export function useDepartmentListV2(params?: Record<string, unknown>) {
   return useQuery({
     queryKey: [...queryKeys.departments.list(params)],
