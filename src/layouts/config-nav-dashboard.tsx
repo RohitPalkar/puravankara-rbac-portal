@@ -27,13 +27,11 @@ export const navData = [
     subheader: 'Masters',
     items: [
       { title: 'Zone Master', path: paths.dashboard.zoneMaster, icon: ICONS.zone },
+      { title: 'Department Master', path: paths.dashboard.departmentMaster, icon: ICONS.department },
       { title: 'Brand Master', path: paths.dashboard.brandMaster, icon: ICONS.zone },
       { title: 'Phase Master', path: paths.dashboard.phaseMaster, icon: ICONS.project },
       { title: 'Project Master', path: paths.dashboard.projectMaster, icon: ICONS.project },
       { title: 'Channel Partner', path: paths.dashboard.channelPartnerMaster, icon: ICONS.role },
-      { title: 'CP Type', path: paths.dashboard.channelPartnerTypeMaster, icon: ICONS.role },
-      { title: 'Department Master', path: paths.dashboard.departmentMaster, icon: ICONS.department },
-      { title: 'Role Master', path: paths.dashboard.roleMaster, icon: ICONS.role },
     ],
   },
   {
