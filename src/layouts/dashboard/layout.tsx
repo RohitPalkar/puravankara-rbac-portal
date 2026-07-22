@@ -23,7 +23,7 @@ import { HeaderSection } from '../core/header-section';
 import { StyledDivider, useNavColorVars } from './styles';
 import { AccountDrawer } from '../components/account-drawer';
 import { SettingsButton } from '../components/settings-button';
-import { navData as dashboardNavData } from '../config-nav-dashboard';
+import { useNavData } from '../config-nav-dashboard';
 
 export type DashboardLayoutProps = {
   sx?: SxProps<Theme>;
@@ -47,7 +47,8 @@ export function DashboardLayout({ sx, children, header, data }: DashboardLayoutP
 
   const layoutQuery: Breakpoint = 'lg';
 
-  const navData = data?.nav ?? dashboardNavData;
+  const dynamicNavData = useNavData();
+  const navData = data?.nav ?? dynamicNavData;
 
   const isNavMini = settings.navLayout === 'mini';
   const isNavHorizontal = settings.navLayout === 'horizontal';
