@@ -3,14 +3,16 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { setAccessToken } from '../api/client';
 import { queryKeys } from '../api/query-keys';
 import { authService } from '../services/auth.service';
-import type { LoginRequest, RefreshTokenRequest, SetPasswordRequest } from '../types/auth';
+import type { LoginRequest, RefreshTokenRequest, SetPasswordRequest, MeResponse, MeUser } from '../types/auth';
+
+type FlatMe = MeUser & { roles: MeResponse['roles'] };
 
 export function useMe() {
   return useQuery({
     queryKey: queryKeys.auth.me,
     queryFn: async () => {
       const res = await authService.me();
-      return res.data.user;
+      return { ...res.data.user, roles: res.data.roles } as FlatMe;
     },
   });
 }

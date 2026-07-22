@@ -22,6 +22,7 @@ import { useMe } from 'src/services/hooks/use-auth';
 import { useMyPermissions } from 'src/services/hooks/use-permissions';
 import { useModuleTree } from 'src/services/hooks/use-product-catalog';
 import { useAuditLogList } from 'src/services/hooks/use-audit';
+import type { MeRole } from 'src/services/types/auth';
 
 dayjs.extend(relativeTime);
 
@@ -114,14 +115,14 @@ export default function DashboardView() {
 
   const roleSummary = useMemo(() => {
     if (!me) return null;
-    const primaryRoles = me.roles.filter((r) => r.departmentId === me.departmentId);
-    const otherRoles = me.roles.filter((r) => r.departmentId !== me.departmentId);
+    const primaryRoles = me.roles.filter((r: MeRole) => r.departmentId === me.departmentId);
+    const otherRoles = me.roles.filter((r: MeRole) => r.departmentId !== me.departmentId);
     return {
       name: me.name,
       email: me.email,
-      department: me.departmentName,
+      department: me.department,
       primaryRole: primaryRoles.length > 0 ? primaryRoles[0].roleName : me.roles[0]?.roleName ?? '-',
-      secondaryRoles: otherRoles.map((r) => r.roleName),
+      secondaryRoles: otherRoles.map((r: MeRole) => r.roleName),
       allRoles: me.roles,
     };
   }, [me]);
@@ -274,7 +275,7 @@ export default function DashboardView() {
                         <Stack direction="row" justifyContent="space-between">
                           <Typography variant="body2" color="text.secondary">Other Roles</Typography>
                           <Stack spacing={0.5} alignItems="flex-end">
-                            {roleSummary.secondaryRoles.map((r) => (
+                            {roleSummary.secondaryRoles.map((r: string) => (
                               <Chip key={r} label={r} size="small" variant="outlined" />
                             ))}
                           </Stack>

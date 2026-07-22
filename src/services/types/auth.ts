@@ -56,21 +56,24 @@ export interface SetPasswordRequest {
   password: string;
 }
 
-export interface MeResponse {
+export interface MeUser {
   empId: string;
   name: string;
   email: string;
+  departmentId: number | null;
+  department: string | null;
+  employmentStatus: string | null;
+}
+
+export interface MeRole {
   departmentId: number;
   departmentName: string;
-  employmentStatus: string;
-  isActive: boolean;
-  roles: {
-    departmentId: number;
-    departmentName: string;
-    roleId: number;
-    roleName: string;
-    hierarchyLevelRank: number;
-  }[];
-  zones: number[];
-  permissions: CompiledPermissions;
+  roleId: number;
+  roleName: string;
+  hierarchyLevelRank?: number;
+}
+
+export interface MeResponse {
+  user: MeUser;
+  roles: MeRole[];
 }
