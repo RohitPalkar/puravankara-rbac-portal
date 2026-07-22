@@ -33,7 +33,7 @@ const groupMap: Record<string, string> = {
   rtmQualificationPercentage: 'RTM',
 };
 
-const groupDividerFields = ['panNumber', 'reraQualificationPercentage', 'rtmQualificationPercentage'];
+const groupDividerFields = ['brandName', 'reraQualificationPercentage', 'rtmQualificationPercentage'];
 
 function renderBrandHeader(params: GridColumnHeaderParams) {
   const group = groupMap[params.field];
@@ -128,8 +128,6 @@ export default function ProjectListPage() {
     { field: 'name', headerName: 'Project Name', flex: 4, minWidth: 220, renderHeader: renderBrandHeader },
     { field: 'cityName', headerName: 'City', flex: 2, minWidth: 130, renderHeader: renderBrandHeader },
     { field: 'brandName', headerName: 'Brand', flex: 2, minWidth: 130, renderHeader: renderBrandHeader },
-    { field: 'billingEntityName', headerName: 'Billing Name', flex: 2, minWidth: 160, renderHeader: renderBrandHeader },
-    { field: 'panNumber', headerName: 'PAN No.', flex: 1, minWidth: 120, align: 'center', headerAlign: 'center', renderHeader: renderBrandHeader },
     {
       field: 'reraRegularizationPercentage',
       headerName: 'Regularisation %',
