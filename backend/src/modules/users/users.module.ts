@@ -5,6 +5,7 @@ import { UserRole } from './entities/user-role.entity';
 import { UserZone } from './entities/user-zone.entity';
 import { UserReportingLine } from './entities/user-reporting-line.entity';
 import { UserAuth } from '../auth/entities/user-auth.entity';
+import { UserProjectAccess } from '../project-access/entities/user-project-access.entity';
 import {
   UserService,
   UserRoleService,
@@ -28,6 +29,7 @@ import { NotificationsModule } from '../notifications/notifications.module';
       UserZone,
       UserReportingLine,
       UserAuth,
+      UserProjectAccess,
     ]),
     PermissionsModule,
     NotificationsModule,

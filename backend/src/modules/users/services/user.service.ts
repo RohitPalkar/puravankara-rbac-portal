@@ -7,12 +7,13 @@ import {
   Logger,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, DataSource } from 'typeorm';
+import { Repository, DataSource, In } from 'typeorm';
 import { User } from '../entities/user.entity';
 import { UserRole } from '../entities/user-role.entity';
 import { UserZone } from '../entities/user-zone.entity';
 import { UserReportingLine } from '../entities/user-reporting-line.entity';
 import { UserAuth } from '../../auth/entities/user-auth.entity';
+import { UserProjectAccess } from '../../project-access/entities/user-project-access.entity';
 import { BaseService } from '../../../common/crud/base.service';
 import {
   PaginationQuery,
@@ -41,6 +42,8 @@ export class UserService {
     readonly reportingLineRepository: Repository<UserReportingLine>,
     @InjectRepository(UserAuth)
     readonly userAuthRepository: Repository<UserAuth>,
+    @InjectRepository(UserProjectAccess)
+    readonly userProjectAccessRepository: Repository<UserProjectAccess>,
     private readonly dataSource: DataSource,
   ) {}
 
@@ -66,8 +69,62 @@ export class UserService {
       relations: { department: true },
     });
 
+    const empIds = data.map((u) => u.empId);
+
+    const [userRoles, userZones, projectCounts] = await Promise.all([
+      this.userRoleRepository.find({
+        where: { userId: In(empIds) },
+        relations: { role: true, department: true },
+      }),
+      this.userZoneRepository.find({
+        where: { userId: In(empIds) },
+        relations: { zone: true },
+      }),
+      this.userProjectAccessRepository
+        .createQueryBuilder('upa')
+        .select('upa.user_id', 'userId')
+        .addSelect('COUNT(upa.project_id)', 'count')
+        .where('upa.user_id IN (:...empIds)', { empIds })
+        .groupBy('upa.user_id')
+        .getRawMany(),
+    ]);
+
+    const roleMap = new Map<string, { roleName: string; departmentName: string }>();
+    for (const ur of userRoles) {
+      if (!roleMap.has(ur.userId) && ur.role) {
+        roleMap.set(ur.userId, {
+          roleName: ur.role.name,
+          departmentName: ur.department?.name ?? '',
+        });
+      }
+    }
+
+    const zoneMap = new Map<string, string[]>();
+    for (const uz of userZones) {
+      if (uz.zone) {
+        const names = zoneMap.get(uz.userId) ?? [];
+        names.push(uz.zone.name);
+        zoneMap.set(uz.userId, names);
+      }
+    }
+
+    const projectCountMap = new Map<string, number>();
+    for (const row of projectCounts) {
+      projectCountMap.set(row.userId, Number(row.count));
+    }
+
+    const enriched = data.map((user) => {
+      const role = roleMap.get(user.empId);
+      return {
+        ...user,
+        roleName: role?.roleName ?? null,
+        zoneNames: zoneMap.get(user.empId) ?? [],
+        projectCount: projectCountMap.get(user.empId) ?? 0,
+      };
+    });
+
     return {
-      data,
+      data: enriched,
       meta: { page, limit, total, totalPages: Math.ceil(total / limit) },
     };
   }
