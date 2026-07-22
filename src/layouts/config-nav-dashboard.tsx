@@ -38,7 +38,7 @@ export const navData = [
     subheader: 'Access Management',
     items: [
       { title: 'User Management', path: paths.dashboard.userManagement, icon: ICONS.user },
-      { title: 'User Role Mapping', path: paths.dashboard.userRoleMapping, icon: ICONS.mapping },
+      { title: 'Role Assignment', path: paths.dashboard.userRoleMapping, icon: ICONS.mapping },
       { title: 'Project Assignment', path: paths.dashboard.projectAssignment, icon: ICONS.project },
       { title: 'Permission Matrix', path: paths.dashboard.permissionMatrix, icon: ICONS.permission },
     ],
