@@ -1,8 +1,9 @@
-import type { ChannelPartner } from 'src/types';
+import type { CreateChannelPartnerRequest, UpdateChannelPartnerRequest } from 'src/services/types/channel-partner';
 
 import { Helmet } from 'react-helmet-async';
-import { useMemo, useState, useCallback } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useState, useEffect, useCallback } from 'react';
 
 import Box from '@mui/material/Box';
 import Card from '@mui/material/Card';
@@ -14,11 +15,18 @@ import TextField from '@mui/material/TextField';
 import MenuItem from '@mui/material/MenuItem';
 import Typography from '@mui/material/Typography';
 import LinearProgress from '@mui/material/LinearProgress';
+import CircularProgress from '@mui/material/CircularProgress';
 
 import { paths } from 'src/routes/paths';
 
 import { CONFIG } from 'src/config-global';
-import { mockChannelPartners, mockChannelPartnerTypes } from 'src/services/mock-data';
+import { queryKeys } from 'src/services/api/query-keys';
+import { channelPartnerTypeService } from 'src/services/services/channel-partner.service';
+import {
+  useChannelPartnerById,
+  useCreateChannelPartner,
+  useUpdateChannelPartner,
+} from 'src/services/hooks/use-channel-partners';
 
 import { Iconify } from 'src/components/iconify';
 import { FormSection } from 'src/components/form-section';
@@ -28,53 +36,80 @@ export default function ChannelPartnerFormPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const isEdit = Boolean(id);
+  const cpId = id ? Number(id) : undefined;
 
-  const [cpData] = useState<ChannelPartner | undefined>(
-    isEdit ? mockChannelPartners.find((cp) => cp.id === id) : undefined
-  );
+  const { data: cpData, isLoading: isFetching, isError: isFetchError } = useChannelPartnerById(cpId ?? 0);
+  const { mutateAsync: createChannelPartner, isPending: isCreating } = useCreateChannelPartner();
+  const { mutateAsync: updateChannelPartner, isPending: isUpdating } = useUpdateChannelPartner();
 
-  const [cpId, setCpId] = useState(cpData?.cpId ?? '');
-  const [cpName, setCpName] = useState(cpData?.cpName ?? '');
-  const [cpTypeId, setCpTypeId] = useState(cpData?.cpTypeId ?? '');
-  const [startDate, setStartDate] = useState(cpData?.startDate ?? '');
-  const [endDate, setEndDate] = useState(cpData?.endDate ?? '');
+  const [cpIdField, setCpIdField] = useState('');
+  const [cpName, setCpName] = useState('');
+  const [cpTypeId, setCpTypeId] = useState<number | ''>('');
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
 
-  const [saving, setSaving] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [cpNameError, setCpNameError] = useState('');
 
-  const handleSave = useCallback(() => {
+  const saving = isCreating || isUpdating;
+
+  const { data: cpTypes } = useQuery({
+    queryKey: queryKeys.channelPartnerTypes.list({}),
+    queryFn: async () => {
+      const res = await channelPartnerTypeService.list({});
+      return res.data;
+    },
+  });
+
+  useEffect(() => {
+    if (cpData) {
+      setCpIdField(cpData.cpId);
+      setCpName(cpData.cpName);
+      setCpTypeId(cpData.cpTypeId);
+      setStartDate(cpData.startDate ? cpData.startDate.slice(0, 10) : '');
+      setEndDate(cpData.endDate ? cpData.endDate.slice(0, 10) : '');
+    }
+  }, [cpData]);
+
+  const handleSave = useCallback(async () => {
     if (!cpName.trim()) {
       setCpNameError('CP Name is required');
       return;
     }
     setCpNameError('');
 
-    setSaving(true);
-    setTimeout(() => {
-      const cpType = mockChannelPartnerTypes.find((t) => t.id === cpTypeId);
+    const payload: CreateChannelPartnerRequest = {
+      cpId: cpIdField.trim(),
+      cpName: cpName.trim(),
+      cpTypeId: cpTypeId as number,
+      startDate,
+      endDate: endDate || undefined,
+      isActive: true,
+    };
 
-      if (isEdit && cpData) {
-        Object.assign(cpData, {
-          cpId, cpName: cpName.trim(), cpTypeId, cpTypeName: cpType?.name,
-          startDate, endDate, updatedAt: new Date().toISOString(),
-        });
+    try {
+      if (isEdit && cpId) {
+        await updateChannelPartner({ id: cpId, data: payload as UpdateChannelPartnerRequest });
       } else {
-        mockChannelPartners.unshift({
-          id: String(Date.now()),
-          cpId, cpName: cpName.trim(), cpTypeId, cpTypeName: cpType?.name ?? '',
-          startDate, endDate, status: 'active', createdBy: 'Rohit Palkar',
-          createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(),
-        });
+        await createChannelPartner(payload);
       }
-
-      setSaving(false);
       setShowSuccess(true);
       setTimeout(() => navigate(paths.dashboard.channelPartnerMaster), 1200);
-    }, 800);
-  }, [cpId, cpName, cpTypeId, startDate, endDate, isEdit, cpData, navigate]);
+    } catch {
+      // handled by query cache invalidation
+    }
+  }, [cpIdField, cpName, cpTypeId, startDate, endDate, isEdit, cpId, createChannelPartner, updateChannelPartner, navigate]);
 
-  if (isEdit && !cpData) {
+  if (isEdit && isFetching) {
+    return (
+      <PageContainer>
+        <PageHeader title="Edit Channel Partner" />
+        <Card sx={{ p: 4, textAlign: 'center' }}><CircularProgress /></Card>
+      </PageContainer>
+    );
+  }
+
+  if (isEdit && (isFetchError || (!isFetching && !cpData))) {
     return (
       <PageContainer>
         <PageHeader title="Channel Partner Not Found" description="The requested channel partner does not exist" />
@@ -98,11 +133,11 @@ export default function ChannelPartnerFormPage() {
         {saving && <LinearProgress />}
 
         <Card sx={{ p: 3 }}>
-          <FormSection title="Basic Details" >
+          <FormSection title="Basic Details">
             <TextField label="CP Name" value={cpName} onChange={(e) => { setCpName(e.target.value); setCpNameError(''); }} error={!!cpNameError} helperText={cpNameError} required fullWidth />
-            <TextField label="CP ID" value={cpId} onChange={(e) => setCpId(e.target.value)} required fullWidth />
-            <TextField label="CP Type" value={cpTypeId} onChange={(e) => setCpTypeId(e.target.value)} select required fullWidth>
-              {mockChannelPartnerTypes.map((t) => <MenuItem key={t.id} value={t.id}>{t.name}</MenuItem>)}
+            <TextField label="CP ID" value={cpIdField} onChange={(e) => setCpIdField(e.target.value)} required fullWidth />
+            <TextField label="CP Type" value={cpTypeId} onChange={(e) => setCpTypeId(Number(e.target.value) || '')} select required fullWidth>
+              {cpTypes?.map((t) => <MenuItem key={t.id} value={t.id}>{t.name}</MenuItem>)}
             </TextField>
             <TextField label="Start Date" value={startDate} onChange={(e) => setStartDate(e.target.value)} type="date" InputLabelProps={{ shrink: true }} required fullWidth />
             <TextField label="End Date" value={endDate} onChange={(e) => setEndDate(e.target.value)} type="date" InputLabelProps={{ shrink: true }} fullWidth />
