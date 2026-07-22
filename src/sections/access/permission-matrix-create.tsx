@@ -1,6 +1,6 @@
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import Box from '@mui/material/Box';
 import Card from '@mui/material/Card';
 import Step from '@mui/material/Step';
@@ -16,19 +16,30 @@ import InputLabel from '@mui/material/InputLabel';
 import FormControl from '@mui/material/FormControl';
 import CircularProgress from '@mui/material/CircularProgress';
 import FormHelperText from '@mui/material/FormHelperText';
+import Alert from '@mui/material/Alert';
+import Snackbar from '@mui/material/Snackbar';
 import { CONFIG } from 'src/config-global';
 import { PageHeader, PageContainer } from 'src/components/page-layout';
 import { paths } from 'src/routes/paths';
 import { useDepartmentList, useDepartmentHierarchyLevels, useRoleForHierarchy } from 'src/services/hooks/use-organization';
+import { useSetRolePermissions, useRolePermissionsSummary } from 'src/services/hooks/use-permissions';
+import PermissionMatrixStep2 from './permission-matrix-step2';
 
 const STEPS = ['Basic Information', 'Permission Configuration'];
 
 export default function PermissionMatrixCreatePage() {
   const navigate = useNavigate();
-  const [activeStep, setActiveStep] = useState(0);
+  const { id: editRoleId } = useParams<{ id: string }>();
+  const isEditMode = !!editRoleId;
 
+  const [activeStep, setActiveStep] = useState(isEditMode ? 1 : 0);
   const [departmentId, setDepartmentId] = useState<number | ''>('');
   const [levelNumber, setLevelNumber] = useState<number | ''>('');
+  const [snackbar, setSnackbar] = useState<{ open: boolean; message: string; severity: 'success' | 'error' }>({
+    open: false,
+    message: '',
+    severity: 'success',
+  });
 
   const { data: departmentsData } = useDepartmentList({});
   const departments: { id: number; name: string }[] = useMemo(
@@ -36,15 +47,33 @@ export default function PermissionMatrixCreatePage() {
     [departmentsData],
   );
 
-  const { data: hierarchyLevels } = useDepartmentHierarchyLevels(departmentId ? Number(departmentId) : undefined);
+  const { data: summary } = useRolePermissionsSummary();
+  const editRoleInfo = useMemo(() => {
+    if (!isEditMode || !summary || !editRoleId) return null;
+    return summary.find((r: any) => r.id === Number(editRoleId)) ?? null;
+  }, [isEditMode, summary, editRoleId]);
+
+  useEffect(() => {
+    if (editRoleInfo && isEditMode) {
+      if (editRoleInfo.departmentId) setDepartmentId(editRoleInfo.departmentId);
+      if (editRoleInfo.hierarchyLevelRank) setLevelNumber(editRoleInfo.hierarchyLevelRank);
+    }
+  }, [editRoleInfo, isEditMode]);
+
+  const hierarchyDeptId = isEditMode ? (editRoleInfo?.departmentId ?? undefined) : (departmentId ? Number(departmentId) : undefined);
+  const { data: hierarchyLevels } = useDepartmentHierarchyLevels(hierarchyDeptId);
+  const effectiveDeptId = isEditMode ? (editRoleInfo?.departmentId ?? undefined) : (departmentId ? Number(departmentId) : undefined);
+  const effectiveLevel = isEditMode ? (editRoleInfo?.hierarchyLevelRank ?? undefined) : (levelNumber ? Number(levelNumber) : undefined);
   const { data: roleData, isLoading: roleLoading } = useRoleForHierarchy(
-    departmentId ? Number(departmentId) : undefined,
-    levelNumber ? Number(levelNumber) : undefined,
+    effectiveDeptId,
+    effectiveLevel,
   );
 
-  const levelOptions = useMemo(() => (hierarchyLevels ?? []), [hierarchyLevels]);
+  const targetRoleId = isEditMode ? Number(editRoleId) : (roleData?.roleId ?? 0);
+  const noRoleConfigured = !isEditMode && levelNumber !== '' && !roleLoading && roleData && !roleData.roleId;
+  const saveMutation = useSetRolePermissions(targetRoleId);
 
-  const noRoleConfigured = levelNumber !== '' && !roleLoading && roleData && !roleData.roleId;
+  const levelOptions = useMemo(() => (hierarchyLevels ?? []), [hierarchyLevels]);
 
   const canGoNext = activeStep === 0
     ? !!departmentId && levelNumber !== '' && !!roleData?.roleId
@@ -60,9 +89,24 @@ export default function PermissionMatrixCreatePage() {
     setActiveStep((prev) => Math.max(0, prev - 1));
   }, []);
 
+  const handleSave = useCallback(
+    (actionIds: number[]) => {
+      saveMutation.mutate(actionIds, {
+        onSuccess: () => {
+          setSnackbar({ open: true, message: 'Permissions saved successfully.', severity: 'success' });
+          setTimeout(() => navigate(paths.dashboard.permissionMatrix), 1500);
+        },
+        onError: () => {
+          setSnackbar({ open: true, message: 'Failed to save permissions.', severity: 'error' });
+        },
+      });
+    },
+    [saveMutation, navigate],
+  );
+
   return (
     <>
-      <Helmet><title>Create Mapping - Permission Matrix - {CONFIG.appName}</title></Helmet>
+      <Helmet><title>{isEditMode ? 'Edit Mapping' : 'Create Mapping'} - Permission Matrix - {CONFIG.appName}</title></Helmet>
       <PageContainer>
         <PageHeader
           title="Permission Matrix"
@@ -84,43 +128,52 @@ export default function PermissionMatrixCreatePage() {
                 <FormControl>
                   <InputLabel>Department *</InputLabel>
                   <Select
-                    value={departmentId}
+                    value={isEditMode ? (editRoleInfo?.departmentName ?? '') : departmentId}
                     label="Department *"
                     onChange={(e) => {
                       const val = e.target.value as number;
                       setDepartmentId(val);
                       setLevelNumber('');
                     }}
+                    disabled={isEditMode}
                   >
-                    {departments.map((dept) => (
-                      <MenuItem key={dept.id} value={dept.id}>{dept.name}</MenuItem>
-                    ))}
+                    {isEditMode ? (
+                      <MenuItem value={editRoleInfo?.departmentName ?? ''}>{editRoleInfo?.departmentName ?? '-'}</MenuItem>
+                    ) : (
+                      departments.map((dept) => (
+                        <MenuItem key={dept.id} value={dept.id}>{dept.name}</MenuItem>
+                      ))
+                    )}
                   </Select>
                 </FormControl>
 
                 <FormControl>
                   <InputLabel>Hierarchy Level *</InputLabel>
                   <Select
-                    value={levelNumber}
+                    value={isEditMode ? `L${editRoleInfo?.hierarchyLevelRank}` : levelNumber}
                     label="Hierarchy Level *"
                     onChange={(e) => setLevelNumber(e.target.value as number)}
-                    disabled={!departmentId}
+                    disabled={isEditMode || !departmentId}
                   >
-                    {levelOptions.map((hl) => (
-                      <MenuItem key={hl.id} value={hl.levelNumber}>
-                        L{hl.levelNumber} - {hl.roleName}
-                      </MenuItem>
-                    ))}
+                    {isEditMode ? (
+                      <MenuItem value={`L${editRoleInfo?.hierarchyLevelRank}`}>L{editRoleInfo?.hierarchyLevelRank}</MenuItem>
+                    ) : (
+                      levelOptions.map((hl) => (
+                        <MenuItem key={hl.id} value={hl.levelNumber}>
+                          L{hl.levelNumber} - {hl.roleName}
+                        </MenuItem>
+                      ))
+                    )}
                   </Select>
                 </FormControl>
 
                 <TextField
                   label="Role"
-                  value={roleLoading ? 'Loading...' : (roleData?.roleName ?? '')}
+                  value={isEditMode ? (editRoleInfo?.name ?? '') : (roleLoading ? 'Loading...' : (roleData?.roleName ?? ''))}
                   inputProps={{ readOnly: true }}
-                  disabled={!levelNumber}
-                  error={noRoleConfigured}
-                  helperText={noRoleConfigured ? 'No role is configured for the selected Department and Hierarchy Level. Please configure it in Department Master first.' : ''}
+                  disabled={isEditMode || !levelNumber}
+                  error={!isEditMode && noRoleConfigured}
+                  helperText={!isEditMode && noRoleConfigured ? 'No role is configured for the selected Department and Hierarchy Level. Please configure it in Department Master first.' : ''}
                   fullWidth
                 />
               </Box>
@@ -133,12 +186,12 @@ export default function PermissionMatrixCreatePage() {
             </Box>
           )}
 
-          {activeStep === 1 && (
-            <Box sx={{ p: 3 }}>
-              <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center', py: 8 }}>
-                Permission Configuration (Step 2) coming in next update.
-              </Typography>
-            </Box>
+          {activeStep === 1 && targetRoleId > 0 && (
+            <PermissionMatrixStep2
+              roleId={targetRoleId}
+              onSave={handleSave}
+              saving={saveMutation.isPending}
+            />
           )}
 
           <Stack direction="row" justifyContent="space-between" sx={{ p: 3, borderTop: '1px solid', borderColor: 'divider' }}>
@@ -155,14 +208,21 @@ export default function PermissionMatrixCreatePage() {
                 <Button variant="contained" onClick={handleNext} disabled={!canGoNext}>
                   Next
                 </Button>
-              ) : (
-                <Button variant="contained" disabled>
-                  Save
-                </Button>
-              )}
+              ) : null}
             </Stack>
           </Stack>
         </Card>
+
+        <Snackbar
+          open={snackbar.open}
+          autoHideDuration={4000}
+          onClose={() => setSnackbar((prev) => ({ ...prev, open: false }))}
+          anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+        >
+          <Alert severity={snackbar.severity} onClose={() => setSnackbar((prev) => ({ ...prev, open: false }))}>
+            {snackbar.message}
+          </Alert>
+        </Snackbar>
       </PageContainer>
     </>
   );

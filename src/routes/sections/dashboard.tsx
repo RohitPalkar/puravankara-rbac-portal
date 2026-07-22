@@ -30,6 +30,7 @@ const UserRoleMappingPage = lazy(() => import('src/sections/access/user-role-map
 const ProjectAssignmentPage = lazy(() => import('src/sections/access/project-assignment'));
 const PermissionMatrixPage = lazy(() => import('src/sections/access/permission-matrix'));
 const PermissionMatrixCreatePage = lazy(() => import('src/sections/access/permission-matrix-create'));
+const PermissionMatrixViewPage = lazy(() => import('src/sections/access/permission-matrix-view'));
 
 // Workflow
 const ApprovalConfigPage = lazy(() => import('src/sections/workflow/approval-config'));
@@ -85,6 +86,7 @@ export const dashboardRoutes = [
       { path: 'project-assignment', element: <ProjectAssignmentPage /> },
       { path: 'permission-matrix', element: <PermissionMatrixPage /> },
       { path: 'permission-matrix/new', element: <PermissionMatrixCreatePage /> },
+      { path: 'permission-matrix/:id', element: <PermissionMatrixViewPage /> },
       { path: 'permission-matrix/:id/edit', element: <PermissionMatrixCreatePage /> },
       // Workflow
       { path: 'approval-config', element: <ApprovalConfigPage /> },
