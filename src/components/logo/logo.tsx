@@ -40,11 +40,11 @@ export const Logo = forwardRef<HTMLDivElement, LogoProps>(
     );
 
     const baseSize = {
-      width: width ?? 40,
-      height: height ?? 40,
+      width: width ?? 48,
+      height: height ?? 48,
       ...(!isSingle && {
-        width: width ?? 102,
-        height: height ?? 36,
+        width: width ?? 120,
+        height: height ?? 42,
       }),
     };
 
