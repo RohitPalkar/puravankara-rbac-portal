@@ -110,6 +110,7 @@ export default function PermissionMatrixStep2({ roleId, onSave, saving, editable
   const toggleActionGroup = useCallback((ag: ActionGroupNode) => {
     setSelectedActionIds((prev) => {
       const next = new Set(prev);
+      if (ag.actions.length === 0) return prev;
       const allSelected = ag.actions.every((a) => next.has(a.id));
       ag.actions.forEach((a) => {
         if (allSelected) next.delete(a.id);
@@ -119,37 +120,15 @@ export default function PermissionMatrixStep2({ roleId, onSave, saving, editable
     });
   }, []);
 
-  const toggleModulePermission = useCallback((sm: SubModuleNode) => {
-    if (sm.hasActions) return;
-    setSelectedActionIds((prev) => {
-      const next = new Set(prev);
-      const hasPermission = sm.actionGroups.some((ag) => ag.actions.some((a) => next.has(a.id)));
-      if (hasPermission) {
-        sm.actionGroups.forEach((ag) => ag.actions.forEach((a) => next.delete(a.id)));
-      } else {
-        sm.actionGroups.forEach((ag) => ag.actions.forEach((a) => next.add(a.id)));
-      }
-      return next;
-    });
-  }, []);
-
   const toggleSubModule = useCallback((sm: SubModuleNode) => {
     setSelectedActionIds((prev) => {
       const next = new Set(prev);
-      if (!sm.hasActions) {
-        const hasPermission = sm.actionGroups.some((ag) => ag.actions.some((a) => next.has(a.id)));
-        sm.actionGroups.forEach((ag) => ag.actions.forEach((a) => {
-          if (hasPermission) next.delete(a.id);
-          else next.add(a.id);
-        }));
-        return next;
-      }
-      const allSelected = sm.actionGroups.every((ag) => ag.actions.every((a) => next.has(a.id)));
-      sm.actionGroups.forEach((ag) => {
-        ag.actions.forEach((a) => {
-          if (allSelected) next.delete(a.id);
-          else next.add(a.id);
-        });
+      const allActionIds = sm.actionGroups.flatMap((ag) => ag.actions.map((a) => a.id));
+      if (allActionIds.length === 0) return prev;
+      const allSelected = allActionIds.every((id) => next.has(id));
+      allActionIds.forEach((id) => {
+        if (allSelected) next.delete(id);
+        else next.add(id);
       });
       return next;
     });
@@ -240,12 +219,8 @@ export default function PermissionMatrixStep2({ roleId, onSave, saving, editable
     );
   }
 
-  const subModulePermissionEnabled = (sm: SubModuleNode): boolean => {
-    if (!sm.hasActions) {
-      return sm.actionGroups.some((ag) => ag.actions.some((a) => selectedActionIds.has(a.id)));
-    }
-    return false;
-  };
+  const subModulePermissionEnabled = (sm: SubModuleNode): boolean =>
+    sm.actionGroups.some((ag) => ag.actions.some((a) => selectedActionIds.has(a.id)));
 
   return (
     <Stack spacing={0} sx={{ minHeight: 500, borderTop: '1px solid', borderColor: 'divider' }}>
@@ -253,7 +228,7 @@ export default function PermissionMatrixStep2({ roleId, onSave, saving, editable
         {/* LEFT PANEL */}
         <Box
           sx={{
-            width: 300,
+            width: 320,
             flexShrink: 0,
             borderRight: '1px solid',
             borderColor: 'divider',
@@ -279,7 +254,7 @@ export default function PermissionMatrixStep2({ roleId, onSave, saving, editable
               }}
             />
           </Box>
-          <Box sx={{ flex: 1, overflow: 'auto', p: 1 }}>
+          <Box sx={{ flex: 1, overflow: 'auto', px: 1, py: 0.5 }}>
             {filteredModules.length === 0 ? (
               <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center', py: 6 }}>
                 {leftSearch ? 'No modules match your search.' : 'No modules found.'}
@@ -296,12 +271,13 @@ export default function PermissionMatrixStep2({ roleId, onSave, saving, editable
                       alignItems="center"
                       spacing={0.5}
                       sx={{
-                        py: 0.5,
-                        px: 0.5,
+                        py: 0.75,
+                        px: 0.75,
                         borderRadius: 1,
                         cursor: 'pointer',
                         bgcolor: isExpanded ? 'action.selected' : 'transparent',
                         '&:hover': { bgcolor: 'action.hover' },
+                        transition: 'background-color 0.15s',
                       }}
                     >
                       <IconButton
@@ -331,15 +307,22 @@ export default function PermissionMatrixStep2({ roleId, onSave, saving, editable
                       </Typography>
                       <Tooltip title={`${mod.selectedCount} of ${mod.totalCount} permissions selected`}>
                         <Chip
-                          label={`${mod.selectedCount}/${mod.totalCount}`}
+                          label={
+                            allSelected
+                              ? `${mod.totalCount} / ${mod.totalCount} Selected`
+                              : `${mod.selectedCount} / ${mod.totalCount} Selected`
+                          }
                           size="small"
                           color={allSelected ? 'success' : someSelected ? 'primary' : 'default'}
                           variant={someSelected || allSelected ? 'filled' : 'outlined'}
-                          sx={{ height: 20, '& .MuiChip-label': { px: 0.5, fontSize: 11, fontWeight: 600 } }}
+                          sx={{
+                            height: 22,
+                            '& .MuiChip-label': { px: 0.75, fontSize: 11, fontWeight: 600 },
+                          }}
                         />
                       </Tooltip>
                     </Stack>
-                    <Collapse in={isExpanded}>
+                    <Collapse in={isExpanded} sx={{ '& .MuiCollapse-wrapperInner': { ml: 1 } }}>
                       {mod.subModules.map((sm: SubModuleNode) => {
                         const isActive = selectedSubModuleId === sm.id;
                         const smAllSelected =
@@ -354,17 +337,18 @@ export default function PermissionMatrixStep2({ roleId, onSave, saving, editable
                             alignItems="center"
                             spacing={0.5}
                             sx={{
-                              py: 0.25,
-                              px: 0.5,
-                              ml: 2,
+                              py: 0.5,
+                              px: 0.75,
+                              ml: 1.5,
                               borderRadius: 1,
                               cursor: 'pointer',
                               bgcolor: isActive ? 'primary.lighter' : 'transparent',
-                              borderLeft: '2px solid',
+                              borderLeft: '3px solid',
                               borderColor: isActive ? 'primary.main' : 'transparent',
                               '&:hover': {
                                 bgcolor: isActive ? 'primary.lighter' : 'action.hover',
                               },
+                              transition: 'background-color 0.15s',
                             }}
                           >
                             <Checkbox
@@ -389,9 +373,13 @@ export default function PermissionMatrixStep2({ roleId, onSave, saving, editable
                             >
                               {sm.name}
                             </Typography>
-                            {sm.hasActions && (
+                            {sm.hasActions ? (
                               <Chip
-                                label={`${sm.selectedCount}/${sm.totalCount}`}
+                                label={
+                                  smAllSelected
+                                    ? `${sm.totalCount} / ${sm.totalCount} Selected`
+                                    : `${sm.selectedCount} / ${sm.totalCount} Selected`
+                                }
                                 size="small"
                                 color={
                                   smAllSelected
@@ -403,7 +391,18 @@ export default function PermissionMatrixStep2({ roleId, onSave, saving, editable
                                 variant={smSomeSelected || smAllSelected ? 'filled' : 'outlined'}
                                 sx={{
                                   height: 20,
-                                  '& .MuiChip-label': { px: 0.5, fontSize: 11 },
+                                  '& .MuiChip-label': { px: 0.5, fontSize: 10, fontWeight: 600 },
+                                }}
+                              />
+                            ) : (
+                              <Chip
+                                label={smFullySelected ? 'Enabled' : 'Disabled'}
+                                size="small"
+                                color={smFullySelected ? 'success' : 'default'}
+                                variant={smFullySelected ? 'filled' : 'outlined'}
+                                sx={{
+                                  height: 20,
+                                  '& .MuiChip-label': { px: 0.5, fontSize: 10, fontWeight: 600 },
                                 }}
                               />
                             )}
@@ -423,16 +422,17 @@ export default function PermissionMatrixStep2({ roleId, onSave, saving, editable
           <Stack
             direction="row"
             alignItems="center"
-            spacing={1.5}
+            spacing={1}
             sx={{
-              px: 2.5,
-              py: 1.25,
+              px: 2,
+              py: 1,
               borderBottom: '1px solid',
               borderColor: 'divider',
               flexWrap: 'wrap',
+              minHeight: 52,
             }}
           >
-            <Typography variant="subtitle2" noWrap sx={{ minWidth: 120 }}>
+            <Typography variant="subtitle2" noWrap sx={{ minWidth: 100, fontWeight: 600 }}>
               {selectedSubModule?.name || 'Permissions'}
             </Typography>
 
@@ -441,7 +441,7 @@ export default function PermissionMatrixStep2({ roleId, onSave, saving, editable
               placeholder="Search permissions..."
               value={rightSearch}
               onChange={(e) => setRightSearch(e.target.value)}
-              sx={{ minWidth: 220 }}
+              sx={{ minWidth: 200 }}
               InputProps={{
                 startAdornment: (
                   <Iconify
@@ -453,22 +453,22 @@ export default function PermissionMatrixStep2({ roleId, onSave, saving, editable
               }}
             />
 
+            <Box sx={{ flex: 1 }} />
+
             <Chip
-              label={`${totalSelected} Permissions Selected`}
+              label={`${totalSelected} Permission${totalSelected !== 1 ? 's' : ''} Selected`}
               color="primary"
               size="small"
               variant="outlined"
-              sx={{ fontWeight: 600 }}
+              sx={{ fontWeight: 600, '& .MuiChip-label': { px: 1 } }}
             />
 
-            <Box sx={{ flex: 1 }} />
-
-            {editable && selectedSubModule && (
+            {editable && selectedSubModule && selectedSubModule.hasActions && (
               <>
-                <Button size="small" variant="outlined" onClick={selectAll}>
+                <Button size="small" variant="outlined" onClick={selectAll} sx={{ minWidth: 80 }}>
                   Select All
                 </Button>
-                <Button size="small" variant="outlined" color="error" onClick={clearAll}>
+                <Button size="small" variant="outlined" color="error" onClick={clearAll} sx={{ minWidth: 80 }}>
                   Clear All
                 </Button>
               </>
@@ -484,29 +484,24 @@ export default function PermissionMatrixStep2({ roleId, onSave, saving, editable
                   width={40}
                   sx={{ color: 'text.disabled', mb: 1.5 }}
                 />
-                <Typography variant="body2" color="text.secondary">
-                  Select a Module and Submodule from the left panel to configure permissions. Submodules without configurable actions can be enabled directly.
+                <Typography variant="body2" color="text.secondary" sx={{ maxWidth: 440, mx: 'auto' }}>
+                  Select a Module and Submodule from the left panel to configure permissions. Submodules without configurable actions can be enabled directly from the Module Tree.
                 </Typography>
               </Box>
             )}
 
             {selectedSubModule && !selectedSubModule.hasActions && (
-              <Paper variant="outlined" sx={{ p: 2.5, maxWidth: 480, mx: 'auto', mt: 3, borderRadius: 2 }}>
-                <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                  This submodule does not contain configurable actions. Selecting this permission grants access to the entire submodule.
+              <Paper variant="outlined" sx={{ p: 3, maxWidth: 520, mx: 'auto', mt: 4, borderRadius: 2, textAlign: 'center' }}>
+                <Iconify icon="solar:lock-bold" width={32} sx={{ color: 'text.disabled', mb: 1.5 }} />
+                <Typography variant="subtitle1" gutterBottom fontWeight={600}>
+                  {selectedSubModule.name}
                 </Typography>
-                <Stack direction="row" alignItems="center" spacing={1}>
-                  <Checkbox
-                    size="small"
-                    checked={subModulePermissionEnabled(selectedSubModule)}
-                    onChange={() => toggleModulePermission(selectedSubModule)}
-                    disabled={!editable}
-                    sx={{ p: 0.25 }}
-                  />
-                  <Typography variant="body2" fontWeight={600}>
-                    Enable {selectedSubModule.name}
-                  </Typography>
-                </Stack>
+                <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', mb: 1.5, textTransform: 'uppercase', letterSpacing: 0.5, fontWeight: 600 }}>
+                  Module Permission
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  This feature does not contain configurable actions. Granting access is controlled directly by selecting the Submodule from the left panel.
+                </Typography>
               </Paper>
             )}
 
@@ -569,7 +564,7 @@ export default function PermissionMatrixStep2({ roleId, onSave, saving, editable
                                     [ag.id]: !prev[ag.id],
                                   }))
                                 }
-                                sx={{ color: 'text.secondary' }}
+                                sx={{ color: 'text.secondary', p: 0.25 }}
                               >
                                 <Iconify
                                   icon={
@@ -588,11 +583,11 @@ export default function PermissionMatrixStep2({ roleId, onSave, saving, editable
                                 disabled={!editable}
                                 sx={{ p: 0.25 }}
                               />
-                              <Typography variant="subtitle2" sx={{ flex: 1, fontSize: '0.8125rem' }}>
+                              <Typography variant="subtitle2" sx={{ flex: 1, fontSize: '0.8125rem', fontWeight: 600 }}>
                                 {ag.name}
                               </Typography>
                               <Chip
-                                label={`${ag.selectedCount}/${ag.totalCount} Selected`}
+                                label={`${ag.selectedCount} / ${ag.totalCount} Selected`}
                                 size="small"
                                 color={agAllSelected ? 'success' : agSomeSelected ? 'primary' : 'default'}
                                 variant="outlined"
@@ -603,32 +598,36 @@ export default function PermissionMatrixStep2({ roleId, onSave, saving, editable
                               />
                             </Stack>
                             <Collapse in={isExpanded}>
-                              <Box sx={{ px: 1.5, py: 0.75 }}>
-                                {ag.actions.map((a) => (
-                                  <Stack
-                                    key={a.id}
-                                    direction="row"
-                                    alignItems="center"
-                                    spacing={0.5}
-                                    sx={{
-                                      py: 0.25,
-                                      px: 0.5,
-                                      borderRadius: 0.5,
-                                      '&:hover': { bgcolor: 'action.hover' },
-                                    }}
-                                  >
-                                    <Checkbox
-                                      size="small"
-                                      checked={selectedActionIds.has(a.id)}
-                                      onChange={() => editable && toggleAction(a.id)}
-                                      disabled={!editable}
-                                      sx={{ p: 0.25 }}
-                                    />
-                                    <Typography variant="body2" sx={{ fontSize: '0.8125rem' }}>
-                                      {a.name}
-                                    </Typography>
-                                  </Stack>
-                                ))}
+                              <Box sx={{ px: 1.5, py: 1 }}>
+                                <Grid container spacing={0.5}>
+                                  {ag.actions.map((a) => (
+                                    <Grid item xs={12} sm={6} key={a.id}>
+                                      <Stack
+                                        direction="row"
+                                        alignItems="center"
+                                        spacing={0.5}
+                                        sx={{
+                                          py: 0.25,
+                                          px: 0.5,
+                                          borderRadius: 0.5,
+                                          '&:hover': { bgcolor: 'action.hover' },
+                                          cursor: 'pointer',
+                                        }}
+                                        onClick={() => editable && toggleAction(a.id)}
+                                      >
+                                        <Checkbox
+                                          size="small"
+                                          checked={selectedActionIds.has(a.id)}
+                                          disabled={!editable}
+                                          sx={{ p: 0.25 }}
+                                        />
+                                        <Typography variant="body2" sx={{ fontSize: '0.8125rem' }}>
+                                          {a.name}
+                                        </Typography>
+                                      </Stack>
+                                    </Grid>
+                                  ))}
+                                </Grid>
                               </Box>
                             </Collapse>
                           </Paper>
@@ -649,7 +648,7 @@ export default function PermissionMatrixStep2({ roleId, onSave, saving, editable
           justifyContent="flex-end"
           alignItems="center"
           spacing={2}
-          sx={{ p: 2, borderTop: '1px solid', borderColor: 'divider', bgcolor: 'grey.50' }}
+          sx={{ px: 2.5, py: 1.5, borderTop: '1px solid', borderColor: 'divider', bgcolor: 'grey.50' }}
         >
           <Typography variant="body2" color="text.secondary">
             {totalSelected} permission{totalSelected !== 1 ? 's' : ''} selected
