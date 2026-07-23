@@ -48,11 +48,12 @@ export class ModuleCatalogService extends BaseService<ModuleEntity> {
     const modules = await this.repository
       .createQueryBuilder('m')
       .where('m.is_active = true')
+      .andWhere('m.is_permission_configurable = true')
       .orderBy('m.name', 'ASC')
       .getMany();
 
     const subModules = await this.repository.manager.query(
-      `SELECT * FROM sub_modules WHERE is_active = true AND deleted_at IS NULL ORDER BY name ASC`,
+      `SELECT * FROM sub_modules WHERE is_active = true AND is_permission_configurable = true AND deleted_at IS NULL ORDER BY name ASC`,
     );
 
     const actionGroups = await this.repository.manager.query(
@@ -71,10 +72,13 @@ export class ModuleCatalogService extends BaseService<ModuleEntity> {
         code: mod.code,
         subModules: modSubModules.map((sm) => {
           const smActionGroups = actionGroups.filter((ag) => ag.sub_module_id === sm.id);
+          const hasActions = smActionGroups.length > 0;
           return {
             id: sm.id,
             name: sm.name,
             displayOrder: sm.display_order,
+            hasActions,
+            permissionType: hasActions ? 'ACTION' : 'MODULE',
             actionGroups: smActionGroups.map((ag) => ({
               id: ag.id,
               name: ag.name,

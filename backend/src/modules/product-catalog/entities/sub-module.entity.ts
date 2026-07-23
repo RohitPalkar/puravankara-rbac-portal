@@ -18,6 +18,9 @@ export class SubModule extends AppBaseEntity {
   @Column({ name: 'is_active', default: true })
   isActive: boolean;
 
+  @Column({ name: 'is_permission_configurable', default: true })
+  isPermissionConfigurable: boolean;
+
   @ManyToOne(() => Module, (m) => m.subModules, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'module_id' })
   module: Module;

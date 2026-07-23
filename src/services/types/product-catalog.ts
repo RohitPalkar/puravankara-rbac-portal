@@ -84,6 +84,8 @@ export interface SubModuleTreeNode {
   id: number;
   name: string;
   displayOrder: number;
+  hasActions: boolean;
+  permissionType: 'ACTION' | 'MODULE';
   actionGroups: ActionGroupNode[];
 }
 

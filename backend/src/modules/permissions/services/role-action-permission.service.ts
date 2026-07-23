@@ -32,12 +32,12 @@ export class RoleActionPermissionService {
 
   async getTreeWithPermissions(roleId: number): Promise<any> {
     const modules = await this.moduleRepo.find({
-      where: { isActive: true },
+      where: { isActive: true, isPermissionConfigurable: true },
       order: { name: 'ASC' },
     });
 
     const subModules = await this.subModuleRepo.find({
-      where: { isActive: true },
+      where: { isActive: true, isPermissionConfigurable: true },
       order: { displayOrder: 'ASC', name: 'ASC' },
     });
 
@@ -63,6 +63,7 @@ export class RoleActionPermissionService {
       const mappedSubModules = modSubModules.map((sm) => {
         let smCount = 0;
         const smActionGroups = actionGroups.filter((ag) => ag.subModuleId === sm.id);
+        const hasActions = smActionGroups.length > 0;
 
         const mappedActionGroups = smActionGroups.map((ag) => {
           let agCount = 0;
@@ -98,12 +99,16 @@ export class RoleActionPermissionService {
           id: sm.id,
           name: sm.name,
           displayOrder: sm.displayOrder,
+          hasActions,
+          permissionType: hasActions ? 'ACTION' : 'MODULE',
           actionGroups: mappedActionGroups,
           selectedCount: smCount,
-          totalCount: smActionGroups.reduce(
-            (sum, ag) => sum + actions.filter((a) => a.actionGroupId === ag.id).length,
-            0,
-          ),
+          totalCount: smActionGroups.length > 0
+            ? smActionGroups.reduce(
+                (sum, ag) => sum + actions.filter((a) => a.actionGroupId === ag.id).length,
+                0,
+              )
+            : 1,
         };
       });
 

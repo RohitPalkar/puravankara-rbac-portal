@@ -14,6 +14,9 @@ export class Module extends AppBaseEntity {
   @Column({ name: 'is_active', default: true })
   isActive: boolean;
 
+  @Column({ name: 'is_permission_configurable', default: true })
+  isPermissionConfigurable: boolean;
+
   @OneToMany(() => SubModule, (sm) => sm.module)
   subModules: SubModule[];
 

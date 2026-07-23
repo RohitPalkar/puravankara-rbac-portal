@@ -48,6 +48,11 @@ export enum NotificationPriority {
   URGENT = 'URGENT',
 }
 
+export enum SubModulePermissionType {
+  ACTION = 'ACTION',
+  MODULE = 'MODULE',
+}
+
 export enum AuditAction {
   CREATE = 'CREATE',
   UPDATE = 'UPDATE',
