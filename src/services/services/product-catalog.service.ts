@@ -1,21 +1,22 @@
 import { apiGet } from '../api/client';
-import { createCrudService } from '../api/crud';
 import { endpoints } from '../api/endpoints';
+import { createCrudService } from '../api/crud';
+
 import type { ApiResponse } from '../types/api';
 import type {
   Module,
+  Action,
+  SubModule,
+  ModuleAction,
+  ModuleTreeNode,
   CreateModuleRequest,
   UpdateModuleRequest,
-  SubModule,
-  CreateSubModuleRequest,
-  UpdateSubModuleRequest,
-  Action,
   CreateActionRequest,
   UpdateActionRequest,
-  ModuleAction,
+  CreateSubModuleRequest,
+  UpdateSubModuleRequest,
   CreateModuleActionRequest,
   UpdateModuleActionRequest,
-  ModuleTreeNode,
 } from '../types/product-catalog';
 
 export const moduleService = {

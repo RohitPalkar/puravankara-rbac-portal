@@ -1,5 +1,5 @@
-import { AppBase } from './common';
-import { ApprovalStatus } from './enums';
+import type { AppBase } from './common';
+import type { ApprovalStatus } from './enums';
 
 export interface ApprovalWorkflow extends AppBase {
   name: string;

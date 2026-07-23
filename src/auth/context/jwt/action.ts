@@ -1,6 +1,6 @@
-import { setAccessToken } from 'src/services/api/client';
-
 import axios, { endpoints } from 'src/utils/axios';
+
+import { setAccessToken } from 'src/services/api/client';
 
 import { setSession } from './utils';
 import { STORAGE_KEY } from './constant';

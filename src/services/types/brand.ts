@@ -1,4 +1,4 @@
-import { AppBase } from './common';
+import type { AppBase } from './common';
 
 export interface Brand extends AppBase {
   brandName: string;

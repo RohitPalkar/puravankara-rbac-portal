@@ -1,28 +1,33 @@
+import type { MeRole } from 'src/services/types/auth';
+
+import dayjs from 'dayjs';
 import { useMemo } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { useNavigate } from 'react-router-dom';
+import relativeTime from 'dayjs/plugin/relativeTime';
+
 import Grid from '@mui/material/Grid';
 import Card from '@mui/material/Card';
+import Chip from '@mui/material/Chip';
 import Stack from '@mui/material/Stack';
 import Button from '@mui/material/Button';
-import CardHeader from '@mui/material/CardHeader';
-import CardContent from '@mui/material/CardContent';
-import Typography from '@mui/material/Typography';
 import Avatar from '@mui/material/Avatar';
-import Chip from '@mui/material/Chip';
 import Divider from '@mui/material/Divider';
 import Skeleton from '@mui/material/Skeleton';
-import dayjs from 'dayjs';
-import relativeTime from 'dayjs/plugin/relativeTime';
-import { CONFIG } from 'src/config-global';
-import { PageContainer } from 'src/components/page-layout';
-import { Iconify } from 'src/components/iconify';
+import CardHeader from '@mui/material/CardHeader';
+import Typography from '@mui/material/Typography';
+import CardContent from '@mui/material/CardContent';
+
 import { paths } from 'src/routes/paths';
+
+import { CONFIG } from 'src/config-global';
 import { useMe } from 'src/services/hooks/use-auth';
+import { useAuditLogList } from 'src/services/hooks/use-audit';
 import { useMyPermissions } from 'src/services/hooks/use-permissions';
 import { useModuleTree } from 'src/services/hooks/use-product-catalog';
-import { useAuditLogList } from 'src/services/hooks/use-audit';
-import type { MeRole } from 'src/services/types/auth';
+
+import { Iconify } from 'src/components/iconify';
+import { PageContainer } from 'src/components/page-layout';
 
 dayjs.extend(relativeTime);
 
@@ -189,11 +194,7 @@ export default function DashboardView() {
                     variant="contained"
                     startIcon={<Iconify icon={action.icon} />}
                     onClick={() => {
-                      if (action.label === 'Approvals') {
-                        navigate(paths.dashboard.approvalInbox);
-                      } else {
-                        navigate(paths.dashboard.modules.new(action.moduleSlug));
-                      }
+                      navigate(action.label === 'Approvals' ? paths.dashboard.root : paths.dashboard.modules.dashboard(action.moduleSlug));
                     }}
                   >
                     {action.label}

@@ -18,7 +18,7 @@ import Autocomplete from '@mui/material/Autocomplete';
 
 import { userService } from 'src/services/services/user.service';
 import { useUserGroupList } from 'src/services/hooks/use-user-groups';
-import { useDepartmentList, useRoleList } from 'src/services/hooks/use-organization';
+import { useRoleList, useDepartmentList } from 'src/services/hooks/use-organization';
 
 import type { BasicInfoData } from './basic-information-step';
 

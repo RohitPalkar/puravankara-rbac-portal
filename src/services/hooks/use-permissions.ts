@@ -1,20 +1,21 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
+import { createCrudHooks } from './use-crud';
 import { queryKeys } from '../api/query-keys';
 import {
   permissionService,
   permissionTemplateService,
 } from '../services/permission.service';
+
 import type {
   PermissionTemplate,
+  CreateOverrideRequest,
+  SetPermissionsRequest,
+  ExplainPermissionRequest,
   CreatePermissionTemplateRequest,
   UpdatePermissionTemplateRequest,
   CreateRoleProjectPermissionRequest,
-  CreateOverrideRequest,
-  ExplainPermissionRequest,
-  SetPermissionsRequest,
 } from '../types/permission';
-import { createCrudHooks } from './use-crud';
 
 export function useMyPermissions() {
   return useQuery({

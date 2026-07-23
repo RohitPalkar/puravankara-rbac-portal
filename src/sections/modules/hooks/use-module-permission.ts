@@ -1,8 +1,10 @@
+import type { ModulePermissions } from 'src/services/types/auth';
+
 import { useMemo } from 'react';
 import { useParams } from 'react-router-dom';
+
 import { useMyPermissions } from 'src/services/hooks/use-permissions';
 import { useModuleTree } from 'src/services/hooks/use-product-catalog';
-import type { ModulePermissions } from 'src/services/types/auth';
 
 function slugify(text: string): string {
   return text.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');

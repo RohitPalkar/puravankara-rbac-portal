@@ -1,7 +1,8 @@
+import { createCrudHooks } from './use-crud';
 import { queryKeys } from '../api/query-keys';
 import { brandService } from '../services/brand.service';
+
 import type { Brand, CreateBrandRequest, UpdateBrandRequest } from '../types/brand';
-import { createCrudHooks } from './use-crud';
 
 export const {
   useList: useBrandList,

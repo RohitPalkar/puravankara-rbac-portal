@@ -1,11 +1,12 @@
-import { apiGet, apiPatch } from '../api/client';
 import { endpoints } from '../api/endpoints';
+import { apiGet, apiPatch } from '../api/client';
+
 import type { ApiResponse } from '../types/api';
 import type {
   Notification,
+  NotificationQuery,
   NotificationPreference,
   UpdateNotificationPreferenceRequest,
-  NotificationQuery,
 } from '../types/notification';
 
 export const notificationService = {

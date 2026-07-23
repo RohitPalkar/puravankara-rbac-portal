@@ -4,36 +4,9 @@ const ROOTS = {
 };
 
 export const paths = {
-  faqs: '/faqs',
   auth: {
     jwt: {
       signIn: `${ROOTS.AUTH}/jwt/sign-in`,
-      signUp: `${ROOTS.AUTH}/jwt/sign-up`,
-    },
-    auth0: {
-      signIn: `${ROOTS.AUTH}/auth0/sign-in`,
-      signUp: `${ROOTS.AUTH}/auth0/sign-up`,
-    },
-    amplify: {
-      signIn: `${ROOTS.AUTH}/amplify/sign-in`,
-      signUp: `${ROOTS.AUTH}/amplify/sign-up`,
-      verify: `${ROOTS.AUTH}/amplify/verify`,
-      updatePassword: `${ROOTS.AUTH}/amplify/update-password`,
-      resetPassword: `${ROOTS.AUTH}/amplify/reset-password`,
-    },
-    firebase: {
-      signIn: `${ROOTS.AUTH}/firebase/sign-in`,
-      signUp: `${ROOTS.AUTH}/firebase/sign-up`,
-      verify: `${ROOTS.AUTH}/firebase/verify`,
-      updatePassword: `${ROOTS.AUTH}/firebase/update-password`,
-      resetPassword: `${ROOTS.AUTH}/firebase/reset-password`,
-    },
-    supabase: {
-      signIn: `${ROOTS.AUTH}/supabase/sign-in`,
-      signUp: `${ROOTS.AUTH}/supabase/sign-up`,
-      verify: `${ROOTS.AUTH}/supabase/verify`,
-      updatePassword: `${ROOTS.AUTH}/supabase/update-password`,
-      resetPassword: `${ROOTS.AUTH}/supabase/reset-password`,
     },
   },
   dashboard: {
@@ -48,7 +21,6 @@ export const paths = {
     phaseMaster: `${ROOTS.DASHBOARD}/phase-master`,
     phaseMasterCreate: `${ROOTS.DASHBOARD}/phase-master/create`,
     phaseMasterEdit: (id: string) => `${ROOTS.DASHBOARD}/phase-master/${id}/edit`,
-    channelPartnerTypeMaster: `${ROOTS.DASHBOARD}/cp-type-master`,
     channelPartnerMaster: `${ROOTS.DASHBOARD}/channel-partner-master`,
     channelPartnerMasterCreate: `${ROOTS.DASHBOARD}/channel-partner-master/create`,
     channelPartnerMasterEdit: (id: string) => `${ROOTS.DASHBOARD}/channel-partner-master/${id}/edit`,
@@ -58,34 +30,22 @@ export const paths = {
     departmentMaster: `${ROOTS.DASHBOARD}/department-master`,
     departmentMasterCreate: `${ROOTS.DASHBOARD}/department-master/create`,
     departmentMasterEdit: (id: string) => `${ROOTS.DASHBOARD}/department-master/${id}/edit`,
-    roleMaster: `${ROOTS.DASHBOARD}/role-master`,
     // Access Management
     userManagement: `${ROOTS.DASHBOARD}/user-management`,
     userNew: `${ROOTS.DASHBOARD}/user-management/new`,
-    userDetail: (id: string) => `${ROOTS.DASHBOARD}/user-management/${id}`,
-    userRoleMapping: `${ROOTS.DASHBOARD}/user-role-mapping`,
-    projectAssignment: `${ROOTS.DASHBOARD}/project-assignment`,
+
     permissionMatrix: `${ROOTS.DASHBOARD}/permission-matrix`,
     permissionMatrixNew: `${ROOTS.DASHBOARD}/permission-matrix/new`,
     permissionMatrixEdit: (id: number) => `${ROOTS.DASHBOARD}/permission-matrix/${id}/edit`,
     permissionMatrixView: (id: number) => `${ROOTS.DASHBOARD}/permission-matrix/${id}`,
-    // Workflow
-    approvalConfig: `${ROOTS.DASHBOARD}/approval-config`,
-    approvalInbox: `${ROOTS.DASHBOARD}/approval-inbox`,
-    delegations: `${ROOTS.DASHBOARD}/delegations`,
     // System
     auditLogs: `${ROOTS.DASHBOARD}/audit-logs`,
-    notifications: `${ROOTS.DASHBOARD}/notifications`,
     settings: `${ROOTS.DASHBOARD}/settings`,
     // Modules (RBAC Showcase)
     modules: {
       root: `${ROOTS.DASHBOARD}/modules`,
       dashboard: (code: string) => `${ROOTS.DASHBOARD}/modules/${code}`,
       list: (code: string) => `${ROOTS.DASHBOARD}/modules/${code}/list`,
-      new: (code: string) => `${ROOTS.DASHBOARD}/modules/${code}/new`,
-      view: (code: string, id: string | number) => `${ROOTS.DASHBOARD}/modules/${code}/${id}`,
-      edit: (code: string, id: string | number) => `${ROOTS.DASHBOARD}/modules/${code}/${id}/edit`,
-      delete: (code: string, id: string | number) => `${ROOTS.DASHBOARD}/modules/${code}/${id}/delete`,
     },
   },
 };

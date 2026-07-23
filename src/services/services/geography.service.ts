@@ -1,15 +1,16 @@
-import { apiGet, apiPost, apiDelete } from '../api/client';
-import { createCrudService } from '../api/crud';
 import { endpoints } from '../api/endpoints';
+import { createCrudService } from '../api/crud';
+import { apiGet, apiPost, apiDelete } from '../api/client';
+
 import type { ApiResponse } from '../types/api';
 import type {
   City,
+  Zone,
+  CityZoneMapping,
   CreateCityRequest,
   UpdateCityRequest,
-  Zone,
   CreateZoneRequest,
   UpdateZoneRequest,
-  CityZoneMapping,
   CreateCityZoneMappingRequest,
 } from '../types/geography';
 

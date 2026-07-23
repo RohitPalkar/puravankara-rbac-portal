@@ -1,27 +1,28 @@
 import { useQuery } from '@tanstack/react-query';
 
+import { createCrudHooks } from './use-crud';
 import { queryKeys } from '../api/query-keys';
 import {
   moduleService,
-  subModuleService,
   actionService,
+  subModuleService,
   moduleActionService,
 } from '../services/product-catalog.service';
+
 import type {
   Module,
+  Action,
+  SubModule,
+  ModuleAction,
   CreateModuleRequest,
   UpdateModuleRequest,
-  SubModule,
-  CreateSubModuleRequest,
-  UpdateSubModuleRequest,
-  Action,
   CreateActionRequest,
   UpdateActionRequest,
-  ModuleAction,
+  CreateSubModuleRequest,
+  UpdateSubModuleRequest,
   CreateModuleActionRequest,
   UpdateModuleActionRequest,
 } from '../types/product-catalog';
-import { createCrudHooks } from './use-crud';
 
 export const {
   useList: useModuleList,

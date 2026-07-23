@@ -1,5 +1,7 @@
 import type { StackProps } from '@mui/material/Stack';
+
 import Stack from '@mui/material/Stack';
+
 import { DashboardBreadcrumbs } from 'src/layouts/components/dashboard-breadcrumbs';
 
 export function PageContainer({ children, sx, ...other }: StackProps) {

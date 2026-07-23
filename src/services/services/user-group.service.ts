@@ -1,5 +1,6 @@
-import { createCrudService } from '../api/crud';
 import { endpoints } from '../api/endpoints';
+import { createCrudService } from '../api/crud';
+
 import type { UserGroup, CreateUserGroupRequest, UpdateUserGroupRequest } from '../types/user-group';
 
 export const userGroupService = createCrudService<UserGroup, CreateUserGroupRequest, UpdateUserGroupRequest>({

@@ -167,9 +167,6 @@ export default function UserListPage() {
       renderCell: (params) => (
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 1 }}>
           <RowActionsMenu actions={[
-            { label: 'Edit', icon: 'solar:pen-bold' as const, onClick: () => navigate(paths.dashboard.userDetail(params.row.empId)) },
-            { label: 'View', icon: 'solar:eye-bold' as const, onClick: () => navigate(paths.dashboard.userDetail(params.row.empId)) },
-            { label: 'Reset Password', icon: 'solar:key-bold' as const, onClick: () => {} },
             { label: params.row.isActive ? 'Deactivate' : 'Activate', icon: params.row.isActive ? 'solar:lock-bold' as const : 'solar:unlock-bold' as const, onClick: () => handleStatusToggle(params.row) },
           ]} />
         </Box>

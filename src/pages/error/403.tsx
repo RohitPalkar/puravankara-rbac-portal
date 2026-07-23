@@ -1,5 +1,7 @@
 import { Helmet } from 'react-helmet-async';
+
 import { CONFIG } from 'src/config-global';
+
 import { View403 } from 'src/sections/error';
 
 const metadata = { title: `403 Forbidden - ${CONFIG.appName}` };

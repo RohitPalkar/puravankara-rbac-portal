@@ -1,33 +1,38 @@
-import { useState, useCallback, useMemo } from 'react';
+import type { GridColDef, GridPaginationModel } from '@mui/x-data-grid';
+
 import { Helmet } from 'react-helmet-async';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import type { GridColDef, GridPaginationModel } from '@mui/x-data-grid';
-import Button from '@mui/material/Button';
+import { useMemo, useState, useCallback } from 'react';
+
+import Box from '@mui/material/Box';
+import Card from '@mui/material/Card';
+import Chip from '@mui/material/Chip';
 import Stack from '@mui/material/Stack';
+import Alert from '@mui/material/Alert';
+import Button from '@mui/material/Button';
 import Dialog from '@mui/material/Dialog';
+import Tooltip from '@mui/material/Tooltip';
+import Popover from '@mui/material/Popover';
+import Typography from '@mui/material/Typography';
 import DialogTitle from '@mui/material/DialogTitle';
 import DialogContent from '@mui/material/DialogContent';
 import DialogActions from '@mui/material/DialogActions';
-import Card from '@mui/material/Card';
-import Box from '@mui/material/Box';
-import Alert from '@mui/material/Alert';
-import Chip from '@mui/material/Chip';
-import Typography from '@mui/material/Typography';
-import Tooltip from '@mui/material/Tooltip';
-import Popover from '@mui/material/Popover';
+
+import { paths } from 'src/routes/paths';
+
 import { CONFIG } from 'src/config-global';
-import { DataTable, type FilterOption } from 'src/components/data-table';
-import { EmptyState } from 'src/components/empty-state';
+import { queryKeys } from 'src/services/api/query-keys';
+import { useMyPermissions } from 'src/services/hooks/use-permissions';
+import { useDeleteDepartment } from 'src/services/hooks/use-organization';
+import { departmentService } from 'src/services/services/organization.service';
+
 import { Label } from 'src/components/label';
 import { Iconify } from 'src/components/iconify';
+import { EmptyState } from 'src/components/empty-state';
 import { RowActionsMenu } from 'src/components/row-actions';
-import { PageContainer, PageHeader } from 'src/components/page-layout';
-import { paths } from 'src/routes/paths';
-import { queryKeys } from 'src/services/api/query-keys';
-import { departmentService } from 'src/services/services/organization.service';
-import { useDeleteDepartment } from 'src/services/hooks/use-organization';
-import { useMyPermissions } from 'src/services/hooks/use-permissions';
+import { PageHeader, PageContainer } from 'src/components/page-layout';
+import { DataTable, type FilterOption } from 'src/components/data-table';
 
 const PAGE_SIZE = 20;
 const MAX_ZONE_CHIPS = 3;

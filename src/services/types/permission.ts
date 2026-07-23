@@ -1,5 +1,5 @@
-import { AppBase } from './common';
-import { PermissionType } from './enums';
+import type { AppBase } from './common';
+import type { PermissionType } from './enums';
 
 export interface PermissionTemplate extends AppBase {
   name: string;

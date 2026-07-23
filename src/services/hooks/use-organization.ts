@@ -1,18 +1,19 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
+import { createCrudHooks } from './use-crud';
 import { queryKeys } from '../api/query-keys';
-import { departmentService, roleService, departmentRoleService } from '../services/organization.service';
+import { roleService, departmentService, departmentRoleService } from '../services/organization.service';
+
 import type {
-  Department,
-  DepartmentListItem,
-  DepartmentDetail,
-  CreateDepartmentRequest,
-  UpdateDepartmentRequest,
   Role,
+  Department,
+  DepartmentDetail,
   CreateRoleRequest,
   UpdateRoleRequest,
+  DepartmentListItem,
+  CreateDepartmentRequest,
+  UpdateDepartmentRequest,
 } from '../types/organization';
-import { createCrudHooks } from './use-crud';
 
 export const {
   useList: useDepartmentList,

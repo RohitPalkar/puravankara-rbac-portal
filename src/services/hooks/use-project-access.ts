@@ -1,17 +1,18 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
+import { createCrudHooks } from './use-crud';
 import { queryKeys } from '../api/query-keys';
 import { projectGroupService, projectAccessService } from '../services/project-access.service';
+
 import type {
   ProjectGroup,
+  AddProjectToGroupRequest,
   CreateProjectGroupRequest,
   UpdateProjectGroupRequest,
   AssignProjectAccessRequest,
-  AssignBulkProjectAccessRequest,
-  AddProjectToGroupRequest,
   AssignUserProjectGroupRequest,
+  AssignBulkProjectAccessRequest,
 } from '../types/project-access';
-import { createCrudHooks } from './use-crud';
 
 export const {
   useList: useProjectGroupList,

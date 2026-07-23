@@ -1,9 +1,10 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
+import { createCrudHooks } from './use-crud';
 import { queryKeys } from '../api/query-keys';
 import { cityService, zoneService, cityZoneMappingService } from '../services/geography.service';
+
 import type { City, Zone, CreateCityRequest, UpdateCityRequest, CreateZoneRequest, UpdateZoneRequest, CreateCityZoneMappingRequest } from '../types/geography';
-import { createCrudHooks } from './use-crud';
 
 export const {
   useList: useCityList,

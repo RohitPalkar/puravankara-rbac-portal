@@ -65,7 +65,6 @@ export default function BrandFormPage() {
 
   const { data: permissions } = useMyPermissions();
   const canCreate = useMemo(() => hasBrandPermission(permissions, 'CREATE'), [permissions]);
-  const canEdit = useMemo(() => hasBrandPermission(permissions, 'EDIT'), [permissions]);
 
   const { data: brandData, isLoading: isFetching, isError: isFetchError } = useBrandById(brandId ?? 0);
   const { mutateAsync: createBrand, isPending: isCreating } = useCreateBrand();

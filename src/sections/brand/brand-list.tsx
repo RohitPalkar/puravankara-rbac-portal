@@ -15,16 +15,16 @@ import { paths } from 'src/routes/paths';
 
 import { CONFIG } from 'src/config-global';
 import { queryKeys } from 'src/services/api/query-keys';
+import { useDeleteBrand } from 'src/services/hooks/use-brands';
 import { brandService } from 'src/services/services/brand.service';
 import { useMyPermissions } from 'src/services/hooks/use-permissions';
-import { useDeleteBrand } from 'src/services/hooks/use-brands';
 
+import { Iconify } from 'src/components/iconify';
 import { DataTable } from 'src/components/data-table';
 import { EmptyState } from 'src/components/empty-state';
-import { Iconify } from 'src/components/iconify';
-import { PageHeader, PageContainer } from 'src/components/page-layout';
-import { ConfirmDialog } from 'src/components/confirm-dialog';
 import { RowActionsMenu } from 'src/components/row-actions';
+import { ConfirmDialog } from 'src/components/confirm-dialog';
+import { PageHeader, PageContainer } from 'src/components/page-layout';
 
 const PAGE_SIZE = 20;
 

@@ -1,10 +1,13 @@
 import { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
+
 import Link from '@mui/material/Link';
 import Typography from '@mui/material/Typography';
 import Breadcrumbs from '@mui/material/Breadcrumbs';
-import { Iconify } from 'src/components/iconify';
+
 import { usePathname } from 'src/routes/hooks';
+
+import { Iconify } from 'src/components/iconify';
 
 const LABEL_MAP: Record<string, string> = {
   dashboard: 'Dashboard',

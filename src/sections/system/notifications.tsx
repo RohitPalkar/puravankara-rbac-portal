@@ -1,26 +1,29 @@
-import { useState, useMemo, useCallback } from 'react';
+import type { NotificationType } from 'src/types';
+
+import dayjs from 'dayjs';
 import { Helmet } from 'react-helmet-async';
-import Stack from '@mui/material/Stack';
-import Typography from '@mui/material/Typography';
-import TextField from '@mui/material/TextField';
-import MenuItem from '@mui/material/MenuItem';
+import relativeTime from 'dayjs/plugin/relativeTime';
+import { useMemo, useState, useCallback } from 'react';
+
+import Box from '@mui/material/Box';
 import Card from '@mui/material/Card';
 import Chip from '@mui/material/Chip';
-import Box from '@mui/material/Box';
-import IconButton from '@mui/material/IconButton';
 import List from '@mui/material/List';
-import ListItem from '@mui/material/ListItem';
-import ListItemText from '@mui/material/ListItemText';
+import Stack from '@mui/material/Stack';
 import Tooltip from '@mui/material/Tooltip';
-import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
+import ListItem from '@mui/material/ListItem';
+import TextField from '@mui/material/TextField';
+import Typography from '@mui/material/Typography';
+import IconButton from '@mui/material/IconButton';
+import ListItemText from '@mui/material/ListItemText';
 import ToggleButton from '@mui/material/ToggleButton';
-import dayjs from 'dayjs';
-import relativeTime from 'dayjs/plugin/relativeTime';
+import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
+
 import { CONFIG } from 'src/config-global';
-import { PageContainer, PageHeader } from 'src/components/page-layout';
-import { Iconify } from 'src/components/iconify';
 import { mockNotifications } from 'src/services/mock-data';
-import type { Notification, NotificationType } from 'src/types';
+
+import { Iconify } from 'src/components/iconify';
+import { PageHeader, PageContainer } from 'src/components/page-layout';
 
 dayjs.extend(relativeTime);
 

@@ -1,7 +1,8 @@
+import { createCrudHooks } from './use-crud';
 import { queryKeys } from '../api/query-keys';
 import { delegationService } from '../services/delegation.service';
+
 import type { Delegation, CreateDelegationRequest, UpdateDelegationRequest } from '../types/delegation';
-import { createCrudHooks } from './use-crud';
 
 export const {
   useList: useDelegationList,

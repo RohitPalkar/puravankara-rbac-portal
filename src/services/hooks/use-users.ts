@@ -2,13 +2,14 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 import { queryKeys } from '../api/query-keys';
 import { userService } from '../services/user.service';
+
 import type { PaginationQuery } from '../types/api';
 import type {
   CreateUserRequest,
   UpdateUserRequest,
   CreateUserRoleRequest,
-  CreateUserReportingLineRequest,
   CreateUserFullRequest,
+  CreateUserReportingLineRequest,
 } from '../types/user';
 
 export function useUserList(params?: PaginationQuery) {

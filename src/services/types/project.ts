@@ -1,5 +1,5 @@
-import { AppBase } from './common';
-import { PaymentGatewayType, IncentiveType } from './enums';
+import type { AppBase } from './common';
+import type { IncentiveType, PaymentGatewayType } from './enums';
 
 export interface Project extends AppBase {
   brandId: number;

@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 import { queryKeys } from '../api/query-keys';
 import { notificationService } from '../services/notification.service';
+
 import type { NotificationQuery, UpdateNotificationPreferenceRequest } from '../types/notification';
 
 export function useNotificationList(params?: NotificationQuery) {

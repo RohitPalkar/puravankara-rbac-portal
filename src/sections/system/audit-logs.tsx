@@ -1,24 +1,26 @@
-import { useState, useMemo } from 'react';
+import dayjs from 'dayjs';
+import { useMemo, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
-import Stack from '@mui/material/Stack';
-import Typography from '@mui/material/Typography';
-import TextField from '@mui/material/TextField';
-import MenuItem from '@mui/material/MenuItem';
+
 import Card from '@mui/material/Card';
+import Chip from '@mui/material/Chip';
+import Stack from '@mui/material/Stack';
 import Table from '@mui/material/Table';
+import MenuItem from '@mui/material/MenuItem';
+import TableRow from '@mui/material/TableRow';
+import TextField from '@mui/material/TextField';
 import TableBody from '@mui/material/TableBody';
 import TableCell from '@mui/material/TableCell';
-import TableContainer from '@mui/material/TableContainer';
 import TableHead from '@mui/material/TableHead';
-import TableRow from '@mui/material/TableRow';
-import Chip from '@mui/material/Chip';
-import Box from '@mui/material/Box';
-import dayjs from 'dayjs';
+import Typography from '@mui/material/Typography';
+import TableContainer from '@mui/material/TableContainer';
+import CircularProgress from '@mui/material/CircularProgress';
+
 import { CONFIG } from 'src/config-global';
-import { PageContainer, PageHeader } from 'src/components/page-layout';
+import { useAuditLogList } from 'src/services/hooks/use-audit';
+
 import { Iconify } from 'src/components/iconify';
-import { mockAuditLogs } from 'src/services/mock-data';
-import type { AuditLog } from 'src/types';
+import { PageHeader, PageContainer } from 'src/components/page-layout';
 
 const ACTION_COLORS: Record<string, 'info' | 'success' | 'error' | 'warning' | 'default'> = {
   CREATE: 'success',
@@ -34,31 +36,35 @@ export default function AuditLogsPage() {
   const [entityFilter, setEntityFilter] = useState<string>('all');
   const [search, setSearch] = useState('');
 
+  const { data: logs, isLoading } = useAuditLogList();
+
   const actions = useMemo(() => {
-    const set = new Set(mockAuditLogs.map((l) => l.action));
+    if (!logs) return ['all'];
+    const set = new Set(logs.map((l) => l.action));
     return ['all', ...Array.from(set)];
-  }, []);
+  }, [logs]);
 
   const entities = useMemo(() => {
-    const set = new Set(mockAuditLogs.map((l) => l.entityType));
+    if (!logs) return ['all'];
+    const set = new Set(logs.map((l) => l.entityName));
     return ['all', ...Array.from(set)];
-  }, []);
+  }, [logs]);
 
   const filtered = useMemo(() => {
-    let list = mockAuditLogs;
+    let list = logs ?? [];
     if (actionFilter !== 'all') list = list.filter((l) => l.action === actionFilter);
-    if (entityFilter !== 'all') list = list.filter((l) => l.entityType === entityFilter);
+    if (entityFilter !== 'all') list = list.filter((l) => l.entityName === entityFilter);
     if (search) {
       const lower = search.toLowerCase();
       list = list.filter(
         (l) =>
-          l.entityLabel.toLowerCase().includes(lower) ||
-          l.userName?.toLowerCase().includes(lower) ||
-          l.details.toLowerCase().includes(lower)
+          l.entityName?.toLowerCase().includes(lower) ||
+          l.performerName?.toLowerCase().includes(lower) ||
+          l.action?.toLowerCase().includes(lower)
       );
     }
     return list.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-  }, [actionFilter, entityFilter, search]);
+  }, [logs, actionFilter, entityFilter, search]);
 
   return (
     <>
@@ -110,13 +116,18 @@ export default function AuditLogsPage() {
                   <TableCell sx={{ fontWeight: 700 }}>Timestamp</TableCell>
                   <TableCell sx={{ fontWeight: 700 }}>Action</TableCell>
                   <TableCell sx={{ fontWeight: 700 }}>Entity</TableCell>
-                  <TableCell sx={{ fontWeight: 700 }}>Details</TableCell>
                   <TableCell sx={{ fontWeight: 700 }}>User</TableCell>
                   <TableCell sx={{ fontWeight: 700 }}>IP Address</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
-                {filtered.map((log) => (
+                {isLoading ? (
+                  <TableRow>
+                    <TableCell colSpan={5} align="center" sx={{ py: 4 }}>
+                      <CircularProgress size={24} />
+                    </TableCell>
+                  </TableRow>
+                ) : filtered.map((log) => (
                   <TableRow key={log.id} hover>
                     <TableCell sx={{ whiteSpace: 'nowrap' }}>
                       {dayjs(log.createdAt).format('DD MMM YYYY, HH:mm')}
@@ -126,18 +137,17 @@ export default function AuditLogsPage() {
                     </TableCell>
                     <TableCell>
                       <Stack>
-                        <Typography variant="body2">{log.entityType}</Typography>
-                        <Typography variant="caption" color="text.secondary">{log.entityLabel}</Typography>
+                        <Typography variant="body2">{log.entityName}</Typography>
+                        <Typography variant="caption" color="text.secondary">{log.entityId}</Typography>
                       </Stack>
                     </TableCell>
-                    <TableCell>{log.details}</TableCell>
-                    <TableCell>{log.userName}</TableCell>
+                    <TableCell>{log.performerName || log.performedBy}</TableCell>
                     <TableCell sx={{ fontFamily: 'monospace', fontSize: 13 }}>{log.ipAddress}</TableCell>
                   </TableRow>
                 ))}
-                {filtered.length === 0 && (
+                {!isLoading && filtered.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={6} align="center" sx={{ py: 4 }}>
+                    <TableCell colSpan={5} align="center" sx={{ py: 4 }}>
                       <Typography variant="body2" color="text.secondary">No audit logs found.</Typography>
                     </TableCell>
                   </TableRow>

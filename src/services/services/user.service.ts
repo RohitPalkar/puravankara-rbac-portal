@@ -1,16 +1,17 @@
-import { apiGet, apiPost, apiPatch, apiDelete } from '../api/client';
 import { endpoints } from '../api/endpoints';
+import { apiGet, apiPost, apiPatch, apiDelete } from '../api/client';
+
 import type { ApiResponse, PaginationQuery } from '../types/api';
 import type {
   User,
+  UserRole,
+  UserZone,
   CreateUserRequest,
   UpdateUserRequest,
-  CreateUserRoleRequest,
-  UserRole,
-  CreateUserReportingLineRequest,
   UserReportingLine,
-  UserZone,
+  CreateUserRoleRequest,
   CreateUserFullRequest,
+  CreateUserReportingLineRequest,
 } from '../types/user';
 
 export const userService = {

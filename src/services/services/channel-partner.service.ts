@@ -1,12 +1,13 @@
-import { createCrudService } from '../api/crud';
 import { endpoints } from '../api/endpoints';
+import { createCrudService } from '../api/crud';
+
 import type {
-  ChannelPartnerType,
-  CreateChannelPartnerTypeRequest,
-  UpdateChannelPartnerTypeRequest,
   ChannelPartner,
+  ChannelPartnerType,
   CreateChannelPartnerRequest,
   UpdateChannelPartnerRequest,
+  CreateChannelPartnerTypeRequest,
+  UpdateChannelPartnerTypeRequest,
 } from '../types/channel-partner';
 
 export const channelPartnerTypeService = createCrudService<

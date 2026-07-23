@@ -1,18 +1,19 @@
-import { apiGet, apiPost, apiDelete } from '../api/client';
-import { createCrudService } from '../api/crud';
 import { endpoints } from '../api/endpoints';
-import type { ApiResponse, PaginationQuery } from '../types/api';
+import { createCrudService } from '../api/crud';
+import { apiGet, apiPost, apiDelete } from '../api/client';
+
+import type { ApiResponse } from '../types/api';
 import type {
   ProjectGroup,
+  UserProjectGroup,
+  UserProjectAccess,
+  ProjectGroupProject,
+  AddProjectToGroupRequest,
   CreateProjectGroupRequest,
   UpdateProjectGroupRequest,
   AssignProjectAccessRequest,
-  AssignBulkProjectAccessRequest,
-  AddProjectToGroupRequest,
   AssignUserProjectGroupRequest,
-  UserProjectAccess,
-  ProjectGroupProject,
-  UserProjectGroup,
+  AssignBulkProjectAccessRequest,
 } from '../types/project-access';
 
 export const projectGroupService = createCrudService<

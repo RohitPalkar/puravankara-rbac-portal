@@ -1,11 +1,10 @@
-import type { ChannelPartnerType } from 'src/types';
 import type { GridColDef } from '@mui/x-data-grid';
+import type { ChannelPartnerType } from 'src/types';
 
-import { Helmet } from 'react-helmet-async';
 import { useState } from 'react';
+import { Helmet } from 'react-helmet-async';
 
 import Card from '@mui/material/Card';
-import Stack from '@mui/material/Stack';
 
 import { CONFIG } from 'src/config-global';
 import { mockChannelPartnerTypes } from 'src/services/mock-data';

@@ -1,6 +1,7 @@
 import { apiPut } from '../api/client';
-import { createCrudService, createEntity } from '../api/crud';
 import { endpoints } from '../api/endpoints';
+import { createCrudService } from '../api/crud';
+
 import type { ApiResponse } from '../types/api';
 import type {
   Phase,

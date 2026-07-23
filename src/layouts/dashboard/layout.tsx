@@ -17,15 +17,15 @@ import { NavVertical } from './nav-vertical';
 import { NavHorizontal } from './nav-horizontal';
 import { _account } from '../config-nav-account';
 import { Searchbar } from '../components/searchbar';
+import { useNavData } from '../config-nav-dashboard';
 import { MenuButton } from '../components/menu-button';
 import { LayoutSection } from '../core/layout-section';
 import { HeaderSection } from '../core/header-section';
 import { StyledDivider, useNavColorVars } from './styles';
 import { AccountDrawer } from '../components/account-drawer';
 import { SettingsButton } from '../components/settings-button';
-import { FullscreenButton } from '../components/fullscreen-button';
 import { DashboardFooter } from '../components/dashboard-footer';
-import { useNavData } from '../config-nav-dashboard';
+import { FullscreenButton } from '../components/fullscreen-button';
 
 export type DashboardLayoutProps = {
   sx?: SxProps<Theme>;

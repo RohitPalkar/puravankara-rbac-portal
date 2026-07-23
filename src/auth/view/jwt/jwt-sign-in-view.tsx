@@ -1,6 +1,6 @@
 import { z as zod } from 'zod';
-import { useForm } from 'react-hook-form';
 import { useState } from 'react';
+import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 
 import Box from '@mui/material/Box';
@@ -87,12 +87,12 @@ export function JwtSignInView() {
       }}
     >
       <Link
-        href={paths.faqs}
+        href={paths.dashboard.root}
         component={RouterLink}
         color="text.secondary"
         sx={{ typography: 'body2', fontWeight: 500, textDecoration: 'none', '&:hover': { color: 'primary.main' } }}
       >
-        Need help?
+        Dashboard
       </Link>
       <IconButton
         aria-label="settings"

@@ -1,5 +1,6 @@
-import { apiGet, apiPost } from '../api/client';
 import { endpoints } from '../api/endpoints';
+import { apiGet, apiPost } from '../api/client';
+
 import type { ApiResponse } from '../types/api';
 import type { SetupStatus } from '../types/setup';
 

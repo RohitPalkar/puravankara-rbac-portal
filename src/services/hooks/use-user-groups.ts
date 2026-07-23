@@ -1,7 +1,8 @@
+import { createCrudHooks } from './use-crud';
 import { queryKeys } from '../api/query-keys';
 import { userGroupService } from '../services/user-group.service';
+
 import type { UserGroup, CreateUserGroupRequest, UpdateUserGroupRequest } from '../types/user-group';
-import { createCrudHooks } from './use-crud';
 
 export const {
   useList: useUserGroupList,

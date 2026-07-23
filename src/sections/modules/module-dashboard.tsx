@@ -1,34 +1,26 @@
 import { Helmet } from 'react-helmet-async';
 import { useNavigate } from 'react-router-dom';
+
 import Grid from '@mui/material/Grid';
 import Card from '@mui/material/Card';
+import Chip from '@mui/material/Chip';
 import Stack from '@mui/material/Stack';
 import Button from '@mui/material/Button';
 import CardHeader from '@mui/material/CardHeader';
-import CardContent from '@mui/material/CardContent';
 import Typography from '@mui/material/Typography';
-import Chip from '@mui/material/Chip';
+import CardContent from '@mui/material/CardContent';
 import CircularProgress from '@mui/material/CircularProgress';
-import { CONFIG } from 'src/config-global';
-import { paths } from 'src/routes/paths';
-import { PageContainer, PageHeader } from 'src/components/page-layout';
-import { Iconify } from 'src/components/iconify';
-import { useModuleTree } from 'src/services/hooks/use-product-catalog';
-import { useModuleActions } from './hooks/use-module-permission';
 
-const ACTION_COLORS: Record<string, 'success' | 'error' | 'warning' | 'info' | 'default'> = {
-  VIEW: 'info',
-  CREATE: 'success',
-  EDIT: 'warning',
-  DELETE: 'error',
-  APPROVE: 'success',
-  EXPORT: 'info',
-};
+import { CONFIG } from 'src/config-global';
+
+import { Iconify } from 'src/components/iconify';
+import { PageHeader, PageContainer } from 'src/components/page-layout';
+
+import { useModuleActions } from './hooks/use-module-permission';
 
 export default function ModuleDashboardPage() {
   const navigate = useNavigate();
   const { actions, subModules, moduleName, isLoading } = useModuleActions();
-  const { data: moduleTree } = useModuleTree();
 
   if (isLoading) {
     return (

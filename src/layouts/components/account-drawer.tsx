@@ -12,14 +12,12 @@ import IconButton from '@mui/material/IconButton';
 
 import { useRouter, usePathname } from 'src/routes/hooks';
 
-import { CONFIG } from 'src/config-global';
 import { varAlpha } from 'src/theme/styles';
+import { useMe } from 'src/services/hooks/use-auth';
 
 import { Iconify } from 'src/components/iconify';
 import { Scrollbar } from 'src/components/scrollbar';
 import { AnimateAvatar } from 'src/components/animate';
-
-import { useMe } from 'src/services/hooks/use-auth';
 
 import { AccountButton } from './account-button';
 import { SignOutButton } from './sign-out-button';

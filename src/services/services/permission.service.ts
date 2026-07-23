@@ -1,22 +1,23 @@
-import { apiGet, apiPost, apiPut, apiDelete } from '../api/client';
-import { createCrudService, createEntity } from '../api/crud';
 import { endpoints } from '../api/endpoints';
+import { createEntity, createCrudService } from '../api/crud';
+import { apiGet, apiPut, apiPost, apiDelete } from '../api/client';
+
 import type { ApiResponse } from '../types/api';
+import type { CompiledPermissions } from '../types/auth';
 import type {
+  FlatModule,
   PermissionTemplate,
-  CreatePermissionTemplateRequest,
-  UpdatePermissionTemplateRequest,
   RoleProjectPermission,
-  CreateRoleProjectPermissionRequest,
-  UserPermissionOverride,
   CreateOverrideRequest,
+  SetPermissionsRequest,
+  UserPermissionOverride,
+  UserPermissionsResponse,
   ExplainPermissionRequest,
   ExplainPermissionResponse,
-  UserPermissionsResponse,
-  SetPermissionsRequest,
-  FlatModule,
+  CreatePermissionTemplateRequest,
+  UpdatePermissionTemplateRequest,
+  CreateRoleProjectPermissionRequest,
 } from '../types/permission';
-import type { CompiledPermissions } from '../types/auth';
 
 export const permissionTemplateService = createCrudService<
   PermissionTemplate,

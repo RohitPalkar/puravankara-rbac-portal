@@ -1,13 +1,14 @@
 import { createCrudHooks } from './use-crud';
 import { queryKeys } from '../api/query-keys';
-import { channelPartnerTypeService, channelPartnerService } from '../services/channel-partner.service';
+import { channelPartnerService, channelPartnerTypeService } from '../services/channel-partner.service';
+
 import type {
-  ChannelPartnerType,
-  CreateChannelPartnerTypeRequest,
-  UpdateChannelPartnerTypeRequest,
   ChannelPartner,
+  ChannelPartnerType,
   CreateChannelPartnerRequest,
   UpdateChannelPartnerRequest,
+  CreateChannelPartnerTypeRequest,
+  UpdateChannelPartnerTypeRequest,
 } from '../types/channel-partner';
 
 export const {

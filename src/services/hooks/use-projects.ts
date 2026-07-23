@@ -1,9 +1,10 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
+import { createCrudHooks } from './use-crud';
 import { queryKeys } from '../api/query-keys';
 import { projectService } from '../services/project.service';
+
 import type { Project, CreateProjectRequest, UpdateProjectRequest, CreateProjectLocationRequest } from '../types/project';
-import { createCrudHooks } from './use-crud';
 
 export const {
   useList: useProjectList,

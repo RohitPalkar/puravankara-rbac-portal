@@ -2,8 +2,6 @@ import 'react-quill/dist/quill.snow.css';
 
 import type { CreateProjectRequest, UpdateProjectRequest, IncentiveRuleRequest, PaymentGatewayRequest } from 'src/services/types/project';
 
-import { PaymentGatewayType, IncentiveType } from 'src/services/types/enums';
-
 import ReactQuill from 'react-quill';
 import { Helmet } from 'react-helmet-async';
 import { useQuery } from '@tanstack/react-query';
@@ -31,8 +29,9 @@ import { paths } from 'src/routes/paths';
 import { CONFIG } from 'src/config-global';
 import { queryKeys } from 'src/services/api/query-keys';
 import { brandService } from 'src/services/services/brand.service';
-import { cityService } from 'src/services/services/geography.service';
 import { phaseService } from 'src/services/services/phase.service';
+import { cityService } from 'src/services/services/geography.service';
+import { IncentiveType, PaymentGatewayType } from 'src/services/types/enums';
 import { useProjectById, useCreateProject, useUpdateProject } from 'src/services/hooks/use-projects';
 
 import { Iconify } from 'src/components/iconify';

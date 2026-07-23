@@ -1,10 +1,12 @@
-import axios from 'axios';
 import type { AxiosError, InternalAxiosRequestConfig } from 'axios';
+
+import axios from 'axios';
 
 import { CONFIG } from 'src/config-global';
 
+import { AppApiError, NetworkError, NotFoundError, ValidationError, UnauthorizedError } from './errors';
+
 import type { ApiResponse, ApiError as ApiErrorType } from '../types/api';
-import { AppApiError, NetworkError, NotFoundError, UnauthorizedError, ValidationError } from './errors';
 
 let accessToken: string | null = null;
 

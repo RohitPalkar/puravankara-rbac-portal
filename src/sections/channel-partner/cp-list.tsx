@@ -2,8 +2,8 @@ import type { GridColDef, GridPaginationModel } from '@mui/x-data-grid';
 
 import dayjs from 'dayjs';
 import { Helmet } from 'react-helmet-async';
-import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import { useMemo, useState, useCallback } from 'react';
 
 import Box from '@mui/material/Box';
@@ -14,8 +14,8 @@ import Button from '@mui/material/Button';
 import { paths } from 'src/routes/paths';
 
 import { CONFIG } from 'src/config-global';
-import { useDeleteChannelPartner } from 'src/services/hooks/use-channel-partners';
 import { queryKeys } from 'src/services/api/query-keys';
+import { useDeleteChannelPartner } from 'src/services/hooks/use-channel-partners';
 import { channelPartnerService } from 'src/services/services/channel-partner.service';
 
 import { Label } from 'src/components/label';

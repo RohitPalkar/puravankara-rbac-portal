@@ -2,8 +2,8 @@ import type { CreateChannelPartnerRequest, UpdateChannelPartnerRequest } from 's
 
 import { Helmet } from 'react-helmet-async';
 import { useQuery } from '@tanstack/react-query';
-import { useParams, useNavigate } from 'react-router-dom';
 import { useState, useEffect, useCallback } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 
 import Box from '@mui/material/Box';
 import Card from '@mui/material/Card';
@@ -11,8 +11,8 @@ import Stack from '@mui/material/Stack';
 import Alert from '@mui/material/Alert';
 import Button from '@mui/material/Button';
 import Snackbar from '@mui/material/Snackbar';
-import TextField from '@mui/material/TextField';
 import MenuItem from '@mui/material/MenuItem';
+import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 import LinearProgress from '@mui/material/LinearProgress';
 import CircularProgress from '@mui/material/CircularProgress';

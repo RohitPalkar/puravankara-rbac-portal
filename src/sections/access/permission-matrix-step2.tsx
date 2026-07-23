@@ -1,18 +1,19 @@
-import { useState, useMemo, useCallback, useEffect, Fragment } from 'react';
+import { useMemo, useState, Fragment, useEffect, useCallback } from 'react';
 
 import Box from '@mui/material/Box';
 import Chip from '@mui/material/Chip';
 import Stack from '@mui/material/Stack';
+import Button from '@mui/material/Button';
 import Checkbox from '@mui/material/Checkbox';
+import Collapse from '@mui/material/Collapse';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 import IconButton from '@mui/material/IconButton';
-import Collapse from '@mui/material/Collapse';
-import Button from '@mui/material/Button';
 import CircularProgress from '@mui/material/CircularProgress';
 
-import { Iconify } from 'src/components/iconify';
 import { useRolePermissionsTree } from 'src/services/hooks/use-permissions';
+
+import { Iconify } from 'src/components/iconify';
 
 interface Props {
   roleId: number;

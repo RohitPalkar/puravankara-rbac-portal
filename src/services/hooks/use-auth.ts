@@ -1,9 +1,10 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
-import { setAccessToken } from '../api/client';
 import { queryKeys } from '../api/query-keys';
+import { setAccessToken } from '../api/client';
 import { authService } from '../services/auth.service';
-import type { LoginRequest, RefreshTokenRequest, SetPasswordRequest, MeResponse, MeUser } from '../types/auth';
+
+import type { MeUser, MeResponse, LoginRequest, SetPasswordRequest, RefreshTokenRequest } from '../types/auth';
 
 type FlatMe = MeUser & { roles: MeResponse['roles'] };
 

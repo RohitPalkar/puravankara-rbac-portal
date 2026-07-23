@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
+import { useParams, useNavigate } from 'react-router-dom';
 
 import Box from '@mui/material/Box';
 import Card from '@mui/material/Card';
@@ -8,11 +8,14 @@ import Stack from '@mui/material/Stack';
 import Button from '@mui/material/Button';
 import Typography from '@mui/material/Typography';
 
-import { Iconify } from 'src/components/iconify';
-import { CONFIG } from 'src/config-global';
-import { PageHeader, PageContainer } from 'src/components/page-layout';
 import { paths } from 'src/routes/paths';
+
+import { CONFIG } from 'src/config-global';
 import { useRolePermissionsSummary } from 'src/services/hooks/use-permissions';
+
+import { Iconify } from 'src/components/iconify';
+import { PageHeader, PageContainer } from 'src/components/page-layout';
+
 import PermissionMatrixStep2 from './permission-matrix-step2';
 
 export default function PermissionMatrixViewPage() {

@@ -1,12 +1,13 @@
-import { apiGet, apiPost, setAccessToken } from '../api/client';
 import { endpoints } from '../api/endpoints';
+import { apiGet, apiPost, setAccessToken } from '../api/client';
+
 import type { ApiResponse } from '../types/api';
 import type {
+  MeResponse,
   AuthResponse,
   LoginRequest,
-  RefreshTokenRequest,
   SetPasswordRequest,
-  MeResponse,
+  RefreshTokenRequest,
 } from '../types/auth';
 
 export const authService = {

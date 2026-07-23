@@ -1,5 +1,6 @@
-import type { PaginationQuery, PaginationMeta, ApiResponse } from '../types/api';
 import { apiGet, apiPost, apiPatch, apiDelete } from './client';
+
+import type { ApiResponse, PaginationMeta, PaginationQuery } from '../types/api';
 
 export interface PaginatedResult<T> {
   data: T[];

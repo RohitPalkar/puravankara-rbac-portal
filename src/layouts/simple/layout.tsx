@@ -51,12 +51,12 @@ export function SimpleLayout({ sx, children, header, content }: SimpleLayoutProp
               <Box display="flex" alignItems="center" gap={{ xs: 1, sm: 1.5 }}>
                 {/* -- Help link -- */}
                 <Link
-                  href={paths.faqs}
+                  href={paths.dashboard.root}
                   component={RouterLink}
                   color="inherit"
                   sx={{ typography: 'subtitle2' }}
                 >
-                  Need help?
+                  Dashboard
                 </Link>
                 {/* -- Settings button -- */}
                 <SettingsButton />

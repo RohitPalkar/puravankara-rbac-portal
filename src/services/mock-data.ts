@@ -1,7 +1,7 @@
 import type {
-  Zone, City, Role, User, Module, Action, Project, SubModule, Department, Brand, Phase,
-  ChannelPartnerType, ChannelPartner, UserGroup, ProjectPaymentGateway, ProjectIncentiveRule,
-  ApprovalConfig, ApprovalRequest, Delegation, AuditLog, Notification,
+  Zone, City, Role, User, Brand, Phase, Module, Action, Project, AuditLog, SubModule,
+  UserGroup, Department, Delegation, Notification, ChannelPartner,
+  ApprovalConfig, ApprovalRequest, ChannelPartnerType, ProjectIncentiveRule, ProjectPaymentGateway,
 } from 'src/types';
 
 export const mockZones: Zone[] = [

@@ -1,4 +1,4 @@
-import { EmploymentStatus } from './enums';
+import type { EmploymentStatus } from './enums';
 
 export interface User {
   empId: string;

@@ -1,4 +1,4 @@
-import { AppBase } from './common';
+import type { AppBase } from './common';
 
 export interface ChannelPartnerType extends AppBase {
   name: string;

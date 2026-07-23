@@ -1,28 +1,31 @@
-import { useState, useMemo, useCallback, useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
+import { useMemo, useState, useEffect, useCallback } from 'react';
+
 import Box from '@mui/material/Box';
 import Card from '@mui/material/Card';
 import Step from '@mui/material/Step';
 import Stack from '@mui/material/Stack';
+import Alert from '@mui/material/Alert';
 import Button from '@mui/material/Button';
 import Select from '@mui/material/Select';
-import MenuItem from '@mui/material/MenuItem';
 import Stepper from '@mui/material/Stepper';
+import MenuItem from '@mui/material/MenuItem';
+import Snackbar from '@mui/material/Snackbar';
 import StepLabel from '@mui/material/StepLabel';
 import TextField from '@mui/material/TextField';
-import Typography from '@mui/material/Typography';
 import InputLabel from '@mui/material/InputLabel';
 import FormControl from '@mui/material/FormControl';
-import CircularProgress from '@mui/material/CircularProgress';
 import FormHelperText from '@mui/material/FormHelperText';
-import Alert from '@mui/material/Alert';
-import Snackbar from '@mui/material/Snackbar';
-import { CONFIG } from 'src/config-global';
-import { PageHeader, PageContainer } from 'src/components/page-layout';
+
 import { paths } from 'src/routes/paths';
-import { useDepartmentList, useDepartmentHierarchyLevels, useRoleForHierarchy } from 'src/services/hooks/use-organization';
+
+import { CONFIG } from 'src/config-global';
 import { useSetRolePermissions, useRolePermissionsSummary } from 'src/services/hooks/use-permissions';
+import { useDepartmentList, useRoleForHierarchy, useDepartmentHierarchyLevels } from 'src/services/hooks/use-organization';
+
+import { PageHeader, PageContainer } from 'src/components/page-layout';
+
 import PermissionMatrixStep2 from './permission-matrix-step2';
 
 const STEPS = ['Basic Information', 'Permission Configuration'];
