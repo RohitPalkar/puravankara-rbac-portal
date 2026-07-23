@@ -133,6 +133,28 @@ export default function PermissionMatrixStep2({ roleId, onSave, saving, editable
     });
   }, []);
 
+  const toggleSubModule = useCallback((sm: SubModuleNode) => {
+    setSelectedActionIds((prev) => {
+      const next = new Set(prev);
+      if (!sm.hasActions) {
+        const hasPermission = sm.actionGroups.some((ag) => ag.actions.some((a) => next.has(a.id)));
+        sm.actionGroups.forEach((ag) => ag.actions.forEach((a) => {
+          if (hasPermission) next.delete(a.id);
+          else next.add(a.id);
+        }));
+        return next;
+      }
+      const allSelected = sm.actionGroups.every((ag) => ag.actions.every((a) => next.has(a.id)));
+      sm.actionGroups.forEach((ag) => {
+        ag.actions.forEach((a) => {
+          if (allSelected) next.delete(a.id);
+          else next.add(a.id);
+        });
+      });
+      return next;
+    });
+  }, []);
+
   const selectAll = useCallback(() => {
     if (!treeData?.modules || !selectedSubModuleId) return;
     const sm = findSubModule(treeData.modules, selectedSubModuleId);
@@ -293,16 +315,18 @@ export default function PermissionMatrixStep2({ roleId, onSave, saving, editable
                         const smAllSelected =
                           sm.totalCount > 0 && sm.selectedCount === sm.totalCount;
                         const smSomeSelected = sm.selectedCount > 0 && !smAllSelected;
+                        const smAnySelected = sm.hasActions ? smSomeSelected : subModulePermissionEnabled(sm);
+                        const smFullySelected = sm.hasActions ? smAllSelected : subModulePermissionEnabled(sm);
                         return (
                           <Stack
                             key={sm.id}
                             direction="row"
                             alignItems="center"
-                            spacing={1}
+                            spacing={0.5}
                             sx={{
-                              py: 0.5,
-                              px: 1,
-                              ml: 3,
+                              py: 0.25,
+                              px: 0.5,
+                              ml: 2,
                               borderRadius: 1,
                               cursor: 'pointer',
                               bgcolor: isActive ? 'primary.lighter' : 'transparent',
@@ -312,8 +336,16 @@ export default function PermissionMatrixStep2({ roleId, onSave, saving, editable
                                 bgcolor: isActive ? 'primary.lighter' : 'action.hover',
                               },
                             }}
-                            onClick={() => setSelectedSubModuleId(sm.id)}
                           >
+                            <Checkbox
+                              size="small"
+                              checked={smFullySelected}
+                              indeterminate={sm.hasActions && smAnySelected && !smFullySelected}
+                              onChange={() => editable && toggleSubModule(sm)}
+                              disabled={!editable}
+                              onClick={(e) => e.stopPropagation()}
+                              sx={{ p: 0.25 }}
+                            />
                             <Typography
                               variant="body2"
                               noWrap
@@ -321,21 +353,13 @@ export default function PermissionMatrixStep2({ roleId, onSave, saving, editable
                                 flex: 1,
                                 fontWeight: isActive ? 600 : 400,
                                 fontSize: '0.8125rem',
+                                cursor: 'pointer',
                               }}
+                              onClick={() => setSelectedSubModuleId(sm.id)}
                             >
                               {sm.name}
                             </Typography>
-                            {sm.permissionType === 'MODULE' ? (
-                              <Box
-                                sx={{
-                                  width: 8,
-                                  height: 8,
-                                  borderRadius: '50%',
-                                  bgcolor: subModulePermissionEnabled(sm) ? 'success.main' : 'grey.300',
-                                  flexShrink: 0,
-                                }}
-                              />
-                            ) : (
+                            {sm.hasActions && (
                               <Chip
                                 label={`${sm.selectedCount}/${sm.totalCount}`}
                                 size="small"
