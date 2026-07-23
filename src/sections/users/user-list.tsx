@@ -167,6 +167,7 @@ export default function UserListPage() {
       renderCell: (params) => (
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 1 }}>
           <RowActionsMenu actions={[
+            { label: 'Edit', icon: 'solar:pen-bold' as const, onClick: () => navigate(paths.dashboard.userEdit(params.row.id)) },
             { label: params.row.isActive ? 'Deactivate' : 'Activate', icon: params.row.isActive ? 'solar:lock-bold' as const : 'solar:unlock-bold' as const, onClick: () => handleStatusToggle(params.row) },
           ]} />
         </Box>

@@ -46,7 +46,7 @@ function updateModuleInProfile(
 
 export function PermissionProfile({ modules, allProjects, initialData, onChange }: Props) {
   const profile = useMemo(
-    () => initialData ?? buildDefaultProfile(modules),
+    () => (initialData && initialData.length > 0 ? initialData : buildDefaultProfile(modules)),
     [modules, initialData],
   );
 

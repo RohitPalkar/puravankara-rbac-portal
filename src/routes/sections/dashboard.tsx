@@ -25,6 +25,7 @@ const DepartmentFormPage = lazy(() => import('src/sections/organization/departme
 // Access Management
 const UserManagementPage = lazy(() => import('src/sections/users/user-list'));
 const UserNewPage = lazy(() => import('src/sections/users/user-new'));
+const UserDetailPage = lazy(() => import('src/sections/users/user-detail'));
 
 const PermissionMatrixPage = lazy(() => import('src/sections/access/permission-matrix'));
 const PermissionMatrixCreatePage = lazy(() => import('src/sections/access/permission-matrix-create'));
@@ -77,6 +78,7 @@ export const dashboardRoutes = [
       // Access Management
       { path: 'user-management', element: <UserManagementPage /> },
       { path: 'user-management/new', element: <UserNewPage /> },
+      { path: 'user-management/:id/edit', element: <UserDetailPage /> },
 
       { path: 'permission-matrix', element: <PermissionMatrixPage /> },
       { path: 'permission-matrix/new', element: <PermissionMatrixCreatePage /> },

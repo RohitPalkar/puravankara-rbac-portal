@@ -33,6 +33,7 @@ export const paths = {
     // Access Management
     userManagement: `${ROOTS.DASHBOARD}/user-management`,
     userNew: `${ROOTS.DASHBOARD}/user-management/new`,
+    userEdit: (id: string) => `${ROOTS.DASHBOARD}/user-management/${id}/edit`,
 
     permissionMatrix: `${ROOTS.DASHBOARD}/permission-matrix`,
     permissionMatrixNew: `${ROOTS.DASHBOARD}/permission-matrix/new`,
