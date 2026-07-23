@@ -74,7 +74,7 @@ export async function bootstrapSeeder(dataSource: DataSource): Promise<void> {
     let mod = await moduleRepo.findOne({ where: { name: m.name } });
     if (!mod) {
       mod = await moduleRepo.save(
-        moduleRepo.create({ name: m.name, code: m.code, isActive: true }),
+        moduleRepo.create({ name: m.name, code: m.code, isActive: true, isPermissionConfigurable: false }),
       );
     }
     moduleMap.set(m.name, mod);
