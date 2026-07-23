@@ -5,21 +5,28 @@ import { Helmet } from 'react-helmet-async';
 import { useNavigate } from 'react-router-dom';
 import { useRef, useState, useCallback } from 'react';
 
+import Box from '@mui/material/Box';
 import Card from '@mui/material/Card';
 import Step from '@mui/material/Step';
 import Alert from '@mui/material/Alert';
 import Stack from '@mui/material/Stack';
 import Button from '@mui/material/Button';
+import Dialog from '@mui/material/Dialog';
 import Stepper from '@mui/material/Stepper';
 import Snackbar from '@mui/material/Snackbar';
 import StepLabel from '@mui/material/StepLabel';
 import Typography from '@mui/material/Typography';
+import IconButton from '@mui/material/IconButton';
+import DialogTitle from '@mui/material/DialogTitle';
+import DialogContent from '@mui/material/DialogContent';
+import DialogContentText from '@mui/material/DialogContentText';
 
 import { paths } from 'src/routes/paths';
 
 import { CONFIG } from 'src/config-global';
 import { useCreateUserFull } from 'src/services/hooks/use-users';
 
+import { Iconify } from 'src/components/iconify';
 import { PageHeader, PageContainer } from 'src/components/page-layout';
 
 import ProjectMappingStep from './components/project-mapping-step';
@@ -38,6 +45,7 @@ export default function UserNewPage() {
   const [showSuccess, setShowSuccess] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState('');
+  const [generatedPassword, setGeneratedPassword] = useState<string | null>(null);
 
   const step1Ref = useRef<BasicInformationStepHandle>(null);
   const step2Ref = useRef<ProjectMappingStepHandle>(null);
@@ -119,16 +127,15 @@ export default function UserNewPage() {
         },
       };
 
-      await createUserFull(payload);
-
+      const result = await createUserFull(payload);
+      setGeneratedPassword(result.generatedPassword);
       setShowSuccess(true);
-      setTimeout(() => navigate(paths.dashboard.userManagement), 2000);
     } catch (err: any) {
       setSubmitError(err?.message ?? 'Failed to create user. Please try again.');
     } finally {
       setSubmitting(false);
     }
-  }, [createUserFull, navigate]);
+  }, [createUserFull]);
 
   const handleCreateClick = useCallback(() => {
     if (activeStep < STEPS.length - 1) {
@@ -199,6 +206,51 @@ export default function UserNewPage() {
           <Typography variant="body2" fontWeight={600}>User Created Successfully</Typography>
         </Alert>
       </Snackbar>
+
+      <Dialog open={!!generatedPassword} onClose={() => { setGeneratedPassword(null); navigate(paths.dashboard.userManagement); }} maxWidth="sm" fullWidth>
+        <DialogTitle>
+          <Stack direction="row" alignItems="center" spacing={1}>
+            <Iconify icon="solar:key-bold" width={24} color="primary.main" />
+            <Typography variant="h6">User Created Successfully</Typography>
+          </Stack>
+        </DialogTitle>
+        <DialogContent>
+          <Stack spacing={2}>
+            <DialogContentText>
+              The user account has been created. Share the password below with the user. They will need it to sign in.
+            </DialogContentText>
+            <Box
+              sx={{
+                bgcolor: 'grey.100',
+                p: 2,
+                borderRadius: 1,
+                border: '1px solid',
+                borderColor: 'divider',
+              }}
+            >
+              <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 0.5, fontWeight: 600 }}>
+                Generated Password
+              </Typography>
+              <Stack direction="row" alignItems="center" spacing={1}>
+                <Typography variant="h5" sx={{ fontFamily: 'monospace', fontWeight: 700, letterSpacing: 1 }}>{generatedPassword}</Typography>
+                <IconButton
+                  size="small"
+                  onClick={() => { navigator.clipboard.writeText(generatedPassword!); }}
+                  sx={{ color: 'primary.main' }}
+                >
+                  <Iconify icon="solar:copy-bold" width={18} />
+                </IconButton>
+              </Stack>
+            </Box>
+            <Typography variant="caption" color="warning.main" sx={{ fontWeight: 500 }}>
+              This password will not be shown again. Copy it now.
+            </Typography>
+            <Button variant="contained" onClick={() => { setGeneratedPassword(null); navigate(paths.dashboard.userManagement); }} sx={{ alignSelf: 'flex-end' }}>
+              Done
+            </Button>
+          </Stack>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }

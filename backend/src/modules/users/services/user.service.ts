@@ -353,6 +353,7 @@ export class UserService {
     zones: UserZone[];
     reportingLines: UserReportingLine[];
     profiles: PermissionProfile[];
+    generatedPassword: string;
   }> {
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
@@ -513,6 +514,16 @@ export class UserService {
         }
       }
 
+      const generatedPassword = this.generateRandomPassword();
+      const passwordHash = await bcrypt.hash(generatedPassword, 12);
+      await queryRunner.manager.save(
+        queryRunner.manager.create(UserAuth, {
+          userId: savedUser.empId,
+          passwordHash,
+          authProvider: 'LOCAL',
+        }),
+      );
+
       await queryRunner.commitTransaction();
 
       // Trigger permission compilation
@@ -538,7 +549,7 @@ export class UserService {
         }
       }
 
-      return { user: savedUser, roles, zones, reportingLines, profiles };
+      return { user: savedUser, roles, zones, reportingLines, profiles, generatedPassword };
     } catch (err) {
       await queryRunner.rollbackTransaction();
       this.logger.error(

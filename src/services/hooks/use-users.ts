@@ -61,6 +61,8 @@ export function useCreateUserFull() {
   });
 }
 
+export type CreateUserFullResult = Awaited<ReturnType<ReturnType<typeof useCreateUserFull>['mutateAsync']>>;
+
 export function useUpdateUser() {
   const queryClient = useQueryClient();
 

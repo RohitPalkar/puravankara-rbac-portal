@@ -24,8 +24,8 @@ export const userService = {
   create: async (data: CreateUserRequest): Promise<ApiResponse<User>> =>
     apiPost<User>(endpoints.users.create, data),
 
-  createFull: async (data: CreateUserFullRequest): Promise<ApiResponse<User>> =>
-    apiPost<User>(endpoints.users.createFull, data),
+  createFull: async (data: CreateUserFullRequest): Promise<ApiResponse<{ user: User; generatedPassword: string }>> =>
+    apiPost<{ user: User; generatedPassword: string }>(endpoints.users.createFull, data),
 
   update: async (id: string, data: UpdateUserRequest): Promise<ApiResponse<User>> =>
     apiPatch<User>(endpoints.users.update(id), data),
