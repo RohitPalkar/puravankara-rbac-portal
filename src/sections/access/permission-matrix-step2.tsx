@@ -155,6 +155,22 @@ export default function PermissionMatrixStep2({ roleId, onSave, saving, editable
     });
   }, []);
 
+  const toggleModule = useCallback((mod: ModuleNode) => {
+    setSelectedActionIds((prev) => {
+      const next = new Set(prev);
+      const allSelected = mod.selectedCount > 0 && mod.selectedCount === mod.totalCount;
+      mod.subModules.forEach((sm) => {
+        sm.actionGroups.forEach((ag) => {
+          ag.actions.forEach((a) => {
+            if (allSelected) next.delete(a.id);
+            else next.add(a.id);
+          });
+        });
+      });
+      return next;
+    });
+  }, []);
+
   const selectAll = useCallback(() => {
     if (!treeData?.modules || !selectedSubModuleId) return;
     const sm = findSubModule(treeData.modules, selectedSubModuleId);
@@ -278,23 +294,37 @@ export default function PermissionMatrixStep2({ roleId, onSave, saving, editable
                     <Stack
                       direction="row"
                       alignItems="center"
-                      spacing={1}
+                      spacing={0.5}
                       sx={{
-                        py: 0.75,
-                        px: 1,
+                        py: 0.5,
+                        px: 0.5,
                         borderRadius: 1,
                         cursor: 'pointer',
                         bgcolor: isExpanded ? 'action.selected' : 'transparent',
                         '&:hover': { bgcolor: 'action.hover' },
                       }}
-                      onClick={() =>
-                        setExpandedModules((prev) => ({ ...prev, [mod.id]: !prev[mod.id] }))
-                      }
                     >
-                      <Iconify
-                        icon={isExpanded ? 'solar:alt-arrow-down-bold' : 'solar:alt-arrow-right-bold'}
-                        width={14}
-                        sx={{ color: 'text.secondary' }}
+                      <IconButton
+                        size="small"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setExpandedModules((prev) => ({ ...prev, [mod.id]: !prev[mod.id] }));
+                        }}
+                        sx={{ color: 'text.secondary', p: 0.25 }}
+                      >
+                        <Iconify
+                          icon={isExpanded ? 'solar:alt-arrow-down-bold' : 'solar:alt-arrow-right-bold'}
+                          width={14}
+                        />
+                      </IconButton>
+                      <Checkbox
+                        size="small"
+                        checked={allSelected}
+                        indeterminate={someSelected && !allSelected}
+                        onChange={() => editable && toggleModule(mod)}
+                        disabled={!editable}
+                        onClick={(e) => e.stopPropagation()}
+                        sx={{ p: 0.25 }}
                       />
                       <Typography variant="body2" fontWeight={600} noWrap sx={{ flex: 1 }}>
                         {mod.name}
@@ -423,15 +453,13 @@ export default function PermissionMatrixStep2({ roleId, onSave, saving, editable
               }}
             />
 
-            {selectedSubModule?.hasActions && (
-              <Chip
-                label={`${totalSelected} Permissions Selected`}
-                color="primary"
-                size="small"
-                variant="outlined"
-                sx={{ fontWeight: 600 }}
-              />
-            )}
+            <Chip
+              label={`${totalSelected} Permissions Selected`}
+              color="primary"
+              size="small"
+              variant="outlined"
+              sx={{ fontWeight: 600 }}
+            />
 
             <Box sx={{ flex: 1 }} />
 
@@ -457,24 +485,29 @@ export default function PermissionMatrixStep2({ roleId, onSave, saving, editable
                   sx={{ color: 'text.disabled', mb: 1.5 }}
                 />
                 <Typography variant="body2" color="text.secondary">
-                  Select a submodule from the left panel to configure permissions.
+                  Select a Module and Submodule from the left panel to configure permissions. Submodules without configurable actions can be enabled directly.
                 </Typography>
               </Box>
             )}
 
             {selectedSubModule && !selectedSubModule.hasActions && (
-              <Stack direction="row" alignItems="center" spacing={1} sx={{ px: 0.5, py: 0.25 }}>
-                <Checkbox
-                  size="small"
-                  checked={subModulePermissionEnabled(selectedSubModule)}
-                  onChange={() => toggleModulePermission(selectedSubModule)}
-                  disabled={!editable}
-                  sx={{ p: 0.25 }}
-                />
-                <Typography variant="body2">
-                  {selectedSubModule.name}
+              <Paper variant="outlined" sx={{ p: 2.5, maxWidth: 480, mx: 'auto', mt: 3, borderRadius: 2 }}>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                  This submodule does not contain configurable actions. Selecting this permission grants access to the entire submodule.
                 </Typography>
-              </Stack>
+                <Stack direction="row" alignItems="center" spacing={1}>
+                  <Checkbox
+                    size="small"
+                    checked={subModulePermissionEnabled(selectedSubModule)}
+                    onChange={() => toggleModulePermission(selectedSubModule)}
+                    disabled={!editable}
+                    sx={{ p: 0.25 }}
+                  />
+                  <Typography variant="body2" fontWeight={600}>
+                    Enable {selectedSubModule.name}
+                  </Typography>
+                </Stack>
+              </Paper>
             )}
 
             {selectedSubModule && selectedSubModule.hasActions && (
