@@ -64,25 +64,6 @@ interface ModuleNode {
   totalCount: number;
 }
 
-const MODULE_ICONS: Record<string, string> = {
-  DEFAULT: 'solar:widget-bold',
-};
-
-const MODULE_COLORS: string[] = [
-  '#2563eb',
-  '#7c3aed',
-  '#059669',
-  '#d97706',
-  '#dc2626',
-  '#0891b2',
-  '#9333ea',
-  '#ca8a04',
-];
-
-function getModuleIcon(_code: string): string {
-  return MODULE_ICONS[_code] || MODULE_ICONS.DEFAULT;
-}
-
 export default function PermissionMatrixStep2({ roleId, onSave, saving, editable = true }: Props) {
   const { data: treeData, isLoading } = useRolePermissionsTree(roleId);
 
@@ -213,8 +194,6 @@ export default function PermissionMatrixStep2({ roleId, onSave, saving, editable
       .filter((ag) => ag.actions.length > 0);
   }, [selectedSubModule, rightSearch]);
 
-  const moduleColorIndex = (index: number) => MODULE_COLORS[index % MODULE_COLORS.length];
-
   if (isLoading) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 400 }}>
@@ -268,11 +247,10 @@ export default function PermissionMatrixStep2({ roleId, onSave, saving, editable
                 {leftSearch ? 'No modules match your search.' : 'No modules found.'}
               </Typography>
             ) : (
-              filteredModules.map((mod: ModuleNode, modIndex: number) => {
+              filteredModules.map((mod: ModuleNode) => {
                 const isExpanded = expandedModules[mod.id] ?? true;
                 const allSelected = mod.selectedCount > 0 && mod.selectedCount === mod.totalCount;
                 const someSelected = mod.selectedCount > 0 && !allSelected;
-                const color = moduleColorIndex(modIndex);
                 return (
                   <Fragment key={mod.id}>
                     <Stack
@@ -295,11 +273,6 @@ export default function PermissionMatrixStep2({ roleId, onSave, saving, editable
                         icon={isExpanded ? 'solar:alt-arrow-down-bold' : 'solar:alt-arrow-right-bold'}
                         width={14}
                         sx={{ color: 'text.secondary' }}
-                      />
-                      <Iconify
-                        icon={getModuleIcon(mod.code)}
-                        width={18}
-                        sx={{ color }}
                       />
                       <Typography variant="body2" fontWeight={600} noWrap sx={{ flex: 1 }}>
                         {mod.name}
@@ -341,23 +314,6 @@ export default function PermissionMatrixStep2({ roleId, onSave, saving, editable
                             }}
                             onClick={() => setSelectedSubModuleId(sm.id)}
                           >
-                            <Iconify
-                              icon={
-                                sm.permissionType === 'MODULE'
-                                  ? 'solar:lock-bold'
-                                  : 'solar:checklist-bold'
-                              }
-                              width={16}
-                              sx={{
-                                color: isActive
-                                  ? 'primary.main'
-                                  : smAllSelected
-                                    ? 'success.main'
-                                    : smSomeSelected
-                                      ? 'primary.main'
-                                      : 'text.disabled',
-                              }}
-                            />
                             <Typography
                               variant="body2"
                               noWrap
@@ -401,8 +357,7 @@ export default function PermissionMatrixStep2({ roleId, onSave, saving, editable
                         );
                       })}
                     </Collapse>
-                  </Fragment>
-                );
+                  </Fragment>);
               })
             )}
           </Box>
@@ -484,47 +439,18 @@ export default function PermissionMatrixStep2({ roleId, onSave, saving, editable
             )}
 
             {selectedSubModule && !selectedSubModule.hasActions && (
-              <Paper
-                variant="outlined"
-                sx={{
-                  p: 3,
-                  maxWidth: 520,
-                  mx: 'auto',
-                  mt: 4,
-                  textAlign: 'center',
-                  borderRadius: 2,
-                }}
-              >
-                <Iconify
-                  icon="solar:lock-bold"
-                  width={36}
-                  sx={{ color: 'primary.main', mb: 1.5 }}
-                />
-                <Typography variant="subtitle1" gutterBottom>
-                  {selectedSubModule.name}
-                </Typography>
-                <Typography variant="body2" color="text.secondary" sx={{ mb: 2.5 }}>
-                  {selectedSubModule.name} is a module-level permission. Enable or disable access
-                  using the toggle below.
-                </Typography>
+              <Stack direction="row" alignItems="center" spacing={1} sx={{ px: 0.5, py: 0.25 }}>
                 <Checkbox
+                  size="small"
                   checked={subModulePermissionEnabled(selectedSubModule)}
                   onChange={() => toggleModulePermission(selectedSubModule)}
                   disabled={!editable}
-                  icon={<Iconify icon="solar:toggle-off-bold" width={48} sx={{ color: 'grey.400' }} />}
-                  checkedIcon={
-                    <Iconify icon="solar:toggle-on-bold" width={48} sx={{ color: 'success.main' }} />
-                  }
-                  sx={{ '& .MuiSvgIcon-root': { width: 48, height: 48 } }}
+                  sx={{ p: 0.25 }}
                 />
-                <Typography
-                  variant="body2"
-                  color={subModulePermissionEnabled(selectedSubModule) ? 'success.main' : 'text.secondary'}
-                  sx={{ mt: 1, fontWeight: 600 }}
-                >
-                  {subModulePermissionEnabled(selectedSubModule) ? 'Access Enabled' : 'Access Disabled'}
+                <Typography variant="body2">
+                  {selectedSubModule.name}
                 </Typography>
-              </Paper>
+              </Stack>
             )}
 
             {selectedSubModule && selectedSubModule.hasActions && (
