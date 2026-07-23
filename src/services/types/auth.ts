@@ -30,9 +30,33 @@ export interface ProjectPermissions {
   modules: ModulePermissions[];
 }
 
+export interface ResourceInfo {
+  id: number;
+  name: string;
+}
+
+export interface ScopeResources {
+  zones: ResourceInfo[];
+  projects: ResourceInfo[];
+}
+
+export interface ScopeInfo {
+  resources: ScopeResources;
+}
+
 export interface CompiledPermissions {
   projects: ProjectPermissions[];
+  scope?: ScopeInfo;
 }
+
+// Future: EffectivePermission (renamed from CompiledPermissions)
+// interface EffectivePermission {
+//   version: string;
+//   generatedAt: string;
+//   expiresAt: string;
+//   scope: { resources: { zones: ResourceInfo[]; projects: ResourceInfo[] } };
+//   permissions: { modules: any[]; subModules: any[]; actions: any[] };
+// }
 
 export interface AuthResponse {
   accessToken: string;

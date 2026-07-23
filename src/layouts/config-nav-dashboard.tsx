@@ -105,7 +105,7 @@ export function useNavData() {
         subheader: 'Administration',
         items: [
           { title: 'Audit Logs', path: paths.dashboard.auditLogs, icon: ICONS.audit },
-          { title: 'Settings', path: paths.dashboard.notifications, icon: ICONS.settings },
+          { title: 'Settings', path: paths.dashboard.settings, icon: ICONS.settings },
         ],
       },
     ];

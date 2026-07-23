@@ -23,6 +23,10 @@ export function useMyPermissions() {
       const res = await permissionService.getMyPermissions();
       return res.data;
     },
+    select: (data) => ({
+      ...data,
+      scope: (data as any).scope ?? undefined,
+    }),
   });
 }
 

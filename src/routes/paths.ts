@@ -76,6 +76,7 @@ export const paths = {
     // System
     auditLogs: `${ROOTS.DASHBOARD}/audit-logs`,
     notifications: `${ROOTS.DASHBOARD}/notifications`,
+    settings: `${ROOTS.DASHBOARD}/settings`,
     // Modules (RBAC Showcase)
     modules: {
       root: `${ROOTS.DASHBOARD}/modules`,

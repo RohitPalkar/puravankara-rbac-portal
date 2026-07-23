@@ -40,6 +40,7 @@ const DelegationsPage = lazy(() => import('src/sections/workflow/delegations'));
 // System
 const AuditLogsPage = lazy(() => import('src/sections/system/audit-logs'));
 const NotificationsPage = lazy(() => import('src/sections/system/notifications'));
+const SettingsPage = lazy(() => import('src/sections/system/settings'));
 
 // Modules (RBAC Showcase)
 const ModuleDashboardPage = lazy(() => import('src/sections/modules/module-dashboard'));
@@ -103,6 +104,7 @@ export const dashboardRoutes = [
       // System
       { path: 'audit-logs', element: <AuditLogsPage /> },
       { path: 'notifications', element: <NotificationsPage /> },
+      { path: 'settings', element: <SettingsPage /> },
       // Modules (RBAC Showcase)
       { path: 'modules/:moduleCode', element: <ModuleDashboardPage /> },
       { path: 'modules/:moduleCode/list', element: <ModuleListPage /> },

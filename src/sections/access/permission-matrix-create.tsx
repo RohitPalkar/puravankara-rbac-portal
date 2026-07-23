@@ -41,10 +41,10 @@ export default function PermissionMatrixCreatePage() {
     severity: 'success',
   });
 
-  const { data: departmentsData } = useDepartmentList({});
-  const departments: { id: number; name: string }[] = useMemo(
-    () => (departmentsData as any)?.data ?? [],
-    [departmentsData],
+  const { data: departments } = useDepartmentList({});
+  const departmentOptions: { id: number; name: string }[] = useMemo(
+    () => departments ?? [],
+    [departments],
   );
 
   const { data: summary } = useRolePermissionsSummary();
@@ -140,7 +140,7 @@ export default function PermissionMatrixCreatePage() {
                     {isEditMode ? (
                       <MenuItem value={editRoleInfo?.departmentName ?? ''}>{editRoleInfo?.departmentName ?? '-'}</MenuItem>
                     ) : (
-                      departments.map((dept) => (
+                      departmentOptions.map((dept) => (
                         <MenuItem key={dept.id} value={dept.id}>{dept.name}</MenuItem>
                       ))
                     )}

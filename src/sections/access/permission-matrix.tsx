@@ -19,6 +19,7 @@ import { PageContainer, PageHeader } from 'src/components/page-layout';
 import { RowActionsMenu } from 'src/components/row-actions';
 import { paths } from 'src/routes/paths';
 import { useRolePermissionsSummary } from 'src/services/hooks/use-permissions';
+import { useUpdateRole } from 'src/services/hooks/use-organization';
 
 interface RoleSummaryRow {
   id: number;
@@ -37,8 +38,9 @@ interface RoleSummaryRow {
 export default function PermissionMatrixPage() {
   const navigate = useNavigate();
   const { data: rows, isLoading } = useRolePermissionsSummary();
+  const { mutateAsync: updateRole, isPending: isUpdating } = useUpdateRole();
 
-  const [deactivateId, setDeactivateId] = useState<number | null>(null);
+  const [deactivateRow, setDeactivateRow] = useState<RoleSummaryRow | null>(null);
 
   const handleEdit = useCallback(
     (row: RoleSummaryRow) => {
@@ -60,10 +62,16 @@ export default function PermissionMatrixPage() {
 
   const handleToggleStatus = useCallback(
     (row: RoleSummaryRow) => {
-      setDeactivateId(row.id);
+      setDeactivateRow(row);
     },
     [],
   );
+
+  const handleConfirmToggle = useCallback(async () => {
+    if (!deactivateRow) return;
+    await updateRole({ id: deactivateRow.id, data: { isActive: !deactivateRow.isActive } });
+    setDeactivateRow(null);
+  }, [deactivateRow, updateRole]);
 
   const columns: GridColDef[] = [
     { field: 'name', headerName: 'Role Name', flex: 1, minWidth: 160 },
@@ -116,16 +124,18 @@ export default function PermissionMatrixPage() {
         </Card>
       </PageContainer>
 
-      <Dialog open={!!deactivateId} onClose={() => setDeactivateId(null)} maxWidth="xs">
+      <Dialog open={!!deactivateRow} onClose={() => setDeactivateRow(null)} maxWidth="xs">
         <DialogTitle>Confirm Status Change</DialogTitle>
         <DialogContent>
           <Typography variant="body2">
-            Are you sure you want to change the status of this role mapping?
+            Are you sure you want to {deactivateRow?.isActive ? 'deactivate' : 'activate'} this role mapping?
           </Typography>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setDeactivateId(null)} color="inherit">Cancel</Button>
-          <Button onClick={() => setDeactivateId(null)} color="warning" variant="contained">Confirm</Button>
+          <Button onClick={() => setDeactivateRow(null)} color="inherit">Cancel</Button>
+          <Button onClick={handleConfirmToggle} color="warning" variant="contained" disabled={isUpdating}>
+            {isUpdating ? 'Updating...' : 'Confirm'}
+          </Button>
         </DialogActions>
       </Dialog>
 

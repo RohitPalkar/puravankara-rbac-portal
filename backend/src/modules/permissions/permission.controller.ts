@@ -10,6 +10,7 @@ import {
 import { ApiBearerAuth, ApiTags, ApiOperation } from '@nestjs/swagger';
 import { PermissionService } from './services/permission.service';
 import { PermissionCompilerService } from './services/permission-compiler.service';
+import { ScopeResolutionService } from './services/scope-resolution.service';
 import { UserPermissionsResponse } from './dto/user-permissions.dto';
 import { User } from '../users/entities/user.entity';
 import {
@@ -24,13 +25,26 @@ export class PermissionController {
   constructor(
     private readonly permissionService: PermissionService,
     private readonly compilerService: PermissionCompilerService,
+    private readonly scopeService: ScopeResolutionService,
   ) {}
 
   @Get('me')
   @ApiOperation({ summary: 'Get current user permissions for frontend' })
   async getMyPermissions(@Req() req: any): Promise<UserPermissionsResponse> {
     const userId = req.user?.empId || req.user?.userId;
-    return this.permissionService.getUserPermissions(userId);
+    const result = await this.permissionService.getUserPermissions(userId);
+    try {
+      const scope = await this.scopeService.resolveUserScope(userId);
+      result.scope = {
+        resources: {
+          zones: scope.resources.zones,
+          projects: scope.resources.projects,
+        },
+      };
+    } catch {
+      // scope is optional — continue without it if resolution fails
+    }
+    return result;
   }
 
   @Post('compile/:userId/:projectId')

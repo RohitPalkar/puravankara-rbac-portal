@@ -17,6 +17,7 @@ import { ModuleAction } from '../../product-catalog/entities/module-action.entit
 import { Action } from '../../product-catalog/entities/action.entity';
 import { PermissionCacheService } from './permission-cache.service';
 import { PermissionCompilerService } from './permission-compiler.service';
+import { ScopeResolutionService } from './scope-resolution.service';
 import { PermissionContext } from '../interfaces/permission-context.interface';
 import { ResolvedPermission } from '../interfaces/resolved-permission.interface';
 import { UserPermissionsResponse } from '../dto/user-permissions.dto';
@@ -72,6 +73,7 @@ export class PermissionService {
     private readonly profileProjectRepo: Repository<PermissionProfileProject>,
     private readonly cacheService: PermissionCacheService,
     private readonly compilerService: PermissionCompilerService,
+    private readonly scopeService: ScopeResolutionService,
   ) {}
 
   async resolve(context: PermissionContext): Promise<ResolvedPermission> {
@@ -97,6 +99,17 @@ export class PermissionService {
     const isSuperAdmin = await this.isSuperAdmin(userId);
     if (isSuperAdmin) {
       return { allowed: true, source: 'super-admin' };
+    }
+
+    if (projectId) {
+      const scope = await this.scopeService.resolveUserScope(userId);
+      if (scope.resources.zones.length > 0 && !scope.hasProject(projectId)) {
+        return {
+          allowed: false,
+          source: 'denied',
+          reason: 'Project is outside user zone scope',
+        };
+      }
     }
 
     if (!projectId) {
@@ -219,6 +232,32 @@ export class PermissionService {
       result: false,
       message: 'User is not Super Admin',
     });
+
+    // Scope check: is project within user's zone scope?
+    if (projectId) {
+      try {
+        const scope = await this.scopeService.resolveUserScope(userId);
+        if (scope.resources.zones.length > 0 && !scope.hasProject(projectId)) {
+          explanation.push({
+            step: 'ZONE_SCOPE',
+            result: false,
+            message: `Project ${projectId} is outside user's zone scope`,
+          });
+          return { allowed: false, source: 'denied', explanation };
+        }
+        explanation.push({
+          step: 'ZONE_SCOPE',
+          result: true,
+          message: `Project ${projectId} is within user's zone scope`,
+        });
+      } catch {
+        explanation.push({
+          step: 'ZONE_SCOPE',
+          result: false,
+          message: 'Zone scope resolution failed',
+        });
+      }
+    }
 
     const hasProjectAccess = await this.hasProjectAccess(userId, projectId);
     if (!hasProjectAccess) {
@@ -427,6 +466,17 @@ export class PermissionService {
         id: a.projectId,
         name: a.project.name,
       }));
+      // Filter projects by zone scope (skip if user has no zone assignments)
+      try {
+        const scope = await this.scopeService.resolveUserScope(userId);
+        if (scope.resources.zones.length > 0) {
+          projectEntities = projectEntities.filter((p) =>
+            scope.hasProject(p.id),
+          );
+        }
+      } catch {
+        // if scope resolution fails, fall back to unfiltered projects
+      }
     }
 
     const result: UserPermissionsResponse = {

@@ -80,6 +80,27 @@ class FrontendPermissions {
   modules: FlatModule[];
 }
 
+class ScopeResourceInfo {
+  @ApiProperty()
+  id: number;
+
+  @ApiProperty()
+  name: string;
+}
+
+class ScopeResources {
+  @ApiProperty({ type: [ScopeResourceInfo] })
+  zones: ScopeResourceInfo[];
+
+  @ApiProperty({ type: [ScopeResourceInfo] })
+  projects: ScopeResourceInfo[];
+}
+
+class ScopeInfo {
+  @ApiProperty({ type: ScopeResources })
+  resources: ScopeResources;
+}
+
 export class UserPermissionsResponse {
   @ApiProperty()
   user: UserInfo;
@@ -89,6 +110,9 @@ export class UserPermissionsResponse {
 
   @ApiProperty({ type: FrontendPermissions })
   permissions: FrontendPermissions;
+
+  @ApiProperty({ type: ScopeInfo, nullable: true })
+  scope?: ScopeInfo;
 }
 
 export {

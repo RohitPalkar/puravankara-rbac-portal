@@ -16,10 +16,14 @@ import { PermissionProfileSubModule } from './entities/permission-profile-sub-mo
 import { PermissionProfileProject } from './entities/permission-profile-project.entity';
 import { User } from '../users/entities/user.entity';
 import { UserRole } from '../users/entities/user-role.entity';
+import { UserZone } from '../users/entities/user-zone.entity';
 import { Role } from '../organization/entities/role.entity';
 import { UserProjectAccess } from '../project-access/entities/user-project-access.entity';
 import { UserProjectGroup } from '../project-access/entities/user-project-group.entity';
 import { ProjectGroupProject } from '../project-access/entities/project-group-project.entity';
+import { Project } from '../projects/entities/project.entity';
+import { ProjectLocation } from '../projects/entities/project-location.entity';
+import { Zone } from '../geography/entities/zone.entity';
 import { Module as ProductModule } from '../product-catalog/entities/module.entity';
 import { SubModule } from '../product-catalog/entities/sub-module.entity';
 import { ActionGroup } from '../product-catalog/entities/action-group.entity';
@@ -32,6 +36,7 @@ import { PermissionCacheService } from './services/permission-cache.service';
 import { PermissionCompilerService } from './services/permission-compiler.service';
 import { PermissionProfileService } from './services/permission-profile.service';
 import { RoleActionPermissionService } from './services/role-action-permission.service';
+import { ScopeResolutionService } from './services/scope-resolution.service';
 import { PermissionGuard } from './guards/permission.guard';
 import { PermissionController } from './permission.controller';
 import { UserPermissionOverrideController } from './user-permission-override.controller';
@@ -58,10 +63,14 @@ import { RoleProjectPermissionService } from './services/role-project-permission
       PermissionProfileProject,
       User,
       UserRole,
+      UserZone,
       Role,
       UserProjectAccess,
       UserProjectGroup,
       ProjectGroupProject,
+      Project,
+      ProjectLocation,
+      Zone,
       ProductModule,
       SubModule,
       ActionGroup,
@@ -84,12 +93,14 @@ import { RoleProjectPermissionService } from './services/role-project-permission
     PermissionCacheService,
     PermissionCompilerService,
     PermissionProfileService,
+    ScopeResolutionService,
     PermissionGuard,
   ],
   exports: [
     PermissionService,
     PermissionCacheService,
     PermissionCompilerService,
+    ScopeResolutionService,
     PermissionGuard,
     RoleActionPermissionService,
     TypeOrmModule,
