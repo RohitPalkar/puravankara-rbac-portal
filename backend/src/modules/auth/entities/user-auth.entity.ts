@@ -23,10 +23,10 @@ export class UserAuth {
   @Column({ name: 'last_login', type: 'timestamptz', nullable: true })
   lastLogin: Date;
 
-  @Column({ name: 'failed_attempts', default: 0 })
+  @Column({ name: 'failed_attempts', type: 'integer', default: 0 })
   failedAttempts: number;
 
-  @Column({ name: 'is_locked', default: false })
+  @Column({ name: 'is_locked', type: 'boolean', default: false })
   isLocked: boolean;
 
   @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })

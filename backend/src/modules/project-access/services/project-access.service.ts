@@ -27,10 +27,26 @@ export class UserProjectAccessService {
   ) {}
 
   async findByUser(userId: string): Promise<UserProjectAccess[]> {
-    return this.repository.find({
-      where: { userId },
-      relations: { project: true },
-    });
+    const rows = await this.repository.query(
+      `SELECT * FROM public.user_project_access WHERE user_id = $1`,
+      [userId],
+    );
+    const projectIds = rows.map(r => r.project_id);
+    if (projectIds.length === 0) return [];
+    const projects = await this.repository.query(
+      `SELECT * FROM public.projects WHERE id = ANY($1) AND deleted_at IS NULL`,
+      [projectIds],
+    );
+    const projectMap = new Map(projects.map(p => [p.id, p]));
+    return rows.map(r => ({
+      userId: r.user_id,
+      projectId: r.project_id,
+      assignedBy: r.assigned_by,
+      assignedAt: r.assigned_at,
+      createdAt: r.created_at,
+      updatedAt: r.updated_at,
+      project: projectMap.get(r.project_id) || null,
+    })) as any;
   }
 
   async assign(dto: {

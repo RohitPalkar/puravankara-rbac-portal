@@ -25,6 +25,8 @@ function buildDatabaseConfig(): TypeOrmModuleOptions {
     synchronize,
     logging: process.env.DB_LOGGING === 'true',
     invalidWhereValuesBehavior: { null: 'sql-null' },
+    useUTC: true,
+    poolSize: Number(process.env.DB_POOL_MAX) || 10,
     extra: {
       max: Number(process.env.DB_POOL_MAX) || 10,
     },

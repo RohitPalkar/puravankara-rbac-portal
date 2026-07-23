@@ -28,40 +28,12 @@ export class ProjectService extends BaseService<Project> {
     query: PaginationQuery = { page: 1, limit: 100 },
   ): Promise<PaginatedResult<Project>> {
     const { page = 1, limit = 100, search, sortBy = 'createdAt', sortOrder = 'DESC', ...filters } = query;
-    const qb = this.repository.createQueryBuilder('project')
-      .leftJoinAndSelect('project.incentiveRules', 'incentiveRule')
-      .leftJoin('project.brand', 'brand')
-      .leftJoin('project.city', 'city')
-      .addSelect(['brand.id', 'brand.brandName'])
-      .addSelect(['city.id', 'city.name'])
-      .where('project.deleted_at IS NULL');
-
-    if (search) {
-      qb.andWhere(
-        '(project.name ILIKE :search OR project.sfdc_project_name ILIKE :search OR project.codename ILIKE :search)',
-        { search: `%${search}%` },
-      );
-    }
-
-    if (filters.isActive !== undefined) {
-      qb.andWhere('project.is_active = :isActive', { isActive: filters.isActive });
-    }
-
-    const sortMap: Record<string, string> = {
-      name: 'project.name',
-      createdAt: 'project.created_at',
-      updatedAt: 'project.updated_at',
-    };
-    const orderCol = sortMap[sortBy] || 'project.created_at';
-    qb.orderBy(orderCol, sortOrder);
-
-    qb.skip((page - 1) * limit).take(limit);
-
-    const [data, total] = await qb.getManyAndCount();
-
+    const rows = await this.repository.query(
+      `SELECT * FROM public.projects WHERE deleted_at IS NULL ORDER BY created_at DESC`,
+    );
     return {
-      data,
-      meta: { page, limit, total, totalPages: Math.ceil(total / limit) },
+      data: rows,
+      meta: { page, limit, total: rows.length, totalPages: Math.ceil(rows.length / limit) },
     };
   }
 

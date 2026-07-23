@@ -45,48 +45,49 @@ export class ModuleCatalogService extends BaseService<ModuleEntity> {
   }
 
   async getTree(): Promise<any[]> {
-    const modules = await this.repository.find({
-      where: { isActive: true },
-      order: { name: 'ASC' },
-    });
+    const modules = await this.repository
+      .createQueryBuilder('m')
+      .where('m.is_active = true')
+      .orderBy('m.name', 'ASC')
+      .getMany();
 
-    const subModules = await this.repository.manager
-      .getRepository(SubModule)
-      .find({ where: { isActive: true }, order: { displayOrder: 'ASC', name: 'ASC' } });
+    const subModules = await this.repository.manager.query(
+      `SELECT * FROM sub_modules WHERE is_active = true AND deleted_at IS NULL ORDER BY name ASC`,
+    );
 
-    const actionGroups = await this.repository.manager
-      .getRepository(ActionGroup)
-      .find({ where: { isActive: true }, order: { displayOrder: 'ASC', name: 'ASC' } });
+    const actionGroups = await this.repository.manager.query(
+      `SELECT * FROM public.action_groups WHERE is_active = true AND deleted_at IS NULL ORDER BY name ASC`,
+    );
 
-    const actions = await this.repository.manager
-      .getRepository(Action)
-      .find({ where: { isActive: true }, order: { displayOrder: 'ASC', name: 'ASC' } });
+    const actions = await this.repository.manager.query(
+      `SELECT * FROM actions WHERE is_active = true AND deleted_at IS NULL ORDER BY name ASC`,
+    );
 
     return modules.map((mod) => {
-      const modSubModules = subModules.filter((sm) => sm.moduleId === mod.id);
+      const modSubModules = subModules.filter((sm) => sm.module_id === mod.id);
       return {
         id: mod.id,
         name: mod.name,
         code: mod.code,
         subModules: modSubModules.map((sm) => {
-          const smActionGroups = actionGroups.filter((ag) => ag.subModuleId === sm.id);
+          const smActionGroups = actionGroups.filter((ag) => ag.sub_module_id === sm.id);
           return {
             id: sm.id,
             name: sm.name,
-            displayOrder: sm.displayOrder,
+            displayOrder: sm.display_order,
             actionGroups: smActionGroups.map((ag) => ({
               id: ag.id,
               name: ag.name,
               code: ag.code,
-              displayOrder: ag.displayOrder,
+              displayOrder: ag.display_order,
               actions: actions
-                .filter((a) => a.actionGroupId === ag.id)
+                .filter((a) => a.action_group_id === ag.id)
                 .map((a) => ({
                   id: a.id,
                   code: a.code,
                   name: a.name,
                   label: a.label,
-                  displayOrder: a.displayOrder,
+                  displayOrder: a.display_order,
                 })),
             })),
           };
