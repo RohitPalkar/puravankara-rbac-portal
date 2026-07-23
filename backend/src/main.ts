@@ -26,6 +26,7 @@ async function bootstrap() {
           'http://localhost:5174',
           'http://localhost:8081',
           'https://puravankara-rbac-frontend.vercel.app',
+          'https://puravankara-rbac-portal.vercel.app',
         ];
 
   app.enableCors({
