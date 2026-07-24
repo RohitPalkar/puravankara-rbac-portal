@@ -14,7 +14,6 @@ import LoadingButton from '@mui/lab/LoadingButton';
 import InputAdornment from '@mui/material/InputAdornment';
 import FormControlLabel from '@mui/material/FormControlLabel';
 
-import { paths } from 'src/routes/paths';
 import { useRouter } from 'src/routes/hooks';
 import { RouterLink } from 'src/routes/components';
 
@@ -86,14 +85,6 @@ export function JwtSignInView() {
         zIndex: 10,
       }}
     >
-      <Link
-        href={paths.dashboard.root}
-        component={RouterLink}
-        color="text.secondary"
-        sx={{ typography: 'body2', fontWeight: 500, textDecoration: 'none', '&:hover': { color: 'primary.main' } }}
-      >
-        Dashboard
-      </Link>
       <IconButton
         aria-label="settings"
         sx={{ width: 36, height: 36, color: 'text.secondary' }}
