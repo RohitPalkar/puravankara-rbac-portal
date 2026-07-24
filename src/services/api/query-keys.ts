@@ -186,4 +186,11 @@ export const queryKeys = {
   auditLogs: {
     list: (params?: Record<string, unknown>) => ['audit-logs', 'list', params] as const,
   },
+
+  dashboard: {
+    zoneOverview: ['dashboard', 'zone-overview'] as const,
+    securityStats: ['dashboard', 'security-stats'] as const,
+    operationsSummary: ['dashboard', 'operations-summary'] as const,
+    kpis: ['dashboard', 'kpis'] as const,
+  },
 } as const;

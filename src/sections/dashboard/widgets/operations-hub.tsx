@@ -6,20 +6,18 @@ import Skeleton from '@mui/material/Skeleton';
 import Typography from '@mui/material/Typography';
 import CardContent from '@mui/material/CardContent';
 
-import { usePendingApprovals } from 'src/services/hooks/use-workflows';
+import { useDashboardOperationsSummary } from 'src/services/hooks/use-dashboard';
 
 import { Iconify } from 'src/components/iconify';
 
 export function OperationsHub() {
-  const { data: pendingApprovals, isLoading: pendingLoading } = usePendingApprovals();
-
-  const pendingCount = pendingApprovals?.length ?? 0;
+  const { data: ops, isLoading } = useDashboardOperationsSummary();
 
   const opsCards = [
     {
       icon: 'solar:clock-circle-bold',
       label: 'Pending User Approvals',
-      value: pendingCount,
+      value: ops?.pendingApprovals ?? 0,
       color: '#FF9800',
       action: 'View Queue →',
       bgColor: '#FFF3E0',
@@ -27,7 +25,7 @@ export function OperationsHub() {
     {
       icon: 'solar:lock-bold',
       label: 'Permission Requests',
-      value: 0,
+      value: ops?.permissionRequests ?? 0,
       color: '#E91E63',
       action: 'Review →',
       bgColor: '#FCE4EC',
@@ -35,7 +33,7 @@ export function OperationsHub() {
     {
       icon: 'solar:user-id-bold',
       label: 'Users Without Roles',
-      value: 0,
+      value: ops?.usersWithoutRoles ?? 0,
       color: '#F44336',
       action: 'Assign →',
       bgColor: '#FFEBEE',
@@ -43,14 +41,14 @@ export function OperationsHub() {
     {
       icon: 'solar:users-group-rounded-bold',
       label: 'Inactive Users',
-      value: 0,
+      value: ops?.inactiveUsers ?? 0,
       color: '#9C27B0',
       action: 'View →',
       bgColor: '#F3E5F5',
     },
   ];
 
-  if (pendingLoading) {
+  if (isLoading) {
     return (
       <Grid container spacing={2}>
         {[1, 2, 3, 4].map((i) => (

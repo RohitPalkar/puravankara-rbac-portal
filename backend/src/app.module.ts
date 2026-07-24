@@ -28,6 +28,7 @@ import { AuditModule } from './modules/audit/audit.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
 import { HealthModule } from './modules/health/health.module';
 import { SetupModule } from './modules/setup/setup.module';
+import { DashboardModule } from './modules/dashboard/dashboard.module';
 import { CommonModule } from './common/common.module';
 
 @Module({
@@ -64,6 +65,7 @@ import { CommonModule } from './common/common.module';
     AuditModule,
     HealthModule,
     SetupModule,
+    DashboardModule,
     CommonModule,
   ],
   providers: [

@@ -8,8 +8,11 @@ import Typography from '@mui/material/Typography';
 import CardContent from '@mui/material/CardContent';
 
 import { apiGet } from 'src/services/api/client';
+import { useDashboardSecurityStats } from 'src/services/hooks/use-dashboard';
 
 import { Iconify } from 'src/components/iconify';
+
+type Status = 'up' | 'down' | 'warning';
 
 function StatRow({ icon, label, value, color }: { icon: string; label: string; value: string | number; color: string }) {
   return (
@@ -25,7 +28,7 @@ function StatRow({ icon, label, value, color }: { icon: string; label: string; v
   );
 }
 
-function StatusDot({ status }: { status: 'up' | 'down' | 'warning' }) {
+function StatusDot({ status }: { status: Status }) {
   const color = status === 'up' ? 'success.main' : status === 'down' ? 'error.main' : 'warning.main';
   return (
     <Stack direction="row" spacing={1} alignItems="center">
@@ -38,6 +41,16 @@ function StatusDot({ status }: { status: 'up' | 'down' | 'warning' }) {
 }
 
 export function SecurityCenter() {
+  const { data: stats, isLoading } = useDashboardSecurityStats();
+
+  if (isLoading) {
+    return (
+      <Card variant="outlined" sx={{ borderRadius: 1.5, height: 1 }}>
+        <CardContent><Skeleton variant="rectangular" height={160} sx={{ borderRadius: 1 }} /></CardContent>
+      </Card>
+    );
+  }
+
   return (
     <Card variant="outlined" sx={{ borderRadius: 1.5, height: 1 }}>
       <CardContent>
@@ -47,10 +60,10 @@ export function SecurityCenter() {
           </Box>
           <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>Security Center</Typography>
         </Stack>
-        <StatRow icon="solar:login-2-bold" label="Today's Logins" value="214" color="#2F3C98" />
-        <StatRow icon="solar:close-circle-bold" label="Failed Logins" value="4" color="#F44336" />
-        <StatRow icon="solar:lock-keyhole-bold" label="Locked Accounts" value="2" color="#FF9800" />
-        <StatRow icon="solar:clock-circle-bold" label="Password Expiring" value="11" color="#E91E63" />
+        <StatRow icon="solar:login-2-bold" label="Today's Logins" value={stats?.todayLogins ?? 0} color="#2F3C98" />
+        <StatRow icon="solar:close-circle-bold" label="Failed Logins" value={stats?.failedLogins ?? 0} color="#F44336" />
+        <StatRow icon="solar:lock-keyhole-bold" label="Locked Accounts" value={stats?.lockedAccounts ?? 0} color="#FF9800" />
+        <StatRow icon="solar:clock-circle-bold" label="Password Expiring" value={stats?.passwordExpiring ?? 0} color="#E91E63" />
       </CardContent>
     </Card>
   );

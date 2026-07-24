@@ -6,6 +6,7 @@ export { phaseService } from './phase.service';
 export { auditService } from './audit.service';
 export { projectService } from './project.service';
 export { workflowService } from './workflow.service';
+export { dashboardService } from './dashboard.service';
 export { userGroupService } from './user-group.service';
 export { delegationService } from './delegation.service';
 export { notificationService } from './notification.service';

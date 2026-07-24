@@ -85,7 +85,7 @@ export default function DashboardView() {
 
         {/* KPI Cards */}
         <Box sx={{ mb: 3 }}>
-          <KpiCards me={me} />
+          <KpiCards />
         </Box>
 
         {/* Analytics */}

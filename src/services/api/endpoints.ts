@@ -289,4 +289,11 @@ export const endpoints = {
   auditLogs: {
     list: `${API_PREFIX}/audit-logs`,
   },
+
+  dashboard: {
+    zoneOverview: `${API_PREFIX}/dashboard/zone-overview`,
+    securityStats: `${API_PREFIX}/dashboard/security-stats`,
+    operationsSummary: `${API_PREFIX}/dashboard/operations-summary`,
+    kpis: `${API_PREFIX}/dashboard/kpis`,
+  },
 } as const;
