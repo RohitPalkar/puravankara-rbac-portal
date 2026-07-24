@@ -94,7 +94,8 @@ export interface MeRole {
   departmentName: string;
   roleId: number;
   roleName: string;
-  hierarchyLevelRank?: number;
+  hierarchyLevelRank: number;
+  isSystemRole: boolean;
 }
 
 export interface MeResponse {

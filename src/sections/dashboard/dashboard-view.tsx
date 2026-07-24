@@ -62,21 +62,28 @@ function getInitials(name: string): string {
 function determinePersona(me: any, myPermissions: any): Persona {
   if (!me?.roles?.length) return 'user';
 
-  const roleNames = me.roles.map((r: MeRole) => r.roleName.toLowerCase());
-  const maxRank = Math.max(...me.roles.map((r: MeRole) => r.hierarchyLevelRank ?? 0));
+  const { roles } = me as { roles: MeRole[] };
 
-  const isSuperAdmin =
-    roleNames.some((n: string) => n.includes('super admin') || n.includes('superadmin')) ||
-    maxRank >= 90;
+  const hasSuperAdminRole = roles.some(
+    (r) =>
+      r.isSystemRole === true ||
+      ['super_admin', 'super admin', 'superadmin'].includes(r.roleName?.toLowerCase()),
+  );
+  if (hasSuperAdminRole) return 'super-admin';
 
-  if (isSuperAdmin) return 'super-admin';
+  const hasAdminRole = roles.some((r) => {
+    const name = r.roleName?.toLowerCase() ?? '';
+    return ['admin', 'manager', 'approver', 'director', 'head'].some((kw) => name.includes(kw));
+  });
+  if (hasAdminRole) return 'admin';
 
-  const isAdmin =
-    roleNames.some((n: string) =>
-      ['admin', 'manager', 'approver', 'director', 'head'].some((kw) => n.includes(kw)),
-    ) || maxRank >= 60;
-
-  if (isAdmin) return 'admin';
+  if (myPermissions) {
+    const hasCreateOrApprove = hasAnyAllowedAction(
+      myPermissions,
+      (a) => (a.code === 'CREATE' || a.code === 'APPROVE') && a.allowed,
+    );
+    if (hasCreateOrApprove) return 'admin';
+  }
 
   return 'user';
 }

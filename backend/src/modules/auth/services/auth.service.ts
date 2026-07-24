@@ -398,6 +398,8 @@ export class AuthService {
         roleName: ur.role?.name,
         departmentId: ur.departmentId,
         departmentName: ur.department?.name,
+        hierarchyLevelRank: ur.role?.hierarchyLevelRank ?? 0,
+        isSystemRole: ur.role?.isSystemRole ?? false,
       })),
     };
   }
