@@ -645,12 +645,19 @@ export async function bootstrapSeeder(dataSource: DataSource): Promise<void> {
     );
   }
 
-  // Ensure UserAuth record exists
+  // Ensure UserAuth record exists and reset if locked
+  const passwordHash: string = await bcrypt.hash(adminPassword, SALT_ROUNDS);
   const existingAuth = await authRepo.findOne({
     where: { userId: adminUser.empId },
   });
-  if (!existingAuth) {
-    const passwordHash: string = await bcrypt.hash(adminPassword, SALT_ROUNDS);
+  if (existingAuth) {
+    if (existingAuth.isLocked || existingAuth.failedAttempts > 0) {
+      existingAuth.passwordHash = passwordHash;
+      existingAuth.failedAttempts = 0;
+      existingAuth.isLocked = false;
+      await authRepo.save(existingAuth);
+    }
+  } else {
     await authRepo.save(
       authRepo.create({
         userId: adminUser.empId,
