@@ -41,7 +41,7 @@ export default function DashboardView() {
   const { data: me } = useMe();
   const { data: myPermissions } = useMyPermissions();
   const { data: moduleTree } = useModuleTree();
-  const { data: auditLogs } = useAuditLogList(
+  const { data: auditLogs, isLoading: auditLogsLoading } = useAuditLogList(
     me?.empId
       ? {
           performedBy: me.empId,
@@ -52,7 +52,7 @@ export default function DashboardView() {
       : undefined,
   );
 
-  const { data: allAuditLogs } = useAuditLogList(
+  const { data: allAuditLogs, isLoading: allAuditLogsLoading } = useAuditLogList(
     { limit: 20, sortBy: 'createdAt' as const, sortOrder: 'DESC' as const },
   );
 
@@ -91,7 +91,7 @@ export default function DashboardView() {
         {/* Analytics */}
         <Box sx={{ mb: 3 }}>
           <SectionDivider icon="solar:chart-2-bold" label="Analytics" />
-          <AnalyticsSection auditLogs={auditLogs} auditLoading={false} moduleTree={moduleTree} />
+          <AnalyticsSection auditLogs={auditLogs} auditLoading={auditLogsLoading} moduleTree={moduleTree} />
         </Box>
 
         {/* Operations Hub */}
@@ -121,8 +121,8 @@ export default function DashboardView() {
         <Box sx={{ mb: 2 }}>
           <SectionDivider icon="solar:clock-circle-bold" label="Activity & Audit" />
           <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 2 }}>
-            <RecentActivities auditLogs={allAuditLogs} auditLoading={false} />
-            <AuditTimeline auditLogs={allAuditLogs} auditLoading={false} />
+            <RecentActivities auditLogs={allAuditLogs} auditLoading={allAuditLogsLoading} />
+            <AuditTimeline auditLogs={allAuditLogs} auditLoading={allAuditLogsLoading} />
           </Box>
         </Box>
       </PageContainer>

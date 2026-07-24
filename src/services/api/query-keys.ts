@@ -192,5 +192,6 @@ export const queryKeys = {
     securityStats: ['dashboard', 'security-stats'] as const,
     operationsSummary: ['dashboard', 'operations-summary'] as const,
     kpis: ['dashboard', 'kpis'] as const,
+    systemInfo: ['dashboard', 'system-info'] as const,
   },
 } as const;

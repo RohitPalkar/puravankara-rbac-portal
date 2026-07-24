@@ -31,6 +31,13 @@ export interface KpiData {
   todayEvents: number;
 }
 
+export interface SystemInfo {
+  backendStatus: string;
+  backendStartTime: string;
+  uptimeSeconds: number;
+  uptimeFormatted: string;
+}
+
 export const dashboardService = {
   getZoneOverview: async (): Promise<ZoneOverviewItem[]> => {
     const res = await apiGet<ZoneOverviewItem[]>(endpoints.dashboard.zoneOverview);
@@ -49,6 +56,11 @@ export const dashboardService = {
 
   getKpis: async (): Promise<KpiData> => {
     const res = await apiGet<KpiData>(endpoints.dashboard.kpis);
+    return res.data;
+  },
+
+  getSystemInfo: async (): Promise<SystemInfo> => {
+    const res = await apiGet<SystemInfo>(endpoints.dashboard.systemInfo);
     return res.data;
   },
 };

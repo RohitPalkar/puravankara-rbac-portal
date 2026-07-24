@@ -295,5 +295,6 @@ export const endpoints = {
     securityStats: `${API_PREFIX}/dashboard/security-stats`,
     operationsSummary: `${API_PREFIX}/dashboard/operations-summary`,
     kpis: `${API_PREFIX}/dashboard/kpis`,
+    systemInfo: `${API_PREFIX}/dashboard/system-info`,
   },
 } as const;

@@ -34,3 +34,11 @@ export function useDashboardKpis() {
     staleTime: 120_000,
   });
 }
+
+export function useDashboardSystemInfo() {
+  return useQuery({
+    queryKey: queryKeys.dashboard.systemInfo,
+    queryFn: () => dashboardService.getSystemInfo(),
+    staleTime: 60_000,
+  });
+}

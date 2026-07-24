@@ -1,3 +1,4 @@
+import dayjs from 'dayjs';
 import { useQuery } from '@tanstack/react-query';
 
 import Box from '@mui/material/Box';
@@ -8,7 +9,7 @@ import Typography from '@mui/material/Typography';
 import CardContent from '@mui/material/CardContent';
 
 import { apiGet } from 'src/services/api/client';
-import { useDashboardSecurityStats } from 'src/services/hooks/use-dashboard';
+import { useDashboardSystemInfo, useDashboardSecurityStats } from 'src/services/hooks/use-dashboard';
 
 import { Iconify } from 'src/components/iconify';
 
@@ -70,7 +71,7 @@ export function SecurityCenter() {
 }
 
 export function SystemHealthWidget() {
-  const { data: health, isLoading } = useQuery({
+  const { data: health, isLoading: healthLoading } = useQuery({
     queryKey: ['system-health'],
     queryFn: async () => {
       try {
@@ -83,6 +84,10 @@ export function SystemHealthWidget() {
     staleTime: 60_000,
   });
 
+  const { data: sysInfo, isLoading: sysInfoLoading } = useDashboardSystemInfo();
+
+  const isLoading = healthLoading || sysInfoLoading;
+
   if (isLoading) {
     return (
       <Card variant="outlined" sx={{ borderRadius: 1.5, height: 1 }}>
@@ -92,6 +97,8 @@ export function SystemHealthWidget() {
   }
 
   const dbUp = health?.details?.database?.status === 'up';
+  const backendStatus: Status = sysInfo?.backendStatus === 'up' ? 'up' : 'down';
+  const uptimeDisplay = sysInfo?.uptimeFormatted ?? '99.9%';
 
   return (
     <Card variant="outlined" sx={{ borderRadius: 1.5, height: 1 }}>
@@ -105,7 +112,7 @@ export function SystemHealthWidget() {
         <Stack spacing={1.5}>
           <Stack direction="row" justifyContent="space-between" alignItems="center">
             <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.8125rem' }}>Backend</Typography>
-            <StatusDot status="up" />
+            <StatusDot status={backendStatus} />
           </Stack>
           <Stack direction="row" justifyContent="space-between" alignItems="center">
             <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.8125rem' }}>Database</Typography>
@@ -113,11 +120,13 @@ export function SystemHealthWidget() {
           </Stack>
           <Stack direction="row" justifyContent="space-between" alignItems="center">
             <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.8125rem' }}>API</Typography>
-            <Typography variant="body2" sx={{ fontWeight: 600, fontSize: '0.8125rem', color: 'success.main' }}>99.9%</Typography>
+            <Typography variant="body2" sx={{ fontWeight: 600, fontSize: '0.8125rem', color: 'success.main' }}>{uptimeDisplay}</Typography>
           </Stack>
           <Stack direction="row" justifyContent="space-between" alignItems="center">
-            <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.8125rem' }}>Last Backup</Typography>
-            <Typography variant="body2" sx={{ fontWeight: 600, fontSize: '0.8125rem' }}>Today</Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.8125rem' }}>Backend Started</Typography>
+            <Typography variant="body2" sx={{ fontWeight: 600, fontSize: '0.8125rem' }}>
+              {sysInfo?.backendStartTime ? dayjs(sysInfo.backendStartTime).format('HH:mm') : 'Today'}
+            </Typography>
           </Stack>
         </Stack>
       </CardContent>

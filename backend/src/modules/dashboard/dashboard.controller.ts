@@ -31,4 +31,10 @@ export class DashboardController {
   getKpis() {
     return this.dashboardService.getKpis();
   }
+
+  @Get('system-info')
+  @ApiOperation({ summary: 'System information and uptime' })
+  getSystemInfo() {
+    return this.dashboardService.getSystemInfo();
+  }
 }

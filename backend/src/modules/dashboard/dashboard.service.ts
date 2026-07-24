@@ -34,9 +34,12 @@ export class DashboardService {
     const [todayLoginsResult] = await this.dataSource.query(
       `SELECT COUNT(*)::int AS count FROM user_sessions WHERE created_at >= CURRENT_DATE`,
     );
+    const [failedLoginsResult] = await this.dataSource.query(
+      `SELECT COUNT(*)::int AS count FROM audit_logs WHERE action = 'LOGIN_FAILED' AND created_at >= CURRENT_DATE`,
+    );
     return {
       todayLogins: todayLoginsResult?.count ?? 0,
-      failedLogins: 0,
+      failedLogins: failedLoginsResult?.count ?? 0,
       lockedAccounts: lockedResult?.count ?? 0,
       passwordExpiring: 0,
     };
@@ -89,5 +92,27 @@ export class DashboardService {
       permissionProfiles: rolesResult?.count ?? 0,
       todayEvents: todayEventsResult?.count ?? 0,
     };
+  }
+
+  async getSystemInfo() {
+    const uptimeSeconds = process.uptime();
+    const startTime = new Date(Date.now() - uptimeSeconds * 1000);
+    return {
+      backendStatus: 'up',
+      backendStartTime: startTime.toISOString(),
+      uptimeSeconds: Math.floor(uptimeSeconds),
+      uptimeFormatted: this.formatDuration(uptimeSeconds),
+    };
+  }
+
+  private formatDuration(seconds: number): string {
+    const days = Math.floor(seconds / 86400);
+    const hours = Math.floor((seconds % 86400) / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    const parts: string[] = [];
+    if (days > 0) parts.push(`${days}d`);
+    if (hours > 0) parts.push(`${hours}h`);
+    if (minutes > 0) parts.push(`${minutes}m`);
+    return parts.join(' ') || '<1m';
   }
 }
