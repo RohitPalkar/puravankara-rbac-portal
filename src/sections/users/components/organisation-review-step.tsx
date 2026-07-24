@@ -82,35 +82,34 @@ export default forwardRef<OrganisationReviewStepHandle, Props>(
     const [teamLeadName, setTeamLeadName] = useState('');
     const [deptAdminName, setDeptAdminName] = useState('');
 
-    const { data: userSearchResults } = useQuery({
-      queryKey: ['user-search', reportingManagerSearch],
+    const { data: allUsers } = useQuery({
+      queryKey: ['organisation-users'],
       queryFn: async () => {
-        if (reportingManagerSearch.length < 2) return [];
-        const res = await userService.list({ search: reportingManagerSearch });
+        const res = await userService.list({});
         return res.data ?? [];
       },
-      enabled: reportingManagerSearch.length >= 2,
     });
 
-    const { data: teamLeadResults } = useQuery({
-      queryKey: ['teamlead-search', teamLeadSearch],
-      queryFn: async () => {
-        if (teamLeadSearch.length < 2) return [];
-        const res = await userService.list({ search: teamLeadSearch });
-        return res.data ?? [];
-      },
-      enabled: teamLeadSearch.length >= 2,
-    });
+    const userSearchResults = useMemo(() => {
+      if (!allUsers) return [];
+      if (!reportingManagerSearch) return allUsers;
+      const lower = reportingManagerSearch.toLowerCase();
+      return allUsers.filter((u: any) => (u.name?.toLowerCase().includes(lower) || u.empId?.toLowerCase().includes(lower)));
+    }, [allUsers, reportingManagerSearch]);
 
-    const { data: deptAdminResults } = useQuery({
-      queryKey: ['deptadmin-search', departmentAdminSearch],
-      queryFn: async () => {
-        if (departmentAdminSearch.length < 2) return [];
-        const res = await userService.list({ search: departmentAdminSearch });
-        return res.data ?? [];
-      },
-      enabled: departmentAdminSearch.length >= 2,
-    });
+    const teamLeadResults = useMemo(() => {
+      if (!allUsers) return [];
+      if (!teamLeadSearch) return allUsers;
+      const lower = teamLeadSearch.toLowerCase();
+      return allUsers.filter((u: any) => (u.name?.toLowerCase().includes(lower) || u.empId?.toLowerCase().includes(lower)));
+    }, [allUsers, teamLeadSearch]);
+
+    const deptAdminResults = useMemo(() => {
+      if (!allUsers) return [];
+      if (!departmentAdminSearch) return allUsers;
+      const lower = departmentAdminSearch.toLowerCase();
+      return allUsers.filter((u: any) => (u.name?.toLowerCase().includes(lower) || u.empId?.toLowerCase().includes(lower)));
+    }, [allUsers, departmentAdminSearch]);
 
     const searchUsers = useMemo(() => userSearchResults ?? [], [userSearchResults]);
     const searchTeamLeads = useMemo(() => teamLeadResults ?? [], [teamLeadResults]);
