@@ -3,8 +3,8 @@ import type { ProjectLocation } from 'src/services/types/project';
 import type { Role, Department } from 'src/services/types/organization';
 import type { ProjectMappingData, RolePermissionProfile } from 'src/services/types/user';
 
-import { useQuery } from '@tanstack/react-query';
-import { useMemo, useState, forwardRef, useCallback, useImperativeHandle } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMemo, useState, useEffect, forwardRef, useCallback, useImperativeHandle } from 'react';
 
 import Box from '@mui/material/Box';
 import Tab from '@mui/material/Tab';
@@ -76,11 +76,19 @@ function validateStep(data: ProjectMappingData): string[] {
 }
 
 export default forwardRef<ProjectMappingStepHandle, Props>(({ initialData }: Props, ref) => {
+  const queryClient = useQueryClient();
   const { data: zones } = useZoneList();
   const { data: departments } = useDepartmentList();
   const { data: roles } = useRoleList();
   const { data: deptRoles } = useDepartmentRoleList();
   const { data: moduleTree } = useModuleTree();
+
+  useEffect(() => {
+    queryClient.invalidateQueries({ queryKey: queryKeys.zones.all });
+    queryClient.invalidateQueries({ queryKey: queryKeys.departments.all });
+    queryClient.invalidateQueries({ queryKey: queryKeys.roles.all });
+    queryClient.invalidateQueries({ queryKey: queryKeys.departmentRoles.all });
+  }, [queryClient]);
   const { data: allProjects } = useQuery({
     queryKey: queryKeys.projects.list({}),
     queryFn: async () => {
@@ -113,6 +121,7 @@ export default forwardRef<ProjectMappingStepHandle, Props>(({ initialData }: Pro
   const [buddyPermissions, setBuddyPermissions] = useState<RolePermissionProfile>(initialData?.profiles?.buddyRm?.permissions ?? []);
 
   const activeModules = useMemo(() => moduleTree ?? [], [moduleTree]);
+  const activeZones = useMemo(() => (zones ?? []).filter((z: Zone) => z.isActive !== false), [zones]);
   const activeDepartments = useMemo(() => departments ?? [], [departments]);
   const activeRoles = useMemo(() => roles ?? [], [roles]);
   const projects = useMemo(() => allProjects ?? [], [allProjects]);
@@ -274,13 +283,13 @@ export default forwardRef<ProjectMappingStepHandle, Props>(({ initialData }: Pro
             renderValue={(selected) => (
               <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
                 {(selected as number[]).map((id) => {
-                  const zone = (zones ?? []).find((z: Zone) => z.id === id);
+                  const zone = activeZones.find((z: Zone) => z.id === id);
                   return <Chip key={id} label={zone?.name ?? id} size="small" />;
                 })}
               </Box>
             )}
           >
-            {(zones ?? []).map((zone: Zone) => (
+            {activeZones.map((zone: Zone) => (
               <MenuItem key={zone.id} value={zone.id}>{zone.name}</MenuItem>
             ))}
           </Select>

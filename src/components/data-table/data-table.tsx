@@ -272,8 +272,7 @@ export function DataTable({
         </Box>
       )}
 
-      <Box sx={{ overflowX: 'auto', overflowY: 'hidden' }}>
-        <DataGrid
+      <DataGrid
           rows={isServerSide ? rows : filteredRows}
           columns={processedColumns}
           loading={loading}
@@ -290,10 +289,19 @@ export function DataTable({
           disableRowSelectionOnClick
           disableColumnMenu
           disableColumnResize
-          autoHeight
           sx={{
+            height: 'calc(100vh - 300px)',
+            minHeight: 400,
             borderRadius: 0,
             minWidth: processedColumns.reduce((sum, col) => sum + (typeof col.width === 'number' ? col.width : 150), 0),
+            '& .MuiDataGrid-virtualScroller': {
+              overflowY: 'auto',
+            },
+            '& .MuiDataGrid-pinnedRows': {
+              position: 'sticky',
+              bottom: 0,
+              zIndex: 1,
+            },
             '& .MuiDataGrid-columnHeaders': {
               borderBottom: '1px solid',
               borderColor: 'divider',
@@ -332,7 +340,6 @@ export function DataTable({
             ...(dataGridSx || {}),
           } as any}
         />
-      </Box>
     </Card>
   );
 }

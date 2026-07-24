@@ -6,12 +6,10 @@ import Grid from '@mui/material/Grid';
 import Stack from '@mui/material/Stack';
 import Paper from '@mui/material/Paper';
 import Button from '@mui/material/Button';
-import Tooltip from '@mui/material/Tooltip';
 import Checkbox from '@mui/material/Checkbox';
 import Collapse from '@mui/material/Collapse';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
-import IconButton from '@mui/material/IconButton';
 import CircularProgress from '@mui/material/CircularProgress';
 
 import { useRolePermissionsTree } from 'src/services/hooks/use-permissions';
@@ -69,7 +67,7 @@ export default function PermissionMatrixStep2({ roleId, onSave, saving, editable
 
   const [selectedActionIds, setSelectedActionIds] = useState<Set<number>>(new Set());
   const [expandedModules, setExpandedModules] = useState<Record<number, boolean>>({});
-  const [expandedActionGroups, setExpandedActionGroups] = useState<Record<number, boolean>>({});
+
   const [selectedSubModuleId, setSelectedSubModuleId] = useState<number | null>(null);
   const [leftSearch, setLeftSearch] = useState('');
   const [rightSearch, setRightSearch] = useState('');
@@ -90,8 +88,6 @@ export default function PermissionMatrixStep2({ roleId, onSave, saving, editable
       const modExpand: Record<number, boolean> = {};
       treeData.modules.forEach((mod: ModuleNode) => { modExpand[mod.id] = true; });
       setExpandedModules(modExpand);
-
-      setExpandedActionGroups({});
 
       const firstSm = treeData.modules[0]?.subModules[0];
       if (firstSm) setSelectedSubModuleId(firstSm.id);
@@ -271,28 +267,31 @@ export default function PermissionMatrixStep2({ roleId, onSave, saving, editable
                       alignItems="center"
                       spacing={0.5}
                       sx={{
-                        py: 0.75,
-                        px: 0.75,
+                        py: 1,
+                        px: 1,
                         borderRadius: 1,
                         cursor: 'pointer',
-                        bgcolor: isExpanded ? 'action.selected' : 'transparent',
                         '&:hover': { bgcolor: 'action.hover' },
-                        transition: 'background-color 0.15s',
                       }}
+                      onClick={() => setExpandedModules((prev) => ({ ...prev, [mod.id]: !prev[mod.id] }))}
                     >
-                      <IconButton
-                        size="small"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setExpandedModules((prev) => ({ ...prev, [mod.id]: !prev[mod.id] }));
+                      <Box
+                        component="span"
+                        sx={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          width: 20,
+                          height: 20,
+                          color: 'text.disabled',
+                          flexShrink: 0,
                         }}
-                        sx={{ color: 'text.secondary', p: 0.25 }}
                       >
                         <Iconify
-                          icon={isExpanded ? 'solar:alt-arrow-down-bold' : 'solar:alt-arrow-right-bold'}
+                          icon={isExpanded ? 'solar:alt-arrow-down-linear' : 'solar:alt-arrow-right-linear'}
                           width={14}
                         />
-                      </IconButton>
+                      </Box>
                       <Checkbox
                         size="small"
                         checked={allSelected}
@@ -302,27 +301,11 @@ export default function PermissionMatrixStep2({ roleId, onSave, saving, editable
                         onClick={(e) => e.stopPropagation()}
                         sx={{ p: 0.25 }}
                       />
-                      <Typography variant="body2" fontWeight={600} noWrap sx={{ flex: 1 }}>
+                      <Typography variant="body2" fontWeight={600} noWrap sx={{ flex: 1, fontSize: '0.8125rem' }}>
                         {mod.name}
                       </Typography>
-                      <Tooltip title={`${mod.selectedCount} of ${mod.totalCount} permissions selected`}>
-                        <Chip
-                          label={
-                            allSelected
-                              ? `${mod.totalCount} / ${mod.totalCount} Selected`
-                              : `${mod.selectedCount} / ${mod.totalCount} Selected`
-                          }
-                          size="small"
-                          color={allSelected ? 'success' : someSelected ? 'primary' : 'default'}
-                          variant={someSelected || allSelected ? 'filled' : 'outlined'}
-                          sx={{
-                            height: 22,
-                            '& .MuiChip-label': { px: 0.75, fontSize: 11, fontWeight: 600 },
-                          }}
-                        />
-                      </Tooltip>
                     </Stack>
-                    <Collapse in={isExpanded} sx={{ '& .MuiCollapse-wrapperInner': { ml: 1 } }}>
+                    <Collapse in={isExpanded}>
                       {mod.subModules.map((sm: SubModuleNode) => {
                         const isActive = selectedSubModuleId === sm.id;
                         const smAllSelected =
@@ -338,17 +321,14 @@ export default function PermissionMatrixStep2({ roleId, onSave, saving, editable
                             spacing={0.5}
                             sx={{
                               py: 0.5,
-                              px: 0.75,
-                              ml: 1.5,
-                              borderRadius: 1,
+                              px: 1,
+                              ml: 2,
+                              borderRadius: 0.5,
                               cursor: 'pointer',
                               bgcolor: isActive ? 'primary.lighter' : 'transparent',
-                              borderLeft: '3px solid',
-                              borderColor: isActive ? 'primary.main' : 'transparent',
                               '&:hover': {
                                 bgcolor: isActive ? 'primary.lighter' : 'action.hover',
                               },
-                              transition: 'background-color 0.15s',
                             }}
                           >
                             <Checkbox
@@ -373,39 +353,6 @@ export default function PermissionMatrixStep2({ roleId, onSave, saving, editable
                             >
                               {sm.name}
                             </Typography>
-                            {sm.hasActions ? (
-                              <Chip
-                                label={
-                                  smAllSelected
-                                    ? `${sm.totalCount} / ${sm.totalCount} Selected`
-                                    : `${sm.selectedCount} / ${sm.totalCount} Selected`
-                                }
-                                size="small"
-                                color={
-                                  smAllSelected
-                                    ? 'success'
-                                    : smSomeSelected
-                                      ? 'primary'
-                                      : 'default'
-                                }
-                                variant={smSomeSelected || smAllSelected ? 'filled' : 'outlined'}
-                                sx={{
-                                  height: 20,
-                                  '& .MuiChip-label': { px: 0.5, fontSize: 10, fontWeight: 600 },
-                                }}
-                              />
-                            ) : (
-                              <Chip
-                                label={smFullySelected ? 'Enabled' : 'Disabled'}
-                                size="small"
-                                color={smFullySelected ? 'success' : 'default'}
-                                variant={smFullySelected ? 'filled' : 'outlined'}
-                                sx={{
-                                  height: 20,
-                                  '& .MuiChip-label': { px: 0.5, fontSize: 10, fontWeight: 600 },
-                                }}
-                              />
-                            )}
                           </Stack>
                         );
                       })}
@@ -521,120 +468,87 @@ export default function PermissionMatrixStep2({ roleId, onSave, saving, editable
                     </Typography>
                   </Box>
                 ) : (
-                  <Grid container spacing={2}>
+                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                     {filteredActionGroups.map((ag) => {
-                      const isExpanded = expandedActionGroups[ag.id] ?? true;
                       const agAllSelected = ag.actions.every((a) => selectedActionIds.has(a.id));
                       const agSomeSelected = ag.actions.some((a) => selectedActionIds.has(a.id));
                       return (
-                        <Grid item xs={12} sm={6} key={ag.id}>
-                          <Paper
-                            variant="outlined"
+                        <Paper
+                          variant="outlined"
+                          key={ag.id}
+                          sx={{
+                            borderRadius: 1.5,
+                            borderColor: agAllSelected
+                              ? 'success.main'
+                              : agSomeSelected
+                                ? 'primary.main'
+                                : 'divider',
+                            overflow: 'hidden',
+                          }}
+                        >
+                          <Stack
+                            direction="row"
+                            alignItems="center"
+                            spacing={0.75}
                             sx={{
-                              borderRadius: 1.5,
-                              borderColor: agAllSelected
-                                ? 'success.main'
+                              px: 1.5,
+                              py: 1,
+                              bgcolor: agAllSelected
+                                ? 'success.lighter'
                                 : agSomeSelected
-                                  ? 'primary.main'
-                                  : 'divider',
-                              overflow: 'hidden',
+                                  ? 'primary.lighter'
+                                  : 'grey.50',
+                              borderBottom: '1px solid',
+                              borderColor: 'divider',
                             }}
                           >
-                            <Stack
-                              direction="row"
-                              alignItems="center"
-                              spacing={0.75}
-                              sx={{
-                                px: 1.5,
-                                py: 1,
-                                bgcolor: agAllSelected
-                                  ? 'success.lighter'
-                                  : agSomeSelected
-                                    ? 'primary.lighter'
-                                    : 'grey.50',
-                                borderBottom: '1px solid',
-                                borderColor: 'divider',
-                              }}
-                            >
-                              <IconButton
-                                size="small"
-                                onClick={() =>
-                                  setExpandedActionGroups((prev) => ({
-                                    ...prev,
-                                    [ag.id]: !prev[ag.id],
-                                  }))
-                                }
-                                sx={{ color: 'text.secondary', p: 0.25 }}
-                              >
-                                <Iconify
-                                  icon={
-                                    isExpanded
-                                      ? 'solar:alt-arrow-down-bold'
-                                      : 'solar:alt-arrow-right-bold'
-                                  }
-                                  width={14}
-                                />
-                              </IconButton>
-                              <Checkbox
-                                size="small"
-                                checked={agAllSelected}
-                                indeterminate={agSomeSelected && !agAllSelected}
-                                onChange={() => editable && toggleActionGroup(ag)}
-                                disabled={!editable}
-                                sx={{ p: 0.25 }}
-                              />
-                              <Typography variant="subtitle2" sx={{ flex: 1, fontSize: '0.8125rem', fontWeight: 600 }}>
-                                {ag.name}
-                              </Typography>
-                              <Chip
-                                label={`${ag.selectedCount} / ${ag.totalCount} Selected`}
-                                size="small"
-                                color={agAllSelected ? 'success' : agSomeSelected ? 'primary' : 'default'}
-                                variant="outlined"
-                                sx={{
-                                  height: 20,
-                                  '& .MuiChip-label': { px: 0.75, fontSize: 10, fontWeight: 600 },
-                                }}
-                              />
-                            </Stack>
-                            <Collapse in={isExpanded}>
-                              <Box sx={{ px: 1.5, py: 1 }}>
-                                <Grid container spacing={0.5}>
-                                  {ag.actions.map((a) => (
-                                    <Grid item xs={12} sm={6} key={a.id}>
-                                      <Stack
-                                        direction="row"
-                                        alignItems="center"
-                                        spacing={0.5}
-                                        sx={{
-                                          py: 0.25,
-                                          px: 0.5,
-                                          borderRadius: 0.5,
-                                          '&:hover': { bgcolor: 'action.hover' },
-                                          cursor: 'pointer',
-                                        }}
-                                        onClick={() => editable && toggleAction(a.id)}
-                                      >
-                                        <Checkbox
-                                          size="small"
-                                          checked={selectedActionIds.has(a.id)}
-                                          disabled={!editable}
-                                          sx={{ p: 0.25 }}
-                                        />
-                                        <Typography variant="body2" sx={{ fontSize: '0.8125rem' }}>
-                                          {a.name}
-                                        </Typography>
-                                      </Stack>
-                                    </Grid>
-                                  ))}
+                            <Checkbox
+                              size="small"
+                              checked={agAllSelected}
+                              indeterminate={agSomeSelected && !agAllSelected}
+                              onChange={() => editable && toggleActionGroup(ag)}
+                              disabled={!editable}
+                              sx={{ p: 0.25 }}
+                            />
+                            <Typography variant="subtitle2" sx={{ flex: 1, fontSize: '0.8125rem', fontWeight: 600 }}>
+                              {ag.name}
+                            </Typography>
+                          </Stack>
+                          <Box sx={{ px: 1.5, py: 1 }}>
+                            <Grid container spacing={0.5}>
+                              {ag.actions.map((a) => (
+                                <Grid item xs={12} sm={6} key={a.id}>
+                                  <Stack
+                                    direction="row"
+                                    alignItems="center"
+                                    spacing={0.5}
+                                    sx={{
+                                      py: 0.25,
+                                      px: 0.5,
+                                      borderRadius: 0.5,
+                                      '&:hover': { bgcolor: 'action.hover' },
+                                      cursor: 'pointer',
+                                    }}
+                                    onClick={() => editable && toggleAction(a.id)}
+                                  >
+                                    <Checkbox
+                                      size="small"
+                                      checked={selectedActionIds.has(a.id)}
+                                      disabled={!editable}
+                                      sx={{ p: 0.25 }}
+                                    />
+                                    <Typography variant="body2" sx={{ fontSize: '0.8125rem' }}>
+                                      {a.name}
+                                    </Typography>
+                                  </Stack>
                                 </Grid>
-                              </Box>
-                            </Collapse>
-                          </Paper>
-                        </Grid>
+                              ))}
+                            </Grid>
+                          </Box>
+                        </Paper>
                       );
                     })}
-                  </Grid>
+                  </Box>
                 )}
               </>
             )}

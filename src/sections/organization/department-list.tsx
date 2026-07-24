@@ -118,6 +118,7 @@ function ZoneChipCell({ zones }: { zones?: string[] }) {
 export default function DepartmentListPage() {
   const navigate = useNavigate();
   const [deleteId, setDeleteId] = useState<number | null>(null);
+  const [deleteError, setDeleteError] = useState('');
   const [paginationModel, setPaginationModel] = useState<GridPaginationModel>({ page: 0, pageSize: PAGE_SIZE });
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
@@ -155,11 +156,13 @@ export default function DepartmentListPage() {
 
   const handleDelete = useCallback(async () => {
     if (deleteId === null) return;
+    setDeleteError('');
     try {
       await deleteDepartment(deleteId);
       setDeleteId(null);
-    } catch {
-      // handled by query cache invalidation
+    } catch (err: any) {
+      const msg = err?.response?.data?.message?.[0] || err?.response?.data?.message || err?.message || 'Failed to delete department';
+      setDeleteError(msg);
     }
   }, [deleteId, deleteDepartment]);
 
@@ -303,11 +306,14 @@ export default function DepartmentListPage() {
         </Card>
       </PageContainer>
 
-      <Dialog open={deleteId !== null} onClose={() => setDeleteId(null)} maxWidth="xs">
+      <Dialog open={deleteId !== null} onClose={() => { setDeleteId(null); setDeleteError(''); }} maxWidth="xs">
         <DialogTitle>Confirm Delete</DialogTitle>
-        <DialogContent>Are you sure you want to delete this department?</DialogContent>
+        <DialogContent>
+          <Typography sx={{ mb: deleteError ? 2 : 0 }}>Are you sure you want to delete this department?</Typography>
+          {deleteError && <Alert severity="error" onClose={() => setDeleteError('')}>{deleteError}</Alert>}
+        </DialogContent>
         <DialogActions>
-          <Button onClick={() => setDeleteId(null)} color="inherit">Cancel</Button>
+          <Button onClick={() => { setDeleteId(null); setDeleteError(''); }} color="inherit">Cancel</Button>
           <Button onClick={handleDelete} color="error" variant="contained" disabled={isDeleting}>
             {isDeleting ? 'Deleting...' : 'Delete'}
           </Button>

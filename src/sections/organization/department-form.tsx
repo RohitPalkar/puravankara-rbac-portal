@@ -347,7 +347,14 @@ export default function DepartmentFormPage() {
         )}
 
         <Card sx={{ p: 3, mb: 3 }}>
-          <Typography variant="subtitle1" sx={{ mb: 3 }}>Department Details</Typography>
+          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3 }}>
+            <Typography variant="subtitle1">Department Details</Typography>
+            {formDisabled && (
+              <Button variant="text" size="small" onClick={() => setLevelsGenerated(false)}>
+                Edit
+              </Button>
+            )}
+          </Box>
 
           <Box display="grid" gridTemplateColumns="1fr 1fr" gap={3}>
             <Autocomplete
