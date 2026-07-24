@@ -64,7 +64,7 @@ export default function DashboardView() {
   }, [me]);
 
   const hasUserModuleAccess = useMemo(() => {
-    if (!myPermissions) return false;
+    if (!myPermissions?.projects) return false;
     return myPermissions.projects.some((project: any) =>
       project.modules.some((mod: any) =>
         mod.subModules.some(

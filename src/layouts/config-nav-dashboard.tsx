@@ -37,7 +37,7 @@ export function useNavData() {
     const allowedModuleIds = new Set<number>();
     const allowedSubModuleIds = new Set<number>();
 
-    if (myPermissions) {
+    if (myPermissions?.projects) {
       myPermissions.projects.forEach((project) => {
         project.modules.forEach((mod) => {
           const hasAnyAction = mod.subModules.some((sm) =>
