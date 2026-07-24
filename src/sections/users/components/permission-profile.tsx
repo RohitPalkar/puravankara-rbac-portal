@@ -32,7 +32,7 @@ function buildDefaultProfile(moduleTree: ModuleTreeNode[]): RolePermissionProfil
     subModules: m.subModules.map((sm) => ({
       subModuleId: sm.id,
       enabled: false,
-      accessType: 'all' as const,
+      accessType: '' as const,
       projectIds: [],
     })),
   }));
@@ -66,7 +66,11 @@ export function PermissionProfile({ modules, allProjects, initialData, onChange 
         const allEnabled = mod.subModules.every((sm) => sm.enabled);
         return {
           ...mod,
-          subModules: mod.subModules.map((sm) => ({ ...sm, enabled: !allEnabled })),
+          subModules: mod.subModules.map((sm) => ({
+            ...sm,
+            enabled: !allEnabled,
+            accessType: !allEnabled && !sm.accessType ? '' : sm.accessType,
+          })),
         };
       });
       onChange(next);
@@ -79,7 +83,9 @@ export function PermissionProfile({ modules, allProjects, initialData, onChange 
       const next = updateModuleInProfile(profile, moduleId, (mod) => ({
         ...mod,
         subModules: mod.subModules.map((sm) =>
-          sm.subModuleId === subModuleId ? { ...sm, enabled: !sm.enabled } : sm,
+          sm.subModuleId === subModuleId
+            ? { ...sm, enabled: !sm.enabled, accessType: !sm.enabled ? '' : sm.accessType }
+            : sm,
         ),
       }));
       onChange(next);
@@ -177,7 +183,6 @@ export function PermissionProfile({ modules, allProjects, initialData, onChange 
                     borderLeft: '3px solid',
                     borderColor: isSelected ? 'primary.main' : 'transparent',
                     '&:hover': { bgcolor: isSelected ? 'primary.lighter' : 'action.hover' },
-                    transition: 'background-color 0.15s',
                     mb: 0.25,
                   }}
                   onClick={() => setSelectedModuleId(mod.id)}
@@ -215,7 +220,7 @@ export function PermissionProfile({ modules, allProjects, initialData, onChange 
           </Box>
         ) : (
           <Box sx={{ flex: 1, overflow: 'auto', p: 2 }}>
-            <Stack spacing={2}>
+            <Stack spacing={1.5}>
               {selectedProfileMod?.subModules.length === 0 && (
                 <Typography variant="body2" color="text.secondary">
                   No submodules available for this module.
@@ -301,80 +306,75 @@ function SubModuleCard({
     [moduleId, sm.subModuleId, onUpdate],
   );
 
+  const useAllProjects = sm.accessType === 'all';
+  const useSelectedProjects = sm.accessType === 'selected';
+  const scopeNotChosen = !useAllProjects && !useSelectedProjects;
+
   return (
-    <Paper variant="outlined" sx={{ borderRadius: 1.5, overflow: 'hidden', borderColor: sm.enabled ? 'primary.light' : 'divider' }}>
+    <Paper variant="outlined" sx={{ borderRadius: 1.5, overflow: 'hidden', borderColor: 'divider' }}>
       {/* Card Header */}
       <Stack
         direction="row"
         alignItems="center"
-        justifyContent="space-between"
+        spacing={1}
         sx={{
-          px: 2,
-          py: 1.25,
-          bgcolor: sm.enabled ? 'primary.lighter' : 'grey.50',
+          px: 1.5,
+          py: 0.75,
           borderBottom: '1px solid',
           borderColor: 'divider',
-          transition: 'background-color 0.2s',
         }}
       >
-        <Typography variant="subtitle2" sx={{ fontWeight: 600, fontSize: '0.875rem' }}>
+        <Checkbox
+          size="small"
+          checked={sm.enabled}
+          onChange={() => onToggleEnabled(moduleId, sm.subModuleId)}
+          sx={{ p: 0.25 }}
+        />
+        <Typography variant="subtitle2" sx={{ fontWeight: 600, fontSize: '0.8125rem' }}>
           {smMeta.name}
         </Typography>
-        <FormControlLabel
-          label={<Typography variant="caption" sx={{ fontWeight: 500, color: sm.enabled ? 'primary.main' : 'text.secondary', userSelect: 'none' }}>Module Enabled</Typography>}
-          control={
-            <Checkbox
-              size="small"
-              checked={sm.enabled}
-              onChange={() => onToggleEnabled(moduleId, sm.subModuleId)}
-              sx={{ p: 0.25 }}
-            />
-          }
-          sx={{ m: 0 }}
-        />
       </Stack>
 
       {sm.enabled && (
-        <Box sx={{ px: 2, py: 1.5 }}>
+        <Box sx={{ px: 1.5, py: 1 }}>
           {/* Project Scope */}
-          <FormControl component="fieldset" sx={{ mb: 1.5 }}>
-            <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 0.5, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.5 }}>
-              Project Scope
-            </Typography>
+          <FormControl component="fieldset" sx={{ mb: 1 }}>
             <RadioGroup
               row
               value={sm.accessType}
-              onChange={(e) =>
+              onChange={(e) => {
+                const val = e.target.value as 'all' | 'selected';
                 onUpdate(moduleId, sm.subModuleId, (s) => ({
                   ...s,
-                  accessType: e.target.value as 'all' | 'selected',
-                  projectIds: e.target.value === 'all' ? [] : s.projectIds,
-                }))
-              }
+                  accessType: val,
+                  projectIds: val === 'all' ? [] : s.projectIds,
+                }));
+              }}
             >
-              <FormControlLabel
-                value="selected"
-                control={<Radio size="small" />}
-                label={<Typography variant="body2" sx={{ fontWeight: 500 }}>Selected Projects</Typography>}
-              />
               <FormControlLabel
                 value="all"
                 control={<Radio size="small" />}
-                label={<Typography variant="body2" sx={{ fontWeight: 500 }}>All Projects</Typography>}
+                label={<Typography variant="body2" sx={{ fontWeight: 500, fontSize: '0.8125rem' }}>All Projects</Typography>}
+              />
+              <FormControlLabel
+                value="selected"
+                control={<Radio size="small" />}
+                label={<Typography variant="body2" sx={{ fontWeight: 500, fontSize: '0.8125rem' }}>Selected Projects</Typography>}
               />
             </RadioGroup>
           </FormControl>
 
-          {sm.accessType === 'all' ? (
-            <Stack direction="row" spacing={1} alignItems="center" sx={{ color: 'success.main', py: 1 }}>
-              <Iconify icon="solar:check-circle-bold" width={20} />
-              <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                All current and future projects
+          {useAllProjects && (
+            <Stack direction="row" spacing={1} alignItems="center" sx={{ color: 'text.secondary', py: 0.5 }}>
+              <Iconify icon="solar:check-circle-bold" width={18} />
+              <Typography variant="body2" sx={{ fontWeight: 500, fontSize: '0.8125rem' }}>
+                This submodule has access to all current and future projects.
               </Typography>
             </Stack>
-          ) : (
+          )}
+
+          {useSelectedProjects && (
             <>
-              {/* Project Search */}
               {showSearch && (
                 <TextField
                   fullWidth
@@ -387,17 +387,13 @@ function SubModuleCard({
                       <Iconify icon="solar:magnifer-bold" width={16} style={{ marginRight: 4, opacity: 0.5 }} />
                     ),
                   }}
-                  sx={{ mb: 1.5 }}
+                  sx={{ mb: 1 }}
                 />
               )}
 
-              {/* Project Grid */}
-              <Box sx={{ mb: 1.5 }}>
-                <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 0.75, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.5 }}>
-                  Projects
-                </Typography>
+              <Box sx={{ mb: 1 }}>
                 {filteredProjects.length === 0 ? (
-                  <Typography variant="body2" color="text.secondary" sx={{ py: 2, textAlign: 'center' }}>
+                  <Typography variant="body2" color="text.secondary" sx={{ py: 1.5, textAlign: 'center', fontSize: '0.8125rem' }}>
                     No projects match your search.
                   </Typography>
                 ) : (
@@ -422,13 +418,12 @@ function SubModuleCard({
                 )}
               </Box>
 
-              {/* Bulk Actions */}
               {allProjects.length > 0 && (
                 <Stack
                   direction="row"
                   spacing={1.5}
                   alignItems="center"
-                  sx={{ pt: 1, borderTop: '1px solid', borderColor: 'divider' }}
+                  sx={{ pt: 0.75, borderTop: '1px solid', borderColor: 'divider' }}
                 >
                   <Button size="small" variant="outlined" onClick={handleSelectAll} disabled={allSelected} sx={{ minWidth: 100 }}>
                     Select All
@@ -443,6 +438,12 @@ function SubModuleCard({
                 </Stack>
               )}
             </>
+          )}
+
+          {scopeNotChosen && (
+            <Typography variant="body2" color="text.disabled" sx={{ py: 1, fontStyle: 'italic', fontSize: '0.8125rem' }}>
+              Select a Project Scope to continue.
+            </Typography>
           )}
         </Box>
       )}

@@ -1,7 +1,6 @@
-import { useMemo, useState, Fragment, useEffect, useCallback } from 'react';
+import { useRef, useMemo, Fragment, useState, useEffect, useCallback } from 'react';
 
 import Box from '@mui/material/Box';
-import Chip from '@mui/material/Chip';
 import Grid from '@mui/material/Grid';
 import Stack from '@mui/material/Stack';
 import Paper from '@mui/material/Paper';
@@ -62,6 +61,36 @@ interface ModuleNode {
   totalCount: number;
 }
 
+function computeSubModuleState(sm: SubModuleNode, selectedIds: Set<number>) {
+  const allActionIds = sm.actionGroups.flatMap((ag) => ag.actions.map((a) => a.id));
+  if (allActionIds.length === 0) {
+    const enabled = sm.actionGroups.some((ag) => ag.actions.some((a) => selectedIds.has(a.id)));
+    return { anySelected: enabled, allSelected: enabled };
+  }
+  const count = allActionIds.filter((id) => selectedIds.has(id)).length;
+  return {
+    anySelected: count > 0,
+    allSelected: count === allActionIds.length,
+  };
+}
+
+function computeModuleState(mod: ModuleNode, selectedIds: Set<number>) {
+  const allIds = new Set<number>();
+  mod.subModules.forEach((sm) => {
+    sm.actionGroups.forEach((ag) => {
+      ag.actions.forEach((a) => allIds.add(a.id));
+    });
+  });
+  if (allIds.size === 0) return { anySelected: false, allSelected: false, count: 0, total: 0 };
+  const count = [...allIds].filter((id) => selectedIds.has(id)).length;
+  return {
+    anySelected: count > 0,
+    allSelected: count === allIds.size,
+    count,
+    total: allIds.size,
+  };
+}
+
 export default function PermissionMatrixStep2({ roleId, onSave, saving, editable = true }: Props) {
   const { data: treeData, isLoading } = useRolePermissionsTree(roleId);
 
@@ -72,8 +101,11 @@ export default function PermissionMatrixStep2({ roleId, onSave, saving, editable
   const [leftSearch, setLeftSearch] = useState('');
   const [rightSearch, setRightSearch] = useState('');
 
+  const initialized = useRef(false);
+
   useEffect(() => {
-    if (treeData?.modules) {
+    if (treeData?.modules && !initialized.current) {
+      initialized.current = true;
       const ids = new Set<number>();
       const collect = (actions: { selected: boolean; id: number }[]) => {
         actions.forEach((a) => { if (a.selected) ids.add(a.id); });
@@ -133,14 +165,17 @@ export default function PermissionMatrixStep2({ roleId, onSave, saving, editable
   const toggleModule = useCallback((mod: ModuleNode) => {
     setSelectedActionIds((prev) => {
       const next = new Set(prev);
-      const allSelected = mod.selectedCount > 0 && mod.selectedCount === mod.totalCount;
+      const allActionIds = new Set<number>();
       mod.subModules.forEach((sm) => {
         sm.actionGroups.forEach((ag) => {
-          ag.actions.forEach((a) => {
-            if (allSelected) next.delete(a.id);
-            else next.add(a.id);
-          });
+          ag.actions.forEach((a) => allActionIds.add(a.id));
         });
+      });
+      if (allActionIds.size === 0) return prev;
+      const allSelected = [...allActionIds].every((id) => next.has(id));
+      allActionIds.forEach((id) => {
+        if (allSelected) next.delete(id);
+        else next.add(id);
       });
       return next;
     });
@@ -215,9 +250,6 @@ export default function PermissionMatrixStep2({ roleId, onSave, saving, editable
     );
   }
 
-  const subModulePermissionEnabled = (sm: SubModuleNode): boolean =>
-    sm.actionGroups.some((ag) => ag.actions.some((a) => selectedActionIds.has(a.id)));
-
   return (
     <Stack spacing={0} sx={{ minHeight: 500, borderTop: '1px solid', borderColor: 'divider' }}>
       <Box sx={{ display: 'flex', flex: 1, minHeight: 0 }}>
@@ -258,8 +290,7 @@ export default function PermissionMatrixStep2({ roleId, onSave, saving, editable
             ) : (
               filteredModules.map((mod: ModuleNode) => {
                 const isExpanded = expandedModules[mod.id] ?? true;
-                const allSelected = mod.selectedCount > 0 && mod.selectedCount === mod.totalCount;
-                const someSelected = mod.selectedCount > 0 && !allSelected;
+                const modState = computeModuleState(mod, selectedActionIds);
                 return (
                   <Fragment key={mod.id}>
                     <Stack
@@ -294,8 +325,8 @@ export default function PermissionMatrixStep2({ roleId, onSave, saving, editable
                       </Box>
                       <Checkbox
                         size="small"
-                        checked={allSelected}
-                        indeterminate={someSelected && !allSelected}
+                        checked={modState.allSelected}
+                        indeterminate={modState.anySelected && !modState.allSelected}
                         onChange={() => editable && toggleModule(mod)}
                         disabled={!editable}
                         onClick={(e) => e.stopPropagation()}
@@ -308,11 +339,7 @@ export default function PermissionMatrixStep2({ roleId, onSave, saving, editable
                     <Collapse in={isExpanded}>
                       {mod.subModules.map((sm: SubModuleNode) => {
                         const isActive = selectedSubModuleId === sm.id;
-                        const smAllSelected =
-                          sm.totalCount > 0 && sm.selectedCount === sm.totalCount;
-                        const smSomeSelected = sm.selectedCount > 0 && !smAllSelected;
-                        const smAnySelected = sm.hasActions ? smSomeSelected : subModulePermissionEnabled(sm);
-                        const smFullySelected = sm.hasActions ? smAllSelected : subModulePermissionEnabled(sm);
+                        const smState = computeSubModuleState(sm, selectedActionIds);
                         return (
                           <Stack
                             key={sm.id}
@@ -326,6 +353,8 @@ export default function PermissionMatrixStep2({ roleId, onSave, saving, editable
                               borderRadius: 0.5,
                               cursor: 'pointer',
                               bgcolor: isActive ? 'primary.lighter' : 'transparent',
+                              borderLeft: '2px solid',
+                              borderColor: isActive ? 'primary.main' : 'transparent',
                               '&:hover': {
                                 bgcolor: isActive ? 'primary.lighter' : 'action.hover',
                               },
@@ -333,8 +362,8 @@ export default function PermissionMatrixStep2({ roleId, onSave, saving, editable
                           >
                             <Checkbox
                               size="small"
-                              checked={smFullySelected}
-                              indeterminate={sm.hasActions && smAnySelected && !smFullySelected}
+                              checked={smState.allSelected}
+                              indeterminate={sm.hasActions && smState.anySelected && !smState.allSelected}
                               onChange={() => editable && toggleSubModule(sm)}
                               disabled={!editable}
                               onClick={(e) => e.stopPropagation()}
@@ -402,14 +431,6 @@ export default function PermissionMatrixStep2({ roleId, onSave, saving, editable
 
             <Box sx={{ flex: 1 }} />
 
-            <Chip
-              label={`${totalSelected} Permission${totalSelected !== 1 ? 's' : ''} Selected`}
-              color="primary"
-              size="small"
-              variant="outlined"
-              sx={{ fontWeight: 600, '& .MuiChip-label': { px: 1 } }}
-            />
-
             {editable && selectedSubModule && selectedSubModule.hasActions && (
               <>
                 <Button size="small" variant="outlined" onClick={selectAll} sx={{ minWidth: 80 }}>
@@ -432,7 +453,7 @@ export default function PermissionMatrixStep2({ roleId, onSave, saving, editable
                   sx={{ color: 'text.disabled', mb: 1.5 }}
                 />
                 <Typography variant="body2" color="text.secondary" sx={{ maxWidth: 440, mx: 'auto' }}>
-                  Select a Module and Submodule from the left panel to configure permissions. Submodules without configurable actions can be enabled directly from the Module Tree.
+                  Select a Module and Submodule from the left panel to configure permissions.
                 </Typography>
               </Box>
             )}
@@ -443,11 +464,17 @@ export default function PermissionMatrixStep2({ roleId, onSave, saving, editable
                 <Typography variant="subtitle1" gutterBottom fontWeight={600}>
                   {selectedSubModule.name}
                 </Typography>
-                <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', mb: 1.5, textTransform: 'uppercase', letterSpacing: 0.5, fontWeight: 600 }}>
-                  Module Permission
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                  This submodule does not contain configurable actions.
                 </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  This feature does not contain configurable actions. Granting access is controlled directly by selecting the Submodule from the left panel.
+                <Checkbox
+                  size="small"
+                  checked={computeSubModuleState(selectedSubModule, selectedActionIds).allSelected}
+                  onChange={() => editable && toggleSubModule(selectedSubModule)}
+                  disabled={!editable}
+                />
+                <Typography variant="body2" component="span" sx={{ ml: 1 }}>
+                  Enable {selectedSubModule.name}
                 </Typography>
               </Paper>
             )}
@@ -468,7 +495,7 @@ export default function PermissionMatrixStep2({ roleId, onSave, saving, editable
                     </Typography>
                   </Box>
                 ) : (
-                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
                     {filteredActionGroups.map((ag) => {
                       const agAllSelected = ag.actions.every((a) => selectedActionIds.has(a.id));
                       const agSomeSelected = ag.actions.some((a) => selectedActionIds.has(a.id));
@@ -478,11 +505,7 @@ export default function PermissionMatrixStep2({ roleId, onSave, saving, editable
                           key={ag.id}
                           sx={{
                             borderRadius: 1.5,
-                            borderColor: agAllSelected
-                              ? 'success.main'
-                              : agSomeSelected
-                                ? 'primary.main'
-                                : 'divider',
+                            borderColor: 'divider',
                             overflow: 'hidden',
                           }}
                         >
@@ -493,11 +516,7 @@ export default function PermissionMatrixStep2({ roleId, onSave, saving, editable
                             sx={{
                               px: 1.5,
                               py: 1,
-                              bgcolor: agAllSelected
-                                ? 'success.lighter'
-                                : agSomeSelected
-                                  ? 'primary.lighter'
-                                  : 'grey.50',
+                              bgcolor: 'grey.50',
                               borderBottom: '1px solid',
                               borderColor: 'divider',
                             }}

@@ -121,7 +121,7 @@ export default function DepartmentListPage() {
   const [deleteError, setDeleteError] = useState('');
   const [paginationModel, setPaginationModel] = useState<GridPaginationModel>({ page: 0, pageSize: PAGE_SIZE });
   const [search, setSearch] = useState('');
-  const [statusFilter, setStatusFilter] = useState('');
+  const statusFilter = '';
 
   const { data: permissions } = useMyPermissions();
 

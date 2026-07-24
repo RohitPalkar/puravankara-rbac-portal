@@ -86,7 +86,7 @@ export interface UserZone {
 export interface SubModuleProjectMapping {
   subModuleId: number;
   enabled: boolean;
-  accessType: 'all' | 'selected';
+  accessType: 'all' | 'selected' | '';
   projectIds: number[];
 }
 

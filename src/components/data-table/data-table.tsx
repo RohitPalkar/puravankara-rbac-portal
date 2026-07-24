@@ -6,13 +6,13 @@ import Box from '@mui/material/Box';
 import Card from '@mui/material/Card';
 import Stack from '@mui/material/Stack';
 import Button from '@mui/material/Button';
-import { DataGrid } from '@mui/x-data-grid';
 import MenuItem from '@mui/material/MenuItem';
 import Checkbox from '@mui/material/Checkbox';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 import ListItemText from '@mui/material/ListItemText';
 import ListItemIcon from '@mui/material/ListItemIcon';
+import { DataGrid, GridPagination, GridFooterContainer } from '@mui/x-data-grid';
 
 import { Iconify } from 'src/components/iconify';
 import { usePopover, CustomPopover } from 'src/components/custom-popover';
@@ -50,6 +50,60 @@ type Props = {
   columnHeaderHeight?: number;
 };
 
+function DataGridFooter({ rowCount, page, pageSize }: { rowCount: number; page: number; pageSize: number }) {
+  const start = rowCount === 0 ? 0 : page * pageSize + 1;
+  const end = Math.min((page + 1) * pageSize, rowCount);
+
+  return (
+    <GridFooterContainer>
+      <Stack direction="row" alignItems="center" spacing={2} sx={{ px: 2, width: 1 }}>
+        <Typography variant="body2" color="text.secondary" sx={{ whiteSpace: 'nowrap', fontSize: '0.8125rem' }}>
+          {rowCount === 0
+            ? '0 records'
+            : `Showing ${start}–${end} of ${rowCount} record${rowCount !== 1 ? 's' : ''}`}
+        </Typography>
+        <Box sx={{ flex: 1 }} />
+        <GridPagination />
+      </Stack>
+    </GridFooterContainer>
+  );
+}
+
+function EmptyStateContent({
+  hasSearch,
+  searchPlaceholder,
+}: {
+  hasSearch: boolean;
+  searchPlaceholder: string;
+}) {
+  return (
+    <Box
+      sx={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        py: 8,
+        px: 2,
+      }}
+    >
+      <Iconify
+        icon={hasSearch ? 'solar:search-cross-bold' : 'solar:clipboard-list-bold'}
+        width={48}
+        sx={{ color: 'text.disabled', mb: 2, opacity: 0.4 }}
+      />
+      <Typography variant="h6" sx={{ color: 'text.secondary', fontWeight: 500, mb: 0.5 }}>
+        {hasSearch ? 'No results found' : 'No data'}
+      </Typography>
+      <Typography variant="body2" color="text.disabled" sx={{ textAlign: 'center' }}>
+        {hasSearch
+          ? `No records match your search. Try different keywords.`
+          : `No records to display. Add data to get started.`}
+      </Typography>
+    </Box>
+  );
+}
+
 export function DataTable({
   columns,
   rows,
@@ -62,7 +116,7 @@ export function DataTable({
   paginationMode = 'client',
   paginationModel,
   onPaginationModelChange,
-  rowCount,
+  rowCount: totalRowCount,
   onSearchChange,
   searchValue,
   getRowHeight,
@@ -159,8 +213,26 @@ export function DataTable({
     return sections.length > 0 ? sections : null;
   }, [groupHeaders, columns, hiddenColumns]);
 
+  const displayRowCount = isServerSide ? (totalRowCount ?? 0) : filteredRows.length;
+  const currentPage = isServerSide ? (paginationModel?.page ?? 0) : 0;
+  const currentPageSize = isServerSide ? (paginationModel?.pageSize ?? 10) : 10;
+  const isEmpty = !loading && displayRowCount === 0;
+  const hasSearchActive = isServerSide ? !!searchValue : !!localSearch;
+
+  const DEFAULT_ROW_HEIGHT = 48;
+  const HEADER_FOOTER_HEIGHT = 112;
+  const idealHeight = (rows.length || 10) * DEFAULT_ROW_HEIGHT + HEADER_FOOTER_HEIGHT;
+  const gridMaxHeight = `min(${idealHeight}px, calc(100vh - 280px))`;
+
   return (
-    <Card sx={{ overflow: 'hidden' }}>
+    <Card
+      variant="outlined"
+      sx={{
+        overflow: 'hidden',
+        borderRadius: 1.5,
+        borderColor: 'divider',
+      }}
+    >
       <Box sx={{ borderBottom: '1px solid', borderColor: 'divider' }}>
         <Stack direction="row" spacing={1} alignItems="center" sx={{ px: 2, py: 1.5 }}>
           <TextField
@@ -168,9 +240,9 @@ export function DataTable({
             placeholder={searchPlaceholder}
             value={onSearchChange ? (searchValue ?? '') : localSearch}
             onChange={handleSearchChange}
-            sx={{ flex: 1 }}
+            sx={{ maxWidth: 360, flex: { xs: 1, sm: 'unset' } }}
             InputProps={{
-              sx: { height: 44 },
+              sx: { height: 40 },
               startAdornment: <Iconify icon="solar:magnifer-bold" width={18} style={{ marginRight: 8, opacity: 0.5 }} />,
             }}
           />
@@ -259,11 +331,11 @@ export function DataTable({
                 py: 1.5,
                 textAlign: 'center',
                 fontWeight: 600,
-                fontSize: '0.875rem',
+                fontSize: '0.8125rem',
                 color: 'text.secondary',
                 borderRight: i < groupHeaderSections.length - 1 ? '1px solid' : 'none',
                 borderColor: 'divider',
-                bgcolor: 'grey.50',
+                bgcolor: 'grey.100',
               }}
             >
               {section.label ?? ''}
@@ -272,7 +344,15 @@ export function DataTable({
         </Box>
       )}
 
-      <DataGrid
+      <Box
+        sx={{
+          maxHeight: gridMaxHeight,
+          overflow: 'auto',
+          position: 'relative',
+          ...(isEmpty ? { minHeight: 200 } : {}),
+        }}
+      >
+        <DataGrid
           rows={isServerSide ? rows : filteredRows}
           columns={processedColumns}
           loading={loading}
@@ -281,65 +361,137 @@ export function DataTable({
           paginationMode={paginationMode}
           {...(isServerSide && paginationModel ? { paginationModel } : {})}
           {...(isServerSide && onPaginationModelChange ? { onPaginationModelChange } : {})}
-          {...(isServerSide && rowCount !== undefined ? { rowCount } : {})}
-          {...(getRowHeight ? { getRowHeight } : {})}
+          {...(isServerSide && totalRowCount !== undefined ? { rowCount: totalRowCount } : {})}
           {...(columnHeaderHeight ? { columnHeaderHeight } : {})}
           initialState={isServerSide ? undefined : { pagination: { paginationModel: { pageSize: 10 } } }}
-          pageSizeOptions={[5, 10, 25]}
+          pageSizeOptions={[10, 25, 50]}
           disableRowSelectionOnClick
           disableColumnMenu
           disableColumnResize
+          autoHeight
+          slots={{
+            footer: () => (
+              <DataGridFooter
+                rowCount={displayRowCount}
+                page={currentPage}
+                pageSize={currentPageSize}
+              />
+            ),
+            noRowsOverlay: () => (
+              <EmptyStateContent hasSearch={hasSearchActive} searchPlaceholder={searchPlaceholder} />
+            ),
+            noResultsOverlay: () => (
+              <EmptyStateContent hasSearch={hasSearchActive} searchPlaceholder={searchPlaceholder} />
+            ),
+            loadingOverlay: () => null,
+          }}
+          getRowHeight={getRowHeight ?? (() => DEFAULT_ROW_HEIGHT)}
           sx={{
-            height: 'calc(100vh - 300px)',
-            minHeight: 400,
             borderRadius: 0,
+            border: 'none',
             minWidth: processedColumns.reduce((sum, col) => sum + (typeof col.width === 'number' ? col.width : 150), 0),
-            '& .MuiDataGrid-virtualScroller': {
-              overflowY: 'auto',
-            },
-            '& .MuiDataGrid-pinnedRows': {
-              position: 'sticky',
-              bottom: 0,
-              zIndex: 1,
+            '& .MuiDataGrid-main': {
+              position: 'unset',
             },
             '& .MuiDataGrid-columnHeaders': {
+              position: 'sticky',
+              top: 0,
+              zIndex: 10,
               borderBottom: '1px solid',
               borderColor: 'divider',
-              bgcolor: 'grey.50',
+              bgcolor: 'grey.100',
+              minHeight: `${columnHeaderHeight ?? 48}px !important`,
+              maxHeight: `${columnHeaderHeight ?? 48}px !important`,
+              lineHeight: `${columnHeaderHeight ?? 48}px !important`,
             },
             '& .MuiDataGrid-columnHeader': {
               px: 2,
-              py: 1,
+              py: 0,
             },
             '& .MuiDataGrid-columnHeaderTitle': {
-              fontWeight: 600,
-              fontSize: '0.8125rem',
+              fontWeight: 700,
+              fontSize: '0.75rem',
               color: 'text.secondary',
-              letterSpacing: '0.01em',
+              textTransform: 'uppercase',
+              letterSpacing: '0.04em',
+            },
+            '& .MuiDataGrid-columnHeader:focus': {
+              outline: 'none',
+            },
+            '& .MuiDataGrid-columnHeader:focus-within': {
+              outline: 'none',
             },
             '& .MuiDataGrid-cell': {
               px: 2,
-              py: '10px',
+              py: 0,
               display: 'flex',
               alignItems: 'center',
               fontSize: '0.8125rem',
+              lineHeight: `${DEFAULT_ROW_HEIGHT}px`,
+              minHeight: `${DEFAULT_ROW_HEIGHT}px !important`,
+              maxHeight: `${DEFAULT_ROW_HEIGHT}px !important`,
               '&:focus': { outline: 'none' },
               '&:focus-within': { outline: 'none' },
             },
             '& .MuiDataGrid-row': {
-              minHeight: '52px !important',
+              minHeight: `${DEFAULT_ROW_HEIGHT}px !important`,
+              maxHeight: `${DEFAULT_ROW_HEIGHT}px !important`,
               cursor: onRowClick ? 'pointer' : 'default',
-              '&:hover': { bgcolor: 'action.hover' },
-              '&.Mui-selected': { bgcolor: 'primary.lighter' },
+              '&:hover': {
+                bgcolor: 'primary.lighter',
+              },
+              '&.Mui-selected': {
+                bgcolor: 'primary.lighter',
+              },
+              '&:nth-of-type(even)': {
+                bgcolor: 'grey.50',
+              },
+              '&:nth-of-type(even):hover': {
+                bgcolor: 'primary.lighter',
+              },
               ...(dataGridSx?.['& .MuiDataGrid-row'] || {}),
             },
             '& .MuiDataGrid-cell--textLeft': { justifyContent: 'flex-start' },
             '& .MuiDataGrid-cell--textCenter': { justifyContent: 'center' },
             '& .MuiDataGrid-cell--textRight': { justifyContent: 'flex-end' },
             '& .MuiDataGrid-withBorder': { borderColor: 'divider' },
+            '& .MuiDataGrid-footerContainer': {
+              borderTop: '1px solid',
+              borderColor: 'divider',
+              bgcolor: 'background.paper',
+              minHeight: 52,
+            },
+            '& .MuiDataGrid-overlayWrapperInner': {
+              position: 'relative',
+              height: 'auto',
+            },
+            '& .MuiDataGrid-virtualScroller': {
+              overflow: 'hidden !important',
+            },
+            '& .MuiDataGrid-virtualScrollerContent': {
+              overflow: 'hidden',
+            },
+            '& .MuiTablePagination-root': {
+              '& .MuiTablePagination-displayedRows': {
+                display: 'none',
+              },
+              '& .MuiTablePagination-selectLabel': {
+                fontSize: '0.8125rem',
+                color: 'text.secondary',
+              },
+              '& .MuiTablePagination-select': {
+                fontSize: '0.8125rem',
+              },
+              '& .MuiTablePagination-actions': {
+                '& .MuiButtonBase-root': {
+                  fontSize: '0.8125rem',
+                },
+              },
+            },
             ...(dataGridSx || {}),
           } as any}
         />
+      </Box>
     </Card>
   );
 }
