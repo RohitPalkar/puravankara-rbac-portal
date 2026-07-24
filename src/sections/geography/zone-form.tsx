@@ -15,12 +15,12 @@ import Button from '@mui/material/Button';
 import MenuItem from '@mui/material/MenuItem';
 import Snackbar from '@mui/material/Snackbar';
 import Checkbox from '@mui/material/Checkbox';
+import Skeleton from '@mui/material/Skeleton';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 import InputAdornment from '@mui/material/InputAdornment';
 import LinearProgress from '@mui/material/LinearProgress';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
-import CircularProgress from '@mui/material/CircularProgress';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
@@ -264,7 +264,14 @@ export default function ZoneFormPage() {
     return (
       <PageContainer>
         <PageHeader title="Edit Zone" />
-        <Card sx={{ p: 4, textAlign: 'center' }}><CircularProgress /></Card>
+        <Card sx={{ p: 4 }}>
+          <Stack spacing={2}>
+            <Skeleton variant="rectangular" height={52} sx={{ borderRadius: 1 }} />
+            <Skeleton variant="rectangular" height={52} sx={{ borderRadius: 1 }} />
+            <Skeleton variant="rectangular" height={52} sx={{ borderRadius: 1 }} />
+            <Skeleton variant="rectangular" height={120} sx={{ borderRadius: 1 }} />
+          </Stack>
+        </Card>
       </PageContainer>
     );
   }

@@ -15,12 +15,12 @@ import Stack from '@mui/material/Stack';
 import Select from '@mui/material/Select';
 import Checkbox from '@mui/material/Checkbox';
 import MenuItem from '@mui/material/MenuItem';
+import Skeleton from '@mui/material/Skeleton';
 import TextField from '@mui/material/TextField';
 import InputLabel from '@mui/material/InputLabel';
 import Typography from '@mui/material/Typography';
 import FormControl from '@mui/material/FormControl';
 import Autocomplete from '@mui/material/Autocomplete';
-import CircularProgress from '@mui/material/CircularProgress';
 import FormControlLabel from '@mui/material/FormControlLabel';
 
 import { queryKeys } from 'src/services/api/query-keys';
@@ -243,18 +243,10 @@ export default forwardRef<ProjectMappingStepHandle, Props>(({ initialData }: Pro
     return (
       <Box sx={{ p: 3 }}>
         <Stack spacing={2}>
-          {!activeModules.length && (
-            <Alert severity="info">Loading modules...</Alert>
-          )}
-          {!activeDepartments.length && (
-            <Alert severity="info">Loading departments...</Alert>
-          )}
-          {!activeRoles.length && (
-            <Alert severity="info">Loading roles...</Alert>
-          )}
-          {(!activeModules.length || !activeDepartments.length || !activeRoles.length) && (
-            <CircularProgress sx={{ alignSelf: 'center' }} />
-          )}
+          <Skeleton variant="rectangular" height={48} sx={{ borderRadius: 1 }} />
+          <Skeleton variant="rectangular" height={48} sx={{ borderRadius: 1 }} />
+          <Skeleton variant="rectangular" height={48} sx={{ borderRadius: 1 }} />
+          <Skeleton variant="rectangular" height={200} sx={{ borderRadius: 1 }} />
         </Stack>
       </Box>
     );

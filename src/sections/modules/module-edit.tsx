@@ -5,10 +5,10 @@ import Card from '@mui/material/Card';
 import Chip from '@mui/material/Chip';
 import Stack from '@mui/material/Stack';
 import Button from '@mui/material/Button';
+import Skeleton from '@mui/material/Skeleton';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 import CardContent from '@mui/material/CardContent';
-import CircularProgress from '@mui/material/CircularProgress';
 
 import { CONFIG } from 'src/config-global';
 
@@ -25,7 +25,14 @@ export default function ModuleEditPage() {
   if (isLoading) {
     return (
       <PageContainer>
-        <CircularProgress />
+        <Card sx={{ p: 4 }}>
+          <Stack spacing={2}>
+            <Skeleton variant="rectangular" height={52} sx={{ borderRadius: 1 }} />
+            <Skeleton variant="rectangular" height={52} sx={{ borderRadius: 1 }} />
+            <Skeleton variant="rectangular" height={52} sx={{ borderRadius: 1 }} />
+            <Skeleton variant="rectangular" height={120} sx={{ borderRadius: 1 }} />
+          </Stack>
+        </Card>
       </PageContainer>
     );
   }

@@ -6,9 +6,9 @@ import Chip from '@mui/material/Chip';
 import Stack from '@mui/material/Stack';
 import Button from '@mui/material/Button';
 import Divider from '@mui/material/Divider';
+import Skeleton from '@mui/material/Skeleton';
 import Typography from '@mui/material/Typography';
 import CardContent from '@mui/material/CardContent';
-import CircularProgress from '@mui/material/CircularProgress';
 
 import { CONFIG } from 'src/config-global';
 
@@ -25,7 +25,14 @@ export default function ModuleViewPage() {
   if (isLoading) {
     return (
       <PageContainer>
-        <CircularProgress />
+        <Card sx={{ p: 4 }}>
+          <Stack spacing={2}>
+            <Skeleton variant="rectangular" height={52} sx={{ borderRadius: 1 }} />
+            <Skeleton variant="rectangular" height={52} sx={{ borderRadius: 1 }} />
+            <Skeleton variant="rectangular" height={52} sx={{ borderRadius: 1 }} />
+            <Skeleton variant="rectangular" height={120} sx={{ borderRadius: 1 }} />
+          </Stack>
+        </Card>
       </PageContainer>
     );
   }

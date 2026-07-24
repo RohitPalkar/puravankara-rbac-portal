@@ -18,11 +18,11 @@ import Divider from '@mui/material/Divider';
 import Checkbox from '@mui/material/Checkbox';
 import Snackbar from '@mui/material/Snackbar';
 import MenuItem from '@mui/material/MenuItem';
+import Skeleton from '@mui/material/Skeleton';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 import LinearProgress from '@mui/material/LinearProgress';
 import FormControlLabel from '@mui/material/FormControlLabel';
-import CircularProgress from '@mui/material/CircularProgress';
 
 import { paths } from 'src/routes/paths';
 
@@ -284,7 +284,14 @@ export default function ProjectFormPage() {
     return (
       <PageContainer>
         <PageHeader title="Edit Project" />
-        <Card sx={{ p: 4, textAlign: 'center' }}><CircularProgress /></Card>
+        <Card sx={{ p: 4 }}>
+          <Stack spacing={2}>
+            <Skeleton variant="rectangular" height={52} sx={{ borderRadius: 1 }} />
+            <Skeleton variant="rectangular" height={52} sx={{ borderRadius: 1 }} />
+            <Skeleton variant="rectangular" height={52} sx={{ borderRadius: 1 }} />
+            <Skeleton variant="rectangular" height={120} sx={{ borderRadius: 1 }} />
+          </Stack>
+        </Card>
       </PageContainer>
     );
   }

@@ -6,10 +6,10 @@ import Card from '@mui/material/Card';
 import Chip from '@mui/material/Chip';
 import Stack from '@mui/material/Stack';
 import Button from '@mui/material/Button';
+import Skeleton from '@mui/material/Skeleton';
 import CardHeader from '@mui/material/CardHeader';
 import Typography from '@mui/material/Typography';
 import CardContent from '@mui/material/CardContent';
-import CircularProgress from '@mui/material/CircularProgress';
 
 import { CONFIG } from 'src/config-global';
 
@@ -25,7 +25,15 @@ export default function ModuleDashboardPage() {
   if (isLoading) {
     return (
       <PageContainer>
-        <CircularProgress />
+        <Grid container spacing={3}>
+          {[1, 2, 3].map((i) => (
+            <Grid item xs={12} sm={6} md={4} key={i}>
+              <Card>
+                <Skeleton variant="rectangular" height={180} sx={{ borderRadius: 1 }} />
+              </Card>
+            </Grid>
+          ))}
+        </Grid>
       </PageContainer>
     );
   }

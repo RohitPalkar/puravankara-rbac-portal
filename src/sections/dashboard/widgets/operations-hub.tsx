@@ -1,19 +1,25 @@
-
 import Grid from '@mui/material/Grid';
 import Card from '@mui/material/Card';
 import Stack from '@mui/material/Stack';
 import Button from '@mui/material/Button';
+import Skeleton from '@mui/material/Skeleton';
 import Typography from '@mui/material/Typography';
 import CardContent from '@mui/material/CardContent';
+
+import { usePendingApprovals } from 'src/services/hooks/use-workflows';
 
 import { Iconify } from 'src/components/iconify';
 
 export function OperationsHub() {
+  const { data: pendingApprovals, isLoading: pendingLoading } = usePendingApprovals();
+
+  const pendingCount = pendingApprovals?.length ?? 0;
+
   const opsCards = [
     {
       icon: 'solar:clock-circle-bold',
       label: 'Pending User Approvals',
-      value: 0,
+      value: pendingCount,
       color: '#FF9800',
       action: 'View Queue →',
       bgColor: '#FFF3E0',
@@ -43,6 +49,20 @@ export function OperationsHub() {
       bgColor: '#F3E5F5',
     },
   ];
+
+  if (pendingLoading) {
+    return (
+      <Grid container spacing={2}>
+        {[1, 2, 3, 4].map((i) => (
+          <Grid item xs={6} md={3} key={i}>
+            <Card variant="outlined" sx={{ borderRadius: 1.5, height: 1 }}>
+              <CardContent><Skeleton variant="rectangular" height={100} sx={{ borderRadius: 1 }} /></CardContent>
+            </Card>
+          </Grid>
+        ))}
+      </Grid>
+    );
+  }
 
   const showAny = opsCards.some((c) => c.value > 0);
 

@@ -10,6 +10,7 @@ import Alert from '@mui/material/Alert';
 import Button from '@mui/material/Button';
 import Select from '@mui/material/Select';
 import Stepper from '@mui/material/Stepper';
+import Skeleton from '@mui/material/Skeleton';
 import MenuItem from '@mui/material/MenuItem';
 import Snackbar from '@mui/material/Snackbar';
 import StepLabel from '@mui/material/StepLabel';
@@ -170,15 +171,19 @@ export default function PermissionMatrixCreatePage() {
                   </Select>
                 </FormControl>
 
-                <TextField
-                  label="Role"
-                  value={isEditMode ? (editRoleInfo?.name ?? '') : (roleLoading ? 'Loading...' : (roleData?.roleName ?? ''))}
-                  inputProps={{ readOnly: true }}
-                  disabled={isEditMode || !levelNumber}
-                  error={!isEditMode && noRoleConfigured}
-                  helperText={!isEditMode && noRoleConfigured ? 'No role is configured for the selected Department and Hierarchy Level. Please configure it in Department Master first.' : ''}
-                  fullWidth
-                />
+                {roleLoading && !isEditMode ? (
+                  <Skeleton variant="rectangular" height={52} sx={{ borderRadius: 1 }} />
+                ) : (
+                  <TextField
+                    label="Role"
+                    value={isEditMode ? (editRoleInfo?.name ?? '') : (roleData?.roleName ?? '')}
+                    inputProps={{ readOnly: true }}
+                    disabled={isEditMode || !levelNumber}
+                    error={!isEditMode && noRoleConfigured}
+                    helperText={!isEditMode && noRoleConfigured ? 'No role is configured for the selected Department and Hierarchy Level. Please configure it in Department Master first.' : ''}
+                    fullWidth
+                  />
+                )}
               </Box>
 
               {noRoleConfigured && (

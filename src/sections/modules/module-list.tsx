@@ -6,8 +6,8 @@ import { useParams, useNavigate } from 'react-router-dom';
 
 import Stack from '@mui/material/Stack';
 import Button from '@mui/material/Button';
+import Skeleton from '@mui/material/Skeleton';
 import Typography from '@mui/material/Typography';
-import CircularProgress from '@mui/material/CircularProgress';
 
 import { CONFIG } from 'src/config-global';
 
@@ -121,7 +121,13 @@ export default function ModuleListPage() {
   if (isLoading) {
     return (
       <PageContainer>
-        <CircularProgress />
+        <Stack spacing={1}>
+          <Skeleton variant="rectangular" height={52} sx={{ borderRadius: 1 }} />
+          <Skeleton variant="rectangular" height={52} sx={{ borderRadius: 1 }} />
+          <Skeleton variant="rectangular" height={52} sx={{ borderRadius: 1 }} />
+          <Skeleton variant="rectangular" height={52} sx={{ borderRadius: 1 }} />
+          <Skeleton variant="rectangular" height={52} sx={{ borderRadius: 1 }} />
+        </Stack>
       </PageContainer>
     );
   }
