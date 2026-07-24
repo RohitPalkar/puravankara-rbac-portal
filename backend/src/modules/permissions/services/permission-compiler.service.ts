@@ -297,7 +297,9 @@ export class PermissionCompilerService {
       where: { userId },
       relations: { role: true },
     });
-    return roles.some((ur) => ur.role.name === 'SUPER_ADMIN');
+    return roles.some(
+      (ur) => ur.role?.isSystemRole === true || ur.role?.name === 'SUPER_ADMIN',
+    );
   }
 
   private async getProfileProjectIdsForModule(
