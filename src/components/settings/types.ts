@@ -7,7 +7,6 @@ export type SettingsDrawerProps = {
   sx?: SxProps<Theme>;
   hideFont?: boolean;
   hideCompact?: boolean;
-  hidePresets?: boolean;
   hideNavColor?: boolean;
   hideContrast?: boolean;
   hideDirection?: boolean;
