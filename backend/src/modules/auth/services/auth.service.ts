@@ -204,7 +204,7 @@ export class AuthService {
     try {
       this.compilerService
         .compileForAllUserProjects(user.empId)
-        .catch(() => {});
+        .catch((err) => this.logger.error('Failed to compile permissions for user after login', err));
       const accessRows = await this.accessRepo.find({
         where: { userId: user.empId },
         relations: { project: true },

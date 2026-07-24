@@ -2,6 +2,7 @@ import {
   Injectable,
   NotFoundException,
   ConflictException,
+  Logger,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -10,6 +11,8 @@ import { PermissionCompilerService } from './permission-compiler.service';
 
 @Injectable()
 export class RoleProjectPermissionService {
+  private readonly logger = new Logger(RoleProjectPermissionService.name);
+
   constructor(
     @InjectRepository(RoleProjectPermission)
     private readonly repository: Repository<RoleProjectPermission>,
@@ -67,7 +70,7 @@ export class RoleProjectPermissionService {
       );
     }
     const saved = await this.repository.save(this.repository.create(dto));
-    await this.compilerService.compileForRole(dto.roleId).catch(() => {});
+    await this.compilerService.compileForRole(dto.roleId).catch((err) => this.logger.error('Failed to compile permissions after role-project permission create', err));
     return saved;
   }
 
@@ -75,6 +78,6 @@ export class RoleProjectPermissionService {
     const entity = await this.repository.findOne({ where: { id } });
     if (!entity) throw new NotFoundException('RoleProjectPermission not found');
     await this.repository.remove(entity);
-    await this.compilerService.compileForRole(entity.roleId).catch(() => {});
+    await this.compilerService.compileForRole(entity.roleId).catch((err) => this.logger.error('Failed to compile permissions after role-project permission removal', err));
   }
 }

@@ -1,7 +1,7 @@
 import type { ApprovalStatus, ApprovalRequest } from 'src/types';
 
 import { Helmet } from 'react-helmet-async';
-import { useMemo, useState, useCallback } from 'react';
+import { useMemo, useState, useEffect, useCallback } from 'react';
 
 import Box from '@mui/material/Box';
 import Card from '@mui/material/Card';
@@ -11,6 +11,7 @@ import Stack from '@mui/material/Stack';
 import Button from '@mui/material/Button';
 import Avatar from '@mui/material/Avatar';
 import Dialog from '@mui/material/Dialog';
+import Skeleton from '@mui/material/Skeleton';
 import ListItem from '@mui/material/ListItem';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
@@ -23,7 +24,7 @@ import ListItemAvatar from '@mui/material/ListItemAvatar';
 import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
 
 import { CONFIG } from 'src/config-global';
-import { mockApprovalRequests } from 'src/services/mock-data';
+import { usePendingApprovals } from 'src/services/hooks';
 
 import { Iconify } from 'src/components/iconify';
 import { PageHeader, PageContainer } from 'src/components/page-layout';
@@ -35,11 +36,19 @@ const STATUS_CONFIG: Record<ApprovalStatus, { color: 'warning' | 'success' | 'er
 };
 
 export default function ApprovalInboxPage() {
-  const [requests, setRequests] = useState(mockApprovalRequests);
+  const { data: approvalsData, isLoading } = usePendingApprovals();
+
+  const [requests, setRequests] = useState<ApprovalRequest[]>([]);
   const [filter, setFilter] = useState<ApprovalStatus | 'all'>('all');
   const [search, setSearch] = useState('');
   const [selected, setSelected] = useState<ApprovalRequest | null>(null);
   const [comment, setComment] = useState('');
+
+  useEffect(() => {
+    if (!isLoading && approvalsData && requests.length === 0) {
+      setRequests(approvalsData as unknown as ApprovalRequest[]);
+    }
+  }, [isLoading, approvalsData, requests.length]);
 
   const filtered = useMemo(() => {
     let list = requests;
@@ -104,43 +113,51 @@ export default function ApprovalInboxPage() {
         </Card>
 
         <Card>
-          <List disablePadding>
-            {filtered.map((req, idx) => {
-              const statusCfg = STATUS_CONFIG[req.status];
-              return (
-                <ListItem
-                  key={req.id}
-                  divider={idx < filtered.length - 1}
-                  sx={{ px: 3, py: 2, cursor: 'pointer', '&:hover': { bgcolor: 'action.hover' } }}
-                  onClick={() => setSelected(req)}
-                >
-                  <ListItemAvatar>
-                    <Avatar sx={{ bgcolor: req.status === 'pending' ? 'warning.light' : req.status === 'approved' ? 'success.light' : 'error.light', width: 40, height: 40 }}>
-                      <Iconify icon={req.status === 'pending' ? 'solar:clock-circle-bold' : req.status === 'approved' ? 'solar:check-circle-bold' : 'solar:close-circle-bold'} width={20} />
-                    </Avatar>
-                  </ListItemAvatar>
-                  <ListItemText
-                    primary={req.referenceLabel}
-                    secondary={`${req.type} · by ${req.requestedByName} · ${new Date(req.createdAt).toLocaleDateString()}`}
-                    primaryTypographyProps={{ variant: 'body2', fontWeight: 600 }}
-                    secondaryTypographyProps={{ variant: 'caption' }}
-                    sx={{ flex: 1 }}
-                  />
-                  <Stack direction="row" spacing={1} alignItems="center" sx={{ ml: 2 }}>
-                    <Chip label={statusCfg.label} color={statusCfg.color} size="small" variant="soft" />
-                    {req.approverName && (
-                      <Typography variant="caption" color="text.secondary">{req.approverName}</Typography>
-                    )}
-                  </Stack>
-                </ListItem>
-              );
-            })}
-            {filtered.length === 0 && (
-              <Box sx={{ p: 4, textAlign: 'center' }}>
-                <Typography variant="body2" color="text.secondary">No approval requests found.</Typography>
-              </Box>
-            )}
-          </List>
+          {isLoading ? (
+            <Box sx={{ p: 4 }}>
+              <Skeleton variant="rectangular" height={52} sx={{ borderRadius: 1, mb: 1 }} />
+              <Skeleton variant="rectangular" height={52} sx={{ borderRadius: 1, mb: 1 }} />
+              <Skeleton variant="rectangular" height={52} sx={{ borderRadius: 1 }} />
+            </Box>
+          ) : (
+            <List disablePadding>
+              {filtered.map((req, idx) => {
+                const statusCfg = STATUS_CONFIG[req.status];
+                return (
+                  <ListItem
+                    key={req.id}
+                    divider={idx < filtered.length - 1}
+                    sx={{ px: 3, py: 2, cursor: 'pointer', '&:hover': { bgcolor: 'action.hover' } }}
+                    onClick={() => setSelected(req)}
+                  >
+                    <ListItemAvatar>
+                      <Avatar sx={{ bgcolor: req.status === 'pending' ? 'warning.light' : req.status === 'approved' ? 'success.light' : 'error.light', width: 40, height: 40 }}>
+                        <Iconify icon={req.status === 'pending' ? 'solar:clock-circle-bold' : req.status === 'approved' ? 'solar:check-circle-bold' : 'solar:close-circle-bold'} width={20} />
+                      </Avatar>
+                    </ListItemAvatar>
+                    <ListItemText
+                      primary={req.referenceLabel}
+                      secondary={`${req.type} · by ${req.requestedByName} · ${new Date(req.createdAt).toLocaleDateString()}`}
+                      primaryTypographyProps={{ variant: 'body2', fontWeight: 600 }}
+                      secondaryTypographyProps={{ variant: 'caption' }}
+                      sx={{ flex: 1 }}
+                    />
+                    <Stack direction="row" spacing={1} alignItems="center" sx={{ ml: 2 }}>
+                      <Chip label={statusCfg.label} color={statusCfg.color} size="small" variant="soft" />
+                      {req.approverName && (
+                        <Typography variant="caption" color="text.secondary">{req.approverName}</Typography>
+                      )}
+                    </Stack>
+                  </ListItem>
+                );
+              })}
+              {filtered.length === 0 && (
+                <Box sx={{ p: 4, textAlign: 'center' }}>
+                  <Typography variant="body2" color="text.secondary">No approval requests found.</Typography>
+                </Box>
+              )}
+            </List>
+          )}
         </Card>
       </PageContainer>
 

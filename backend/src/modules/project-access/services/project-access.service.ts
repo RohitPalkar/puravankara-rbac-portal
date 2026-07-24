@@ -2,6 +2,7 @@ import {
   Injectable,
   NotFoundException,
   ConflictException,
+  Logger,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -19,6 +20,8 @@ import { NotificationService } from '../../notifications/services/notification.s
 
 @Injectable()
 export class UserProjectAccessService {
+  private readonly logger = new Logger(UserProjectAccessService.name);
+
   constructor(
     @InjectRepository(UserProjectAccess)
     readonly repository: Repository<UserProjectAccess>,
@@ -78,11 +81,11 @@ export class UserProjectAccessService {
         'PROJECT',
         'HIGH',
       )
-      .catch(() => {});
+      .catch((err) => this.logger.error('Failed to send project access notification', err));
 
     this.compilerService
       .compileAndSave(dto.userId, dto.projectId)
-      .catch(() => {});
+      .catch((err) => this.logger.error('Failed to compile permissions after project access grant', err));
 
     return saved;
   }
@@ -113,7 +116,7 @@ export class UserProjectAccessService {
     if (result.affected === 0)
       throw new NotFoundException('Project access not found');
 
-    this.compilerService.compileAndSave(userId, projectId).catch(() => {});
+    this.compilerService.compileAndSave(userId, projectId).catch((err) => this.logger.error('Failed to compile permissions after project access revoke', err));
   }
 }
 

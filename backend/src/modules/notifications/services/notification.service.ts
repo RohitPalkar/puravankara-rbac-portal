@@ -53,7 +53,7 @@ export class NotificationService {
         performedBy: dto.userId,
         source: 'NOTIFICATION',
       })
-      .catch(() => {});
+      .catch((err) => this.logger.error('Failed to create audit log for notification creation', err));
 
     this.onNotification?.(saved);
 
@@ -149,7 +149,7 @@ export class NotificationService {
         performedBy: userId,
         source: 'NOTIFICATION',
       })
-      .catch(() => {});
+      .catch((err) => this.logger.error('Failed to create audit log for notification mark-as-read', err));
 
     return saved;
   }
@@ -168,7 +168,7 @@ export class NotificationService {
         performedBy: userId,
         source: 'NOTIFICATION',
       })
-      .catch(() => {});
+      .catch((err) => this.logger.error('Failed to create audit log for marking all notifications as read', err));
   }
 
   async getUnreadCount(userId: string): Promise<number> {
@@ -204,7 +204,7 @@ export class NotificationService {
         performedBy: userId,
         source: 'NOTIFICATION',
       })
-      .catch(() => {});
+      .catch((err) => this.logger.error('Failed to create audit log for notification preference update', err));
 
     return saved;
   }

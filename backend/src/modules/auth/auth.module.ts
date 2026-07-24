@@ -31,9 +31,7 @@ import { PermissionsModule } from '../permissions/permissions.module';
     JwtModule.registerAsync({
       inject: [ConfigService],
       useFactory: (config: ConfigService) => ({
-        secret:
-          config.get<string>('JWT_SECRET') ||
-          'puravankara-rbac-jwt-secret-key-2026',
+        secret: config.get<string>('JWT_SECRET'),
         signOptions: { expiresIn: 900 },
       }),
     }),

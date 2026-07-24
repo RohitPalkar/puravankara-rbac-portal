@@ -545,7 +545,7 @@ export class UserService {
           }
         }
         for (const pid of projectIds) {
-          this.compilerService.compileAndSave(savedUser.empId, pid).catch(() => {});
+          this.compilerService.compileAndSave(savedUser.empId, pid).catch((err) => this.logger.error('Failed to compile permissions for user project', err));
         }
       }
 
@@ -585,6 +585,8 @@ export class UserService {
 
 @Injectable()
 export class UserRoleService {
+  private readonly logger = new Logger(UserRoleService.name);
+
   constructor(
     @InjectRepository(UserRole)
     readonly repository: Repository<UserRole>,
@@ -636,9 +638,9 @@ export class UserRoleService {
         'ROLE',
         'HIGH',
       )
-      .catch(() => {});
+      .catch((err) => this.logger.error('Failed to send role-assigned notification', err));
 
-    this.compilerService.compileForAllUserProjects(dto.userId).catch(() => {});
+    this.compilerService.compileForAllUserProjects(dto.userId).catch((err) => this.logger.error('Failed to compile permissions after role assignment', err));
 
     return saved;
   }
@@ -656,7 +658,7 @@ export class UserRoleService {
     if (result.affected === 0)
       throw new NotFoundException('User role assignment not found');
 
-    this.compilerService.compileForAllUserProjects(userId).catch(() => {});
+    this.compilerService.compileForAllUserProjects(userId).catch((err) => this.logger.error('Failed to compile permissions after role revoke', err));
   }
 }
 

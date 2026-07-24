@@ -40,11 +40,11 @@ function buildDatabaseConfig(): TypeOrmModuleOptions {
 
   return {
     ...base,
-    host: process.env.DB_HOST || 'localhost',
+    host: process.env.DB_HOST,
     port: Number(process.env.DB_PORT) || 5432,
-    username: process.env.DB_USERNAME || 'postgres',
-    password: process.env.DB_PASSWORD || 'postgres',
-    database: process.env.DB_NAME || 'puravankara_rbac_v3',
+    username: process.env.DB_USERNAME,
+    password: process.env.DB_PASSWORD,
+    database: process.env.DB_NAME,
   };
 }
 

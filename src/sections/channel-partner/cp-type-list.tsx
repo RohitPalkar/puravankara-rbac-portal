@@ -1,20 +1,18 @@
 import type { GridColDef } from '@mui/x-data-grid';
-import type { ChannelPartnerType } from 'src/types';
 
-import { useState } from 'react';
 import { Helmet } from 'react-helmet-async';
 
 import Card from '@mui/material/Card';
 
 import { CONFIG } from 'src/config-global';
-import { mockChannelPartnerTypes } from 'src/services/mock-data';
+import { useChannelPartnerTypeList } from 'src/services/hooks';
 
 import { Label } from 'src/components/label';
 import { DataTable } from 'src/components/data-table';
 import { PageHeader, PageContainer } from 'src/components/page-layout';
 
 export default function ChannelPartnerTypeListPage() {
-  const [data] = useState<ChannelPartnerType[]>(mockChannelPartnerTypes);
+  const { data, isLoading } = useChannelPartnerTypeList();
 
   const columns: GridColDef[] = [
     { field: 'id', headerName: 'ID', width: 60 },
@@ -34,7 +32,7 @@ export default function ChannelPartnerTypeListPage() {
       <PageContainer>
         <PageHeader title="Channel Partner Types" description="Manage partner categories" />
         <Card sx={{ overflow: 'hidden' }}>
-          <DataTable columns={columns} rows={data} getRowId={(r) => r.id} />
+          <DataTable columns={columns} rows={data ?? []} getRowId={(r) => r.id} loading={isLoading} />
         </Card>
       </PageContainer>
     </>

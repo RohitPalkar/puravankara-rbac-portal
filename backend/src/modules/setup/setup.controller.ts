@@ -16,7 +16,6 @@ export class SetupController {
     return this.setupService.getStatus();
   }
 
-  @Public()
   @Post('reset')
   @ApiOperation({ summary: 'Reset zones, cities, and non-admin users' })
   async reset(): Promise<{ message: string }> {

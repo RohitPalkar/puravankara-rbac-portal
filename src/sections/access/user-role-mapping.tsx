@@ -1,5 +1,5 @@
 import { Helmet } from 'react-helmet-async';
-import { useMemo, useState, useCallback } from 'react';
+import { useMemo, useState, useEffect, useCallback } from 'react';
 
 import Box from '@mui/material/Box';
 import Card from '@mui/material/Card';
@@ -19,7 +19,7 @@ import ListItemAvatar from '@mui/material/ListItemAvatar';
 import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
 
 import { CONFIG } from 'src/config-global';
-import { mockRoles, mockUsers } from 'src/services/mock-data';
+import { useRoleList, useUserList } from 'src/services/hooks';
 
 import { Iconify } from 'src/components/iconify';
 import { PageHeader, PageContainer } from 'src/components/page-layout';
@@ -39,21 +39,32 @@ function stringAvatar(name: string) {
 }
 
 export default function UserRoleMappingPage() {
+  const { data: rolesData } = useRoleList();
+  const { data: usersData } = useUserList();
+
+  const roles: any[] = useMemo(() => (rolesData ?? []) as any[], [rolesData]);
+
   const [view, setView] = useState<ViewMode>('by-role');
   const [search, setSearch] = useState('');
   const [expandedRole, setExpandedRole] = useState<string | null>(null);
-  const [users, setUsers] = useState(mockUsers);
+  const [users, setUsers] = useState<any[]>([]);
+
+  useEffect(() => {
+    if (usersData && users.length === 0) {
+      setUsers(usersData as any[]);
+    }
+  }, [usersData, users.length]);
 
   const filteredRoles = useMemo(() => {
-    if (!search) return mockRoles;
+    if (!search) return roles;
     const lower = search.toLowerCase();
-    return mockRoles.filter(
+    return roles.filter(
       (r) =>
         r.name.toLowerCase().includes(lower) ||
         r.level.toLowerCase().includes(lower) ||
         users.filter((u) => u.roleId === r.id).some((u) => u.name.toLowerCase().includes(lower))
     );
-  }, [search, users]);
+  }, [search, users, roles]);
 
   const filteredUsers = useMemo(() => {
     if (!search) return users;
@@ -70,11 +81,11 @@ export default function UserRoleMappingPage() {
     setUsers((prev) =>
       prev.map((u) => {
         if (u.id !== userId) return u;
-        const role = mockRoles.find((r) => r.id === newRoleId);
+        const role = roles.find((r) => r.id === newRoleId);
         return { ...u, roleId: newRoleId, roleName: role?.name ?? u.roleName };
       })
     );
-  }, []);
+  }, [roles]);
 
   const handleRemoveUserFromRole = useCallback((userId: string) => {
     setUsers((prev) => prev.filter((u) => u.id !== userId));
@@ -220,7 +231,7 @@ export default function UserRoleMappingPage() {
                       onChange={(e) => handleRoleChange(user.id, e.target.value)}
                       sx={{ minWidth: 180 }}
                     >
-                      {mockRoles.map((r) => (
+                      {roles.map((r) => (
                         <MenuItem key={r.id} value={r.id}>{r.name}</MenuItem>
                       ))}
                     </TextField>

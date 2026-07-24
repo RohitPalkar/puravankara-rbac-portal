@@ -1,6 +1,6 @@
-import type { Status } from 'src/types';
+import type { Role, User, Action, Module, Status, Project, SubModule, Department } from 'src/types';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { useParams, useNavigate } from 'react-router-dom';
 
@@ -12,6 +12,7 @@ import Chip from '@mui/material/Chip';
 import Stack from '@mui/material/Stack';
 import Button from '@mui/material/Button';
 import Divider from '@mui/material/Divider';
+import Skeleton from '@mui/material/Skeleton';
 import MenuItem from '@mui/material/MenuItem';
 import Checkbox from '@mui/material/Checkbox';
 import TextField from '@mui/material/TextField';
@@ -22,7 +23,15 @@ import FormControlLabel from '@mui/material/FormControlLabel';
 import { paths } from 'src/routes/paths';
 
 import { CONFIG } from 'src/config-global';
-import { mockUsers, mockRoles, mockModules, mockActions, mockProjects, mockSubModules, mockDepartments } from 'src/services/mock-data';
+import {
+  useRoleList,
+  useUserById,
+  useActionList,
+  useModuleList,
+  useProjectList,
+  useSubModuleList,
+  useDepartmentList,
+} from 'src/services/hooks';
 
 import { Iconify } from 'src/components/iconify';
 import { PageHeader, PageContainer } from 'src/components/page-layout';
@@ -37,21 +46,63 @@ const STATUS_OPTIONS = [
 export default function UserDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const user = mockUsers.find((u) => u.id === id);
+  const { data: rawUser, isLoading } = useUserById(id!);
+  const user = rawUser as unknown as User;
+  const { data: rolesData } = useRoleList();
+  const { data: modulesData } = useModuleList();
+  const { data: actionsData } = useActionList();
+  const { data: projectsData } = useProjectList();
+  const { data: subModulesData } = useSubModuleList();
+  const { data: departmentsData } = useDepartmentList();
+
+  const roles = (rolesData ?? []) as unknown as Role[];
+  const projects = (projectsData ?? []) as unknown as Project[];
+  const modules = (modulesData ?? []) as unknown as Module[];
+  const actions = (actionsData ?? []) as unknown as Action[];
+  const subModules = (subModulesData ?? []) as unknown as SubModule[];
+  const departments = (departmentsData ?? []) as unknown as Department[];
 
   const [tab, setTab] = useState(0);
-  const [firstName, setFirstName] = useState(user?.firstName ?? '');
-  const [lastName, setLastName] = useState(user?.lastName ?? '');
-  const [email, setEmail] = useState(user?.email ?? '');
-  const [phone, setPhone] = useState(user?.phone ?? '');
-  const [departmentId, setDepartmentId] = useState(user?.departmentId ?? '');
-  const [roleId, setRoleId] = useState(user?.roleId ?? '');
-  const [status, setStatus] = useState(user?.status ?? 'active');
-  const [selectedProjects, setSelectedProjects] = useState<string[]>(user?.projects?.map((p) => p.projectId) ?? []);
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
+  const [departmentId, setDepartmentId] = useState('');
+  const [roleId, setRoleId] = useState('');
+  const [status, setStatus] = useState<Status>('active');
+  const [selectedProjects, setSelectedProjects] = useState<string[]>([]);
 
-  const [projectPermissions, setProjectPermissions] = useState<{ projectId: string; permissions: PermissionSelection[] }[]>(
-    user?.projects?.map((p) => ({ projectId: p.projectId, permissions: [] })) ?? [],
-  );
+  const [projectPermissions, setProjectPermissions] = useState<{ projectId: string; permissions: PermissionSelection[] }[]>([]);
+
+  useEffect(() => {
+    if (user) {
+      setFirstName(user.firstName);
+      setLastName(user.lastName);
+      setEmail(user.email);
+      setPhone(user.phone);
+      setDepartmentId(user.departmentId);
+      setRoleId(user.roleId);
+      setStatus(user.status);
+      setSelectedProjects(user.projects?.map((p) => p.projectId) ?? []);
+      setProjectPermissions(
+        user.projects?.map((p) => ({ projectId: p.projectId, permissions: [] as PermissionSelection[] })) ?? [],
+      );
+    }
+  }, [user]);
+
+  if (isLoading) {
+    return (
+      <PageContainer>
+        <PageHeader title="Loading..." />
+        <Card sx={{ p: 4 }}>
+          <Skeleton variant="rectangular" height={52} sx={{ borderRadius: 1 }} />
+          <Skeleton variant="rectangular" height={52} sx={{ borderRadius: 1, mt: 2 }} />
+          <Skeleton variant="rectangular" height={52} sx={{ borderRadius: 1, mt: 2 }} />
+          <Skeleton variant="rectangular" height={120} sx={{ borderRadius: 1, mt: 2 }} />
+        </Card>
+      </PageContainer>
+    );
+  }
 
   if (!user) {
     return (
@@ -121,10 +172,10 @@ export default function UserDetailPage() {
             <Typography variant="subtitle1" sx={{ mb: 2.5 }}>Organization Mapping</Typography>
             <Box display="grid" gridTemplateColumns={{ xs: '1fr', sm: '1fr 1fr' }} gap={2.5} maxWidth={720}>
               <TextField label="Department" select value={departmentId} onChange={(e) => setDepartmentId(e.target.value)} fullWidth>
-                {mockDepartments.map((d) => <MenuItem key={d.id} value={d.id}>{d.name}</MenuItem>)}
+                {departments.map((d) => <MenuItem key={d.id} value={d.id}>{d.name}</MenuItem>)}
               </TextField>
               <TextField label="Role" select value={roleId} onChange={(e) => setRoleId(e.target.value)} fullWidth>
-                {mockRoles.map((r) => <MenuItem key={r.id} value={r.id}>{r.name}</MenuItem>)}
+                {roles.map((r) => <MenuItem key={r.id} value={r.id}>{r.name}</MenuItem>)}
               </TextField>
               <TextField label="Hierarchy Level" value={user.level} fullWidth inputProps={{ readOnly: true }} />
               <TextField label="Reporting Manager" value={user.reportingManagerName ?? '-'} fullWidth inputProps={{ readOnly: true }} />
@@ -142,7 +193,7 @@ export default function UserDetailPage() {
           <Card sx={{ p: 3 }}>
             <Typography variant="subtitle1" sx={{ mb: 2 }}>Assigned Projects</Typography>
             <FormGroup>
-              {mockProjects.map((project) => (
+              {projects.map((project) => (
                 <FormControlLabel
                   key={project.id}
                   control={<Checkbox checked={selectedProjects.includes(project.id)} onChange={() => handleToggleProject(project.id)} />}
@@ -151,14 +202,14 @@ export default function UserDetailPage() {
               ))}
             </FormGroup>
             {projectPermissions.filter((p) => selectedProjects.includes(p.projectId)).map((pp) => {
-              const project = mockProjects.find((pj) => pj.id === pp.projectId);
+              const project = projects.find((pj) => pj.id === pp.projectId);
               return (
                 <Card key={pp.projectId} variant="outlined" sx={{ mt: 2, p: 2 }}>
                   <Typography variant="subtitle2" sx={{ mb: 1 }}>{project?.name} Permissions</Typography>
                   <PermissionTree
-                    modules={mockModules}
-                    subModules={mockSubModules}
-                    actions={mockActions}
+                    modules={modules}
+                    subModules={subModules}
+                    actions={actions}
                     selection={pp.permissions}
                     onChange={(perm) => handlePermissionChange(pp.projectId, perm)}
                   />

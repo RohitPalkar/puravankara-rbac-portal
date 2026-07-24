@@ -17,9 +17,7 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       ignoreExpiration: false,
-      secretOrKey:
-        configService.get<string>('JWT_SECRET') ||
-        'puravankara-rbac-jwt-secret-key-2026',
+      secretOrKey: configService.get<string>('JWT_SECRET'),
     });
   }
 

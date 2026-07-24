@@ -1,7 +1,5 @@
-import type { UserProject } from 'src/types';
-
-import { useState } from 'react';
 import { Helmet } from 'react-helmet-async';
+import { useMemo, useState, useEffect } from 'react';
 
 import Box from '@mui/material/Box';
 import Card from '@mui/material/Card';
@@ -24,7 +22,7 @@ import DialogActions from '@mui/material/DialogActions';
 import ListItemAvatar from '@mui/material/ListItemAvatar';
 
 import { CONFIG } from 'src/config-global';
-import { mockUsers, mockProjects } from 'src/services/mock-data';
+import { useUserList, useProjectList } from 'src/services/hooks';
 
 import { Iconify } from 'src/components/iconify';
 import { PageHeader, PageContainer } from 'src/components/page-layout';
@@ -41,21 +39,35 @@ function stringAvatar(name: string) {
 }
 
 export default function ProjectAssignmentPage() {
-  const [selectedProjectId, setSelectedProjectId] = useState<string>(mockProjects[0]?.id ?? '');
-  const [usersWithProjects, setUsersWithProjects] = useState(() =>
-    mockUsers.map((u) => ({ ...u, assigned: u.projects?.some((p) => p.projectId === selectedProjectId) ?? false }))
-  );
+  const { data: projectsData, isLoading: isLoadingProjects } = useProjectList();
+  const { data: usersData, isLoading: isLoadingUsers } = useUserList();
+
+  const projects: any[] = useMemo(() => (projectsData ?? []) as any[], [projectsData]);
+  const users: any[] = useMemo(() => (usersData ?? []) as any[], [usersData]);
+
+  const [selectedProjectId, setSelectedProjectId] = useState<string>('');
+  const [usersWithProjects, setUsersWithProjects] = useState<any[]>([]);
+
+  useEffect(() => {
+    if (users.length > 0 && usersWithProjects.length === 0) {
+      const defaultProjectId = projects[0]?.id ?? '';
+      setSelectedProjectId(defaultProjectId);
+      setUsersWithProjects(
+        users.map((u: any) => ({ ...u, assigned: u.projects?.some((p: any) => p.projectId === defaultProjectId) ?? false }))
+      );
+    }
+  }, [users, projects, usersWithProjects.length]);
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [selectedUserId, setSelectedUserId] = useState<string>('');
 
-  const selectedProject = mockProjects.find((p) => p.id === selectedProjectId);
+  const selectedProject = projects.find((p) => p.id === selectedProjectId);
 
   const handleProjectChange = (projectId: string) => {
     setSelectedProjectId(projectId);
     setUsersWithProjects((prev) =>
       prev.map((u) => ({
         ...u,
-        assigned: (u.projects ?? []).some((p) => p.projectId === projectId),
+        assigned: (u.projects ?? []).some((p: any) => p.projectId === projectId),
       }))
     );
   };
@@ -68,11 +80,11 @@ export default function ProjectAssignmentPage() {
     setUsersWithProjects((prev) =>
       prev.map((u) => {
         if (u.id !== selectedUserId) return u;
-        const projects: UserProject[] = [...(u.projects ?? [])];
-        if (!projects.some((p) => p.projectId === selectedProjectId)) {
-          projects.push({ projectId: selectedProjectId, projectName: selectedProject?.name });
+        const userProjects: any[] = [...(u.projects ?? [])];
+        if (!userProjects.some((p) => p.projectId === selectedProjectId)) {
+          userProjects.push({ projectId: selectedProjectId, projectName: selectedProject?.name });
         }
-        return { ...u, projects, assigned: true };
+        return { ...u, projects: userProjects, assigned: true };
       })
     );
     setSelectedUserId('');
@@ -83,10 +95,21 @@ export default function ProjectAssignmentPage() {
     setUsersWithProjects((prev) =>
       prev.map((u) => {
         if (u.id !== userId) return u;
-        return { ...u, projects: (u.projects ?? []).filter((p) => p.projectId !== selectedProjectId), assigned: false };
+        return { ...u, projects: (u.projects ?? []).filter((p: any) => p.projectId !== selectedProjectId), assigned: false };
       })
     );
   };
+
+  if (isLoadingProjects || isLoadingUsers) {
+    return (
+      <PageContainer>
+        <PageHeader title="Project Assignment" description="Assign users to projects" />
+        <Card sx={{ p: 4, textAlign: 'center' }}>
+          <Typography variant="body2" color="text.secondary">Loading...</Typography>
+        </Card>
+      </PageContainer>
+    );
+  }
 
   return (
     <>
@@ -103,7 +126,7 @@ export default function ProjectAssignmentPage() {
               onChange={(e) => handleProjectChange(e.target.value)}
               sx={{ minWidth: 260 }}
             >
-              {mockProjects.map((p) => (
+              {projects.map((p) => (
                 <MenuItem key={p.id} value={p.id}>{p.name} ({p.code})</MenuItem>
               ))}
             </TextField>

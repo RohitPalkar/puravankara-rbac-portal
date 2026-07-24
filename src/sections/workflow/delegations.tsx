@@ -4,8 +4,8 @@ import type { GridColDef } from '@mui/x-data-grid';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { Helmet } from 'react-helmet-async';
-import { useState, useCallback } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useMemo, useState, useEffect, useCallback } from 'react';
 
 import Card from '@mui/material/Card';
 import Stack from '@mui/material/Stack';
@@ -16,7 +16,7 @@ import DialogContent from '@mui/material/DialogContent';
 import DialogActions from '@mui/material/DialogActions';
 
 import { CONFIG } from 'src/config-global';
-import { mockUsers, mockDelegations } from 'src/services/mock-data';
+import { useUserList, useDelegationList } from 'src/services/hooks';
 
 import { Label } from 'src/components/label';
 import { Iconify } from 'src/components/iconify';
@@ -45,14 +45,24 @@ const MODULE_OPTIONS = [
 ];
 
 export default function DelegationsPage() {
-  const [data, setData] = useState<Delegation[]>(mockDelegations);
+  const { data: delegationsData, isLoading } = useDelegationList();
+  const { data: usersData } = useUserList();
+
+  const users: any[] = useMemo(() => (usersData ?? []) as any[], [usersData]);
+  const [data, setData] = useState<any[]>([]);
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Delegation | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
+  useEffect(() => {
+    if (!isLoading && delegationsData && data.length === 0) {
+      setData(delegationsData as any[]);
+    }
+  }, [isLoading, delegationsData, data.length]);
+
   const methods = useForm<FormData>({ resolver: zodResolver(schema), defaultValues: defaults });
 
-  const userOptions = mockUsers.map((u) => ({ value: u.id, label: u.name }));
+  const userOptions = users.map((u) => ({ value: u.id, label: u.name }));
 
   const handleNew = useCallback(() => {
     setEditing(null);
@@ -71,9 +81,9 @@ export default function DelegationsPage() {
     setEditing(null);
   }, []);
 
-  const getUserName = (id: string) => mockUsers.find((u) => u.id === id)?.name ?? id;
-
   const onSubmit = useCallback((form: FormData) => {
+    const getUserName = (id: string) => users.find((u) => u.id === id)?.name ?? id;
+
     if (editing) {
       setData((prev) => prev.map((item) => (item.id === editing.id ? {
         ...item, ...form, isActive: form.isActive === 'active',
@@ -84,10 +94,10 @@ export default function DelegationsPage() {
         id: String(Date.now()), ...form, isActive: form.isActive === 'active',
         delegatorName: getUserName(form.delegatorId), delegateName: getUserName(form.delegateId),
         createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(),
-      }, ...prev]);
+      } as Delegation, ...prev]);
     }
     handleClose();
-  }, [editing, handleClose]);
+  }, [editing, handleClose, users]);
 
   const handleDelete = useCallback(() => {
     if (deleteId) {
@@ -131,7 +141,7 @@ export default function DelegationsPage() {
           </Button>
         } />
         <Card sx={{ overflow: 'hidden' }}>
-          <DataTable columns={columns} rows={data} getRowId={(r) => r.id} />
+          <DataTable columns={columns} rows={data} getRowId={(r) => r.id} loading={isLoading} />
         </Card>
       </PageContainer>
 

@@ -4,8 +4,8 @@ import type { GridColDef } from '@mui/x-data-grid';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { Helmet } from 'react-helmet-async';
-import { useState, useCallback } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useMemo, useState, useCallback } from 'react';
 
 import Card from '@mui/material/Card';
 import Stack from '@mui/material/Stack';
@@ -16,7 +16,7 @@ import DialogContent from '@mui/material/DialogContent';
 import DialogActions from '@mui/material/DialogActions';
 
 import { CONFIG } from 'src/config-global';
-import { mockRoles, mockApprovalConfigs } from 'src/services/mock-data';
+import { useRoleList } from 'src/services/hooks';
 
 import { Label } from 'src/components/label';
 import { Iconify } from 'src/components/iconify';
@@ -38,7 +38,10 @@ type FormData = z.infer<typeof schema>;
 const defaults: FormData = { name: '', module: '', description: '', approverRoleId: '', stages: 1, isActive: 'active' };
 
 export default function ApprovalConfigPage() {
-  const [data, setData] = useState<ApprovalConfig[]>(mockApprovalConfigs);
+  const { data: rolesData } = useRoleList();
+  const roles = useMemo(() => rolesData ?? [], [rolesData]);
+
+  const [data, setData] = useState<ApprovalConfig[]>([]);
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<ApprovalConfig | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
@@ -63,17 +66,17 @@ export default function ApprovalConfigPage() {
   }, []);
 
   const onSubmit = useCallback((form: FormData) => {
-    const role = mockRoles.find((r) => r.id === form.approverRoleId);
+    const role = roles.find((r) => String(r.id) === form.approverRoleId);
     if (editing) {
       setData((prev) => prev.map((item) => (item.id === editing.id ? { ...item, ...form, isActive: form.isActive === 'active', approverRoleName: role?.name } : item)));
     } else {
       setData((prev) => [{
         id: String(Date.now()), ...form, isActive: form.isActive === 'active', approverRoleName: role?.name,
         createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(),
-      }, ...prev]);
+      } as ApprovalConfig, ...prev]);
     }
     handleClose();
-  }, [editing, handleClose]);
+  }, [editing, handleClose, roles]);
 
   const handleDelete = useCallback(() => {
     if (deleteId) {
@@ -136,7 +139,7 @@ export default function ApprovalConfigPage() {
               <Field.Text name="name" label="Workflow Name" />
               <Field.Select name="module" label="Module" options={MODULE_OPTIONS} />
               <Field.Text name="description" label="Description" multiline rows={2} />
-              <Field.Select name="approverRoleId" label="Approver Role" options={mockRoles.map((r) => ({ value: r.id, label: r.name }))} />
+              <Field.Select name="approverRoleId" label="Approver Role" options={roles.map((r) => ({ value: String(r.id), label: r.name }))} />
               <Field.Text name="stages" label="Approval Stages" type="number" />
               <Field.Select name="isActive" label="Status" options={[{ value: 'active', label: 'Active' }, { value: 'inactive', label: 'Inactive' }]} />
             </Stack>

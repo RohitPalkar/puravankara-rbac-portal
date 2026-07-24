@@ -2,6 +2,7 @@ import {
   Injectable,
   NotFoundException,
   ConflictException,
+  Logger,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, IsNull } from 'typeorm';
@@ -11,6 +12,8 @@ import { PermissionCompilerService } from './permission-compiler.service';
 
 @Injectable()
 export class UserPermissionOverrideService {
+  private readonly logger = new Logger(UserPermissionOverrideService.name);
+
   constructor(
     @InjectRepository(UserPermissionOverride)
     readonly repository: Repository<UserPermissionOverride>,
@@ -59,7 +62,7 @@ export class UserPermissionOverrideService {
       const saved = await this.repository.save(existing);
       await this.compilerService
         .compileAndSave(dto.userId, dto.projectId)
-        .catch(() => {});
+        .catch((err) => this.logger.error('Failed to compile permissions after override upsert (existing)', err));
       return saved;
     }
 
@@ -67,7 +70,7 @@ export class UserPermissionOverrideService {
     const saved = await this.repository.save(override);
     await this.compilerService
       .compileAndSave(dto.userId, dto.projectId)
-      .catch(() => {});
+      .catch((err) => this.logger.error('Failed to compile permissions after override upsert (new)', err));
     return saved as unknown as Promise<UserPermissionOverride>;
   }
 
@@ -78,7 +81,7 @@ export class UserPermissionOverrideService {
     await this.repository.delete(id);
     await this.compilerService
       .compileAndSave(userId, projectId)
-      .catch(() => {});
+      .catch((err) => this.logger.error('Failed to compile permissions after override removal', err));
   }
 
   async removeByKey(
