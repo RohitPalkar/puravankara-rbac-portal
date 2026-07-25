@@ -38,6 +38,10 @@ const SettingsPage = lazy(() => import('src/sections/system/settings'));
 // Modules (RBAC Showcase)
 const ModuleDashboardPage = lazy(() => import('src/sections/modules/module-dashboard'));
 const ModuleListPage = lazy(() => import('src/sections/modules/module-list'));
+const ModuleCreatePage = lazy(() => import('src/sections/modules/module-create'));
+const ModuleViewPage = lazy(() => import('src/sections/modules/module-view'));
+const ModuleEditPage = lazy(() => import('src/sections/modules/module-edit'));
+const ModuleDeletePage = lazy(() => import('src/sections/modules/module-delete'));
 
 const DashboardIndex = lazy(() => import('src/pages/dashboard/index'));
 
@@ -90,6 +94,10 @@ export const dashboardRoutes = [
       // Modules (RBAC Showcase)
       { path: 'modules/:moduleCode', element: <ModuleDashboardPage /> },
       { path: 'modules/:moduleCode/list', element: <ModuleListPage /> },
+      { path: 'modules/:moduleCode/new', element: <ModuleCreatePage /> },
+      { path: 'modules/:moduleCode/:id', element: <ModuleViewPage /> },
+      { path: 'modules/:moduleCode/:id/edit', element: <ModuleEditPage /> },
+      { path: 'modules/:moduleCode/:id/delete', element: <ModuleDeletePage /> },
     ],
   },
 ];
