@@ -1,8 +1,9 @@
-import { useMemo } from 'react';
 import { Helmet } from 'react-helmet-async';
+import { lazy, useMemo, Suspense } from 'react';
 
 import Box from '@mui/material/Box';
 import Stack from '@mui/material/Stack';
+import Skeleton from '@mui/material/Skeleton';
 import Typography from '@mui/material/Typography';
 
 import { CONFIG } from 'src/config-global';
@@ -20,8 +21,9 @@ import { ZoneOverview } from './widgets/zone-overview';
 import { QuickActions } from './widgets/quick-actions';
 import { WelcomeBanner } from './widgets/welcome-banner';
 import { OperationsHub } from './widgets/operations-hub';
-import { AuditTimeline, RecentActivities } from './widgets/activities';
 import { SecurityCenter, SystemHealthWidget } from './widgets/security-health';
+
+const ActivitiesSection = lazy(() => import('./widgets/activities-section'));
 
 function SectionDivider({ icon, label }: { icon: string; label: string }) {
   return (
@@ -41,7 +43,8 @@ export default function DashboardView() {
   const { data: me } = useMe();
   const { data: myPermissions } = useMyPermissions();
   const { data: moduleTree } = useModuleTree();
-  const { data: auditLogs, isLoading: auditLogsLoading } = useAuditLogList(
+
+  const { data: personalAuditLogs, isLoading: personalAuditLoading } = useAuditLogList(
     me?.empId
       ? {
           performedBy: me.empId,
@@ -50,10 +53,6 @@ export default function DashboardView() {
           sortOrder: 'DESC' as const,
         }
       : undefined,
-  );
-
-  const { data: allAuditLogs, isLoading: allAuditLogsLoading } = useAuditLogList(
-    { limit: 20, sortBy: 'createdAt' as const, sortOrder: 'DESC' as const },
   );
 
   const isSuperAdmin = useMemo(() => {
@@ -91,7 +90,7 @@ export default function DashboardView() {
         {/* Analytics */}
         <Box sx={{ mb: 3 }}>
           <SectionDivider icon="solar:chart-2-bold" label="Analytics" />
-          <AnalyticsSection auditLogs={auditLogs} auditLoading={auditLogsLoading} moduleTree={moduleTree} />
+          <AnalyticsSection auditLogs={personalAuditLogs} auditLoading={personalAuditLoading} moduleTree={moduleTree} />
         </Box>
 
         {/* Operations Hub */}
@@ -117,14 +116,10 @@ export default function DashboardView() {
           </Box>
         )}
 
-        {/* Activities + Audit Timeline */}
-        <Box sx={{ mb: 2 }}>
-          <SectionDivider icon="solar:clock-circle-bold" label="Activity & Audit" />
-          <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 2 }}>
-            <RecentActivities auditLogs={allAuditLogs} auditLoading={allAuditLogsLoading} />
-            <AuditTimeline auditLogs={allAuditLogs} auditLoading={allAuditLogsLoading} />
-          </Box>
-        </Box>
+        {/* Activities + Audit Timeline (lazy-loaded) */}
+        <Suspense fallback={<Skeleton variant="rectangular" height={260} sx={{ borderRadius: 1.5, mb: 2 }} />}>
+          <ActivitiesSection />
+        </Suspense>
       </PageContainer>
     </>
   );

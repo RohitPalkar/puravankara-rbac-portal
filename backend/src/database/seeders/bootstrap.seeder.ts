@@ -9,8 +9,6 @@ import { Module } from '../../modules/product-catalog/entities/module.entity';
 import { SubModule } from '../../modules/product-catalog/entities/sub-module.entity';
 import { ActionGroup } from '../../modules/product-catalog/entities/action-group.entity';
 import { ModuleAction } from '../../modules/product-catalog/entities/module-action.entity';
-import { Zone } from '../../modules/geography/entities/zone.entity';
-
 const SALT_ROUNDS = 12;
 
 interface ModuleSeed {
@@ -498,8 +496,6 @@ const MODULES_SEED: ModuleSeed[] = [
   },
 ];
 
-const ZONE_NAMES = ['North', 'South', 'East', 'West'];
-
 export async function bootstrapSeeder(dataSource: DataSource): Promise<void> {
   const roleRepo = dataSource.getRepository(Role);
   const userRepo = dataSource.getRepository(User);
@@ -510,17 +506,8 @@ export async function bootstrapSeeder(dataSource: DataSource): Promise<void> {
   const subModuleRepo = dataSource.getRepository(SubModule);
   const actionGroupRepo = dataSource.getRepository(ActionGroup);
   const moduleActionRepo = dataSource.getRepository(ModuleAction);
-  const zoneRepo = dataSource.getRepository(Zone);
 
-  // 1. Seed zones
-  for (const name of ZONE_NAMES) {
-    const existing = await zoneRepo.findOne({ where: { name } });
-    if (!existing) {
-      await zoneRepo.save(zoneRepo.create({ name, isActive: true }));
-    }
-  }
-
-  // 2. Seed modules, sub-modules, action groups, and actions
+  // 1. Seed modules, sub-modules, action groups, and actions
   for (const m of MODULES_SEED) {
     let mod = await moduleRepo.findOne({ where: { name: m.name } });
     if (!mod) {
@@ -603,7 +590,7 @@ export async function bootstrapSeeder(dataSource: DataSource): Promise<void> {
     }
   }
 
-  // 3. Seed SUPER_ADMIN role
+  // 2. Seed SUPER_ADMIN role
   const existingRole = await roleRepo.findOne({
     where: { name: 'SUPER_ADMIN' },
   });
