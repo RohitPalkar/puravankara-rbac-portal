@@ -1,3 +1,4 @@
+import { Exclude } from 'class-transformer';
 import { Entity, Column } from 'typeorm';
 import { AppBaseEntity } from '../../../common/entities/app-base.entity';
 
@@ -18,21 +19,26 @@ export class Brand extends AppBaseEntity {
   @Column({ name: 'razorpay_merchant_id', nullable: true })
   razorpayMerchantId: string;
 
+  @Exclude()
   @Column({ name: 'razorpay_secret_key', nullable: true })
   razorpaySecretKey: string;
 
+  @Exclude()
   @Column({ name: 'easebuzz_booking_salt', nullable: true })
   easebuzzBookingSalt: string;
 
+  @Exclude()
   @Column({ name: 'easebuzz_booking_key', nullable: true })
   easebuzzBookingKey: string;
 
   @Column({ name: 'easebuzz_booking_sub_merchant_id', nullable: true })
   easebuzzBookingSubMerchantId: string;
 
+  @Exclude()
   @Column({ name: 'easebuzz_milestone_salt', nullable: true })
   easebuzzMilestoneSalt: string;
 
+  @Exclude()
   @Column({ name: 'easebuzz_milestone_key', nullable: true })
   easebuzzMilestoneKey: string;
 

@@ -70,8 +70,8 @@ export class AuthResponseDto {
   @ApiProperty()
   accessToken: string;
 
-  @ApiProperty()
-  refreshToken: string;
+  @ApiPropertyOptional()
+  refreshToken?: string;
 
   @ApiProperty()
   expiresIn: number;

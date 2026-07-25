@@ -11,21 +11,6 @@ import { QueryBrandDto } from '../dto/query-brand.dto';
 import { Brand } from '../entities/brand.entity';
 import { BaseController } from '../../../common/crud/base.controller';
 
-const SENSITIVE_FIELDS = [
-  'razorpaySecretKey',
-  'easebuzzBookingSalt',
-  'easebuzzBookingKey',
-  'easebuzzMilestoneSalt',
-  'easebuzzMilestoneKey',
-];
-
-function stripSensitiveFields(brand: Brand): Brand {
-  for (const field of SENSITIVE_FIELDS) {
-    delete (brand as any)[field];
-  }
-  return brand;
-}
-
 @ApiTags('Brands')
 @ApiBearerAuth()
 @Controller('brands')
@@ -39,7 +24,7 @@ export class BrandController extends BaseController<
   }
 
   @Get()
-  @ApiOperation({ summary: 'List all brands (sensitive fields excluded)' })
+  @ApiOperation({ summary: 'List all brands (payment secrets excluded by @Exclude)' })
   @ApiResponse({ status: 200, description: 'Paginated list of brands' })
   async findAll(@Query() query: QueryBrandDto) {
     const result = await this.brandService.findAll(query, [
@@ -47,13 +32,13 @@ export class BrandController extends BaseController<
       'billingName',
     ]);
     return {
-      data: result.data.map(stripSensitiveFields),
+      data: result.data,
       meta: result.meta,
     };
   }
 
   @Get(':id')
-  @ApiOperation({ summary: 'Get brand by ID (includes sensitive fields)' })
+  @ApiOperation({ summary: 'Get brand by ID (payment secrets excluded by @Exclude)' })
   @ApiResponse({ status: 200, description: 'Brand found' })
   @ApiResponse({ status: 404, description: 'Brand not found' })
   async findById(@Param('id', ParseIntPipe) id: number) {

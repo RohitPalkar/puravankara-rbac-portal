@@ -1,3 +1,4 @@
+import { Exclude } from 'class-transformer';
 import {
   Entity,
   Column,
@@ -14,6 +15,7 @@ export class UserAuth {
   @PrimaryColumn({ name: 'user_id' })
   userId: string;
 
+  @Exclude()
   @Column({ name: 'password_hash', nullable: true })
   passwordHash: string;
 
@@ -23,9 +25,11 @@ export class UserAuth {
   @Column({ name: 'last_login', type: 'timestamptz', nullable: true })
   lastLogin: Date;
 
+  @Exclude()
   @Column({ name: 'failed_attempts', type: 'integer', default: 0 })
   failedAttempts: number;
 
+  @Exclude()
   @Column({ name: 'is_locked', type: 'boolean', default: false })
   isLocked: boolean;
 

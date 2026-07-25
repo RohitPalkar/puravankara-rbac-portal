@@ -49,18 +49,8 @@ export interface CompiledPermissions {
   scope?: ScopeInfo;
 }
 
-// Future: EffectivePermission (renamed from CompiledPermissions)
-// interface EffectivePermission {
-//   version: string;
-//   generatedAt: string;
-//   expiresAt: string;
-//   scope: { resources: { zones: ResourceInfo[]; projects: ResourceInfo[] } };
-//   permissions: { modules: any[]; subModules: any[]; actions: any[] };
-// }
-
 export interface AuthResponse {
   accessToken: string;
-  refreshToken: string;
   expiresIn: number;
   user: AuthUser;
   permissions?: CompiledPermissions;

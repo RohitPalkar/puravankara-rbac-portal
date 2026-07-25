@@ -48,9 +48,8 @@ export class AllExceptionsFilter implements ExceptionFilter {
 
     response.status(status).json({
       statusCode: status,
-      message: Array.isArray(message) ? message : [message],
+      message: Array.isArray(message) ? message.join('; ') : message,
       data: null,
-      timestamp: new Date().toISOString(),
     });
   }
 }

@@ -229,7 +229,6 @@ export class AuthService {
 
     return {
       accessToken: tokens.accessToken,
-      refreshToken: tokens.refreshToken,
       expiresIn: tokens.expiresIn,
       user: {
         empId: user.empId,
