@@ -271,7 +271,7 @@ export class PermissionCompilerService {
       projectIds = accessRows.map((p) => Number(p.project_id));
 
       if (projectIds.length === 0) {
-        const allProjects = await this.projectRepo.find({ select: ['id'] });
+        const allProjects = await this.projectRepo.find({ select: { id: true } });
         projectIds = allProjects.map((p) => p.id);
       }
 
