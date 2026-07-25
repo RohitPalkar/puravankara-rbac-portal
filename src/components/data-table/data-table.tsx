@@ -344,154 +344,144 @@ export function DataTable({
         </Box>
       )}
 
-      <Box
+      <DataGrid
+        rows={isServerSide ? rows : filteredRows}
+        columns={processedColumns}
+        loading={loading}
+        getRowId={getRowId ?? ((row) => row.id)}
+        onRowClick={(params) => onRowClick?.(params.row)}
+        paginationMode={paginationMode}
+        {...(isServerSide && paginationModel ? { paginationModel } : {})}
+        {...(isServerSide && onPaginationModelChange ? { onPaginationModelChange } : {})}
+        {...(isServerSide && totalRowCount !== undefined ? { rowCount: totalRowCount } : {})}
+        {...(columnHeaderHeight ? { columnHeaderHeight } : {})}
+        initialState={isServerSide ? undefined : { pagination: { paginationModel: { pageSize: 10 } } }}
+        pageSizeOptions={[10, 25, 50]}
+        disableRowSelectionOnClick
+        disableColumnMenu
+        disableColumnResize
+        autoHeight
         sx={{
           maxHeight: gridMaxHeight,
-          overflow: 'auto',
-          position: 'relative',
-          ...(isEmpty ? { minHeight: 200 } : {}),
-        }}
-      >
-        <DataGrid
-          rows={isServerSide ? rows : filteredRows}
-          columns={processedColumns}
-          loading={loading}
-          getRowId={getRowId ?? ((row) => row.id)}
-          onRowClick={(params) => onRowClick?.(params.row)}
-          paginationMode={paginationMode}
-          {...(isServerSide && paginationModel ? { paginationModel } : {})}
-          {...(isServerSide && onPaginationModelChange ? { onPaginationModelChange } : {})}
-          {...(isServerSide && totalRowCount !== undefined ? { rowCount: totalRowCount } : {})}
-          {...(columnHeaderHeight ? { columnHeaderHeight } : {})}
-          initialState={isServerSide ? undefined : { pagination: { paginationModel: { pageSize: 10 } } }}
-          pageSizeOptions={[10, 25, 50]}
-          disableRowSelectionOnClick
-          disableColumnMenu
-          disableColumnResize
-          autoHeight
-          slots={{
-            footer: () => (
-              <DataGridFooter
-                rowCount={displayRowCount}
-                page={currentPage}
-                pageSize={currentPageSize}
-              />
-            ),
-            noRowsOverlay: () => (
-              <EmptyStateContent hasSearch={hasSearchActive} searchPlaceholder={searchPlaceholder} />
-            ),
-            noResultsOverlay: () => (
-              <EmptyStateContent hasSearch={hasSearchActive} searchPlaceholder={searchPlaceholder} />
-            ),
-            loadingOverlay: () => null,
-          }}
-          getRowHeight={getRowHeight ?? (() => DEFAULT_ROW_HEIGHT)}
-          sx={{
-            borderRadius: 0,
-            border: 'none',
-            minWidth: processedColumns.reduce((sum, col) => sum + (typeof col.width === 'number' ? col.width : 150), 0),
-            '& .MuiDataGrid-main': {
-              position: 'unset',
+          borderRadius: 0,
+          border: 'none',
+          minWidth: processedColumns.reduce((sum, col) => sum + (typeof col.width === 'number' ? col.width : 150), 0),
+          '& .MuiDataGrid-columnHeaders': {
+            position: 'sticky',
+            top: 0,
+            zIndex: 10,
+            borderBottom: '1px solid',
+            borderColor: 'divider',
+            bgcolor: 'grey.100',
+            minHeight: `${columnHeaderHeight ?? 48}px !important`,
+            maxHeight: `${columnHeaderHeight ?? 48}px !important`,
+            lineHeight: `${columnHeaderHeight ?? 48}px !important`,
+          },
+          '& .MuiDataGrid-columnHeader': {
+            px: 2,
+            py: 0,
+          },
+          '& .MuiDataGrid-columnHeaderTitle': {
+            fontWeight: 700,
+            fontSize: '0.75rem',
+            color: 'text.secondary',
+            textTransform: 'uppercase',
+            letterSpacing: '0.04em',
+          },
+          '& .MuiDataGrid-columnHeader:focus': {
+            outline: 'none',
+          },
+          '& .MuiDataGrid-columnHeader:focus-within': {
+            outline: 'none',
+          },
+          '& .MuiDataGrid-cell': {
+            px: 2,
+            py: 0,
+            display: 'flex',
+            alignItems: 'center',
+            fontSize: '0.8125rem',
+            lineHeight: `${DEFAULT_ROW_HEIGHT}px`,
+            minHeight: `${DEFAULT_ROW_HEIGHT}px !important`,
+            maxHeight: `${DEFAULT_ROW_HEIGHT}px !important`,
+            '&:focus': { outline: 'none' },
+            '&:focus-within': { outline: 'none' },
+          },
+          '& .MuiDataGrid-row': {
+            minHeight: `${DEFAULT_ROW_HEIGHT}px !important`,
+            maxHeight: `${DEFAULT_ROW_HEIGHT}px !important`,
+            cursor: onRowClick ? 'pointer' : 'default',
+            '&:hover': {
+              bgcolor: 'primary.lighter',
             },
-            '& .MuiDataGrid-columnHeaders': {
-              position: 'sticky',
-              top: 0,
-              zIndex: 10,
-              borderBottom: '1px solid',
-              borderColor: 'divider',
-              bgcolor: 'grey.100',
-              minHeight: `${columnHeaderHeight ?? 48}px !important`,
-              maxHeight: `${columnHeaderHeight ?? 48}px !important`,
-              lineHeight: `${columnHeaderHeight ?? 48}px !important`,
+            '&.Mui-selected': {
+              bgcolor: 'primary.lighter',
             },
-            '& .MuiDataGrid-columnHeader': {
-              px: 2,
-              py: 0,
+            '&:nth-of-type(even)': {
+              bgcolor: 'grey.50',
             },
-            '& .MuiDataGrid-columnHeaderTitle': {
-              fontWeight: 700,
-              fontSize: '0.75rem',
-              color: 'text.secondary',
-              textTransform: 'uppercase',
-              letterSpacing: '0.04em',
+            '&:nth-of-type(even):hover': {
+              bgcolor: 'primary.lighter',
             },
-            '& .MuiDataGrid-columnHeader:focus': {
-              outline: 'none',
+            ...(dataGridSx?.['& .MuiDataGrid-row'] || {}),
+          },
+          '& .MuiDataGrid-cell--textLeft': { justifyContent: 'flex-start' },
+          '& .MuiDataGrid-cell--textCenter': { justifyContent: 'center' },
+          '& .MuiDataGrid-cell--textRight': { justifyContent: 'flex-end' },
+          '& .MuiDataGrid-withBorder': { borderColor: 'divider' },
+          '& .MuiDataGrid-footerContainer': {
+            borderTop: '1px solid',
+            borderColor: 'divider',
+            bgcolor: 'background.paper',
+            minHeight: 52,
+            position: 'sticky',
+            bottom: 0,
+            zIndex: 10,
+          },
+          '& .MuiDataGrid-overlayWrapperInner': {
+            position: 'relative',
+            height: 'auto',
+          },
+          '& .MuiDataGrid-virtualScroller': {
+            overflow: 'auto !important',
+          },
+          '& .MuiTablePagination-root': {
+            '& .MuiTablePagination-displayedRows': {
+              display: 'none',
             },
-            '& .MuiDataGrid-columnHeader:focus-within': {
-              outline: 'none',
-            },
-            '& .MuiDataGrid-cell': {
-              px: 2,
-              py: 0,
-              display: 'flex',
-              alignItems: 'center',
+            '& .MuiTablePagination-selectLabel': {
               fontSize: '0.8125rem',
-              lineHeight: `${DEFAULT_ROW_HEIGHT}px`,
-              minHeight: `${DEFAULT_ROW_HEIGHT}px !important`,
-              maxHeight: `${DEFAULT_ROW_HEIGHT}px !important`,
-              '&:focus': { outline: 'none' },
-              '&:focus-within': { outline: 'none' },
+              color: 'text.secondary',
             },
-            '& .MuiDataGrid-row': {
-              minHeight: `${DEFAULT_ROW_HEIGHT}px !important`,
-              maxHeight: `${DEFAULT_ROW_HEIGHT}px !important`,
-              cursor: onRowClick ? 'pointer' : 'default',
-              '&:hover': {
-                bgcolor: 'primary.lighter',
-              },
-              '&.Mui-selected': {
-                bgcolor: 'primary.lighter',
-              },
-              '&:nth-of-type(even)': {
-                bgcolor: 'grey.50',
-              },
-              '&:nth-of-type(even):hover': {
-                bgcolor: 'primary.lighter',
-              },
-              ...(dataGridSx?.['& .MuiDataGrid-row'] || {}),
+            '& .MuiTablePagination-select': {
+              fontSize: '0.8125rem',
             },
-            '& .MuiDataGrid-cell--textLeft': { justifyContent: 'flex-start' },
-            '& .MuiDataGrid-cell--textCenter': { justifyContent: 'center' },
-            '& .MuiDataGrid-cell--textRight': { justifyContent: 'flex-end' },
-            '& .MuiDataGrid-withBorder': { borderColor: 'divider' },
-            '& .MuiDataGrid-footerContainer': {
-              borderTop: '1px solid',
-              borderColor: 'divider',
-              bgcolor: 'background.paper',
-              minHeight: 52,
-            },
-            '& .MuiDataGrid-overlayWrapperInner': {
-              position: 'relative',
-              height: 'auto',
-            },
-            '& .MuiDataGrid-virtualScroller': {
-              overflow: 'hidden !important',
-            },
-            '& .MuiDataGrid-virtualScrollerContent': {
-              overflow: 'hidden',
-            },
-            '& .MuiTablePagination-root': {
-              '& .MuiTablePagination-displayedRows': {
-                display: 'none',
-              },
-              '& .MuiTablePagination-selectLabel': {
-                fontSize: '0.8125rem',
-                color: 'text.secondary',
-              },
-              '& .MuiTablePagination-select': {
+            '& .MuiTablePagination-actions': {
+              '& .MuiButtonBase-root': {
                 fontSize: '0.8125rem',
               },
-              '& .MuiTablePagination-actions': {
-                '& .MuiButtonBase-root': {
-                  fontSize: '0.8125rem',
-                },
-              },
             },
-            ...(dataGridSx || {}),
-          } as any}
-        />
-      </Box>
+          },
+          ...(isEmpty ? { minHeight: 200 } : {}),
+          ...(dataGridSx || {}),
+        } as any}
+        slots={{
+          footer: () => (
+            <DataGridFooter
+              rowCount={displayRowCount}
+              page={currentPage}
+              pageSize={currentPageSize}
+            />
+          ),
+          noRowsOverlay: () => (
+            <EmptyStateContent hasSearch={hasSearchActive} searchPlaceholder={searchPlaceholder} />
+          ),
+          noResultsOverlay: () => (
+            <EmptyStateContent hasSearch={hasSearchActive} searchPlaceholder={searchPlaceholder} />
+          ),
+          loadingOverlay: () => null,
+        }}
+        getRowHeight={getRowHeight ?? (() => DEFAULT_ROW_HEIGHT)}
+      />
     </Card>
   );
 }

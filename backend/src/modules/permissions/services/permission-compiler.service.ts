@@ -16,6 +16,7 @@ import { PermissionSnapshotHistory } from '../entities/permission-snapshot-histo
 import { Module } from '../../product-catalog/entities/module.entity';
 import { SubModule } from '../../product-catalog/entities/sub-module.entity';
 import { Action } from '../../product-catalog/entities/action.entity';
+import { Project } from '../../projects/entities/project.entity';
 import { PermissionCacheService } from './permission-cache.service';
 import { PermissionProfile } from '../entities/permission-profile.entity';
 import { PermissionProfileModule } from '../entities/permission-profile-module.entity';
@@ -75,6 +76,8 @@ export class PermissionCompilerService {
     private readonly profileSubModuleRepo: Repository<PermissionProfileSubModule>,
     @InjectRepository(PermissionProfileProject)
     private readonly profileProjectRepo: Repository<PermissionProfileProject>,
+    @InjectRepository(Project)
+    private readonly projectRepo: Repository<Project>,
     private readonly cacheService: PermissionCacheService,
   ) {}
 
@@ -260,12 +263,21 @@ export class PermissionCompilerService {
     let projectIds: number[];
 
     if (isSuperAdmin) {
-      const projects = await this.accessRepo
+      const accessRows = await this.accessRepo
         .createQueryBuilder('upa')
         .select('upa.project_id')
         .distinct(true)
         .getRawMany();
-      projectIds = projects.map((p) => Number(p.project_id));
+      projectIds = accessRows.map((p) => Number(p.project_id));
+
+      if (projectIds.length === 0) {
+        const allProjects = await this.projectRepo.find({ select: ['id'] });
+        projectIds = allProjects.map((p) => p.id);
+      }
+
+      if (projectIds.length === 0) {
+        projectIds = [0];
+      }
     } else {
       const directIds = (await this.accessRepo.find({ where: { userId } })).map(
         (a) => a.projectId,

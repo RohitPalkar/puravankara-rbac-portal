@@ -15,7 +15,6 @@ import Stack from '@mui/material/Stack';
 import Select from '@mui/material/Select';
 import Checkbox from '@mui/material/Checkbox';
 import MenuItem from '@mui/material/MenuItem';
-import Skeleton from '@mui/material/Skeleton';
 import TextField from '@mui/material/TextField';
 import InputLabel from '@mui/material/InputLabel';
 import Typography from '@mui/material/Typography';
@@ -239,15 +238,12 @@ export default forwardRef<ProjectMappingStepHandle, Props>(({ initialData }: Pro
     setErrList([]);
   }, []);
 
-  if (!activeModules.length || !activeDepartments.length || !activeRoles.length) {
+  if (!activeModules.length && !activeDepartments.length && !activeRoles.length) {
     return (
       <Box sx={{ p: 3 }}>
-        <Stack spacing={2}>
-          <Skeleton variant="rectangular" height={48} sx={{ borderRadius: 1 }} />
-          <Skeleton variant="rectangular" height={48} sx={{ borderRadius: 1 }} />
-          <Skeleton variant="rectangular" height={48} sx={{ borderRadius: 1 }} />
-          <Skeleton variant="rectangular" height={200} sx={{ borderRadius: 1 }} />
-        </Stack>
+        <Alert severity="warning">
+          No master data available. Please configure Departments, Roles, and Modules in the system before creating a user.
+        </Alert>
       </Box>
     );
   }
@@ -274,16 +270,24 @@ export default forwardRef<ProjectMappingStepHandle, Props>(({ initialData }: Pro
             onChange={(e) => { setZoneIds(e.target.value as number[]); setErrList([]); }}
             renderValue={(selected) => (
               <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                {(selected as number[]).map((id) => {
-                  const zone = activeZones.find((z: Zone) => z.id === id);
-                  return <Chip key={id} label={zone?.name ?? id} size="small" />;
-                })}
+                {(selected as number[]).length === 0 ? (
+                  <Typography variant="body2" color="text.disabled">Select zones</Typography>
+                ) : (
+                  (selected as number[]).map((id) => {
+                    const zone = activeZones.find((z: Zone) => z.id === id);
+                    return <Chip key={id} label={zone?.name ?? id} size="small" />;
+                  })
+                )}
               </Box>
             )}
           >
-            {activeZones.map((zone: Zone) => (
+            {activeZones.length > 0 ? activeZones.map((zone: Zone) => (
               <MenuItem key={zone.id} value={zone.id}>{zone.name}</MenuItem>
-            ))}
+            )) : (
+              <MenuItem disabled value="">
+                <Typography variant="body2" color="text.disabled">No zones available</Typography>
+              </MenuItem>
+            )}
           </Select>
         </FormControl>
 

@@ -202,9 +202,7 @@ export class AuthService {
 
     let permissions: any = undefined;
     try {
-      this.compilerService
-        .compileForAllUserProjects(user.empId)
-        .catch((err) => this.logger.error('Failed to compile permissions for user after login', err));
+      await this.compilerService.compileForAllUserProjects(user.empId);
       const accessRows = await this.accessRepo.find({
         where: { userId: user.empId },
         relations: { project: true },
@@ -384,6 +382,24 @@ export class AuthService {
       relations: { role: true, department: true },
     });
 
+    let permissions: any = undefined;
+    try {
+      const snapshot = await this.compilerService.getCompiled(empId, 0);
+      if (snapshot.modules.length > 0) {
+        permissions = {
+          projects: [
+            {
+              id: 0,
+              name: 'All Projects',
+              modules: snapshot.modules,
+            },
+          ],
+        };
+      }
+    } catch {
+      // permissions are optional in profile response
+    }
+
     return {
       user: {
         empId: user.empId,
@@ -401,6 +417,7 @@ export class AuthService {
         hierarchyLevelRank: ur.role?.hierarchyLevelRank ?? 0,
         isSystemRole: ur.role?.isSystemRole ?? false,
       })),
+      permissions,
     };
   }
 
