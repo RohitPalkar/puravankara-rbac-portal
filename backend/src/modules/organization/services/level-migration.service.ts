@@ -33,7 +33,10 @@ export interface LevelImpactPreview {
   };
   dependencies: {
     users: { count: number };
-    permissions: { count: number; modules: { moduleId: number; name: string; count: number }[] };
+    permissions: {
+      count: number;
+      modules: { moduleId: number; name: string; count: number }[];
+    };
     projects: { count: number };
     approvals: { count: number; active: number };
     reporting: { count: number };
@@ -41,12 +44,20 @@ export interface LevelImpactPreview {
   };
   autoMerge: {
     eligible: boolean;
-    candidateLevel: { id: number; levelNumber: number; roleName: string } | null;
+    candidateLevel: {
+      id: number;
+      levelNumber: number;
+      roleName: string;
+    } | null;
     direction: 'up' | 'down' | null;
   };
   protected: boolean;
   protectionReason: string | null;
-  availableDestinations: { id: number; levelNumber: number; roleName: string }[];
+  availableDestinations: {
+    id: number;
+    levelNumber: number;
+    roleName: string;
+  }[];
 }
 
 export interface LevelRemoveResult {
@@ -93,7 +104,9 @@ export class LevelMigrationService {
     departmentId: number,
     levelNumber: number,
   ): Promise<LevelImpactPreview> {
-    const dept = await this.deptRepo.findOne({ where: { id: departmentId, deletedAt: null } });
+    const dept = await this.deptRepo.findOne({
+      where: { id: departmentId, deletedAt: null },
+    });
     if (!dept) throw new NotFoundException('Department not found');
 
     const sourceLevel = await this.levelRepo.findOne({
@@ -112,13 +125,14 @@ export class LevelMigrationService {
 
     const roleId = sourceLevel.roleId;
 
-    const [userCount, permCount, rppCount, approvalCount, reportingCount] = await Promise.all([
-      this.userRoleRepo.count({ where: { roleId } }),
-      this.rapRepo.count({ where: { roleId } }),
-      this.rppRepo.count({ where: { roleId } }),
-      this.approvalStepRepo.count({ where: { roleId } }),
-      this.reportingLineRepo.count({ where: { levelRank: levelNumber } }),
-    ]);
+    const [userCount, permCount, rppCount, approvalCount, reportingCount] =
+      await Promise.all([
+        this.userRoleRepo.count({ where: { roleId } }),
+        this.rapRepo.count({ where: { roleId } }),
+        this.rppRepo.count({ where: { roleId } }),
+        this.approvalStepRepo.count({ where: { roleId } }),
+        this.reportingLineRepo.count({ where: { levelRank: levelNumber } }),
+      ]);
 
     const permissionModules = await this.rapRepo
       .createQueryBuilder('rap')
@@ -132,12 +146,12 @@ export class LevelMigrationService {
       where: { roleId, deletedAt: null },
     });
 
-    const projectCount = await this.rppRepo
+    const projectRow = await this.rppRepo
       .createQueryBuilder('rpp')
       .where('rpp.role_id = :roleId', { roleId })
       .select('COUNT(DISTINCT rpp.project_id)', 'count')
-      .getRawOne()
-      .then((r) => Number(r?.count ?? 0));
+      .getRawOne();
+    const projectCount = Number(projectRow?.count ?? 0);
 
     const isDepartmentAdmin = dept.departmentAdminId
       ? !!(await this.userRoleRepo.findOne({
@@ -179,10 +193,10 @@ export class LevelMigrationService {
         users: { count: userCount },
         permissions: {
           count: permCount + rppCount,
-          modules: permissionModules.map((m: any) => ({
-            moduleId: Number(m.moduleId),
+          modules: permissionModules.map((m) => ({
+            moduleId: m.moduleId,
             name: `Module #${m.moduleId}`,
-            count: Number(m.count),
+            count: m.count,
           })),
         },
         projects: { count: projectCount },
@@ -191,7 +205,11 @@ export class LevelMigrationService {
         isDepartmentAdmin,
       },
       autoMerge: {
-        eligible: userCount === 0 && permCount === 0 && approvalCount === 0 && reportingCount === 0,
+        eligible:
+          userCount === 0 &&
+          permCount === 0 &&
+          approvalCount === 0 &&
+          reportingCount === 0,
         candidateLevel: autoMergeResult.candidate,
         direction: autoMergeResult.direction,
       },
@@ -207,7 +225,9 @@ export class LevelMigrationService {
     dto: RemoveLevelDto,
     performedBy?: string,
   ): Promise<LevelRemoveResult> {
-    const dept = await this.deptRepo.findOne({ where: { id: departmentId, deletedAt: null } });
+    const dept = await this.deptRepo.findOne({
+      where: { id: departmentId, deletedAt: null },
+    });
     if (!dept) throw new NotFoundException('Department not found');
 
     const sourceLevel = await this.levelRepo.findOne({
@@ -231,7 +251,8 @@ export class LevelMigrationService {
     }
 
     const destinationLevel = allLevels.find(
-      (l) => l.levelNumber === dto.destinationLevelNumber && l.id !== sourceLevel.id,
+      (l) =>
+        l.levelNumber === dto.destinationLevelNumber && l.id !== sourceLevel.id,
     );
     if (!destinationLevel) {
       throw new BadRequestException('Destination hierarchy level not found');
@@ -246,7 +267,9 @@ export class LevelMigrationService {
       where: { roleId: sourceLevel.roleId },
       select: { userId: true },
     });
-    const affectedUserIds = [...new Set(affectedUserRoles.map((ur) => ur.userId))];
+    const affectedUserIds = [
+      ...new Set(affectedUserRoles.map((ur) => ur.userId)),
+    ];
 
     // Delegate to RoleMigrationService for all data movement
     const roleResult = await this.roleMigrationService.remove(
@@ -296,7 +319,9 @@ export class LevelMigrationService {
         source: 'level-migration',
       });
     } catch (auditErr) {
-      this.logger.warn(`Failed to create audit log: ${(auditErr as Error).message}`);
+      this.logger.warn(
+        `Failed to create audit log: ${(auditErr as Error).message}`,
+      );
     }
 
     // Invalidate permission cache for affected users
@@ -337,7 +362,9 @@ export class LevelMigrationService {
       return { autoMerge: false };
     }
 
-    const dept = await this.deptRepo.findOne({ where: { id: departmentId, deletedAt: null } });
+    const dept = await this.deptRepo.findOne({
+      where: { id: departmentId, deletedAt: null },
+    });
     if (!dept) throw new NotFoundException('Department not found');
 
     const sourceLevel = await this.levelRepo.findOne({
@@ -347,7 +374,9 @@ export class LevelMigrationService {
 
     // Auto-merge: delegate to RoleMigrationService
     const candidate = impact.autoMerge.candidateLevel;
-    const destLevel = await this.levelRepo.findOne({ where: { id: candidate.id } });
+    const destLevel = await this.levelRepo.findOne({
+      where: { id: candidate.id },
+    });
     if (!destLevel) throw new NotFoundException('Destination level not found');
 
     await this.roleMigrationService.remove(
@@ -383,7 +412,9 @@ export class LevelMigrationService {
         source: 'level-migration',
       });
     } catch (auditErr) {
-      this.logger.warn(`Failed to create audit log: ${(auditErr as Error).message}`);
+      this.logger.warn(
+        `Failed to create audit log: ${(auditErr as Error).message}`,
+      );
     }
 
     return {
@@ -408,11 +439,16 @@ export class LevelMigrationService {
     // Rule 1: Last remaining level
     const activeLevels = allLevels.filter((l) => l.isActive);
     if (activeLevels.length <= 1) {
-      return { deletable: false, reason: 'Cannot delete the last remaining hierarchy level' };
+      return {
+        deletable: false,
+        reason: 'Cannot delete the last remaining hierarchy level',
+      };
     }
 
     // Rule 2: System roles
-    const role = await this.roleRepo.findOne({ where: { id: roleId, deletedAt: null } });
+    const role = await this.roleRepo.findOne({
+      where: { id: roleId, deletedAt: null },
+    });
     if (role?.isSystemRole) {
       return {
         deletable: false,
@@ -443,7 +479,8 @@ export class LevelMigrationService {
       if (adminRole) {
         return {
           deletable: false,
-          reason: 'Department administrator is assigned at this level. Reassign the admin first.',
+          reason:
+            'Department administrator is assigned at this level. Reassign the admin first.',
         };
       }
     }
@@ -466,15 +503,25 @@ export class LevelMigrationService {
     const higher = sorted.find((l) => l.levelNumber > sourceLevelNumber);
     if (higher) {
       return {
-        candidate: { id: higher.id, levelNumber: higher.levelNumber, roleName: higher.roleName },
+        candidate: {
+          id: higher.id,
+          levelNumber: higher.levelNumber,
+          roleName: higher.roleName,
+        },
         direction: 'up',
       };
     }
 
-    const lower = sorted.reverse().find((l) => l.levelNumber < sourceLevelNumber);
+    const lower = sorted
+      .reverse()
+      .find((l) => l.levelNumber < sourceLevelNumber);
     if (lower) {
       return {
-        candidate: { id: lower.id, levelNumber: lower.levelNumber, roleName: lower.roleName },
+        candidate: {
+          id: lower.id,
+          levelNumber: lower.levelNumber,
+          roleName: lower.roleName,
+        },
         direction: 'down',
       };
     }

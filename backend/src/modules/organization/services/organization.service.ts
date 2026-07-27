@@ -162,7 +162,7 @@ export class DepartmentService {
           const role = roleNameToRole.get(hl.roleName);
           return queryRunner.manager.create(DepartmentHierarchyLevel, {
             departmentId: savedDept.id,
-            roleId: role!.id,
+            roleId: role.id,
             levelNumber: hl.levelNumber,
             roleName: hl.roleName,
             displayOrder: hl.displayOrder,
@@ -271,7 +271,7 @@ export class DepartmentService {
             const role = roleNameToRole.get(hl.roleName);
             return queryRunner.manager.create(DepartmentHierarchyLevel, {
               departmentId: id,
-              roleId: role!.id,
+              roleId: role.id,
               levelNumber: hl.levelNumber,
               roleName: hl.roleName,
               displayOrder: hl.displayOrder,

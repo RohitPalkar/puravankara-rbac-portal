@@ -17,11 +17,13 @@ import {
 } from './services/organization.service';
 import { DepartmentRoleService } from './services/department-role.service';
 import { RoleMigrationService } from './services/role-migration.service';
+import { LevelMigrationService } from './services/level-migration.service';
 import {
   DepartmentController,
   RoleController,
 } from './controllers/organization.controller';
 import { DepartmentRoleController } from './controllers/department-role.controller';
+import { LevelMigrationController } from './controllers/level-migration.controller';
 
 @Module({
   imports: [
@@ -39,12 +41,18 @@ import { DepartmentRoleController } from './controllers/department-role.controll
     PermissionsModule,
     AuditModule,
   ],
-  controllers: [DepartmentController, RoleController, DepartmentRoleController],
+  controllers: [
+    DepartmentController,
+    RoleController,
+    DepartmentRoleController,
+    LevelMigrationController,
+  ],
   providers: [
     DepartmentService,
     RoleService,
     DepartmentRoleService,
     RoleMigrationService,
+    LevelMigrationService,
   ],
   exports: [TypeOrmModule],
 })
