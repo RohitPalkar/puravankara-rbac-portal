@@ -41,6 +41,7 @@ export default function UserListPage() {
     };
     if (search) params.search = search;
     if (filters.status) params.isActive = filters.status === 'active';
+    if (filters.reportsTo) params.reportsTo = filters.reportsTo;
     return params;
   }, [search, paginationModel, filters]);
 
@@ -79,10 +80,16 @@ export default function UserListPage() {
     {
       key: 'status',
       label: 'Status',
+      type: 'select' as const,
       options: [
         { value: 'active', label: 'Active' },
         { value: 'inactive', label: 'Inactive' },
       ],
+    },
+    {
+      key: 'reportsTo',
+      label: 'Reporting Manager',
+      type: 'text' as const,
     },
   ];
 
@@ -116,6 +123,14 @@ export default function UserListPage() {
     },
     {
       field: 'roleName', headerName: 'Role', width: 150,
+      renderCell: (params) => (
+        <Typography variant="body2" noWrap>
+          {params.value || '-'}
+        </Typography>
+      ),
+    },
+    {
+      field: 'reportsToName', headerName: 'Reports To', width: 160,
       renderCell: (params) => (
         <Typography variant="body2" noWrap>
           {params.value || '-'}

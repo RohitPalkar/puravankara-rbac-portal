@@ -22,7 +22,8 @@ import { usePopover, CustomPopover } from 'src/components/custom-popover';
 export type FilterOption = {
   key: string;
   label: string;
-  options: { value: string; label: string }[];
+  type?: 'select' | 'text';
+  options?: { value: string; label: string }[];
 };
 
 export type GroupHeader = {
@@ -342,24 +343,35 @@ export function DataTable({
               <Stack spacing={1.5} sx={{ p: 2, minWidth: 220 }}>
                 <Typography variant="subtitle2">Filter By</Typography>
                 {filterOptions && filterOptions.length > 0 ? (
-                  filterOptions.map((f) => (
-                    <TextField
-                      key={f.key}
-                      select
-                      size="small"
-                      label={f.label}
-                      value={filters[f.key] ?? ''}
-                      onChange={(e) => setFilters((prev) => ({ ...prev, [f.key]: e.target.value }))}
-                      fullWidth
-                    >
-                      <MenuItem value="">All</MenuItem>
-                      {f.options.map((o) => (
-                        <MenuItem key={o.value} value={o.value}>
-                          {o.label}
-                        </MenuItem>
-                      ))}
-                    </TextField>
-                  ))
+                  filterOptions.map((f) =>
+                    f.type === 'text' ? (
+                      <TextField
+                        key={f.key}
+                        size="small"
+                        label={f.label}
+                        value={filters[f.key] ?? ''}
+                        onChange={(e) => setFilters((prev) => ({ ...prev, [f.key]: e.target.value }))}
+                        fullWidth
+                      />
+                    ) : (
+                      <TextField
+                        key={f.key}
+                        select
+                        size="small"
+                        label={f.label}
+                        value={filters[f.key] ?? ''}
+                        onChange={(e) => setFilters((prev) => ({ ...prev, [f.key]: e.target.value }))}
+                        fullWidth
+                      >
+                        <MenuItem value="">All</MenuItem>
+                        {f.options?.map((o) => (
+                          <MenuItem key={o.value} value={o.value}>
+                            {o.label}
+                          </MenuItem>
+                        ))}
+                      </TextField>
+                    )
+                  )
                 ) : (
                   <Typography variant="body2" color="text.secondary" sx={{ py: 1 }}>
                     No filter options available

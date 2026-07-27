@@ -32,4 +32,9 @@ export class PaginationQueryDto {
   @IsOptional()
   @IsEnum(['ASC', 'DESC'])
   sortOrder?: 'ASC' | 'DESC' = 'DESC';
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  reportsTo?: string;
 }

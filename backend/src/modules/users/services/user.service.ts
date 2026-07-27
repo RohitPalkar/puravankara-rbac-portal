@@ -80,10 +80,16 @@ export class UserService {
       page = 1,
       limit = 20,
       search,
+      reportsTo,
       sortBy = 'createdAt',
       sortOrder = 'DESC',
     } = query;
-    const where: any = { deletedAt: null, isActive: true };
+    const where: any = { deletedAt: null };
+
+    const rawIsActive = query['isActive'] as string | undefined;
+    if (rawIsActive !== undefined) {
+      where.isActive = rawIsActive === 'true';
+    }
 
     if (search) {
       where.$or = [
@@ -93,17 +99,48 @@ export class UserService {
       ];
     }
 
-    const [data, total] = await this.repository.findAndCount({
-      where,
-      order: { [sortBy]: sortOrder },
-      skip: (page - 1) * limit,
-      take: limit,
-      relations: { department: true },
-    });
+    let userQuery = this.repository
+      .createQueryBuilder('u')
+      .where('u.deleted_at IS NULL')
+      .orderBy(`u.${sortBy}`, sortOrder)
+      .skip((page - 1) * limit)
+      .take(limit);
+
+    if (rawIsActive !== undefined) {
+      userQuery = userQuery.andWhere('u.is_active = :isActive', { isActive: rawIsActive === 'true' });
+    }
+
+    if (search) {
+      userQuery = userQuery.andWhere(
+        '(u.name ILIKE :search OR u.emp_id ILIKE :search OR u.email ILIKE :search)',
+        { search: `%${search}%` },
+      );
+    }
+
+    if (reportsTo) {
+      userQuery = userQuery
+        .innerJoin('user_reporting_lines', 'url', 'url.user_id = u.emp_id AND url.level_rank = 1')
+        .innerJoin('users', 'rm', 'rm.emp_id = url.reports_to_user_id')
+        .andWhere(
+          '(rm.name ILIKE :reportsTo OR rm.emp_id ILIKE :reportsTo)',
+          { reportsTo: `%${reportsTo}%` },
+        );
+    }
+
+    userQuery = userQuery.leftJoinAndSelect('u.department', 'department');
+
+    const [data, total] = await userQuery.getManyAndCount();
+
+    if (data.length === 0) {
+      return {
+        data: [],
+        meta: { page, limit, total, totalPages: 0 },
+      };
+    }
 
     const empIds = data.map((u) => u.empId);
 
-    const [userRoles, userZones, projectCounts] = await Promise.all([
+    const [userRoles, userZones, projectCounts, reportingLines] = await Promise.all([
       this.userRoleRepository.find({
         where: { userId: In(empIds) },
         relations: { role: true, department: true },
@@ -119,6 +156,10 @@ export class UserService {
         .where('upa.user_id IN (:...empIds)', { empIds })
         .groupBy('upa.user_id')
         .getRawMany(),
+      this.reportingLineRepository.find({
+        where: { userId: In(empIds), levelRank: 1 },
+        relations: { reportsTo: true },
+      }),
     ]);
 
     const roleMap = new Map<
@@ -148,6 +189,13 @@ export class UserService {
       projectCountMap.set(row.userId, Number(row.count));
     }
 
+    const reportsToMap = new Map<string, string>();
+    for (const rl of reportingLines) {
+      if (rl.reportsTo) {
+        reportsToMap.set(rl.userId, rl.reportsTo.name);
+      }
+    }
+
     const enriched = data.map((user) => {
       const role = roleMap.get(user.empId);
       return {
@@ -155,6 +203,7 @@ export class UserService {
         roleName: role?.roleName ?? null,
         zoneNames: zoneMap.get(user.empId) ?? [],
         projectCount: projectCountMap.get(user.empId) ?? 0,
+        reportsToName: reportsToMap.get(user.empId) ?? null,
       };
     });
 
