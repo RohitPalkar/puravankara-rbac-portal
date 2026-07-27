@@ -693,10 +693,15 @@ export class PermissionService {
     moduleId: number,
     actionId: number,
   ): Promise<boolean> {
-    const profiles = await this.profileRepo.find({
-      where: { userId },
-      relations: { modules: { subModules: { projects: true } } },
-    });
+    let profiles: PermissionProfile[] = [];
+    try {
+      profiles = await this.profileRepo.find({
+        where: { userId },
+        relations: { modules: { subModules: { projects: true } } },
+      });
+    } catch {
+      return false;
+    }
     if (!profiles.length) return false;
 
     const moduleActions = await this.moduleActionRepo.find({
@@ -815,10 +820,15 @@ export class PermissionService {
         });
 
         // Fetch profile-based module access
-        const profiles = await this.profileRepo.find({
-          where: { userId },
-          relations: { modules: { subModules: { projects: true } } },
-        });
+        let profiles: PermissionProfile[] = [];
+        try {
+          profiles = await this.profileRepo.find({
+            where: { userId },
+            relations: { modules: { subModules: { projects: true } } },
+          });
+        } catch {
+          // profile table may not exist
+        }
 
         if (subModules.length > 0) {
           for (const sm of subModules) {
