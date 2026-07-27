@@ -437,6 +437,7 @@ export class PermissionService {
         name: r.project_name,
       }));
     } else {
+      projectEntities = [];
       const projectIds = await this.getUserProjectIds(userId);
       if (projectIds.length > 0) {
         const placeholders = projectIds.map((_, i) => `$${i + 1}`).join(',');
