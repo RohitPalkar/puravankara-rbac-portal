@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { RawStringPipe } from '../../common/pipes/raw-string.pipe';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { User } from './entities/user.entity';
 import { UserRole } from './entities/user-role.entity';
@@ -67,6 +68,7 @@ import { NotificationsModule } from '../notifications/notifications.module';
     UserZoneService,
     UserReportingLineService,
     UserMetadataService,
+    RawStringPipe,
   ],
   exports: [TypeOrmModule],
 })
