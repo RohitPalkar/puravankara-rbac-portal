@@ -162,11 +162,24 @@ export class UserService {
   }
 
   async findById(id: string): Promise<User & { profiles?: PermissionProfile[] }> {
-    const user = await this.repository.findOne({
-      where: { empId: id },
-      relations: { department: true },
-    });
-    if (!user || user.deletedAt) throw new NotFoundException('User not found');
+    this.logger.debug(`findById called with id="${id}" (typeof=${typeof id})`);
+
+    let user: User | null = null;
+    try {
+      user = await this.repository.findOne({
+        where: { empId: id },
+        relations: { department: true },
+      });
+    } catch (err) {
+      this.logger.warn(`findById ORM error for id="${id}": ${(err as Error).message}`);
+    }
+
+    if (!user || user.deletedAt) {
+      this.logger.warn(
+        `findById: ORM returned no user for id="${id}" (user=${!!user}, deletedAt=${(user as any)?.deletedAt})`,
+      );
+      throw new NotFoundException('User not found');
+    }
 
     const profiles = await this.profileRepo.find({
       where: { userId: id },
