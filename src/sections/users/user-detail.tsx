@@ -1,4 +1,4 @@
-import type { Role, User, Action, Module, Status, Project, SubModule, Department } from 'src/types';
+import type { User, Action, Module, Status, Project, SubModule, Department } from 'src/types';
 
 import { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
@@ -24,7 +24,6 @@ import { paths } from 'src/routes/paths';
 
 import { CONFIG } from 'src/config-global';
 import {
-  useRoleList,
   useUserById,
   useActionList,
   useModuleList,
@@ -48,14 +47,12 @@ export default function UserDetailPage() {
   const navigate = useNavigate();
   const { data: rawUser, isLoading } = useUserById(id!);
   const user = rawUser as unknown as User;
-  const { data: rolesData } = useRoleList();
   const { data: modulesData } = useModuleList();
   const { data: actionsData } = useActionList();
   const { data: projectsData } = useProjectList();
   const { data: subModulesData } = useSubModuleList();
   const { data: departmentsData } = useDepartmentList();
 
-  const roles = (rolesData ?? []) as unknown as Role[];
   const projects = (projectsData ?? []) as unknown as Project[];
   const modules = (modulesData ?? []) as unknown as Module[];
   const actions = (actionsData ?? []) as unknown as Action[];
@@ -68,7 +65,6 @@ export default function UserDetailPage() {
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [departmentId, setDepartmentId] = useState('');
-  const [roleId, setRoleId] = useState('');
   const [status, setStatus] = useState<Status>('active');
   const [selectedProjects, setSelectedProjects] = useState<string[]>([]);
 
@@ -81,7 +77,6 @@ export default function UserDetailPage() {
       setEmail(user.email);
       setPhone(user.phone);
       setDepartmentId(user.departmentId);
-      setRoleId(user.roleId);
       setStatus(user.status);
       setSelectedProjects(user.projects?.map((p) => p.projectId) ?? []);
       setProjectPermissions(
@@ -173,9 +168,6 @@ export default function UserDetailPage() {
             <Box display="grid" gridTemplateColumns={{ xs: '1fr', sm: '1fr 1fr' }} gap={2.5} maxWidth={720}>
               <TextField label="Department" select value={departmentId} onChange={(e) => setDepartmentId(e.target.value)} fullWidth>
                 {departments.map((d) => <MenuItem key={d.id} value={d.id}>{d.name}</MenuItem>)}
-              </TextField>
-              <TextField label="Role" select value={roleId} onChange={(e) => setRoleId(e.target.value)} fullWidth>
-                {roles.map((r) => <MenuItem key={r.id} value={r.id}>{r.name}</MenuItem>)}
               </TextField>
               <TextField label="Hierarchy Level" value={user.level} fullWidth inputProps={{ readOnly: true }} />
               <TextField label="Reporting Manager" value={user.reportingManagerName ?? '-'} fullWidth inputProps={{ readOnly: true }} />
