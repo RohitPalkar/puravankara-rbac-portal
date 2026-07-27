@@ -314,18 +314,16 @@ export default forwardRef<ProjectMappingStepHandle, Props>(({ initialData }: Pro
           </Select>
         </FormControl>
 
-        <FormControl>
-          <InputLabel>Primary Role *</InputLabel>
-          <Select
-            value={primaryRoleId}
-            label="Primary Role *"
-            onChange={(e) => { setPrimaryRoleId(e.target.value as number); setErrList([]); }}
-          >
-            {rolesForPrimaryDept.map((role: Role) => (
-              <MenuItem key={role.id} value={role.id}>{role.name}</MenuItem>
-            ))}
-          </Select>
-        </FormControl>
+        <Autocomplete
+          options={rolesForPrimaryDept}
+          value={rolesForPrimaryDept.find((r: Role) => r.id === primaryRoleId) ?? null}
+          onChange={(_, newValue) => { setPrimaryRoleId(newValue?.id ?? ''); setErrList([]); }}
+          getOptionLabel={(option: Role) => option.name}
+          isOptionEqualToValue={(option: Role, value: Role) => option.id === value.id}
+          renderInput={(params) => <TextField {...params} label="Primary Role *" />}
+          disablePortal
+          fullWidth
+        />
 
         <FormControl>
           <InputLabel>Secondary Department (Optional)</InputLabel>
@@ -349,19 +347,16 @@ export default forwardRef<ProjectMappingStepHandle, Props>(({ initialData }: Pro
           </Select>
         </FormControl>
 
-        <FormControl>
-          <InputLabel>Secondary Role (Optional)</InputLabel>
-          <Select
-            value={secondaryRoleId}
-            label="Secondary Role (Optional)"
-            onChange={(e) => { setSecondaryRoleId(e.target.value as number); setErrList([]); }}
-          >
-            <MenuItem value="">None</MenuItem>
-            {rolesForSecondaryDept.map((role: Role) => (
-              <MenuItem key={role.id} value={role.id}>{role.name}</MenuItem>
-            ))}
-          </Select>
-        </FormControl>
+        <Autocomplete
+          options={rolesForSecondaryDept}
+          value={rolesForSecondaryDept.find((r: Role) => r.id === secondaryRoleId) ?? null}
+          onChange={(_, newValue) => { setSecondaryRoleId(newValue?.id ?? ''); setErrList([]); }}
+          getOptionLabel={(option: Role) => option.name}
+          isOptionEqualToValue={(option: Role, value: Role) => option.id === value.id}
+          renderInput={(params) => <TextField {...params} label="Secondary Role (Optional)" />}
+          disablePortal
+          fullWidth
+        />
 
         <Box /> {/* spacer */}
       </Box>

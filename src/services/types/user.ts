@@ -47,10 +47,15 @@ export interface ReportingEntry {
   managerId: string;
 }
 
+export interface SecondaryRoleEntry {
+  roleId: number;
+  departmentId?: number;
+}
+
 export interface UserOrganizationRequest {
   zones: number[];
   primaryRole: number;
-  secondaryRoles?: number[];
+  secondaryRoles?: SecondaryRoleEntry[];
   reporting?: ReportingEntry[];
 }
 

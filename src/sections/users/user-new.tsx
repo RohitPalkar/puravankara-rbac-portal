@@ -115,7 +115,9 @@ export default function UserNewPage() {
         organization: {
           zones: projectData.zoneIds,
           primaryRole: projectData.primaryRoleId,
-          secondaryRoles: projectData.secondaryRoleId ? [projectData.secondaryRoleId] : undefined,
+          secondaryRoles: projectData.secondaryRoleId
+            ? [{ roleId: projectData.secondaryRoleId, departmentId: projectData.secondaryDepartmentId }]
+            : undefined,
           reporting: reportingEntries,
         },
       };
