@@ -85,16 +85,13 @@ export default function UserNewPage() {
   const handleSubmit = useCallback(async () => {
     setSubmitError('');
 
-    const step1 = step1Ref.current;
-    const step2 = step2Ref.current;
+    if (!savedStep1Data || !savedStep2Data) return;
+
     const step3 = step3Ref.current;
+    if (!step3?.validate()) return;
 
-    if (!step1?.validate() || !step2?.validate() || !step3?.validate()) {
-      return;
-    }
-
-    const basicData = step1!.getData();
-    const projectData = step2!.getData();
+    const basicData = savedStep1Data;
+    const projectData = savedStep2Data;
     const orgData = step3!.getData();
 
     setSubmitting(true);
@@ -131,7 +128,7 @@ export default function UserNewPage() {
     } finally {
       setSubmitting(false);
     }
-  }, [createUserFull]);
+  }, [savedStep1Data, savedStep2Data, createUserFull]);
 
   const handleCreateClick = useCallback(() => {
     if (activeStep < STEPS.length - 1) {
