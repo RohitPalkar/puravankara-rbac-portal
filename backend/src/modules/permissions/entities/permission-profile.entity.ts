@@ -21,7 +21,12 @@ export class PermissionProfile {
   @Column({ name: 'user_id', nullable: false })
   userId: string;
 
-  @Column({ name: 'profile_type', type: 'varchar', length: 20, nullable: false })
+  @Column({
+    name: 'profile_type',
+    type: 'varchar',
+    length: 20,
+    nullable: false,
+  })
   profileType: string;
 
   @Column({ name: 'department_id', nullable: true })
@@ -61,6 +66,8 @@ export class PermissionProfile {
   @JoinColumn({ name: 'buddy_user_id' })
   buddyUser: User | null;
 
-  @OneToMany(() => PermissionProfileModule, (ppm) => ppm.profile, { cascade: true })
+  @OneToMany(() => PermissionProfileModule, (ppm) => ppm.profile, {
+    cascade: true,
+  })
   modules: PermissionProfileModule[];
 }

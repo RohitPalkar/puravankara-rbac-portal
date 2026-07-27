@@ -38,7 +38,9 @@ export class UserZoneController {
 
   @Get(':userId')
   @ApiOperation({ summary: 'Get zones for a user' })
-  async findByUser(@Param('userId', RawStringPipe) userId: string): Promise<UserZone[]> {
+  async findByUser(
+    @Param('userId', RawStringPipe) userId: string,
+  ): Promise<UserZone[]> {
     return this.zoneService.findByUser(userId);
   }
 

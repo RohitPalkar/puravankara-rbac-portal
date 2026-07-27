@@ -31,13 +31,25 @@ export class ProjectService extends BaseService<Project> {
   async findAll(
     query: PaginationQuery = { page: 1, limit: 100 },
   ): Promise<PaginatedResult<Project>> {
-    const { page = 1, limit = 100, search, sortBy = 'createdAt', sortOrder = 'DESC', ...filters } = query;
+    const {
+      page = 1,
+      limit = 100,
+      search,
+      sortBy = 'createdAt',
+      sortOrder = 'DESC',
+      ...filters
+    } = query;
     const rows = await this.repository.query(
       `SELECT * FROM public.projects WHERE deleted_at IS NULL ORDER BY created_at DESC`,
     );
     return {
       data: rows,
-      meta: { page, limit, total: rows.length, totalPages: Math.ceil(rows.length / limit) },
+      meta: {
+        page,
+        limit,
+        total: rows.length,
+        totalPages: Math.ceil(rows.length / limit),
+      },
     };
   }
 
@@ -166,7 +178,7 @@ export class ProjectService extends BaseService<Project> {
 
   async remove(id: number): Promise<void> {
     const project = await this.findById(id);
-    project.deletedAt = new Date() as any;
+    project.deletedAt = new Date();
     await this.repository.save(project);
   }
 }

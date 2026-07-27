@@ -28,7 +28,9 @@ export class PermissionProfileModule {
   @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
   createdAt: Date;
 
-  @ManyToOne(() => PermissionProfile, (pp) => pp.modules, { onDelete: 'CASCADE' })
+  @ManyToOne(() => PermissionProfile, (pp) => pp.modules, {
+    onDelete: 'CASCADE',
+  })
   @JoinColumn({ name: 'profile_id' })
   profile: PermissionProfile;
 
@@ -36,6 +38,8 @@ export class PermissionProfileModule {
   @JoinColumn({ name: 'module_id' })
   module: Module;
 
-  @OneToMany(() => PermissionProfileSubModule, (ppsm) => ppsm.profileModule, { cascade: true })
+  @OneToMany(() => PermissionProfileSubModule, (ppsm) => ppsm.profileModule, {
+    cascade: true,
+  })
   subModules: PermissionProfileSubModule[];
 }

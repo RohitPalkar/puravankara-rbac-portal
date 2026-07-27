@@ -725,7 +725,11 @@ export class PermissionService {
       for (const mod of profile.modules ?? []) {
         if (mod.moduleId !== moduleId) continue;
         for (const sm of mod.subModules ?? []) {
-          if (allowedSubModuleIds.length > 0 && !allowedSubModuleIds.includes(sm.subModuleId)) continue;
+          if (
+            allowedSubModuleIds.length > 0 &&
+            !allowedSubModuleIds.includes(sm.subModuleId)
+          )
+            continue;
           // inherit_future_projects grants access to all projects
           if (sm.inheritFutureProjects) return true;
           for (const proj of sm.projects ?? []) {
@@ -860,7 +864,8 @@ export class PermissionService {
             const grantedActionIds = new Set<number>();
             for (const p of smRolePerms) grantedActionIds.add(p.actionId);
             for (const p of roleActionPerms) {
-              if (p.subModuleId == null || p.subModuleId === sm.id) grantedActionIds.add(p.actionId);
+              if (p.subModuleId == null || p.subModuleId === sm.id)
+                grantedActionIds.add(p.actionId);
             }
             for (const p of smTemplatePerms) grantedActionIds.add(p.actionId);
             for (const o of smOverrides) {

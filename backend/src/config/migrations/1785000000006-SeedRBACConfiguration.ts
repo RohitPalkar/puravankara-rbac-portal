@@ -8,20 +8,52 @@ export class SeedRBACConfiguration1785000000006 implements MigrationInterface {
     // 1. SEED MODULES (from bootstrap.seeder.ts MODULES_SEED)
     // ===================================================================
     const modulesData = [
-      { name: 'Geography', code: 'GEOGRAPHY', is_permission_configurable: false },
-      { name: 'Organization', code: 'ORGANIZATION', is_permission_configurable: false },
-      { name: 'Product Config', code: 'PRODUCT_CONFIG', is_permission_configurable: false },
+      {
+        name: 'Geography',
+        code: 'GEOGRAPHY',
+        is_permission_configurable: false,
+      },
+      {
+        name: 'Organization',
+        code: 'ORGANIZATION',
+        is_permission_configurable: false,
+      },
+      {
+        name: 'Product Config',
+        code: 'PRODUCT_CONFIG',
+        is_permission_configurable: false,
+      },
       { name: 'Projects', code: 'PROJECTS', is_permission_configurable: false },
       { name: 'Users', code: 'USERS', is_permission_configurable: false },
-      { name: 'Permissions', code: 'PERMISSIONS', is_permission_configurable: false },
+      {
+        name: 'Permissions',
+        code: 'PERMISSIONS',
+        is_permission_configurable: false,
+      },
       { name: 'Brands', code: 'BRANDS', is_permission_configurable: true },
       { name: 'IOM', code: 'IOM', is_permission_configurable: true },
       { name: 'EOI', code: 'EOI', is_permission_configurable: true },
-      { name: 'Inventory', code: 'INVENTORY', is_permission_configurable: true },
+      {
+        name: 'Inventory',
+        code: 'INVENTORY',
+        is_permission_configurable: true,
+      },
       { name: 'Batch', code: 'BATCH', is_permission_configurable: true },
-      { name: 'eSignature', code: 'ESIGNATURE', is_permission_configurable: true },
-      { name: 'Incentive', code: 'INCENTIVE', is_permission_configurable: true },
-      { name: 'Booking Form', code: 'BOOKING_FORM', is_permission_configurable: true },
+      {
+        name: 'eSignature',
+        code: 'ESIGNATURE',
+        is_permission_configurable: true,
+      },
+      {
+        name: 'Incentive',
+        code: 'INCENTIVE',
+        is_permission_configurable: true,
+      },
+      {
+        name: 'Booking Form',
+        code: 'BOOKING_FORM',
+        is_permission_configurable: true,
+      },
     ];
     const modIds: Record<string, number> = {};
     for (const m of modulesData) {
@@ -43,61 +75,246 @@ export class SeedRBACConfiguration1785000000006 implements MigrationInterface {
     // ===================================================================
     // 2. SEED SUB-MODULES
     // ===================================================================
-    type SubDef = { name: string; moduleName: string; displayOrder: number; isPermissionConfigurable: boolean };
+    type SubDef = {
+      name: string;
+      moduleName: string;
+      displayOrder: number;
+      isPermissionConfigurable: boolean;
+    };
     const subModulesData: SubDef[] = [
       // Geography
-      { name: 'ZONES', moduleName: 'Geography', displayOrder: 1, isPermissionConfigurable: false },
-      { name: 'CITIES', moduleName: 'Geography', displayOrder: 2, isPermissionConfigurable: false },
+      {
+        name: 'ZONES',
+        moduleName: 'Geography',
+        displayOrder: 1,
+        isPermissionConfigurable: false,
+      },
+      {
+        name: 'CITIES',
+        moduleName: 'Geography',
+        displayOrder: 2,
+        isPermissionConfigurable: false,
+      },
       // Organization
-      { name: 'DEPARTMENTS', moduleName: 'Organization', displayOrder: 1, isPermissionConfigurable: false },
-      { name: 'ROLES', moduleName: 'Organization', displayOrder: 2, isPermissionConfigurable: false },
+      {
+        name: 'DEPARTMENTS',
+        moduleName: 'Organization',
+        displayOrder: 1,
+        isPermissionConfigurable: false,
+      },
+      {
+        name: 'ROLES',
+        moduleName: 'Organization',
+        displayOrder: 2,
+        isPermissionConfigurable: false,
+      },
       // Product Config
-      { name: 'MODULES', moduleName: 'Product Config', displayOrder: 1, isPermissionConfigurable: false },
-      { name: 'SUB_MODULES', moduleName: 'Product Config', displayOrder: 2, isPermissionConfigurable: false },
-      { name: 'ACTIONS', moduleName: 'Product Config', displayOrder: 3, isPermissionConfigurable: false },
+      {
+        name: 'MODULES',
+        moduleName: 'Product Config',
+        displayOrder: 1,
+        isPermissionConfigurable: false,
+      },
+      {
+        name: 'SUB_MODULES',
+        moduleName: 'Product Config',
+        displayOrder: 2,
+        isPermissionConfigurable: false,
+      },
+      {
+        name: 'ACTIONS',
+        moduleName: 'Product Config',
+        displayOrder: 3,
+        isPermissionConfigurable: false,
+      },
       // Projects
-      { name: 'PROJECTS', moduleName: 'Projects', displayOrder: 1, isPermissionConfigurable: false },
+      {
+        name: 'PROJECTS',
+        moduleName: 'Projects',
+        displayOrder: 1,
+        isPermissionConfigurable: false,
+      },
       // Users
-      { name: 'USERS', moduleName: 'Users', displayOrder: 1, isPermissionConfigurable: false },
+      {
+        name: 'USERS',
+        moduleName: 'Users',
+        displayOrder: 1,
+        isPermissionConfigurable: false,
+      },
       // Permissions
-      { name: 'PERMISSIONS', moduleName: 'Permissions', displayOrder: 1, isPermissionConfigurable: false },
+      {
+        name: 'PERMISSIONS',
+        moduleName: 'Permissions',
+        displayOrder: 1,
+        isPermissionConfigurable: false,
+      },
       // Brands
-      { name: 'BRANDS', moduleName: 'Brands', displayOrder: 1, isPermissionConfigurable: true },
+      {
+        name: 'BRANDS',
+        moduleName: 'Brands',
+        displayOrder: 1,
+        isPermissionConfigurable: true,
+      },
       // IOM
-      { name: 'Loyalty IOM', moduleName: 'IOM', displayOrder: 1, isPermissionConfigurable: true },
-      { name: 'Stamp IOM', moduleName: 'IOM', displayOrder: 2, isPermissionConfigurable: true },
+      {
+        name: 'Loyalty IOM',
+        moduleName: 'IOM',
+        displayOrder: 1,
+        isPermissionConfigurable: true,
+      },
+      {
+        name: 'Stamp IOM',
+        moduleName: 'IOM',
+        displayOrder: 2,
+        isPermissionConfigurable: true,
+      },
       // EOI
-      { name: 'EOI Records', moduleName: 'EOI', displayOrder: 1, isPermissionConfigurable: true },
-      { name: 'EOI Dashboard', moduleName: 'EOI', displayOrder: 2, isPermissionConfigurable: true },
-      { name: 'EOI Leaderboard', moduleName: 'EOI', displayOrder: 3, isPermissionConfigurable: true },
-      { name: 'EOI Manager', moduleName: 'EOI', displayOrder: 4, isPermissionConfigurable: true },
-      { name: 'CP Link', moduleName: 'EOI', displayOrder: 5, isPermissionConfigurable: true },
-      { name: 'Bank Details', moduleName: 'EOI', displayOrder: 6, isPermissionConfigurable: true },
+      {
+        name: 'EOI Records',
+        moduleName: 'EOI',
+        displayOrder: 1,
+        isPermissionConfigurable: true,
+      },
+      {
+        name: 'EOI Dashboard',
+        moduleName: 'EOI',
+        displayOrder: 2,
+        isPermissionConfigurable: true,
+      },
+      {
+        name: 'EOI Leaderboard',
+        moduleName: 'EOI',
+        displayOrder: 3,
+        isPermissionConfigurable: true,
+      },
+      {
+        name: 'EOI Manager',
+        moduleName: 'EOI',
+        displayOrder: 4,
+        isPermissionConfigurable: true,
+      },
+      {
+        name: 'CP Link',
+        moduleName: 'EOI',
+        displayOrder: 5,
+        isPermissionConfigurable: true,
+      },
+      {
+        name: 'Bank Details',
+        moduleName: 'EOI',
+        displayOrder: 6,
+        isPermissionConfigurable: true,
+      },
       // Inventory
-      { name: 'Add / Update Inventory', moduleName: 'Inventory', displayOrder: 1, isPermissionConfigurable: true },
-      { name: 'Unit Mapping', moduleName: 'Inventory', displayOrder: 2, isPermissionConfigurable: true },
+      {
+        name: 'Add / Update Inventory',
+        moduleName: 'Inventory',
+        displayOrder: 1,
+        isPermissionConfigurable: true,
+      },
+      {
+        name: 'Unit Mapping',
+        moduleName: 'Inventory',
+        displayOrder: 2,
+        isPermissionConfigurable: true,
+      },
       // Batch
-      { name: 'Listing', moduleName: 'Batch', displayOrder: 1, isPermissionConfigurable: true },
-      { name: 'Tracker', moduleName: 'Batch', displayOrder: 2, isPermissionConfigurable: true },
+      {
+        name: 'Listing',
+        moduleName: 'Batch',
+        displayOrder: 1,
+        isPermissionConfigurable: true,
+      },
+      {
+        name: 'Tracker',
+        moduleName: 'Batch',
+        displayOrder: 2,
+        isPermissionConfigurable: true,
+      },
       // eSignature
-      { name: 'Agreement Management', moduleName: 'eSignature', displayOrder: 1, isPermissionConfigurable: true },
+      {
+        name: 'Agreement Management',
+        moduleName: 'eSignature',
+        displayOrder: 1,
+        isPermissionConfigurable: true,
+      },
       // Incentive
-      { name: 'Records', moduleName: 'Incentive', displayOrder: 1, isPermissionConfigurable: true },
-      { name: 'Leaderboard', moduleName: 'Incentive', displayOrder: 2, isPermissionConfigurable: true },
-      { name: 'Incentive Policy', moduleName: 'Incentive', displayOrder: 3, isPermissionConfigurable: true },
-      { name: 'Booster Policy', moduleName: 'Incentive', displayOrder: 4, isPermissionConfigurable: true },
-      { name: 'Modify Booking Dates', moduleName: 'Incentive', displayOrder: 5, isPermissionConfigurable: true },
-      { name: 'Incentive Payouts', moduleName: 'Incentive', displayOrder: 6, isPermissionConfigurable: true },
-      { name: 'Dashboard', moduleName: 'Incentive', displayOrder: 7, isPermissionConfigurable: true },
-      { name: 'Reports', moduleName: 'Incentive', displayOrder: 8, isPermissionConfigurable: true },
-      { name: 'Incentive Slabs', moduleName: 'Incentive', displayOrder: 9, isPermissionConfigurable: true },
+      {
+        name: 'Records',
+        moduleName: 'Incentive',
+        displayOrder: 1,
+        isPermissionConfigurable: true,
+      },
+      {
+        name: 'Leaderboard',
+        moduleName: 'Incentive',
+        displayOrder: 2,
+        isPermissionConfigurable: true,
+      },
+      {
+        name: 'Incentive Policy',
+        moduleName: 'Incentive',
+        displayOrder: 3,
+        isPermissionConfigurable: true,
+      },
+      {
+        name: 'Booster Policy',
+        moduleName: 'Incentive',
+        displayOrder: 4,
+        isPermissionConfigurable: true,
+      },
+      {
+        name: 'Modify Booking Dates',
+        moduleName: 'Incentive',
+        displayOrder: 5,
+        isPermissionConfigurable: true,
+      },
+      {
+        name: 'Incentive Payouts',
+        moduleName: 'Incentive',
+        displayOrder: 6,
+        isPermissionConfigurable: true,
+      },
+      {
+        name: 'Dashboard',
+        moduleName: 'Incentive',
+        displayOrder: 7,
+        isPermissionConfigurable: true,
+      },
+      {
+        name: 'Reports',
+        moduleName: 'Incentive',
+        displayOrder: 8,
+        isPermissionConfigurable: true,
+      },
+      {
+        name: 'Incentive Slabs',
+        moduleName: 'Incentive',
+        displayOrder: 9,
+        isPermissionConfigurable: true,
+      },
       // Booking Form
-      { name: 'Pre Booking Form', moduleName: 'Booking Form', displayOrder: 1, isPermissionConfigurable: true },
-      { name: 'Post Booking Form', moduleName: 'Booking Form', displayOrder: 2, isPermissionConfigurable: true },
+      {
+        name: 'Pre Booking Form',
+        moduleName: 'Booking Form',
+        displayOrder: 1,
+        isPermissionConfigurable: true,
+      },
+      {
+        name: 'Post Booking Form',
+        moduleName: 'Booking Form',
+        displayOrder: 2,
+        isPermissionConfigurable: true,
+      },
     ];
 
     // Map submodule name to its id, also store the modId for action linking
-    const subModInfo: { id: number; modId: number; moduleName: string; name: string }[] = [];
+    const subModInfo: {
+      id: number;
+      modId: number;
+      moduleName: string;
+      name: string;
+    }[] = [];
     for (const sm of subModulesData) {
       const modId = modIds[sm.moduleName];
       if (!modId) continue;
@@ -106,13 +323,23 @@ export class SeedRBACConfiguration1785000000006 implements MigrationInterface {
         [modId, sm.name],
       );
       if (existing.length > 0) {
-        subModInfo.push({ id: existing[0].id, modId, moduleName: sm.moduleName, name: sm.name });
+        subModInfo.push({
+          id: existing[0].id,
+          modId,
+          moduleName: sm.moduleName,
+          name: sm.name,
+        });
       } else {
         const r = await queryRunner.query(
           `INSERT INTO sub_modules (module_id, name, display_order, is_active, is_permission_configurable) VALUES ($1, $2, $3, true, $4) RETURNING id`,
           [modId, sm.name, sm.displayOrder, sm.isPermissionConfigurable],
         );
-        subModInfo.push({ id: r[0].id, modId, moduleName: sm.moduleName, name: sm.name });
+        subModInfo.push({
+          id: r[0].id,
+          modId,
+          moduleName: sm.moduleName,
+          name: sm.name,
+        });
       }
     }
 
@@ -134,33 +361,101 @@ export class SeedRBACConfiguration1785000000006 implements MigrationInterface {
       { code: 'REJECT_IOM', name: 'Reject IOM', label: 'Reject IOM' },
       { code: 'DELETE_IOM', name: 'Delete IOM', label: 'Delete IOM' },
       { code: 'EDIT_IOM', name: 'Edit IOM', label: 'Edit IOM' },
-      { code: 'ADD_LOYALTY_POINTS', name: 'Add Loyalty Points', label: 'Add Loyalty Points' },
-      { code: 'SIGNATURE_UPLOAD', name: 'Signature Upload', label: 'Signature Upload' },
-      { code: 'REQUEST_INVOICE', name: 'Request Invoice', label: 'Request Invoice' },
-      { code: 'SUBMIT_INVOICE', name: 'Submit Invoice', label: 'Submit Invoice' },
+      {
+        code: 'ADD_LOYALTY_POINTS',
+        name: 'Add Loyalty Points',
+        label: 'Add Loyalty Points',
+      },
+      {
+        code: 'SIGNATURE_UPLOAD',
+        name: 'Signature Upload',
+        label: 'Signature Upload',
+      },
+      {
+        code: 'REQUEST_INVOICE',
+        name: 'Request Invoice',
+        label: 'Request Invoice',
+      },
+      {
+        code: 'SUBMIT_INVOICE',
+        name: 'Submit Invoice',
+        label: 'Submit Invoice',
+      },
       { code: 'CLOSE_INVOICE', name: 'Close Invoice', label: 'Close Invoice' },
       { code: 'VIEW_INVOICE', name: 'View Invoice', label: 'View Invoice' },
       // EOI actions
       { code: 'PREVIEW_FORM', name: 'Preview Form', label: 'Preview Form' },
       { code: 'BOOKING_FORM', name: 'Booking Form', label: 'Booking Form' },
       { code: 'APPROVE_FORM', name: 'Approve Form', label: 'Approve Form' },
-      { code: 'REQUEST_RESUBMISSION', name: 'Request for Resubmission', label: 'Request for Resubmission' },
+      {
+        code: 'REQUEST_RESUBMISSION',
+        name: 'Request for Resubmission',
+        label: 'Request for Resubmission',
+      },
       { code: 'APPROVE_UNIT', name: 'Approve Unit', label: 'Approve Unit' },
       { code: 'BLOCK_UNIT', name: 'Block Unit', label: 'Block Unit' },
-      { code: 'REQUEST_CANCELLATION', name: 'Request Cancellation', label: 'Request Cancellation' },
-      { code: 'CANCEL_REFUND', name: 'Cancel & Refund', label: 'Cancel & Refund' },
-      { code: 'CHANGE_REQUEST', name: 'Change Request', label: 'Change Request' },
-      { code: 'CREATE_LEAD_SFDC', name: 'Create Lead on SFDC', label: 'Create Lead on SFDC' },
-      { code: 'CONVERT_LEAD_SFDC', name: 'Convert Lead on SFDC', label: 'Convert Lead on SFDC' },
-      { code: 'PUSH_APPLICANT_DATA', name: 'Push Applicant Data', label: 'Push Applicant Data' },
-      { code: 'EDIT_EOI_DETAILS', name: 'Edit EOI Details', label: 'Edit EOI Details' },
+      {
+        code: 'REQUEST_CANCELLATION',
+        name: 'Request Cancellation',
+        label: 'Request Cancellation',
+      },
+      {
+        code: 'CANCEL_REFUND',
+        name: 'Cancel & Refund',
+        label: 'Cancel & Refund',
+      },
+      {
+        code: 'CHANGE_REQUEST',
+        name: 'Change Request',
+        label: 'Change Request',
+      },
+      {
+        code: 'CREATE_LEAD_SFDC',
+        name: 'Create Lead on SFDC',
+        label: 'Create Lead on SFDC',
+      },
+      {
+        code: 'CONVERT_LEAD_SFDC',
+        name: 'Convert Lead on SFDC',
+        label: 'Convert Lead on SFDC',
+      },
+      {
+        code: 'PUSH_APPLICANT_DATA',
+        name: 'Push Applicant Data',
+        label: 'Push Applicant Data',
+      },
+      {
+        code: 'EDIT_EOI_DETAILS',
+        name: 'Edit EOI Details',
+        label: 'Edit EOI Details',
+      },
       { code: 'ASSIGN_RM', name: 'Assign RM', label: 'Assign RM' },
-      { code: 'TRANSACTION_DETAILS', name: 'Transaction Details / View', label: 'Transaction Details / View' },
-      { code: 'UPDATE_SFDC_IDS', name: 'Update SFDC IDs', label: 'Update SFDC IDs' },
-      { code: 'EXPORT_BOOKING_FORM', name: 'Export Booking Form', label: 'Export Booking Form' },
+      {
+        code: 'TRANSACTION_DETAILS',
+        name: 'Transaction Details / View',
+        label: 'Transaction Details / View',
+      },
+      {
+        code: 'UPDATE_SFDC_IDS',
+        name: 'Update SFDC IDs',
+        label: 'Update SFDC IDs',
+      },
+      {
+        code: 'EXPORT_BOOKING_FORM',
+        name: 'Export Booking Form',
+        label: 'Export Booking Form',
+      },
       { code: 'DELETE_RECORD', name: 'Delete Record', label: 'Delete Record' },
-      { code: 'RESTORE_RECORD', name: 'Restore Record', label: 'Restore Record' },
-      { code: 'PRE_BOOKING_DOCUMENTS', name: 'Pre-Booking Documents', label: 'Pre-Booking Documents' },
+      {
+        code: 'RESTORE_RECORD',
+        name: 'Restore Record',
+        label: 'Restore Record',
+      },
+      {
+        code: 'PRE_BOOKING_DOCUMENTS',
+        name: 'Pre-Booking Documents',
+        label: 'Pre-Booking Documents',
+      },
       { code: 'CX_PAGE_LINK', name: 'Cx Page Link', label: 'Cx Page Link' },
       { code: 'DASHBOARD_VIEW', name: 'View', label: 'View' },
       { code: 'DASHBOARD_EXPORT', name: 'Export', label: 'Export' },
@@ -171,14 +466,26 @@ export class SeedRBACConfiguration1785000000006 implements MigrationInterface {
       { code: 'BANK_VIEW_LIST', name: 'View List', label: 'View List' },
       { code: 'BANK_SHARE', name: 'Share', label: 'Share' },
       // Inventory actions
-      { code: 'UPLOAD_INVENTORY', name: 'Upload Inventory', label: 'Upload Inventory' },
-      { code: 'MAP_UNIT_TO_VOUCHER', name: 'Map Unit to Voucher', label: 'Map Unit to Voucher' },
+      {
+        code: 'UPLOAD_INVENTORY',
+        name: 'Upload Inventory',
+        label: 'Upload Inventory',
+      },
+      {
+        code: 'MAP_UNIT_TO_VOUCHER',
+        name: 'Map Unit to Voucher',
+        label: 'Map Unit to Voucher',
+      },
       // Batch actions
       { code: 'BATCH_CREATE', name: 'Create', label: 'Create' },
       { code: 'BATCH_EDIT', name: 'Edit', label: 'Edit' },
       { code: 'BATCH_DELETE', name: 'Delete', label: 'Delete' },
       { code: 'MAP_EOIS', name: 'Map EOIs', label: 'Map EOIs' },
-      { code: 'NOTIFY_CUSTOMER', name: 'Notify Customer', label: 'Notify Customer' },
+      {
+        code: 'NOTIFY_CUSTOMER',
+        name: 'Notify Customer',
+        label: 'Notify Customer',
+      },
       { code: 'OPEN_BATCH', name: 'Open Batch', label: 'Open Batch' },
       { code: 'LOCK_BATCH', name: 'Lock Batch', label: 'Lock Batch' },
       { code: 'SHARE_PREVIEW', name: 'Share Preview', label: 'Share Preview' },
@@ -193,37 +500,101 @@ export class SeedRBACConfiguration1785000000006 implements MigrationInterface {
       // Incentive actions
       { code: 'RECORDS_USERS', name: 'Users', label: 'Users' },
       { code: 'RECORDS_BOOKINGS', name: 'Bookings', label: 'Bookings' },
-      { code: 'INCENTIVE_REPORTS', name: 'Incentive Reports', label: 'Incentive Reports' },
+      {
+        code: 'INCENTIVE_REPORTS',
+        name: 'Incentive Reports',
+        label: 'Incentive Reports',
+      },
       { code: 'INC_LEADERBOARD_VIEW', name: 'View', label: 'View' },
       { code: 'INC_LEADERBOARD_EXPORT', name: 'Export', label: 'Export' },
       { code: 'POLICY_CREATE', name: 'Create', label: 'Create' },
       { code: 'POLICY_VIEW', name: 'View', label: 'View' },
       { code: 'POLICY_EDIT', name: 'Edit', label: 'Edit' },
-      { code: 'POLICY_ACTIVATE', name: 'Activate / Deactivate', label: 'Activate / Deactivate' },
+      {
+        code: 'POLICY_ACTIVATE',
+        name: 'Activate / Deactivate',
+        label: 'Activate / Deactivate',
+      },
       { code: 'BOOSTER_CREATE', name: 'Create', label: 'Create' },
       { code: 'BOOSTER_VIEW', name: 'View', label: 'View' },
       { code: 'BOOSTER_EDIT', name: 'Edit', label: 'Edit' },
-      { code: 'BOOSTER_ACTIVATE', name: 'Activate / Deactivate', label: 'Activate / Deactivate' },
+      {
+        code: 'BOOSTER_ACTIVATE',
+        name: 'Activate / Deactivate',
+        label: 'Activate / Deactivate',
+      },
       { code: 'MODIFY_UPLOAD', name: 'Upload', label: 'Upload' },
-      { code: 'EXPORT_INCENTIVE_PAYOUT', name: 'Export Incentive Payout', label: 'Export Incentive Payout' },
-      { code: 'UPLOAD_INCENTIVE_PAYOUT', name: 'Upload Incentive Payout', label: 'Upload Incentive Payout' },
-      { code: 'REPORT_ANALYSIS', name: 'Report Analysis', label: 'Report Analysis' },
-      { code: 'FREEZE_RECORD', name: 'Freeze Record for Incentive Payout', label: 'Freeze Record for Incentive Payout' },
+      {
+        code: 'EXPORT_INCENTIVE_PAYOUT',
+        name: 'Export Incentive Payout',
+        label: 'Export Incentive Payout',
+      },
+      {
+        code: 'UPLOAD_INCENTIVE_PAYOUT',
+        name: 'Upload Incentive Payout',
+        label: 'Upload Incentive Payout',
+      },
+      {
+        code: 'REPORT_ANALYSIS',
+        name: 'Report Analysis',
+        label: 'Report Analysis',
+      },
+      {
+        code: 'FREEZE_RECORD',
+        name: 'Freeze Record for Incentive Payout',
+        label: 'Freeze Record for Incentive Payout',
+      },
       { code: 'INC_DASHBOARD_VIEW', name: 'View', label: 'View' },
       { code: 'REPORTS_VIEW', name: 'View', label: 'View' },
       { code: 'REPORTS_GENERATE', name: 'Generate', label: 'Generate' },
       { code: 'SLABS_VIEW', name: 'View', label: 'View' },
       // Booking Form actions
-      { code: 'UPLOAD_COST_SHEET', name: 'Upload Cost Sheet & Allotment Letter', label: 'Upload Cost Sheet & Allotment Letter' },
-      { code: 'SHARE_BOOKING_FORM', name: 'Share Booking Form', label: 'Share Booking Form' },
-      { code: 'EDIT_BOOKING_FORM_DRAFT', name: 'Edit Booking Form Draft', label: 'Edit Booking Form Draft' },
-      { code: 'CREATE_APPLICANT', name: 'Create Applicant', label: 'Create Applicant' },
-      { code: 'VIEW_APPLICANT', name: 'View Applicant', label: 'View Applicant' },
-      { code: 'EDIT_APPLICANT', name: 'Edit Applicant', label: 'Edit Applicant' },
-      { code: 'DELETE_APPLICANT', name: 'Delete Applicant', label: 'Delete Applicant' },
+      {
+        code: 'UPLOAD_COST_SHEET',
+        name: 'Upload Cost Sheet & Allotment Letter',
+        label: 'Upload Cost Sheet & Allotment Letter',
+      },
+      {
+        code: 'SHARE_BOOKING_FORM',
+        name: 'Share Booking Form',
+        label: 'Share Booking Form',
+      },
+      {
+        code: 'EDIT_BOOKING_FORM_DRAFT',
+        name: 'Edit Booking Form Draft',
+        label: 'Edit Booking Form Draft',
+      },
+      {
+        code: 'CREATE_APPLICANT',
+        name: 'Create Applicant',
+        label: 'Create Applicant',
+      },
+      {
+        code: 'VIEW_APPLICANT',
+        name: 'View Applicant',
+        label: 'View Applicant',
+      },
+      {
+        code: 'EDIT_APPLICANT',
+        name: 'Edit Applicant',
+        label: 'Edit Applicant',
+      },
+      {
+        code: 'DELETE_APPLICANT',
+        name: 'Delete Applicant',
+        label: 'Delete Applicant',
+      },
       { code: 'UNIT_SWAP', name: 'Unit Swap', label: 'Unit Swap' },
-      { code: 'MULTI_UNIT_BOOKING', name: 'Multi Unit Booking', label: 'Multi Unit Booking' },
-      { code: 'OFFICE_USE_SECTION', name: 'Office Use Section', label: 'Office Use Section' },
+      {
+        code: 'MULTI_UNIT_BOOKING',
+        name: 'Multi Unit Booking',
+        label: 'Multi Unit Booking',
+      },
+      {
+        code: 'OFFICE_USE_SECTION',
+        name: 'Office Use Section',
+        label: 'Office Use Section',
+      },
     ];
 
     const actIds: Record<string, number> = {};
@@ -246,65 +617,245 @@ export class SeedRBACConfiguration1785000000006 implements MigrationInterface {
     // ===================================================================
     // 4. SEED ACTION GROUPS
     // ===================================================================
-    type AGDef = { subModuleName: string; name: string; code: string; displayOrder: number };
+    type AGDef = {
+      subModuleName: string;
+      name: string;
+      code: string;
+      displayOrder: number;
+    };
     const actionGroupsData: AGDef[] = [
       // IOM > Loyalty IOM
-      { subModuleName: 'Loyalty IOM', name: 'IOM Management', code: 'IOM_MGMT', displayOrder: 1 },
-      { subModuleName: 'Loyalty IOM', name: 'Loyalty', code: 'IOM_LOYALTY', displayOrder: 2 },
-      { subModuleName: 'Loyalty IOM', name: 'Signature', code: 'IOM_SIGNATURE', displayOrder: 3 },
-      { subModuleName: 'Loyalty IOM', name: 'Invoice', code: 'IOM_INVOICE', displayOrder: 4 },
+      {
+        subModuleName: 'Loyalty IOM',
+        name: 'IOM Management',
+        code: 'IOM_MGMT',
+        displayOrder: 1,
+      },
+      {
+        subModuleName: 'Loyalty IOM',
+        name: 'Loyalty',
+        code: 'IOM_LOYALTY',
+        displayOrder: 2,
+      },
+      {
+        subModuleName: 'Loyalty IOM',
+        name: 'Signature',
+        code: 'IOM_SIGNATURE',
+        displayOrder: 3,
+      },
+      {
+        subModuleName: 'Loyalty IOM',
+        name: 'Invoice',
+        code: 'IOM_INVOICE',
+        displayOrder: 4,
+      },
       // EOI > EOI Records
-      { subModuleName: 'EOI Records', name: 'Booking', code: 'EOI_BOOKING', displayOrder: 1 },
-      { subModuleName: 'EOI Records', name: 'CRM', code: 'EOI_CRM', displayOrder: 2 },
-      { subModuleName: 'EOI Records', name: 'Applicant', code: 'EOI_APPLICANT', displayOrder: 3 },
-      { subModuleName: 'EOI Records', name: 'SFDC', code: 'EOI_SFDC', displayOrder: 4 },
-      { subModuleName: 'EOI Records', name: 'Export', code: 'EOI_EXPORT', displayOrder: 5 },
-      { subModuleName: 'EOI Records', name: 'Recovery', code: 'EOI_RECOVERY', displayOrder: 6 },
-      { subModuleName: 'EOI Records', name: 'Documents', code: 'EOI_DOCUMENTS', displayOrder: 7 },
-      { subModuleName: 'EOI Records', name: 'Utilities', code: 'EOI_UTILITIES', displayOrder: 8 },
+      {
+        subModuleName: 'EOI Records',
+        name: 'Booking',
+        code: 'EOI_BOOKING',
+        displayOrder: 1,
+      },
+      {
+        subModuleName: 'EOI Records',
+        name: 'CRM',
+        code: 'EOI_CRM',
+        displayOrder: 2,
+      },
+      {
+        subModuleName: 'EOI Records',
+        name: 'Applicant',
+        code: 'EOI_APPLICANT',
+        displayOrder: 3,
+      },
+      {
+        subModuleName: 'EOI Records',
+        name: 'SFDC',
+        code: 'EOI_SFDC',
+        displayOrder: 4,
+      },
+      {
+        subModuleName: 'EOI Records',
+        name: 'Export',
+        code: 'EOI_EXPORT',
+        displayOrder: 5,
+      },
+      {
+        subModuleName: 'EOI Records',
+        name: 'Recovery',
+        code: 'EOI_RECOVERY',
+        displayOrder: 6,
+      },
+      {
+        subModuleName: 'EOI Records',
+        name: 'Documents',
+        code: 'EOI_DOCUMENTS',
+        displayOrder: 7,
+      },
+      {
+        subModuleName: 'EOI Records',
+        name: 'Utilities',
+        code: 'EOI_UTILITIES',
+        displayOrder: 8,
+      },
       // EOI > EOI Dashboard
-      { subModuleName: 'EOI Dashboard', name: 'Dashboard', code: 'EOI_DASHBOARD', displayOrder: 1 },
+      {
+        subModuleName: 'EOI Dashboard',
+        name: 'Dashboard',
+        code: 'EOI_DASHBOARD',
+        displayOrder: 1,
+      },
       // EOI > EOI Leaderboard
-      { subModuleName: 'EOI Leaderboard', name: 'Leaderboard', code: 'EOI_LEADERBOARD', displayOrder: 1 },
+      {
+        subModuleName: 'EOI Leaderboard',
+        name: 'Leaderboard',
+        code: 'EOI_LEADERBOARD',
+        displayOrder: 1,
+      },
       // EOI > CP Link
-      { subModuleName: 'CP Link', name: 'Link', code: 'EOI_CP_LINK', displayOrder: 1 },
+      {
+        subModuleName: 'CP Link',
+        name: 'Link',
+        code: 'EOI_CP_LINK',
+        displayOrder: 1,
+      },
       // EOI > Bank Details
-      { subModuleName: 'Bank Details', name: 'Bank Details', code: 'EOI_BANK_DETAILS', displayOrder: 1 },
+      {
+        subModuleName: 'Bank Details',
+        name: 'Bank Details',
+        code: 'EOI_BANK_DETAILS',
+        displayOrder: 1,
+      },
       // Inventory > Add / Update Inventory
-      { subModuleName: 'Add / Update Inventory', name: 'Inventory', code: 'INV_INVENTORY', displayOrder: 1 },
+      {
+        subModuleName: 'Add / Update Inventory',
+        name: 'Inventory',
+        code: 'INV_INVENTORY',
+        displayOrder: 1,
+      },
       // Inventory > Unit Mapping
-      { subModuleName: 'Unit Mapping', name: 'Unit Mapping', code: 'INV_UNIT_MAPPING', displayOrder: 1 },
+      {
+        subModuleName: 'Unit Mapping',
+        name: 'Unit Mapping',
+        code: 'INV_UNIT_MAPPING',
+        displayOrder: 1,
+      },
       // Batch > Listing
-      { subModuleName: 'Listing', name: 'Batch Management', code: 'BATCH_MGMT', displayOrder: 1 },
+      {
+        subModuleName: 'Listing',
+        name: 'Batch Management',
+        code: 'BATCH_MGMT',
+        displayOrder: 1,
+      },
       // Batch > Tracker
-      { subModuleName: 'Tracker', name: 'Tracker', code: 'BATCH_TRACKER', displayOrder: 1 },
+      {
+        subModuleName: 'Tracker',
+        name: 'Tracker',
+        code: 'BATCH_TRACKER',
+        displayOrder: 1,
+      },
       // eSignature > Agreement Management
-      { subModuleName: 'Agreement Management', name: 'Agreement', code: 'ESIGN_AGREEMENT', displayOrder: 1 },
+      {
+        subModuleName: 'Agreement Management',
+        name: 'Agreement',
+        code: 'ESIGN_AGREEMENT',
+        displayOrder: 1,
+      },
       // Incentive > Records
-      { subModuleName: 'Records', name: 'Records', code: 'INC_RECORDS', displayOrder: 1 },
+      {
+        subModuleName: 'Records',
+        name: 'Records',
+        code: 'INC_RECORDS',
+        displayOrder: 1,
+      },
       // Incentive > Leaderboard
-      { subModuleName: 'Leaderboard', name: 'Leaderboard', code: 'INC_LEADERBOARD', displayOrder: 1 },
+      {
+        subModuleName: 'Leaderboard',
+        name: 'Leaderboard',
+        code: 'INC_LEADERBOARD',
+        displayOrder: 1,
+      },
       // Incentive > Incentive Policy
-      { subModuleName: 'Incentive Policy', name: 'Policy', code: 'INC_POLICY', displayOrder: 1 },
+      {
+        subModuleName: 'Incentive Policy',
+        name: 'Policy',
+        code: 'INC_POLICY',
+        displayOrder: 1,
+      },
       // Incentive > Booster Policy
-      { subModuleName: 'Booster Policy', name: 'Policy', code: 'INC_BOOSTER_POLICY', displayOrder: 1 },
+      {
+        subModuleName: 'Booster Policy',
+        name: 'Policy',
+        code: 'INC_BOOSTER_POLICY',
+        displayOrder: 1,
+      },
       // Incentive > Modify Booking Dates
-      { subModuleName: 'Modify Booking Dates', name: 'Upload', code: 'INC_MODIFY_UPLOAD', displayOrder: 1 },
+      {
+        subModuleName: 'Modify Booking Dates',
+        name: 'Upload',
+        code: 'INC_MODIFY_UPLOAD',
+        displayOrder: 1,
+      },
       // Incentive > Incentive Payouts
-      { subModuleName: 'Incentive Payouts', name: 'Payout', code: 'INC_PAYOUT', displayOrder: 1 },
+      {
+        subModuleName: 'Incentive Payouts',
+        name: 'Payout',
+        code: 'INC_PAYOUT',
+        displayOrder: 1,
+      },
       // Incentive > Dashboard
-      { subModuleName: 'Dashboard', name: 'Dashboard', code: 'INC_DASHBOARD', displayOrder: 1 },
+      {
+        subModuleName: 'Dashboard',
+        name: 'Dashboard',
+        code: 'INC_DASHBOARD',
+        displayOrder: 1,
+      },
       // Incentive > Reports
-      { subModuleName: 'Reports', name: 'Reports', code: 'INC_REPORTS', displayOrder: 1 },
+      {
+        subModuleName: 'Reports',
+        name: 'Reports',
+        code: 'INC_REPORTS',
+        displayOrder: 1,
+      },
       // Incentive > Incentive Slabs
-      { subModuleName: 'Incentive Slabs', name: 'Slabs', code: 'INC_SLABS', displayOrder: 1 },
+      {
+        subModuleName: 'Incentive Slabs',
+        name: 'Slabs',
+        code: 'INC_SLABS',
+        displayOrder: 1,
+      },
       // Booking Form > Pre Booking Form
-      { subModuleName: 'Pre Booking Form', name: 'Documents', code: 'BF_DOCUMENTS', displayOrder: 1 },
-      { subModuleName: 'Pre Booking Form', name: 'Booking Form', code: 'BF_FORM', displayOrder: 2 },
-      { subModuleName: 'Pre Booking Form', name: 'Applicant Management', code: 'BF_APPLICANT', displayOrder: 3 },
-      { subModuleName: 'Pre Booking Form', name: 'Unit Management', code: 'BF_UNIT', displayOrder: 4 },
+      {
+        subModuleName: 'Pre Booking Form',
+        name: 'Documents',
+        code: 'BF_DOCUMENTS',
+        displayOrder: 1,
+      },
+      {
+        subModuleName: 'Pre Booking Form',
+        name: 'Booking Form',
+        code: 'BF_FORM',
+        displayOrder: 2,
+      },
+      {
+        subModuleName: 'Pre Booking Form',
+        name: 'Applicant Management',
+        code: 'BF_APPLICANT',
+        displayOrder: 3,
+      },
+      {
+        subModuleName: 'Pre Booking Form',
+        name: 'Unit Management',
+        code: 'BF_UNIT',
+        displayOrder: 4,
+      },
       // Booking Form > Post Booking Form
-      { subModuleName: 'Post Booking Form', name: 'Office Use', code: 'BF_OFFICE_USE', displayOrder: 1 },
+      {
+        subModuleName: 'Post Booking Form',
+        name: 'Office Use',
+        code: 'BF_OFFICE_USE',
+        displayOrder: 1,
+      },
     ];
 
     // Map: subModuleName -> { agCode -> agId }
@@ -361,18 +912,34 @@ export class SeedRBACConfiguration1785000000006 implements MigrationInterface {
       const info = subModInfo.find((s) => s.name === smName);
       if (!info) return;
       // Check if these base actions exist; create if not
-      const baseCodes = ['VIEW', 'CREATE', 'UPDATE', 'DELETE', 'APPROVE', 'REJECT', 'EXPORT', 'IMPORT'];
+      const baseCodes = [
+        'VIEW',
+        'CREATE',
+        'UPDATE',
+        'DELETE',
+        'APPROVE',
+        'REJECT',
+        'EXPORT',
+        'IMPORT',
+      ];
       for (const code of baseCodes) {
         let actId = actIds[code];
         if (!actId) {
-          const existing = await queryRunner.query(`SELECT id FROM actions WHERE code = $1`, [code]);
+          const existing = await queryRunner.query(
+            `SELECT id FROM actions WHERE code = $1`,
+            [code],
+          );
           if (existing.length > 0) {
             actId = existing[0].id;
             actIds[code] = actId;
           } else {
             const r = await queryRunner.query(
               `INSERT INTO actions (code, name, label, is_active) VALUES ($1, $2, $3, true) RETURNING id`,
-              [code, code.charAt(0) + code.slice(1).toLowerCase(), code.charAt(0) + code.slice(1).toLowerCase()],
+              [
+                code,
+                code.charAt(0) + code.slice(1).toLowerCase(),
+                code.charAt(0) + code.slice(1).toLowerCase(),
+              ],
             );
             actId = r[0].id;
             actIds[code] = actId;
@@ -467,7 +1034,14 @@ export class SeedRBACConfiguration1785000000006 implements MigrationInterface {
     // ===================================================================
     // 6. SEED DEPARTMENTS
     // ===================================================================
-    const departmentNames = ['CRM', 'Finance', 'HR', 'Marketing', 'Operations', 'Sales'];
+    const departmentNames = [
+      'CRM',
+      'Finance',
+      'HR',
+      'Marketing',
+      'Operations',
+      'Sales',
+    ];
     const deptIds: Record<string, number> = {};
     for (const d of departmentNames) {
       const existing = await queryRunner.query(
@@ -608,7 +1182,9 @@ export class SeedRBACConfiguration1785000000006 implements MigrationInterface {
     await queryRunner.query(`DELETE FROM module_actions`);
     await queryRunner.query(`UPDATE actions SET action_group_id = NULL`);
     await queryRunner.query(`DELETE FROM action_groups`);
-    await queryRunner.query(`DELETE FROM actions WHERE code NOT IN ('VIEW', 'CREATE', 'UPDATE', 'DELETE', 'APPROVE', 'REJECT', 'EXPORT', 'IMPORT')`);
+    await queryRunner.query(
+      `DELETE FROM actions WHERE code NOT IN ('VIEW', 'CREATE', 'UPDATE', 'DELETE', 'APPROVE', 'REJECT', 'EXPORT', 'IMPORT')`,
+    );
     await queryRunner.query(`DELETE FROM sub_modules`);
     await queryRunner.query(`DELETE FROM modules`);
   }
@@ -616,41 +1192,99 @@ export class SeedRBACConfiguration1785000000006 implements MigrationInterface {
   // Maps action group codes to their action codes (from bootstrap.seeder.ts)
   private getActionsForGroup(groupCode: string): string[] {
     const map: Record<string, string[]> = {
-      'IOM_MGMT': ['GENERATE_IOM', 'VIEW_IOM', 'APPROVE_IOM', 'REJECT_IOM', 'DELETE_IOM', 'EDIT_IOM'],
-      'IOM_LOYALTY': ['ADD_LOYALTY_POINTS'],
-      'IOM_SIGNATURE': ['SIGNATURE_UPLOAD'],
-      'IOM_INVOICE': ['REQUEST_INVOICE', 'SUBMIT_INVOICE', 'CLOSE_INVOICE', 'VIEW_INVOICE'],
-      'EOI_BOOKING': ['PREVIEW_FORM', 'BOOKING_FORM', 'APPROVE_FORM', 'REQUEST_RESUBMISSION', 'APPROVE_UNIT', 'BLOCK_UNIT', 'REQUEST_CANCELLATION', 'CANCEL_REFUND', 'CHANGE_REQUEST'],
-      'EOI_CRM': ['CREATE_LEAD_SFDC', 'CONVERT_LEAD_SFDC', 'PUSH_APPLICANT_DATA'],
-      'EOI_APPLICANT': ['EDIT_EOI_DETAILS', 'ASSIGN_RM', 'TRANSACTION_DETAILS'],
-      'EOI_SFDC': ['UPDATE_SFDC_IDS'],
-      'EOI_EXPORT': ['EXPORT_BOOKING_FORM'],
-      'EOI_RECOVERY': ['DELETE_RECORD', 'RESTORE_RECORD'],
-      'EOI_DOCUMENTS': ['PRE_BOOKING_DOCUMENTS'],
-      'EOI_UTILITIES': ['CX_PAGE_LINK'],
-      'EOI_DASHBOARD': ['DASHBOARD_VIEW', 'DASHBOARD_EXPORT'],
-      'EOI_LEADERBOARD': ['LEADERBOARD_CREATE', 'LEADERBOARD_EXPORT'],
-      'EOI_CP_LINK': ['VIEW_LIST', 'COPY_LINK'],
-      'EOI_BANK_DETAILS': ['BANK_VIEW_LIST', 'BANK_SHARE'],
-      'INV_INVENTORY': ['UPLOAD_INVENTORY'],
-      'INV_UNIT_MAPPING': ['MAP_UNIT_TO_VOUCHER'],
-      'BATCH_MGMT': ['BATCH_CREATE', 'BATCH_EDIT', 'BATCH_DELETE', 'MAP_EOIS', 'NOTIFY_CUSTOMER', 'OPEN_BATCH', 'LOCK_BATCH', 'SHARE_PREVIEW'],
-      'BATCH_TRACKER': ['TRACKER_VIEW'],
-      'ESIGN_AGREEMENT': ['AGREEMENT_ADD', 'AGREEMENT_EDIT', 'SIGNED_PDF', 'VIEW_LINK', 'AGREEMENT_LISTING', 'SIGN_NOW'],
-      'INC_RECORDS': ['RECORDS_USERS', 'RECORDS_BOOKINGS', 'INCENTIVE_REPORTS'],
-      'INC_LEADERBOARD': ['INC_LEADERBOARD_VIEW', 'INC_LEADERBOARD_EXPORT'],
-      'INC_POLICY': ['POLICY_CREATE', 'POLICY_VIEW', 'POLICY_EDIT', 'POLICY_ACTIVATE'],
-      'INC_BOOSTER_POLICY': ['BOOSTER_CREATE', 'BOOSTER_VIEW', 'BOOSTER_EDIT', 'BOOSTER_ACTIVATE'],
-      'INC_MODIFY_UPLOAD': ['MODIFY_UPLOAD'],
-      'INC_PAYOUT': ['EXPORT_INCENTIVE_PAYOUT', 'UPLOAD_INCENTIVE_PAYOUT', 'REPORT_ANALYSIS', 'FREEZE_RECORD'],
-      'INC_DASHBOARD': ['INC_DASHBOARD_VIEW'],
-      'INC_REPORTS': ['REPORTS_VIEW', 'REPORTS_GENERATE'],
-      'INC_SLABS': ['SLABS_VIEW'],
-      'BF_DOCUMENTS': ['UPLOAD_COST_SHEET'],
-      'BF_FORM': ['SHARE_BOOKING_FORM', 'EDIT_BOOKING_FORM_DRAFT'],
-      'BF_APPLICANT': ['CREATE_APPLICANT', 'VIEW_APPLICANT', 'EDIT_APPLICANT', 'DELETE_APPLICANT'],
-      'BF_UNIT': ['UNIT_SWAP', 'MULTI_UNIT_BOOKING'],
-      'BF_OFFICE_USE': ['OFFICE_USE_SECTION'],
+      IOM_MGMT: [
+        'GENERATE_IOM',
+        'VIEW_IOM',
+        'APPROVE_IOM',
+        'REJECT_IOM',
+        'DELETE_IOM',
+        'EDIT_IOM',
+      ],
+      IOM_LOYALTY: ['ADD_LOYALTY_POINTS'],
+      IOM_SIGNATURE: ['SIGNATURE_UPLOAD'],
+      IOM_INVOICE: [
+        'REQUEST_INVOICE',
+        'SUBMIT_INVOICE',
+        'CLOSE_INVOICE',
+        'VIEW_INVOICE',
+      ],
+      EOI_BOOKING: [
+        'PREVIEW_FORM',
+        'BOOKING_FORM',
+        'APPROVE_FORM',
+        'REQUEST_RESUBMISSION',
+        'APPROVE_UNIT',
+        'BLOCK_UNIT',
+        'REQUEST_CANCELLATION',
+        'CANCEL_REFUND',
+        'CHANGE_REQUEST',
+      ],
+      EOI_CRM: ['CREATE_LEAD_SFDC', 'CONVERT_LEAD_SFDC', 'PUSH_APPLICANT_DATA'],
+      EOI_APPLICANT: ['EDIT_EOI_DETAILS', 'ASSIGN_RM', 'TRANSACTION_DETAILS'],
+      EOI_SFDC: ['UPDATE_SFDC_IDS'],
+      EOI_EXPORT: ['EXPORT_BOOKING_FORM'],
+      EOI_RECOVERY: ['DELETE_RECORD', 'RESTORE_RECORD'],
+      EOI_DOCUMENTS: ['PRE_BOOKING_DOCUMENTS'],
+      EOI_UTILITIES: ['CX_PAGE_LINK'],
+      EOI_DASHBOARD: ['DASHBOARD_VIEW', 'DASHBOARD_EXPORT'],
+      EOI_LEADERBOARD: ['LEADERBOARD_CREATE', 'LEADERBOARD_EXPORT'],
+      EOI_CP_LINK: ['VIEW_LIST', 'COPY_LINK'],
+      EOI_BANK_DETAILS: ['BANK_VIEW_LIST', 'BANK_SHARE'],
+      INV_INVENTORY: ['UPLOAD_INVENTORY'],
+      INV_UNIT_MAPPING: ['MAP_UNIT_TO_VOUCHER'],
+      BATCH_MGMT: [
+        'BATCH_CREATE',
+        'BATCH_EDIT',
+        'BATCH_DELETE',
+        'MAP_EOIS',
+        'NOTIFY_CUSTOMER',
+        'OPEN_BATCH',
+        'LOCK_BATCH',
+        'SHARE_PREVIEW',
+      ],
+      BATCH_TRACKER: ['TRACKER_VIEW'],
+      ESIGN_AGREEMENT: [
+        'AGREEMENT_ADD',
+        'AGREEMENT_EDIT',
+        'SIGNED_PDF',
+        'VIEW_LINK',
+        'AGREEMENT_LISTING',
+        'SIGN_NOW',
+      ],
+      INC_RECORDS: ['RECORDS_USERS', 'RECORDS_BOOKINGS', 'INCENTIVE_REPORTS'],
+      INC_LEADERBOARD: ['INC_LEADERBOARD_VIEW', 'INC_LEADERBOARD_EXPORT'],
+      INC_POLICY: [
+        'POLICY_CREATE',
+        'POLICY_VIEW',
+        'POLICY_EDIT',
+        'POLICY_ACTIVATE',
+      ],
+      INC_BOOSTER_POLICY: [
+        'BOOSTER_CREATE',
+        'BOOSTER_VIEW',
+        'BOOSTER_EDIT',
+        'BOOSTER_ACTIVATE',
+      ],
+      INC_MODIFY_UPLOAD: ['MODIFY_UPLOAD'],
+      INC_PAYOUT: [
+        'EXPORT_INCENTIVE_PAYOUT',
+        'UPLOAD_INCENTIVE_PAYOUT',
+        'REPORT_ANALYSIS',
+        'FREEZE_RECORD',
+      ],
+      INC_DASHBOARD: ['INC_DASHBOARD_VIEW'],
+      INC_REPORTS: ['REPORTS_VIEW', 'REPORTS_GENERATE'],
+      INC_SLABS: ['SLABS_VIEW'],
+      BF_DOCUMENTS: ['UPLOAD_COST_SHEET'],
+      BF_FORM: ['SHARE_BOOKING_FORM', 'EDIT_BOOKING_FORM_DRAFT'],
+      BF_APPLICANT: [
+        'CREATE_APPLICANT',
+        'VIEW_APPLICANT',
+        'EDIT_APPLICANT',
+        'DELETE_APPLICANT',
+      ],
+      BF_UNIT: ['UNIT_SWAP', 'MULTI_UNIT_BOOKING'],
+      BF_OFFICE_USE: ['OFFICE_USE_SECTION'],
     };
     return map[groupCode] || [];
   }

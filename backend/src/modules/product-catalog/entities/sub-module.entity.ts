@@ -1,4 +1,11 @@
-import { Entity, Column, ManyToOne, JoinColumn, Unique, OneToMany } from 'typeorm';
+import {
+  Entity,
+  Column,
+  ManyToOne,
+  JoinColumn,
+  Unique,
+  OneToMany,
+} from 'typeorm';
 import { AppBaseEntity } from '../../../common/entities/app-base.entity';
 import { Module } from './module.entity';
 import { ActionGroup } from './action-group.entity';

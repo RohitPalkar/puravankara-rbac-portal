@@ -77,7 +77,10 @@ export class UserController {
 
   @Patch(':id')
   @ApiOperation({ summary: 'Update user' })
-  async update(@Param('id', RawStringPipe) id: string, @Body() dto: UpdateUserDto) {
+  async update(
+    @Param('id', RawStringPipe) id: string,
+    @Body() dto: UpdateUserDto,
+  ) {
     return this.userService.update(id, dto);
   }
 

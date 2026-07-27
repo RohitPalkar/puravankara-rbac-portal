@@ -121,7 +121,10 @@ export class UserService {
         .getRawMany(),
     ]);
 
-    const roleMap = new Map<string, { roleName: string; departmentName: string }>();
+    const roleMap = new Map<
+      string,
+      { roleName: string; departmentName: string }
+    >();
     for (const ur of userRoles) {
       if (!roleMap.has(ur.userId) && ur.role) {
         roleMap.set(ur.userId, {
@@ -161,7 +164,9 @@ export class UserService {
     };
   }
 
-  async findById(id: string): Promise<User & { profiles?: PermissionProfile[] }> {
+  async findById(
+    id: string,
+  ): Promise<User & { profiles?: PermissionProfile[] }> {
     this.logger.debug(`findById called with id="${id}" (typeof=${typeof id})`);
 
     let user: User | null = null;
@@ -171,7 +176,9 @@ export class UserService {
         relations: { department: true },
       });
     } catch (err) {
-      this.logger.warn(`findById ORM error for id="${id}": ${(err as Error).message}`);
+      this.logger.warn(
+        `findById ORM error for id="${id}": ${(err as Error).message}`,
+      );
     }
 
     if (!user || user.deletedAt) {
@@ -268,7 +275,10 @@ export class UserService {
     return required.join('');
   }
 
-  async update(id: string, dto: UpdateUserDto): Promise<User & { profiles?: PermissionProfile[] }> {
+  async update(
+    id: string,
+    dto: UpdateUserDto,
+  ): Promise<User & { profiles?: PermissionProfile[] }> {
     const user = await this.findById(id);
     if (dto.email && dto.email !== user.email) {
       const existing = await this.repository.findOne({
@@ -289,7 +299,9 @@ export class UserService {
         // Validate buddy RM requires department + role
         if (profileDto.profileType === ProfileType.BUDDY_RM) {
           if (!profileDto.departmentId || !profileDto.roleId) {
-            throw new BadRequestException('Buddy RM profile requires departmentId and roleId');
+            throw new BadRequestException(
+              'Buddy RM profile requires departmentId and roleId',
+            );
           }
           if (profileDto.buddyUserId === id) {
             throw new BadRequestException('Buddy RM cannot be the same user');
@@ -300,7 +312,9 @@ export class UserService {
         if (profileDto.departmentId && profileDto.roleId) {
           const pair = `${profileDto.departmentId}:${profileDto.roleId}`;
           if (deptRolePairs.has(pair)) {
-            throw new BadRequestException(`Duplicate department+role assignment: department ${profileDto.departmentId}, role ${profileDto.roleId}`);
+            throw new BadRequestException(
+              `Duplicate department+role assignment: department ${profileDto.departmentId}, role ${profileDto.roleId}`,
+            );
           }
           deptRolePairs.add(pair);
         }
@@ -466,7 +480,9 @@ export class UserService {
           // Validate buddy RM requires department + role
           if (profileDto.profileType === ProfileType.BUDDY_RM) {
             if (!profileDto.departmentId || !profileDto.roleId) {
-              throw new BadRequestException('Buddy RM profile requires departmentId and roleId');
+              throw new BadRequestException(
+                'Buddy RM profile requires departmentId and roleId',
+              );
             }
             if (profileDto.buddyUserId === savedUser.empId) {
               throw new BadRequestException('Buddy RM cannot be the same user');
@@ -477,7 +493,9 @@ export class UserService {
           if (profileDto.departmentId && profileDto.roleId) {
             const pair = `${profileDto.departmentId}:${profileDto.roleId}`;
             if (deptRolePairs.has(pair)) {
-              throw new BadRequestException(`Duplicate department+role assignment: department ${profileDto.departmentId}, role ${profileDto.roleId}`);
+              throw new BadRequestException(
+                `Duplicate department+role assignment: department ${profileDto.departmentId}, role ${profileDto.roleId}`,
+              );
             }
             deptRolePairs.add(pair);
           }
@@ -517,20 +535,27 @@ export class UserService {
 
               if (modDto.subModules?.length) {
                 for (const smDto of modDto.subModules) {
-                  const ppsm = queryRunner.manager.create(PermissionProfileSubModule, {
-                    profileModuleId: savedMod.id,
-                    subModuleId: smDto.subModuleId,
-                    inheritFutureProjects: smDto.inheritFutureProjects ?? false,
-                  });
+                  const ppsm = queryRunner.manager.create(
+                    PermissionProfileSubModule,
+                    {
+                      profileModuleId: savedMod.id,
+                      subModuleId: smDto.subModuleId,
+                      inheritFutureProjects:
+                        smDto.inheritFutureProjects ?? false,
+                    },
+                  );
                   const savedSm = await queryRunner.manager.save(ppsm);
 
                   if (smDto.projects?.length) {
                     for (const projDto of smDto.projects) {
-                      const ppp = queryRunner.manager.create(PermissionProfileProject, {
-                        profileSubModuleId: savedSm.id,
-                        projectId: projDto.projectId,
-                        selectedBy: projDto.selectedBy ?? 'SYSTEM',
-                      });
+                      const ppp = queryRunner.manager.create(
+                        PermissionProfileProject,
+                        {
+                          profileSubModuleId: savedSm.id,
+                          projectId: projDto.projectId,
+                          selectedBy: projDto.selectedBy ?? 'SYSTEM',
+                        },
+                      );
                       await queryRunner.manager.save(ppp);
                       allProjectIds.add(projDto.projectId);
                     }
@@ -587,11 +612,25 @@ export class UserService {
           }
         }
         for (const pid of projectIds) {
-          this.compilerService.compileAndSave(savedUser.empId, pid).catch((err) => this.logger.error('Failed to compile permissions for user project', err));
+          this.compilerService
+            .compileAndSave(savedUser.empId, pid)
+            .catch((err) =>
+              this.logger.error(
+                'Failed to compile permissions for user project',
+                err,
+              ),
+            );
         }
       }
 
-      return { user: savedUser, roles, zones, reportingLines, profiles, generatedPassword };
+      return {
+        user: savedUser,
+        roles,
+        zones,
+        reportingLines,
+        profiles,
+        generatedPassword,
+      };
     } catch (err) {
       await queryRunner.rollbackTransaction();
       this.logger.error(
@@ -683,9 +722,18 @@ export class UserRoleService {
         'ROLE',
         'HIGH',
       )
-      .catch((err) => this.logger.error('Failed to send role-assigned notification', err));
+      .catch((err) =>
+        this.logger.error('Failed to send role-assigned notification', err),
+      );
 
-    this.compilerService.compileForAllUserProjects(dto.userId).catch((err) => this.logger.error('Failed to compile permissions after role assignment', err));
+    this.compilerService
+      .compileForAllUserProjects(dto.userId)
+      .catch((err) =>
+        this.logger.error(
+          'Failed to compile permissions after role assignment',
+          err,
+        ),
+      );
 
     return saved;
   }
@@ -703,7 +751,14 @@ export class UserRoleService {
     if (result.affected === 0)
       throw new NotFoundException('User role assignment not found');
 
-    this.compilerService.compileForAllUserProjects(userId).catch((err) => this.logger.error('Failed to compile permissions after role revoke', err));
+    this.compilerService
+      .compileForAllUserProjects(userId)
+      .catch((err) =>
+        this.logger.error(
+          'Failed to compile permissions after role revoke',
+          err,
+        ),
+      );
   }
 }
 

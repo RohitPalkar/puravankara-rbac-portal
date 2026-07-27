@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 import { createCrudHooks } from './use-crud';
 import { queryKeys } from '../api/query-keys';
-import { roleService, departmentService, departmentRoleService } from '../services/organization.service';
+import { roleService, departmentService, roleMigrationService, departmentRoleService } from '../services/organization.service';
 
 import type {
   Role,
@@ -119,6 +119,48 @@ export function useCreateDepartmentRole() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.departmentRoles.all });
     },
+  });
+}
+
+export function useRemoveRole() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      id,
+      payload,
+    }: {
+      id: number;
+      payload: { mode: 'MERGE' | 'REPLACE'; destinationRoleId: number };
+    }) => {
+      const { data } = await roleMigrationService.remove(id, payload);
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.roles.all });
+    },
+  });
+}
+
+export function useRemoveRoleCheck(id: number | null) {
+  return useQuery({
+    queryKey: ['roles', id, 'remove-check'],
+    queryFn: async () => {
+      const res = await roleMigrationService.checkRemove(id!);
+      return res.data;
+    },
+    enabled: !!id,
+  });
+}
+
+export function useRemoveRoleDependencies(id: number | null) {
+  return useQuery({
+    queryKey: ['roles', id, 'remove-dependencies'],
+    queryFn: async () => {
+      const res = await roleMigrationService.getDependencies(id!);
+      return res.data;
+    },
+    enabled: !!id,
   });
 }
 

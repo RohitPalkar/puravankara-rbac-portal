@@ -271,7 +271,9 @@ export class PermissionCompilerService {
       projectIds = accessRows.map((p) => Number(p.project_id));
 
       if (projectIds.length === 0) {
-        const allProjects = await this.projectRepo.find({ select: { id: true } });
+        const allProjects = await this.projectRepo.find({
+          select: { id: true },
+        });
         projectIds = allProjects.map((p) => p.id);
       }
 
@@ -369,8 +371,12 @@ export class PermissionCompilerService {
       if (tp) return true;
     }
 
-    const profileProjectIds = await this.getProfileProjectIdsForModule(userId, moduleId);
-    if (profileProjectIds.includes(projectId) || profileProjectIds.includes(-1)) return true;
+    const profileProjectIds = await this.getProfileProjectIdsForModule(
+      userId,
+      moduleId,
+    );
+    if (profileProjectIds.includes(projectId) || profileProjectIds.includes(-1))
+      return true;
 
     return false;
   }
@@ -401,9 +407,17 @@ export class PermissionCompilerService {
       for (const tp of tpPerms) actionIds.add(tp.actionId);
     }
 
-    const profileProjectIds = await this.getProfileProjectIdsForModule(userId, moduleId);
-    if (profileProjectIds.includes(projectId) || profileProjectIds.includes(-1)) {
-      const allActions = await this.actionRepo.find({ where: { isActive: true } });
+    const profileProjectIds = await this.getProfileProjectIdsForModule(
+      userId,
+      moduleId,
+    );
+    if (
+      profileProjectIds.includes(projectId) ||
+      profileProjectIds.includes(-1)
+    ) {
+      const allActions = await this.actionRepo.find({
+        where: { isActive: true },
+      });
       for (const a of allActions) actionIds.add(a.id);
     }
 
@@ -482,10 +496,15 @@ export class PermissionCompilerService {
     }
 
     const hasProfileAccess = await this.hasProfileSubModuleProject(
-      userId, projectId, moduleId, subModuleId,
+      userId,
+      projectId,
+      moduleId,
+      subModuleId,
     );
     if (hasProfileAccess) {
-      const allActions = await this.actionRepo.find({ where: { isActive: true } });
+      const allActions = await this.actionRepo.find({
+        where: { isActive: true },
+      });
       for (const a of allActions) actionIds.add(a.id);
     }
 

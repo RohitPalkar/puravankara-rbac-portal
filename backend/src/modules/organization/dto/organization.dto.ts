@@ -147,3 +147,13 @@ export class UpdateRoleDto {
   @IsBoolean()
   isActive?: boolean;
 }
+
+export class RemoveRoleDto {
+  @ApiProperty({ enum: ['MERGE', 'REPLACE'], description: 'Migration mode' })
+  @IsString()
+  mode: 'MERGE' | 'REPLACE';
+
+  @ApiProperty({ description: 'Destination role ID to merge/replace into' })
+  @IsInt()
+  destinationRoleId: number;
+}

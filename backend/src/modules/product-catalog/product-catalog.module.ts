@@ -22,7 +22,13 @@ import {
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([ModuleEntity, SubModule, ActionGroup, Action, ModuleAction]),
+    TypeOrmModule.forFeature([
+      ModuleEntity,
+      SubModule,
+      ActionGroup,
+      Action,
+      ModuleAction,
+    ]),
   ],
   controllers: [
     ModuleController,

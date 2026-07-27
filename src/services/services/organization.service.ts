@@ -37,6 +37,42 @@ export const roleService = createCrudService<Role, CreateRoleRequest, UpdateRole
   delete: endpoints.roles.delete,
 });
 
+export interface RemoveRolePayload {
+  mode: 'MERGE' | 'REPLACE';
+  destinationRoleId: number;
+}
+
+export interface RemoveRoleResult {
+  message: string;
+  destinationRole: Role;
+}
+
+export interface DependencyCounts {
+  users: number;
+  permissions: number;
+  projectPermissions: number;
+  approvalSteps: number;
+  departmentMappings: number;
+  total: number;
+}
+
+export interface RemoveCheckResult {
+  autoMerge: boolean;
+  message?: string;
+  destinationRole?: Role;
+}
+
+export const roleMigrationService = {
+  remove: async (id: number, payload: RemoveRolePayload): Promise<ApiResponse<RemoveRoleResult>> =>
+    apiPost<RemoveRoleResult>(endpoints.roles.remove(id), payload),
+
+  checkRemove: async (id: number): Promise<ApiResponse<RemoveCheckResult>> =>
+    apiGet<RemoveCheckResult>(endpoints.roles.removeCheck(id)),
+
+  getDependencies: async (id: number): Promise<ApiResponse<DependencyCounts>> =>
+    apiGet<DependencyCounts>(endpoints.roles.removeDependencies(id)),
+};
+
 export const departmentRoleService = {
   list: async (): Promise<ApiResponse<DepartmentRole[]>> =>
     apiGet<DepartmentRole[]>(endpoints.departmentRoles.list),

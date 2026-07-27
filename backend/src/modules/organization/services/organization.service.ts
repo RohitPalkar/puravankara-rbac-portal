@@ -299,7 +299,10 @@ export class DepartmentService {
     }));
   }
 
-  async getRoleForHierarchyLevel(departmentId: number, levelNumber: number): Promise<any> {
+  async getRoleForHierarchyLevel(
+    departmentId: number,
+    levelNumber: number,
+  ): Promise<any> {
     const dept = await this.repository.findOne({
       where: { id: departmentId, deletedAt: null },
     });
@@ -319,14 +322,23 @@ export class DepartmentService {
       .select('r.id', 'roleId')
       .addSelect('r.name', 'roleName')
       .from(Role, 'r')
-      .innerJoin('department_roles', 'dr', 'dr.role_id = r.id AND dr.department_id = :deptId', { deptId: departmentId })
+      .innerJoin(
+        'department_roles',
+        'dr',
+        'dr.role_id = r.id AND dr.department_id = :deptId',
+        { deptId: departmentId },
+      )
       .where('r.hierarchy_level_rank = :level', { level: levelNumber })
       .andWhere('r.deletedAt IS NULL')
       .andWhere('r.is_active = :active', { active: true })
       .getRawOne();
 
     if (!role) {
-      return { roleId: null, roleName: null, hierarchyLevel: `L${levelNumber}` };
+      return {
+        roleId: null,
+        roleName: null,
+        hierarchyLevel: `L${levelNumber}`,
+      };
     }
 
     return {
@@ -431,22 +443,30 @@ export class RoleService extends BaseService<Role> {
       order: { name: 'ASC' },
     });
 
-    const deptRoles = await this.deptRoleRepo.find({ relations: { department: true } });
+    const deptRoles = await this.deptRoleRepo.find({
+      relations: { department: true },
+    });
     const roleDeptMap = new Map<number, any>();
     deptRoles.forEach((dr) => {
       roleDeptMap.set(dr.roleId, dr.department);
     });
 
-    const countRows: { role_id: number; module_count: string; permission_count: string }[] =
-      await this.repository.manager.query(
-        `SELECT
+    const countRows: {
+      role_id: number;
+      module_count: string;
+      permission_count: string;
+    }[] = await this.repository.manager.query(
+      `SELECT
            ra.role_id,
            COUNT(DISTINCT ra.module_id) as module_count,
            COUNT(ra.id) as permission_count
          FROM role_action_permissions ra
          GROUP BY ra.role_id`,
-      );
-    const countMap = new Map<number, { modules: number; permissions: number }>();
+    );
+    const countMap = new Map<
+      number,
+      { modules: number; permissions: number }
+    >();
     countRows.forEach((r) =>
       countMap.set(Number(r.role_id), {
         modules: Number(r.module_count),
@@ -473,7 +493,10 @@ export class RoleService extends BaseService<Role> {
     });
   }
 
-  async findAll(query: any, searchableFields: string[] = ['name']): Promise<any> {
+  async findAll(
+    query: any,
+    searchableFields: string[] = ['name'],
+  ): Promise<any> {
     const {
       page = 1,
       limit = 20,

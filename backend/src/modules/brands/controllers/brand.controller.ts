@@ -24,7 +24,9 @@ export class BrandController extends BaseController<
   }
 
   @Get()
-  @ApiOperation({ summary: 'List all brands (payment secrets excluded by @Exclude)' })
+  @ApiOperation({
+    summary: 'List all brands (payment secrets excluded by @Exclude)',
+  })
   @ApiResponse({ status: 200, description: 'Paginated list of brands' })
   async findAll(@Query() query: QueryBrandDto) {
     const result = await this.brandService.findAll(query, [
@@ -38,7 +40,9 @@ export class BrandController extends BaseController<
   }
 
   @Get(':id')
-  @ApiOperation({ summary: 'Get brand by ID (payment secrets excluded by @Exclude)' })
+  @ApiOperation({
+    summary: 'Get brand by ID (payment secrets excluded by @Exclude)',
+  })
   @ApiResponse({ status: 200, description: 'Brand found' })
   @ApiResponse({ status: 404, description: 'Brand not found' })
   async findById(@Param('id', ParseIntPipe) id: number) {

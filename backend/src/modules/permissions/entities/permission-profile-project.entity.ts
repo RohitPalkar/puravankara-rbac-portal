@@ -26,7 +26,9 @@ export class PermissionProfileProject {
   @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
   createdAt: Date;
 
-  @ManyToOne(() => PermissionProfileSubModule, (ppsm) => ppsm.projects, { onDelete: 'CASCADE' })
+  @ManyToOne(() => PermissionProfileSubModule, (ppsm) => ppsm.projects, {
+    onDelete: 'CASCADE',
+  })
   @JoinColumn({ name: 'profile_sub_module_id' })
   profileSubModule: PermissionProfileSubModule;
 

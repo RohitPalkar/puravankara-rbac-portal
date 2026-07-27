@@ -39,7 +39,9 @@ export class ModuleController extends BaseController<
   }
 
   @Get('tree')
-  @ApiOperation({ summary: 'Get module tree with sub-modules, action groups, and actions' })
+  @ApiOperation({
+    summary: 'Get module tree with sub-modules, action groups, and actions',
+  })
   async getTree() {
     return this.svc.getTree();
   }

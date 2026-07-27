@@ -33,21 +33,27 @@ interface SubModuleSeed {
 
 const MODULES_SEED: ModuleSeed[] = [
   {
-    name: 'Geography', code: 'GEOGRAPHY', isPermissionConfigurable: false,
+    name: 'Geography',
+    code: 'GEOGRAPHY',
+    isPermissionConfigurable: false,
     subModules: [
       { name: 'ZONES', displayOrder: 1, actionGroups: [] },
       { name: 'CITIES', displayOrder: 2, actionGroups: [] },
     ],
   },
   {
-    name: 'Organization', code: 'ORGANIZATION', isPermissionConfigurable: false,
+    name: 'Organization',
+    code: 'ORGANIZATION',
+    isPermissionConfigurable: false,
     subModules: [
       { name: 'DEPARTMENTS', displayOrder: 1, actionGroups: [] },
       { name: 'ROLES', displayOrder: 2, actionGroups: [] },
     ],
   },
   {
-    name: 'Product Config', code: 'PRODUCT_CONFIG', isPermissionConfigurable: false,
+    name: 'Product Config',
+    code: 'PRODUCT_CONFIG',
+    isPermissionConfigurable: false,
     subModules: [
       { name: 'MODULES', displayOrder: 1, actionGroups: [] },
       { name: 'SUB_MODULES', displayOrder: 2, actionGroups: [] },
@@ -55,37 +61,42 @@ const MODULES_SEED: ModuleSeed[] = [
     ],
   },
   {
-    name: 'Projects', code: 'PROJECTS', isPermissionConfigurable: false,
-    subModules: [
-      { name: 'PROJECTS', displayOrder: 1, actionGroups: [] },
-    ],
+    name: 'Projects',
+    code: 'PROJECTS',
+    isPermissionConfigurable: false,
+    subModules: [{ name: 'PROJECTS', displayOrder: 1, actionGroups: [] }],
   },
   {
-    name: 'Users', code: 'USERS', isPermissionConfigurable: false,
-    subModules: [
-      { name: 'USERS', displayOrder: 1, actionGroups: [] },
-    ],
+    name: 'Users',
+    code: 'USERS',
+    isPermissionConfigurable: false,
+    subModules: [{ name: 'USERS', displayOrder: 1, actionGroups: [] }],
   },
   {
-    name: 'Permissions', code: 'PERMISSIONS', isPermissionConfigurable: false,
-    subModules: [
-      { name: 'PERMISSIONS', displayOrder: 1, actionGroups: [] },
-    ],
+    name: 'Permissions',
+    code: 'PERMISSIONS',
+    isPermissionConfigurable: false,
+    subModules: [{ name: 'PERMISSIONS', displayOrder: 1, actionGroups: [] }],
   },
   {
-    name: 'Brands', code: 'BRANDS', isPermissionConfigurable: true,
-    subModules: [
-      { name: 'BRANDS', displayOrder: 1, actionGroups: [] },
-    ],
+    name: 'Brands',
+    code: 'BRANDS',
+    isPermissionConfigurable: true,
+    subModules: [{ name: 'BRANDS', displayOrder: 1, actionGroups: [] }],
   },
   {
-    name: 'IOM', code: 'IOM', isPermissionConfigurable: true,
+    name: 'IOM',
+    code: 'IOM',
+    isPermissionConfigurable: true,
     subModules: [
       {
-        name: 'Loyalty IOM', displayOrder: 1,
+        name: 'Loyalty IOM',
+        displayOrder: 1,
         actionGroups: [
           {
-            name: 'IOM Management', code: 'IOM_MGMT', displayOrder: 1,
+            name: 'IOM Management',
+            code: 'IOM_MGMT',
+            displayOrder: 1,
             actions: [
               { name: 'Generate IOM', code: 'GENERATE_IOM' },
               { name: 'View IOM', code: 'VIEW_IOM' },
@@ -96,19 +107,23 @@ const MODULES_SEED: ModuleSeed[] = [
             ],
           },
           {
-            name: 'Loyalty', code: 'IOM_LOYALTY', displayOrder: 2,
+            name: 'Loyalty',
+            code: 'IOM_LOYALTY',
+            displayOrder: 2,
             actions: [
               { name: 'Add Loyalty Points', code: 'ADD_LOYALTY_POINTS' },
             ],
           },
           {
-            name: 'Signature', code: 'IOM_SIGNATURE', displayOrder: 3,
-            actions: [
-              { name: 'Signature Upload', code: 'SIGNATURE_UPLOAD' },
-            ],
+            name: 'Signature',
+            code: 'IOM_SIGNATURE',
+            displayOrder: 3,
+            actions: [{ name: 'Signature Upload', code: 'SIGNATURE_UPLOAD' }],
           },
           {
-            name: 'Invoice', code: 'IOM_INVOICE', displayOrder: 4,
+            name: 'Invoice',
+            code: 'IOM_INVOICE',
+            displayOrder: 4,
             actions: [
               { name: 'Request Invoice', code: 'REQUEST_INVOICE' },
               { name: 'Submit Invoice', code: 'SUBMIT_INVOICE' },
@@ -119,23 +134,33 @@ const MODULES_SEED: ModuleSeed[] = [
         ],
       },
       {
-        name: 'Stamp IOM', displayOrder: 2, actionGroups: [],
+        name: 'Stamp IOM',
+        displayOrder: 2,
+        actionGroups: [],
       },
     ],
   },
   {
-    name: 'EOI', code: 'EOI', isPermissionConfigurable: true,
+    name: 'EOI',
+    code: 'EOI',
+    isPermissionConfigurable: true,
     subModules: [
       {
-        name: 'EOI Records', displayOrder: 1,
+        name: 'EOI Records',
+        displayOrder: 1,
         actionGroups: [
           {
-            name: 'Booking', code: 'EOI_BOOKING', displayOrder: 1,
+            name: 'Booking',
+            code: 'EOI_BOOKING',
+            displayOrder: 1,
             actions: [
               { name: 'Preview Form', code: 'PREVIEW_FORM' },
               { name: 'Booking Form', code: 'BOOKING_FORM' },
               { name: 'Approve Form', code: 'APPROVE_FORM' },
-              { name: 'Request for Resubmission', code: 'REQUEST_RESUBMISSION' },
+              {
+                name: 'Request for Resubmission',
+                code: 'REQUEST_RESUBMISSION',
+              },
               { name: 'Approve Unit', code: 'APPROVE_UNIT' },
               { name: 'Block Unit', code: 'BLOCK_UNIT' },
               { name: 'Request Cancellation', code: 'REQUEST_CANCELLATION' },
@@ -144,7 +169,9 @@ const MODULES_SEED: ModuleSeed[] = [
             ],
           },
           {
-            name: 'CRM', code: 'EOI_CRM', displayOrder: 2,
+            name: 'CRM',
+            code: 'EOI_CRM',
+            displayOrder: 2,
             actions: [
               { name: 'Create Lead on SFDC', code: 'CREATE_LEAD_SFDC' },
               { name: 'Convert Lead on SFDC', code: 'CONVERT_LEAD_SFDC' },
@@ -152,51 +179,65 @@ const MODULES_SEED: ModuleSeed[] = [
             ],
           },
           {
-            name: 'Applicant', code: 'EOI_APPLICANT', displayOrder: 3,
+            name: 'Applicant',
+            code: 'EOI_APPLICANT',
+            displayOrder: 3,
             actions: [
               { name: 'Edit EOI Details', code: 'EDIT_EOI_DETAILS' },
               { name: 'Assign RM', code: 'ASSIGN_RM' },
-              { name: 'Transaction Details / View', code: 'TRANSACTION_DETAILS' },
+              {
+                name: 'Transaction Details / View',
+                code: 'TRANSACTION_DETAILS',
+              },
             ],
           },
           {
-            name: 'SFDC', code: 'EOI_SFDC', displayOrder: 4,
-            actions: [
-              { name: 'Update SFDC IDs', code: 'UPDATE_SFDC_IDS' },
-            ],
+            name: 'SFDC',
+            code: 'EOI_SFDC',
+            displayOrder: 4,
+            actions: [{ name: 'Update SFDC IDs', code: 'UPDATE_SFDC_IDS' }],
           },
           {
-            name: 'Export', code: 'EOI_EXPORT', displayOrder: 5,
+            name: 'Export',
+            code: 'EOI_EXPORT',
+            displayOrder: 5,
             actions: [
               { name: 'Export Booking Form', code: 'EXPORT_BOOKING_FORM' },
             ],
           },
           {
-            name: 'Recovery', code: 'EOI_RECOVERY', displayOrder: 6,
+            name: 'Recovery',
+            code: 'EOI_RECOVERY',
+            displayOrder: 6,
             actions: [
               { name: 'Delete Record', code: 'DELETE_RECORD' },
               { name: 'Restore Record', code: 'RESTORE_RECORD' },
             ],
           },
           {
-            name: 'Documents', code: 'EOI_DOCUMENTS', displayOrder: 7,
+            name: 'Documents',
+            code: 'EOI_DOCUMENTS',
+            displayOrder: 7,
             actions: [
               { name: 'Pre-Booking Documents', code: 'PRE_BOOKING_DOCUMENTS' },
             ],
           },
           {
-            name: 'Utilities', code: 'EOI_UTILITIES', displayOrder: 8,
-            actions: [
-              { name: 'Cx Page Link', code: 'CX_PAGE_LINK' },
-            ],
+            name: 'Utilities',
+            code: 'EOI_UTILITIES',
+            displayOrder: 8,
+            actions: [{ name: 'Cx Page Link', code: 'CX_PAGE_LINK' }],
           },
         ],
       },
       {
-        name: 'EOI Dashboard', displayOrder: 2,
+        name: 'EOI Dashboard',
+        displayOrder: 2,
         actionGroups: [
           {
-            name: 'Dashboard', code: 'EOI_DASHBOARD', displayOrder: 1,
+            name: 'Dashboard',
+            code: 'EOI_DASHBOARD',
+            displayOrder: 1,
             actions: [
               { name: 'View', code: 'DASHBOARD_VIEW' },
               { name: 'Export', code: 'DASHBOARD_EXPORT' },
@@ -205,10 +246,13 @@ const MODULES_SEED: ModuleSeed[] = [
         ],
       },
       {
-        name: 'EOI Leaderboard', displayOrder: 3,
+        name: 'EOI Leaderboard',
+        displayOrder: 3,
         actionGroups: [
           {
-            name: 'Leaderboard', code: 'EOI_LEADERBOARD', displayOrder: 1,
+            name: 'Leaderboard',
+            code: 'EOI_LEADERBOARD',
+            displayOrder: 1,
             actions: [
               { name: 'Create', code: 'LEADERBOARD_CREATE' },
               { name: 'Export', code: 'LEADERBOARD_EXPORT' },
@@ -217,13 +261,18 @@ const MODULES_SEED: ModuleSeed[] = [
         ],
       },
       {
-        name: 'EOI Manager', displayOrder: 4, actionGroups: [],
+        name: 'EOI Manager',
+        displayOrder: 4,
+        actionGroups: [],
       },
       {
-        name: 'CP Link', displayOrder: 5,
+        name: 'CP Link',
+        displayOrder: 5,
         actionGroups: [
           {
-            name: 'Link', code: 'EOI_CP_LINK', displayOrder: 1,
+            name: 'Link',
+            code: 'EOI_CP_LINK',
+            displayOrder: 1,
             actions: [
               { name: 'View List', code: 'VIEW_LIST' },
               { name: 'Copy Link', code: 'COPY_LINK' },
@@ -232,10 +281,13 @@ const MODULES_SEED: ModuleSeed[] = [
         ],
       },
       {
-        name: 'Bank Details', displayOrder: 6,
+        name: 'Bank Details',
+        displayOrder: 6,
         actionGroups: [
           {
-            name: 'Bank Details', code: 'EOI_BANK_DETAILS', displayOrder: 1,
+            name: 'Bank Details',
+            code: 'EOI_BANK_DETAILS',
+            displayOrder: 1,
             actions: [
               { name: 'View List', code: 'BANK_VIEW_LIST' },
               { name: 'Share', code: 'BANK_SHARE' },
@@ -246,24 +298,30 @@ const MODULES_SEED: ModuleSeed[] = [
     ],
   },
   {
-    name: 'Inventory', code: 'INVENTORY', isPermissionConfigurable: true,
+    name: 'Inventory',
+    code: 'INVENTORY',
+    isPermissionConfigurable: true,
     subModules: [
       {
-        name: 'Add / Update Inventory', displayOrder: 1,
+        name: 'Add / Update Inventory',
+        displayOrder: 1,
         actionGroups: [
           {
-            name: 'Inventory', code: 'INV_INVENTORY', displayOrder: 1,
-            actions: [
-              { name: 'Upload Inventory', code: 'UPLOAD_INVENTORY' },
-            ],
+            name: 'Inventory',
+            code: 'INV_INVENTORY',
+            displayOrder: 1,
+            actions: [{ name: 'Upload Inventory', code: 'UPLOAD_INVENTORY' }],
           },
         ],
       },
       {
-        name: 'Unit Mapping', displayOrder: 2,
+        name: 'Unit Mapping',
+        displayOrder: 2,
         actionGroups: [
           {
-            name: 'Unit Mapping', code: 'INV_UNIT_MAPPING', displayOrder: 1,
+            name: 'Unit Mapping',
+            code: 'INV_UNIT_MAPPING',
+            displayOrder: 1,
             actions: [
               { name: 'Map Unit to Voucher', code: 'MAP_UNIT_TO_VOUCHER' },
             ],
@@ -273,13 +331,18 @@ const MODULES_SEED: ModuleSeed[] = [
     ],
   },
   {
-    name: 'Batch', code: 'BATCH', isPermissionConfigurable: true,
+    name: 'Batch',
+    code: 'BATCH',
+    isPermissionConfigurable: true,
     subModules: [
       {
-        name: 'Listing', displayOrder: 1,
+        name: 'Listing',
+        displayOrder: 1,
         actionGroups: [
           {
-            name: 'Batch Management', code: 'BATCH_MGMT', displayOrder: 1,
+            name: 'Batch Management',
+            code: 'BATCH_MGMT',
+            displayOrder: 1,
             actions: [
               { name: 'Create', code: 'BATCH_CREATE' },
               { name: 'Edit', code: 'BATCH_EDIT' },
@@ -294,26 +357,32 @@ const MODULES_SEED: ModuleSeed[] = [
         ],
       },
       {
-        name: 'Tracker', displayOrder: 2,
+        name: 'Tracker',
+        displayOrder: 2,
         actionGroups: [
           {
-            name: 'Tracker', code: 'BATCH_TRACKER', displayOrder: 1,
-            actions: [
-              { name: 'View', code: 'TRACKER_VIEW' },
-            ],
+            name: 'Tracker',
+            code: 'BATCH_TRACKER',
+            displayOrder: 1,
+            actions: [{ name: 'View', code: 'TRACKER_VIEW' }],
           },
         ],
       },
     ],
   },
   {
-    name: 'eSignature', code: 'ESIGNATURE', isPermissionConfigurable: true,
+    name: 'eSignature',
+    code: 'ESIGNATURE',
+    isPermissionConfigurable: true,
     subModules: [
       {
-        name: 'Agreement Management', displayOrder: 1,
+        name: 'Agreement Management',
+        displayOrder: 1,
         actionGroups: [
           {
-            name: 'Agreement', code: 'ESIGN_AGREEMENT', displayOrder: 1,
+            name: 'Agreement',
+            code: 'ESIGN_AGREEMENT',
+            displayOrder: 1,
             actions: [
               { name: 'Add', code: 'AGREEMENT_ADD' },
               { name: 'Edit', code: 'AGREEMENT_EDIT' },
@@ -328,13 +397,18 @@ const MODULES_SEED: ModuleSeed[] = [
     ],
   },
   {
-    name: 'Incentive', code: 'INCENTIVE', isPermissionConfigurable: true,
+    name: 'Incentive',
+    code: 'INCENTIVE',
+    isPermissionConfigurable: true,
     subModules: [
       {
-        name: 'Records', displayOrder: 1,
+        name: 'Records',
+        displayOrder: 1,
         actionGroups: [
           {
-            name: 'Records', code: 'INC_RECORDS', displayOrder: 1,
+            name: 'Records',
+            code: 'INC_RECORDS',
+            displayOrder: 1,
             actions: [
               { name: 'Users', code: 'RECORDS_USERS' },
               { name: 'Bookings', code: 'RECORDS_BOOKINGS' },
@@ -344,10 +418,13 @@ const MODULES_SEED: ModuleSeed[] = [
         ],
       },
       {
-        name: 'Leaderboard', displayOrder: 2,
+        name: 'Leaderboard',
+        displayOrder: 2,
         actionGroups: [
           {
-            name: 'Leaderboard', code: 'INC_LEADERBOARD', displayOrder: 1,
+            name: 'Leaderboard',
+            code: 'INC_LEADERBOARD',
+            displayOrder: 1,
             actions: [
               { name: 'View', code: 'INC_LEADERBOARD_VIEW' },
               { name: 'Export', code: 'INC_LEADERBOARD_EXPORT' },
@@ -356,10 +433,13 @@ const MODULES_SEED: ModuleSeed[] = [
         ],
       },
       {
-        name: 'Incentive Policy', displayOrder: 3,
+        name: 'Incentive Policy',
+        displayOrder: 3,
         actionGroups: [
           {
-            name: 'Policy', code: 'INC_POLICY', displayOrder: 1,
+            name: 'Policy',
+            code: 'INC_POLICY',
+            displayOrder: 1,
             actions: [
               { name: 'Create', code: 'POLICY_CREATE' },
               { name: 'View', code: 'POLICY_VIEW' },
@@ -370,10 +450,13 @@ const MODULES_SEED: ModuleSeed[] = [
         ],
       },
       {
-        name: 'Booster Policy', displayOrder: 4,
+        name: 'Booster Policy',
+        displayOrder: 4,
         actionGroups: [
           {
-            name: 'Policy', code: 'INC_BOOSTER_POLICY', displayOrder: 1,
+            name: 'Policy',
+            code: 'INC_BOOSTER_POLICY',
+            displayOrder: 1,
             actions: [
               { name: 'Create', code: 'BOOSTER_CREATE' },
               { name: 'View', code: 'BOOSTER_VIEW' },
@@ -384,46 +467,63 @@ const MODULES_SEED: ModuleSeed[] = [
         ],
       },
       {
-        name: 'Modify Booking Dates', displayOrder: 5,
+        name: 'Modify Booking Dates',
+        displayOrder: 5,
         actionGroups: [
           {
-            name: 'Upload', code: 'INC_MODIFY_UPLOAD', displayOrder: 1,
-            actions: [
-              { name: 'Upload', code: 'MODIFY_UPLOAD' },
-            ],
+            name: 'Upload',
+            code: 'INC_MODIFY_UPLOAD',
+            displayOrder: 1,
+            actions: [{ name: 'Upload', code: 'MODIFY_UPLOAD' }],
           },
         ],
       },
       {
-        name: 'Incentive Payouts', displayOrder: 6,
+        name: 'Incentive Payouts',
+        displayOrder: 6,
         actionGroups: [
           {
-            name: 'Payout', code: 'INC_PAYOUT', displayOrder: 1,
+            name: 'Payout',
+            code: 'INC_PAYOUT',
+            displayOrder: 1,
             actions: [
-              { name: 'Export Incentive Payout', code: 'EXPORT_INCENTIVE_PAYOUT' },
-              { name: 'Upload Incentive Payout', code: 'UPLOAD_INCENTIVE_PAYOUT' },
+              {
+                name: 'Export Incentive Payout',
+                code: 'EXPORT_INCENTIVE_PAYOUT',
+              },
+              {
+                name: 'Upload Incentive Payout',
+                code: 'UPLOAD_INCENTIVE_PAYOUT',
+              },
               { name: 'Report Analysis', code: 'REPORT_ANALYSIS' },
-              { name: 'Freeze Record for Incentive Payout', code: 'FREEZE_RECORD' },
+              {
+                name: 'Freeze Record for Incentive Payout',
+                code: 'FREEZE_RECORD',
+              },
             ],
           },
         ],
       },
       {
-        name: 'Dashboard', displayOrder: 7,
+        name: 'Dashboard',
+        displayOrder: 7,
         actionGroups: [
           {
-            name: 'Dashboard', code: 'INC_DASHBOARD', displayOrder: 1,
-            actions: [
-              { name: 'View', code: 'INC_DASHBOARD_VIEW' },
-            ],
+            name: 'Dashboard',
+            code: 'INC_DASHBOARD',
+            displayOrder: 1,
+            actions: [{ name: 'View', code: 'INC_DASHBOARD_VIEW' }],
           },
         ],
       },
       {
-        name: 'Reports', displayOrder: 8,
+        name: 'Reports',
+        displayOrder: 8,
         actionGroups: [
           {
-            name: 'Reports', code: 'INC_REPORTS', displayOrder: 1,
+            name: 'Reports',
+            code: 'INC_REPORTS',
+            displayOrder: 1,
             actions: [
               { name: 'View', code: 'REPORTS_VIEW' },
               { name: 'Generate', code: 'REPORTS_GENERATE' },
@@ -432,39 +532,55 @@ const MODULES_SEED: ModuleSeed[] = [
         ],
       },
       {
-        name: 'Incentive Slabs', displayOrder: 9,
+        name: 'Incentive Slabs',
+        displayOrder: 9,
         actionGroups: [
           {
-            name: 'Slabs', code: 'INC_SLABS', displayOrder: 1,
-            actions: [
-              { name: 'View', code: 'SLABS_VIEW' },
-            ],
+            name: 'Slabs',
+            code: 'INC_SLABS',
+            displayOrder: 1,
+            actions: [{ name: 'View', code: 'SLABS_VIEW' }],
           },
         ],
       },
     ],
   },
   {
-    name: 'Booking Form', code: 'BOOKING_FORM', isPermissionConfigurable: true,
+    name: 'Booking Form',
+    code: 'BOOKING_FORM',
+    isPermissionConfigurable: true,
     subModules: [
       {
-        name: 'Pre Booking Form', displayOrder: 1,
+        name: 'Pre Booking Form',
+        displayOrder: 1,
         actionGroups: [
           {
-            name: 'Documents', code: 'BF_DOCUMENTS', displayOrder: 1,
+            name: 'Documents',
+            code: 'BF_DOCUMENTS',
+            displayOrder: 1,
             actions: [
-              { name: 'Upload Cost Sheet & Allotment Letter', code: 'UPLOAD_COST_SHEET' },
+              {
+                name: 'Upload Cost Sheet & Allotment Letter',
+                code: 'UPLOAD_COST_SHEET',
+              },
             ],
           },
           {
-            name: 'Booking Form', code: 'BF_FORM', displayOrder: 2,
+            name: 'Booking Form',
+            code: 'BF_FORM',
+            displayOrder: 2,
             actions: [
               { name: 'Share Booking Form', code: 'SHARE_BOOKING_FORM' },
-              { name: 'Edit Booking Form Draft', code: 'EDIT_BOOKING_FORM_DRAFT' },
+              {
+                name: 'Edit Booking Form Draft',
+                code: 'EDIT_BOOKING_FORM_DRAFT',
+              },
             ],
           },
           {
-            name: 'Applicant Management', code: 'BF_APPLICANT', displayOrder: 3,
+            name: 'Applicant Management',
+            code: 'BF_APPLICANT',
+            displayOrder: 3,
             actions: [
               { name: 'Create Applicant', code: 'CREATE_APPLICANT' },
               { name: 'View Applicant', code: 'VIEW_APPLICANT' },
@@ -473,7 +589,9 @@ const MODULES_SEED: ModuleSeed[] = [
             ],
           },
           {
-            name: 'Unit Management', code: 'BF_UNIT', displayOrder: 4,
+            name: 'Unit Management',
+            code: 'BF_UNIT',
+            displayOrder: 4,
             actions: [
               { name: 'Unit Swap', code: 'UNIT_SWAP' },
               { name: 'Multi Unit Booking', code: 'MULTI_UNIT_BOOKING' },
@@ -482,10 +600,13 @@ const MODULES_SEED: ModuleSeed[] = [
         ],
       },
       {
-        name: 'Post Booking Form', displayOrder: 2,
+        name: 'Post Booking Form',
+        displayOrder: 2,
         actionGroups: [
           {
-            name: 'Office Use', code: 'BF_OFFICE_USE', displayOrder: 1,
+            name: 'Office Use',
+            code: 'BF_OFFICE_USE',
+            displayOrder: 1,
             actions: [
               { name: 'Office Use Section', code: 'OFFICE_USE_SECTION' },
             ],

@@ -62,7 +62,9 @@ export class RoleActionPermissionService {
 
       const mappedSubModules = modSubModules.map((sm) => {
         let smCount = 0;
-        const smActionGroups = actionGroups.filter((ag) => ag.subModuleId === sm.id);
+        const smActionGroups = actionGroups.filter(
+          (ag) => ag.subModuleId === sm.id,
+        );
         const hasActions = smActionGroups.length > 0;
 
         const mappedActionGroups = smActionGroups.map((ag) => {
@@ -103,12 +105,15 @@ export class RoleActionPermissionService {
           permissionType: hasActions ? 'ACTION' : 'MODULE',
           actionGroups: mappedActionGroups,
           selectedCount: smCount,
-          totalCount: smActionGroups.length > 0
-            ? smActionGroups.reduce(
-                (sum, ag) => sum + actions.filter((a) => a.actionGroupId === ag.id).length,
-                0,
-              )
-            : 1,
+          totalCount:
+            smActionGroups.length > 0
+              ? smActionGroups.reduce(
+                  (sum, ag) =>
+                    sum +
+                    actions.filter((a) => a.actionGroupId === ag.id).length,
+                  0,
+                )
+              : 1,
         };
       });
 
@@ -124,7 +129,11 @@ export class RoleActionPermissionService {
             sum +
             actionGroups
               .filter((ag) => ag.subModuleId === sm.id)
-              .reduce((s, ag) => s + actions.filter((a) => a.actionGroupId === ag.id).length, 0),
+              .reduce(
+                (s, ag) =>
+                  s + actions.filter((a) => a.actionGroupId === ag.id).length,
+                0,
+              ),
           0,
         ),
       };

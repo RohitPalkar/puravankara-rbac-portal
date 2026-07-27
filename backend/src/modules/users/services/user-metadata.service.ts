@@ -28,12 +28,27 @@ export class UserMetadataService {
   async getMetadata() {
     const [departments, roles, modules, subModules, projects, zones] =
       await Promise.all([
-        this.deptRepo.find({ where: { isActive: true }, order: { name: 'ASC' } }),
-        this.roleRepo.find({ where: { isActive: true }, order: { name: 'ASC' } }),
-        this.moduleRepo.find({ where: { isActive: true }, order: { name: 'ASC' } }),
-        this.subModuleRepo.find({ where: { isActive: true }, order: { name: 'ASC' } }),
+        this.deptRepo.find({
+          where: { isActive: true },
+          order: { name: 'ASC' },
+        }),
+        this.roleRepo.find({
+          where: { isActive: true },
+          order: { name: 'ASC' },
+        }),
+        this.moduleRepo.find({
+          where: { isActive: true },
+          order: { name: 'ASC' },
+        }),
+        this.subModuleRepo.find({
+          where: { isActive: true },
+          order: { name: 'ASC' },
+        }),
         this.projectRepo.find({ order: { name: 'ASC' } }),
-        this.zoneRepo.find({ where: { isActive: true }, order: { name: 'ASC' } }),
+        this.zoneRepo.find({
+          where: { isActive: true },
+          order: { name: 'ASC' },
+        }),
       ]);
 
     return {

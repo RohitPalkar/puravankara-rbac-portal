@@ -70,7 +70,14 @@ export class RoleProjectPermissionService {
       );
     }
     const saved = await this.repository.save(this.repository.create(dto));
-    await this.compilerService.compileForRole(dto.roleId).catch((err) => this.logger.error('Failed to compile permissions after role-project permission create', err));
+    await this.compilerService
+      .compileForRole(dto.roleId)
+      .catch((err) =>
+        this.logger.error(
+          'Failed to compile permissions after role-project permission create',
+          err,
+        ),
+      );
     return saved;
   }
 
@@ -78,6 +85,13 @@ export class RoleProjectPermissionService {
     const entity = await this.repository.findOne({ where: { id } });
     if (!entity) throw new NotFoundException('RoleProjectPermission not found');
     await this.repository.remove(entity);
-    await this.compilerService.compileForRole(entity.roleId).catch((err) => this.logger.error('Failed to compile permissions after role-project permission removal', err));
+    await this.compilerService
+      .compileForRole(entity.roleId)
+      .catch((err) =>
+        this.logger.error(
+          'Failed to compile permissions after role-project permission removal',
+          err,
+        ),
+      );
   }
 }

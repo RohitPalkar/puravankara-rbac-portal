@@ -62,7 +62,12 @@ export class UserPermissionOverrideService {
       const saved = await this.repository.save(existing);
       await this.compilerService
         .compileAndSave(dto.userId, dto.projectId)
-        .catch((err) => this.logger.error('Failed to compile permissions after override upsert (existing)', err));
+        .catch((err) =>
+          this.logger.error(
+            'Failed to compile permissions after override upsert (existing)',
+            err,
+          ),
+        );
       return saved;
     }
 
@@ -70,7 +75,12 @@ export class UserPermissionOverrideService {
     const saved = await this.repository.save(override);
     await this.compilerService
       .compileAndSave(dto.userId, dto.projectId)
-      .catch((err) => this.logger.error('Failed to compile permissions after override upsert (new)', err));
+      .catch((err) =>
+        this.logger.error(
+          'Failed to compile permissions after override upsert (new)',
+          err,
+        ),
+      );
     return saved as unknown as Promise<UserPermissionOverride>;
   }
 
@@ -81,7 +91,12 @@ export class UserPermissionOverrideService {
     await this.repository.delete(id);
     await this.compilerService
       .compileAndSave(userId, projectId)
-      .catch((err) => this.logger.error('Failed to compile permissions after override removal', err));
+      .catch((err) =>
+        this.logger.error(
+          'Failed to compile permissions after override removal',
+          err,
+        ),
+      );
   }
 
   async removeByKey(

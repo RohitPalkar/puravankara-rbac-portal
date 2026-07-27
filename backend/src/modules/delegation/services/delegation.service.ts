@@ -128,7 +128,12 @@ export class DelegationService {
         'DELEGATION',
         'HIGH',
       )
-      .catch((err) => this.logger.error('Failed to send delegation-created notification to fromUser', err));
+      .catch((err) =>
+        this.logger.error(
+          'Failed to send delegation-created notification to fromUser',
+          err,
+        ),
+      );
 
     this.notifService
       .sendToUser(
@@ -140,7 +145,12 @@ export class DelegationService {
         'DELEGATION',
         'HIGH',
       )
-      .catch((err) => this.logger.error('Failed to send delegation-received notification to toUser', err));
+      .catch((err) =>
+        this.logger.error(
+          'Failed to send delegation-received notification to toUser',
+          err,
+        ),
+      );
 
     return saved;
   }

@@ -43,16 +43,16 @@ export abstract class BaseService<
       const [data, total] = await this.repository.findAndCount({
         where: searchConditions,
         order: { [sortBy]: sortOrder } as any,
-        ...(paginate ? { skip: (page! - 1) * limit!, take: limit! } : {}),
+        ...(paginate ? { skip: (page - 1) * limit, take: limit } : {}),
       });
 
       return {
         data,
         meta: {
-          page: paginate ? page! : 1,
-          limit: paginate ? limit! : total,
+          page: paginate ? page : 1,
+          limit: paginate ? limit : total,
           total,
-          totalPages: paginate ? Math.ceil(total / limit!) : 1,
+          totalPages: paginate ? Math.ceil(total / limit) : 1,
         },
       };
     }
@@ -66,16 +66,16 @@ export abstract class BaseService<
     const [data, total] = await this.repository.findAndCount({
       where,
       order: { [sortBy]: sortOrder } as any,
-      ...(paginate ? { skip: (page! - 1) * limit!, take: limit! } : {}),
+      ...(paginate ? { skip: (page - 1) * limit, take: limit } : {}),
     });
 
     return {
       data,
       meta: {
-        page: paginate ? page! : 1,
-        limit: paginate ? limit! : total,
+        page: paginate ? page : 1,
+        limit: paginate ? limit : total,
         total,
-        totalPages: paginate ? Math.ceil(total / limit!) : 1,
+        totalPages: paginate ? Math.ceil(total / limit) : 1,
       },
     };
   }

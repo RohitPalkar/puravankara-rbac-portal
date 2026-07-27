@@ -152,9 +152,15 @@ export class PermissionProfiles1785000000004 implements MigrationInterface {
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
-    await queryRunner.query(`DROP TABLE IF EXISTS "permission_profile_projects"`);
-    await queryRunner.query(`DROP TABLE IF EXISTS "permission_profile_sub_modules"`);
-    await queryRunner.query(`DROP TABLE IF EXISTS "permission_profile_modules"`);
+    await queryRunner.query(
+      `DROP TABLE IF EXISTS "permission_profile_projects"`,
+    );
+    await queryRunner.query(
+      `DROP TABLE IF EXISTS "permission_profile_sub_modules"`,
+    );
+    await queryRunner.query(
+      `DROP TABLE IF EXISTS "permission_profile_modules"`,
+    );
     await queryRunner.query(`DROP TABLE IF EXISTS "permission_profiles"`);
   }
 }

@@ -1,16 +1,22 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { PermissionsModule } from '../permissions/permissions.module';
+import { AuditModule } from '../audit/audit.module';
 import { Department } from './entities/department.entity';
 import { Role } from './entities/role.entity';
 import { DepartmentRole } from './entities/department-role.entity';
 import { DepartmentHierarchyLevel } from './entities/department-hierarchy-level.entity';
 import { DepartmentZoneMapping } from './entities/department-zone-mapping.entity';
+import { UserRole } from '../users/entities/user-role.entity';
+import { RoleActionPermission } from '../permissions/entities/role-action-permission.entity';
+import { RoleProjectPermission } from '../permissions/entities/role-project-permission.entity';
+import { ApprovalStep } from '../workflows/entities/approval-step.entity';
 import {
   DepartmentService,
   RoleService,
 } from './services/organization.service';
 import { DepartmentRoleService } from './services/department-role.service';
+import { RoleMigrationService } from './services/role-migration.service';
 import {
   DepartmentController,
   RoleController,
@@ -25,11 +31,21 @@ import { DepartmentRoleController } from './controllers/department-role.controll
       DepartmentRole,
       DepartmentHierarchyLevel,
       DepartmentZoneMapping,
+      UserRole,
+      RoleActionPermission,
+      RoleProjectPermission,
+      ApprovalStep,
     ]),
     PermissionsModule,
+    AuditModule,
   ],
   controllers: [DepartmentController, RoleController, DepartmentRoleController],
-  providers: [DepartmentService, RoleService, DepartmentRoleService],
+  providers: [
+    DepartmentService,
+    RoleService,
+    DepartmentRoleService,
+    RoleMigrationService,
+  ],
   exports: [TypeOrmModule],
 })
 export class OrganizationModule {}

@@ -27,12 +27,14 @@ import {
   UpdateDepartmentDto,
   CreateRoleDto,
   UpdateRoleDto,
+  RemoveRoleDto,
 } from '../dto/organization.dto';
 import { QueryDepartmentDto } from '../dto/query-department.dto';
 import { Department } from '../entities/department.entity';
 import { Role } from '../entities/role.entity';
 import { BaseController } from '../../../common/crud/base.controller';
 import { RoleActionPermissionService } from '../../permissions/services/role-action-permission.service';
+import { RoleMigrationService } from '../services/role-migration.service';
 
 class SetRolePermissionsDto {
   @ApiProperty({ type: [Number] })
@@ -97,7 +99,9 @@ export class DepartmentController {
   }
 
   @Get(':id/hierarchy-levels/:levelNumber')
-  @ApiOperation({ summary: 'Get the role configured for a department + hierarchy level' })
+  @ApiOperation({
+    summary: 'Get the role configured for a department + hierarchy level',
+  })
   @ApiResponse({ status: 200, description: 'Role found or null' })
   async getRoleForHierarchyLevel(
     @Param('id', ParseIntPipe) id: number,
@@ -127,12 +131,15 @@ export class RoleController extends BaseController<
   constructor(
     private readonly roleService: RoleService,
     private readonly roleActionPermissionService: RoleActionPermissionService,
+    private readonly roleMigrationService: RoleMigrationService,
   ) {
     super(roleService, 'Role');
   }
 
   @Get('permissions-summary')
-  @ApiOperation({ summary: 'Get all roles with department info and permission counts' })
+  @ApiOperation({
+    summary: 'Get all roles with department info and permission counts',
+  })
   async getPermissionsSummary() {
     return this.roleService.getPermissionsSummary();
   }
@@ -145,7 +152,9 @@ export class RoleController extends BaseController<
   }
 
   @Get(':roleId/permissions/tree')
-  @ApiOperation({ summary: 'Get module tree with permission counts for a role' })
+  @ApiOperation({
+    summary: 'Get module tree with permission counts for a role',
+  })
   async getPermissionsTree(@Param('roleId', ParseIntPipe) roleId: number) {
     return this.roleActionPermissionService.getTreeWithPermissions(roleId);
   }
@@ -158,5 +167,34 @@ export class RoleController extends BaseController<
   ) {
     await this.roleActionPermissionService.setByRole(roleId, dto.actionIds);
     return { message: 'Permissions updated successfully' };
+  }
+
+  @Post(':id/remove')
+  @ApiOperation({
+    summary: 'Remove a role with merge or replace migration',
+    description:
+      'MERGE: combine permissions and users into destination role. REPLACE: reassign users only.',
+  })
+  async removeWithMigration(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: RemoveRoleDto,
+  ) {
+    return this.roleMigrationService.remove(id, dto);
+  }
+
+  @Get(':id/remove/check')
+  @ApiOperation({
+    summary: 'Check if role can be auto-merged (has no dependencies)',
+  })
+  async checkRemove(@Param('id', ParseIntPipe) id: number) {
+    return this.roleMigrationService.checkAutoMerge(id);
+  }
+
+  @Get(':id/remove/dependencies')
+  @ApiOperation({
+    summary: 'Get dependency counts for a role',
+  })
+  async getRemoveDependencies(@Param('id', ParseIntPipe) id: number) {
+    return this.roleMigrationService.getDependencyCounts(id);
   }
 }

@@ -34,14 +34,14 @@ export class UserProjectAccessService {
       `SELECT * FROM public.user_project_access WHERE user_id = $1`,
       [userId],
     );
-    const projectIds = rows.map(r => r.project_id);
+    const projectIds = rows.map((r) => r.project_id);
     if (projectIds.length === 0) return [];
     const projects = await this.repository.query(
       `SELECT * FROM public.projects WHERE id = ANY($1) AND deleted_at IS NULL`,
       [projectIds],
     );
-    const projectMap = new Map(projects.map(p => [p.id, p]));
-    return rows.map(r => ({
+    const projectMap = new Map(projects.map((p) => [p.id, p]));
+    return rows.map((r) => ({
       userId: r.user_id,
       projectId: r.project_id,
       assignedBy: r.assigned_by,
@@ -49,7 +49,7 @@ export class UserProjectAccessService {
       createdAt: r.created_at,
       updatedAt: r.updated_at,
       project: projectMap.get(r.project_id) || null,
-    })) as any;
+    }));
   }
 
   async assign(dto: {
@@ -81,11 +81,18 @@ export class UserProjectAccessService {
         'PROJECT',
         'HIGH',
       )
-      .catch((err) => this.logger.error('Failed to send project access notification', err));
+      .catch((err) =>
+        this.logger.error('Failed to send project access notification', err),
+      );
 
     this.compilerService
       .compileAndSave(dto.userId, dto.projectId)
-      .catch((err) => this.logger.error('Failed to compile permissions after project access grant', err));
+      .catch((err) =>
+        this.logger.error(
+          'Failed to compile permissions after project access grant',
+          err,
+        ),
+      );
 
     return saved;
   }
@@ -116,7 +123,14 @@ export class UserProjectAccessService {
     if (result.affected === 0)
       throw new NotFoundException('Project access not found');
 
-    this.compilerService.compileAndSave(userId, projectId).catch((err) => this.logger.error('Failed to compile permissions after project access revoke', err));
+    this.compilerService
+      .compileAndSave(userId, projectId)
+      .catch((err) =>
+        this.logger.error(
+          'Failed to compile permissions after project access revoke',
+          err,
+        ),
+      );
   }
 }
 

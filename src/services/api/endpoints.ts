@@ -147,6 +147,9 @@ export const endpoints = {
       tree: (roleId: number) => `${API_PREFIX}/roles/${roleId}/permissions/tree`,
       set: (roleId: number) => `${API_PREFIX}/roles/${roleId}/permissions`,
     },
+    remove: (id: number) => `${API_PREFIX}/roles/${id}/remove`,
+    removeCheck: (id: number) => `${API_PREFIX}/roles/${id}/remove/check`,
+    removeDependencies: (id: number) => `${API_PREFIX}/roles/${id}/remove/dependencies`,
   },
 
   departmentRoles: {

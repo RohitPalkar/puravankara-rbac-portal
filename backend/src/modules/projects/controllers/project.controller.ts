@@ -9,11 +9,7 @@ import {
   ParseIntPipe,
   Query,
 } from '@nestjs/common';
-import {
-  ApiBearerAuth,
-  ApiTags,
-  ApiOperation,
-} from '@nestjs/swagger';
+import { ApiBearerAuth, ApiTags, ApiOperation } from '@nestjs/swagger';
 import { ProjectService } from '../services/project.service';
 import { CreateProjectDto, UpdateProjectDto } from '../dto/project.dto';
 import { QueryProjectDto } from '../dto/query-project.dto';
@@ -27,9 +23,7 @@ export class ProjectController {
 
   @Get()
   @ApiOperation({ summary: 'Get all projects (paginated)' })
-  async findAll(
-    @Query() query: QueryProjectDto,
-  ) {
+  async findAll(@Query() query: QueryProjectDto) {
     return this.projectService.findAll(query);
   }
 

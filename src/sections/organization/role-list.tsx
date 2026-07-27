@@ -18,7 +18,7 @@ import DialogContent from '@mui/material/DialogContent';
 import DialogActions from '@mui/material/DialogActions';
 
 import { CONFIG } from 'src/config-global';
-import { useRoleList, useCreateRole, useUpdateRole, useDeleteRole, useDepartmentList, useCreateDepartmentRole } from 'src/services/hooks/use-organization';
+import { useRoleList, useCreateRole, useUpdateRole, useRemoveRole, useDepartmentList, useCreateDepartmentRole } from 'src/services/hooks/use-organization';
 
 import { Label } from 'src/components/label';
 import { Iconify } from 'src/components/iconify';
@@ -27,6 +27,7 @@ import { EmptyState } from 'src/components/empty-state';
 import { RowActionsMenu } from 'src/components/row-actions';
 import { PageHeader, PageContainer } from 'src/components/page-layout';
 import { DataTable, type FilterOption } from 'src/components/data-table';
+import { RemoveRoleDialog } from 'src/components/remove-role-dialog/remove-role-dialog';
 
 const STATUS_OPTIONS = [
   { value: 'active', label: 'Active' },
@@ -46,7 +47,7 @@ const defaults: FormData = { name: '', departmentId: '', level: '', status: 'act
 export default function RoleListPage() {
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<any>(null);
-  const [deleteId, setDeleteId] = useState<number | null>(null);
+  const [deleteRole, setDeleteRole] = useState<{ id: number; name: string } | null>(null);
   const [paginationModel, setPaginationModel] = useState<GridPaginationModel>({ page: 0, pageSize: 20 });
   const [search, setSearch] = useState('');
 
@@ -65,7 +66,7 @@ export default function RoleListPage() {
   const { data: rolesData, isLoading, isError, error } = useRoleList(queryParams as any);
   const { mutateAsync: createRole } = useCreateRole();
   const { mutateAsync: updateRole } = useUpdateRole();
-  const { mutateAsync: deleteRole, isPending: isDeleting } = useDeleteRole();
+  const { mutateAsync: removeRole, isPending: isRemoving } = useRemoveRole();
   const { mutateAsync: createDepartmentRole } = useCreateDepartmentRole();
 
   const roles = rolesData ?? [];
@@ -138,15 +139,15 @@ export default function RoleListPage() {
     }
   }, [editing, createRole, updateRole, createDepartmentRole, handleClose]);
 
-  const handleDelete = useCallback(async () => {
-    if (deleteId === null) return;
+  const handleRemoveConfirm = useCallback(async (payload: { mode: 'MERGE' | 'REPLACE'; destinationRoleId: number }) => {
+    if (!deleteRole) return;
     try {
-      await deleteRole(deleteId);
-      setDeleteId(null);
+      await removeRole({ id: deleteRole.id, payload });
+      setDeleteRole(null);
     } catch {
       // handled by query cache invalidation
     }
-  }, [deleteId, deleteRole]);
+  }, [deleteRole, removeRole]);
 
   const handleSearchChange = useCallback((value: string) => {
     setSearch(value);
@@ -195,7 +196,7 @@ export default function RoleListPage() {
       renderCell: (params: any) => (
         <RowActionsMenu actions={[
           { label: 'Edit', icon: 'solar:pen-bold' as const, onClick: () => handleEdit(params.row) },
-          { label: 'Delete', icon: 'solar:trash-bin-trash-bold' as const, onClick: () => setDeleteId(params.row.id), color: 'error.main' as const },
+            { label: 'Delete', icon: 'solar:trash-bin-trash-bold' as const, onClick: () => setDeleteRole({ id: params.row.id, name: params.row.name }), color: 'error.main' as const },
         ]} />
       ),
     },
@@ -258,16 +259,14 @@ export default function RoleListPage() {
         </Form>
       </Dialog>
 
-      <Dialog open={deleteId !== null} onClose={() => setDeleteId(null)} maxWidth="xs">
-        <DialogTitle>Confirm Delete</DialogTitle>
-        <DialogContent>Are you sure you want to delete this role?</DialogContent>
-        <DialogActions>
-          <Button onClick={() => setDeleteId(null)} color="inherit">Cancel</Button>
-          <Button onClick={handleDelete} color="error" variant="contained" disabled={isDeleting}>
-            {isDeleting ? 'Deleting...' : 'Delete'}
-          </Button>
-        </DialogActions>
-      </Dialog>
+      <RemoveRoleDialog
+        open={deleteRole !== null}
+        roleId={deleteRole?.id ?? null}
+        roleName={deleteRole?.name ?? ''}
+        onClose={() => setDeleteRole(null)}
+        onConfirm={handleRemoveConfirm}
+        loading={isRemoving}
+      />
     </>
   );
 }

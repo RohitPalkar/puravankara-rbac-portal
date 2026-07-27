@@ -71,7 +71,9 @@ export class ModuleCatalogService extends BaseService<ModuleEntity> {
         name: mod.name,
         code: mod.code,
         subModules: modSubModules.map((sm) => {
-          const smActionGroups = actionGroups.filter((ag) => ag.sub_module_id === sm.id);
+          const smActionGroups = actionGroups.filter(
+            (ag) => ag.sub_module_id === sm.id,
+          );
           const hasActions = smActionGroups.length > 0;
           return {
             id: sm.id,

@@ -108,7 +108,12 @@ export class ApprovalService {
         performedBy: requestedBy,
         source: 'WORKFLOW',
       })
-      .catch((err) => this.logger.error('Failed to create audit log for approval submission', err));
+      .catch((err) =>
+        this.logger.error(
+          'Failed to create audit log for approval submission',
+          err,
+        ),
+      );
 
     const approverSteps = await this.requestStepRepo.find({
       where: { requestId: saved.id, status: 'PENDING' },
@@ -123,7 +128,12 @@ export class ApprovalService {
           'APPROVAL_REQUEST',
           String(saved.id),
         )
-        .catch((err) => this.logger.error('Failed to send approval request notification to approver', err));
+        .catch((err) =>
+          this.logger.error(
+            'Failed to send approval request notification to approver',
+            err,
+          ),
+        );
     }
 
     return this.getDetail(saved.id);
@@ -177,7 +187,12 @@ export class ApprovalService {
         performedBy: userId,
         source: 'WORKFLOW',
       })
-      .catch((err) => this.logger.error('Failed to create audit log for approval action', err));
+      .catch((err) =>
+        this.logger.error(
+          'Failed to create audit log for approval action',
+          err,
+        ),
+      );
 
     if (action === 'APPROVE') {
       this.notificationService
@@ -188,7 +203,12 @@ export class ApprovalService {
           'APPROVAL_REQUEST',
           String(requestId),
         )
-        .catch((err) => this.logger.error('Failed to send approval notification to requester', err));
+        .catch((err) =>
+          this.logger.error(
+            'Failed to send approval notification to requester',
+            err,
+          ),
+        );
     }
 
     if (action === 'REJECT') {
@@ -204,7 +224,12 @@ export class ApprovalService {
           'APPROVAL_REQUEST',
           String(requestId),
         )
-        .catch((err) => this.logger.error('Failed to send rejection notification to requester', err));
+        .catch((err) =>
+          this.logger.error(
+            'Failed to send rejection notification to requester',
+            err,
+          ),
+        );
 
       return this.getDetail(request.id);
     }
