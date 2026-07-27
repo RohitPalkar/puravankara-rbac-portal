@@ -1,3 +1,5 @@
+import type { Role } from 'src/services/types/organization';
+
 import { useState, useEffect } from 'react';
 
 import Box from '@mui/material/Box';
@@ -8,19 +10,19 @@ import Alert from '@mui/material/Alert';
 import Button from '@mui/material/Button';
 import Dialog from '@mui/material/Dialog';
 import Tooltip from '@mui/material/Tooltip';
+import TextField from '@mui/material/TextField';
 import RadioGroup from '@mui/material/RadioGroup';
 import Typography from '@mui/material/Typography';
 import DialogTitle from '@mui/material/DialogTitle';
 import Autocomplete from '@mui/material/Autocomplete';
 import DialogContent from '@mui/material/DialogContent';
 import DialogActions from '@mui/material/DialogActions';
-import FormControlLabel from '@mui/material/FormControlLabel';
 import FormHelperText from '@mui/material/FormHelperText';
-import TextField from '@mui/material/TextField';
+import FormControlLabel from '@mui/material/FormControlLabel';
 
-import type { Role } from 'src/services/types/organization';
-import { Iconify } from 'src/components/iconify';
 import { useRoleList, useRemoveRoleDependencies } from 'src/services/hooks/use-organization';
+
+import { Iconify } from 'src/components/iconify';
 
 interface Props {
   open: boolean;

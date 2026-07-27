@@ -7,13 +7,13 @@ import type {
   Role,
   Department,
   DepartmentRole,
+  AutoMergeResult,
   CreateRoleRequest,
   UpdateRoleRequest,
+  RemoveLevelResult,
+  LevelImpactPreview,
   CreateDepartmentRequest,
   UpdateDepartmentRequest,
-  LevelImpactPreview,
-  RemoveLevelResult,
-  AutoMergeResult,
 } from '../types/organization';
 
 const _departmentCrud = createCrudService<Department, CreateDepartmentRequest, UpdateDepartmentRequest>({

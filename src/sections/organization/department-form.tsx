@@ -11,11 +11,13 @@ import Chip from '@mui/material/Chip';
 import Alert from '@mui/material/Alert';
 import Stack from '@mui/material/Stack';
 import Button from '@mui/material/Button';
+import Tooltip from '@mui/material/Tooltip';
 import MenuItem from '@mui/material/MenuItem';
 import Snackbar from '@mui/material/Snackbar';
 import Skeleton from '@mui/material/Skeleton';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
+import IconButton from '@mui/material/IconButton';
 import Autocomplete from '@mui/material/Autocomplete';
 import LinearProgress from '@mui/material/LinearProgress';
 
@@ -26,10 +28,11 @@ import { queryKeys } from 'src/services/api/query-keys';
 import { userService } from 'src/services/services/user.service';
 import { useMyPermissions } from 'src/services/hooks/use-permissions';
 import { zoneService } from 'src/services/services/geography.service';
-import { useDepartmentById, useCreateDepartment, useUpdateDepartment } from 'src/services/hooks/use-organization';
+import { useLevelRemove, useDepartmentById, useCreateDepartment, useUpdateDepartment } from 'src/services/hooks/use-organization';
 
 import { Iconify } from 'src/components/iconify';
 import { PageHeader, PageContainer } from 'src/components/page-layout';
+import { DeleteLevelDialog } from 'src/components/delete-level-dialog';
 
 function hasDepartmentPermission(
   permissions: { projects: { modules: { subModules: { name: string; actions: { code: string; allowed: boolean }[] }[] }[] }[] } | undefined,
@@ -107,6 +110,9 @@ export default function DepartmentFormPage() {
   const [hierarchyErrors, setHierarchyErrors] = useState<Record<number, string>>({});
 
   const saving = isCreating || isUpdating;
+  const { mutateAsync: removeLevel, isPending: isRemovingLevel } = useLevelRemove();
+
+  const [deleteLevel, setDeleteLevel] = useState<{ levelNumber: number; roleName: string } | null>(null);
 
   const formDisabled = levelsGenerated;
 
@@ -249,6 +255,16 @@ export default function DepartmentFormPage() {
 
     return valid;
   }, [name, selectedZoneIds, departmentAdminId, numberOfLevels, levelsGenerated, hierarchyLevels]);
+
+  const handleRemoveLevel = useCallback(async (payload: { mode: 'MERGE' | 'REPLACE'; destinationLevelNumber: number }) => {
+    if (!deleteLevel || !departmentId) return;
+    try {
+      await removeLevel({ departmentId, levelNumber: deleteLevel.levelNumber, payload });
+      setDeleteLevel(null);
+    } catch {
+      // error handled by mutation
+    }
+  }, [deleteLevel, departmentId, removeLevel]);
 
   const handleSave = useCallback(async () => {
     if (!validate()) return;
@@ -499,6 +515,17 @@ export default function DepartmentFormPage() {
                     size="small"
                     sx={{ flex: 1 }}
                   />
+                  {isEdit && (
+                    <Tooltip title="Remove this level">
+                      <IconButton
+                        size="small"
+                        color="error"
+                        onClick={() => setDeleteLevel({ levelNumber: hl.levelNumber, roleName: hl.roleName })}
+                      >
+                        <Iconify icon="solar:trash-bin-trash-bold" width={18} />
+                      </IconButton>
+                    </Tooltip>
+                  )}
                 </Box>
               ))}
             </Box>
@@ -514,6 +541,16 @@ export default function DepartmentFormPage() {
           </Button>
         </Box>
       </PageContainer>
+
+      <DeleteLevelDialog
+        open={deleteLevel !== null}
+        departmentId={departmentId ?? null}
+        levelNumber={deleteLevel?.levelNumber ?? null}
+        levelName={deleteLevel?.roleName ?? ''}
+        onClose={() => setDeleteLevel(null)}
+        onConfirm={handleRemoveLevel}
+        loading={isRemovingLevel}
+      />
 
       <Snackbar open={showSuccess} autoHideDuration={2000} anchorOrigin={{ vertical: 'top', horizontal: 'center' }}>
         <Alert severity="success" variant="filled" sx={{ width: 1 }}>

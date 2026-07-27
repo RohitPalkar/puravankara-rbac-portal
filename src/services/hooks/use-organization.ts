@@ -7,15 +7,15 @@ import { roleService, departmentService, roleMigrationService, levelMigrationSer
 import type {
   Role,
   Department,
+  AutoMergeResult,
   DepartmentDetail,
   CreateRoleRequest,
   UpdateRoleRequest,
+  RemoveLevelResult,
   DepartmentListItem,
+  LevelImpactPreview,
   CreateDepartmentRequest,
   UpdateDepartmentRequest,
-  LevelImpactPreview,
-  RemoveLevelResult,
-  AutoMergeResult,
 } from '../types/organization';
 
 export const {
