@@ -18,7 +18,7 @@ export interface TokenPair {
 
 @Injectable()
 export class TokenService {
-  private readonly accessTokenExpiry = 900; // 15 minutes in seconds
+  private readonly accessTokenExpiry = 28800; // 8 hours in seconds
   private readonly refreshTokenExpiry = '7d';
 
   constructor(private readonly jwtService: JwtService) {}

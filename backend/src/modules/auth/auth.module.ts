@@ -32,7 +32,7 @@ import { PermissionsModule } from '../permissions/permissions.module';
       inject: [ConfigService],
       useFactory: (config: ConfigService) => ({
         secret: config.get<string>('JWT_SECRET'),
-        signOptions: { expiresIn: 900 },
+        signOptions: { expiresIn: 28800 },
       }),
     }),
     forwardRef(() => PermissionsModule),

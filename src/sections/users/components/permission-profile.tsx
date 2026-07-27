@@ -2,7 +2,7 @@ import type { Project } from 'src/services/types/project';
 import type { ModuleTreeNode } from 'src/services/types/product-catalog';
 import type { ModuleProjectMapping, RolePermissionProfile, SubModuleProjectMapping } from 'src/services/types/user';
 
-import { useMemo, useState, useCallback } from 'react';
+import { useRef, useMemo, Fragment, useState, useEffect, useCallback } from 'react';
 
 import Box from '@mui/material/Box';
 import Grid from '@mui/material/Grid';
@@ -11,6 +11,7 @@ import Stack from '@mui/material/Stack';
 import Paper from '@mui/material/Paper';
 import Button from '@mui/material/Button';
 import Checkbox from '@mui/material/Checkbox';
+import Collapse from '@mui/material/Collapse';
 import TextField from '@mui/material/TextField';
 import RadioGroup from '@mui/material/RadioGroup';
 import Typography from '@mui/material/Typography';
@@ -52,13 +53,32 @@ export function PermissionProfile({ modules, allProjects, initialData, onChange 
     [modules, initialData],
   );
 
+  const initialized = useRef(false);
   const [selectedModuleId, setSelectedModuleId] = useState<number | null>(null);
+  const [selectedSubModuleId, setSelectedSubModuleId] = useState<number | null>(null);
+  const [expandedModules, setExpandedModules] = useState<Record<number, boolean>>({});
   const [leftSearch, setLeftSearch] = useState('');
+
+  useEffect(() => {
+    if (modules.length > 0 && !initialized.current) {
+      initialized.current = true;
+      setExpandedModules({ [modules[0].id]: true });
+      setSelectedModuleId(modules[0].id);
+      if (modules[0].subModules.length > 0) {
+        setSelectedSubModuleId(modules[0].subModules[0].id);
+      }
+    }
+  }, [modules]);
 
   const selectedModule = useMemo(
     () => modules.find((m) => m.id === selectedModuleId) ?? null,
     [modules, selectedModuleId],
   );
+
+  const selectedSubModule = useMemo(() => {
+    if (!selectedModule || !selectedSubModuleId) return null;
+    return selectedModule.subModules.find((s) => s.id === selectedSubModuleId) ?? null;
+  }, [selectedModule, selectedSubModuleId]);
 
   const toggleModuleEnabled = useCallback(
     (moduleId: number) => {
@@ -113,7 +133,12 @@ export function PermissionProfile({ modules, allProjects, initialData, onChange 
   const filteredModules = useMemo(() => {
     if (!leftSearch) return modules;
     const lower = leftSearch.toLowerCase();
-    return modules.filter((m) => m.name.toLowerCase().includes(lower));
+    return modules
+      .map((m) => ({
+        ...m,
+        subModules: m.subModules.filter((sm) => sm.name.toLowerCase().includes(lower)),
+      }))
+      .filter((m) => m.subModules.length > 0 || m.name.toLowerCase().includes(lower));
   }, [modules, leftSearch]);
 
   const selectedProfileMod = useMemo(
@@ -167,42 +192,85 @@ export function PermissionProfile({ modules, allProjects, initialData, onChange 
               const modProfile = profile.find((m) => m.moduleId === mod.id);
               const allEnabled = modProfile?.subModules.every((sm) => sm.enabled) ?? false;
               const anyEnabled = modProfile?.subModules.some((sm) => sm.enabled) ?? false;
-              const isSelected = selectedModuleId === mod.id;
+              const isExpanded = expandedModules[mod.id] ?? false;
               return (
-                <Stack
-                  key={mod.id}
-                  direction="row"
-                  alignItems="center"
-                  spacing={0.5}
-                  sx={{
-                    py: 0.75,
-                    px: 1,
-                    borderRadius: 1,
-                    cursor: 'pointer',
-                    bgcolor: isSelected ? 'primary.lighter' : 'transparent',
-                    borderLeft: '3px solid',
-                    borderColor: isSelected ? 'primary.main' : 'transparent',
-                    '&:hover': { bgcolor: isSelected ? 'primary.lighter' : 'action.hover' },
-                    mb: 0.25,
-                  }}
-                  onClick={() => setSelectedModuleId(mod.id)}
-                >
-                  <Checkbox
-                    size="small"
-                    checked={allEnabled}
-                    indeterminate={anyEnabled && !allEnabled}
-                    onChange={(e) => { e.stopPropagation(); toggleModuleEnabled(mod.id); }}
-                    onClick={(e) => e.stopPropagation()}
-                    sx={{ p: 0.25 }}
-                  />
-                  <Typography
-                    variant="body2"
-                    noWrap
-                    sx={{ flex: 1, fontWeight: isSelected ? 600 : 400, fontSize: '0.8125rem' }}
+                <Fragment key={mod.id}>
+                  <Stack
+                    direction="row"
+                    alignItems="center"
+                    spacing={0.5}
+                    sx={{
+                      py: 0.75,
+                      px: 1,
+                      borderRadius: 1,
+                      cursor: 'pointer',
+                      '&:hover': { bgcolor: 'action.hover' },
+                    }}
+                    onClick={() => {
+                      setExpandedModules({ [mod.id]: !isExpanded });
+                      setSelectedModuleId(mod.id);
+                    }}
                   >
-                    {mod.name}
-                  </Typography>
-                </Stack>
+                    <Box
+                      component="span"
+                      sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 20, height: 20, color: 'text.disabled', flexShrink: 0 }}
+                    >
+                      <Iconify icon={isExpanded ? 'solar:alt-arrow-down-linear' : 'solar:alt-arrow-right-linear'} width={14} />
+                    </Box>
+                    <Checkbox
+                      size="small"
+                      checked={allEnabled}
+                      indeterminate={anyEnabled && !allEnabled}
+                      onChange={(e) => { e.stopPropagation(); toggleModuleEnabled(mod.id); }}
+                      onClick={(e) => e.stopPropagation()}
+                      sx={{ p: 0.25 }}
+                    />
+                    <Typography variant="body2" fontWeight={600} noWrap sx={{ flex: 1, fontSize: '0.8125rem' }}>
+                      {mod.name}
+                    </Typography>
+                  </Stack>
+                  <Collapse in={isExpanded}>
+                    {mod.subModules.map((sm) => {
+                      const smProfile = modProfile?.subModules.find((s) => s.subModuleId === sm.id);
+                      const isActive = selectedSubModuleId === sm.id && selectedModuleId === mod.id;
+                      return (
+                        <Stack
+                          key={sm.id}
+                          direction="row"
+                          alignItems="center"
+                          spacing={0.5}
+                          sx={{
+                            py: 0.5,
+                            px: 1,
+                            ml: 2,
+                            borderRadius: 0.5,
+                            cursor: 'pointer',
+                            bgcolor: isActive ? 'primary.lighter' : 'transparent',
+                            borderLeft: '2px solid',
+                            borderColor: isActive ? 'primary.main' : 'transparent',
+                            '&:hover': { bgcolor: isActive ? 'primary.lighter' : 'action.hover' },
+                          }}
+                        >
+                          <Checkbox
+                            size="small"
+                            checked={smProfile?.enabled ?? false}
+                            onChange={(e) => { e.stopPropagation(); toggleSubModuleEnabled(mod.id, sm.id); }}
+                            onClick={(e) => e.stopPropagation()}
+                            sx={{ p: 0.25 }}
+                          />
+                          <Typography
+                            variant="body2"
+                            noWrap
+                            sx={{ flex: 1, fontWeight: isActive ? 600 : 400, fontSize: '0.8125rem', cursor: 'pointer' }}
+                            onClick={() => { setSelectedModuleId(mod.id); setSelectedSubModuleId(sm.id); }}
+                          >
+                            {sm.name}
+                          </Typography>
+                        </Stack>
+                      );
+                    })}
+                  </Collapse>
+                </Fragment>
               );
             })
           )}
@@ -215,33 +283,36 @@ export function PermissionProfile({ modules, allProjects, initialData, onChange 
           <Box sx={{ textAlign: 'center', py: 12 }}>
             <Iconify icon="solar:hand-point-left-bold" width={40} sx={{ color: 'text.disabled', mb: 1.5 }} />
             <Typography variant="body2" color="text.secondary">
-              Select a Module from the left panel to configure permissions.
+              Select a Module and Submodule from the left panel to configure permissions.
+            </Typography>
+          </Box>
+        ) : !selectedSubModuleId || !selectedSubModule ? (
+          <Box sx={{ textAlign: 'center', py: 12 }}>
+            <Iconify icon="solar:hand-point-left-bold" width={40} sx={{ color: 'text.disabled', mb: 1.5 }} />
+            <Typography variant="body2" color="text.secondary">
+              Select a Submodule from the left panel to configure its project access.
             </Typography>
           </Box>
         ) : (
           <Box sx={{ flex: 1, overflow: 'auto', p: 2 }}>
-            <Stack spacing={1.5}>
-              {selectedProfileMod?.subModules.length === 0 && (
-                <Typography variant="body2" color="text.secondary">
-                  No submodules available for this module.
+            {(() => {
+              const sm = selectedProfileMod?.subModules.find((s) => s.subModuleId === selectedSubModuleId);
+              if (!sm) return (
+                <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center', py: 6 }}>
+                  Select a submodule from the left panel.
                 </Typography>
-              )}
-              {selectedProfileMod?.subModules.map((sm) => {
-                const smMeta = selectedModule.subModules.find((s) => s.id === sm.subModuleId);
-                if (!smMeta) return null;
-                return (
-                  <SubModuleCard
-                    key={sm.subModuleId}
-                    sm={sm}
-                    smMeta={smMeta}
-                    moduleId={selectedModule.id}
-                    allProjects={allProjects}
-                    onToggleEnabled={toggleSubModuleEnabled}
-                    onUpdate={updateSubModule}
-                  />
-                );
-              })}
-            </Stack>
+              );
+              return (
+                <SubModuleCard
+                  sm={sm}
+                  smMeta={selectedSubModule}
+                  moduleId={selectedModule.id}
+                  allProjects={allProjects}
+                  onToggleEnabled={toggleSubModuleEnabled}
+                  onUpdate={updateSubModule}
+                />
+              );
+            })()}
           </Box>
         )}
       </Box>
