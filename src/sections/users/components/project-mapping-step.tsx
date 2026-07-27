@@ -1,6 +1,6 @@
 import type { Zone } from 'src/services/types/geography';
 import type { ProjectLocation } from 'src/services/types/project';
-import type { Role, Department } from 'src/services/types/organization';
+import type { Role } from 'src/services/types/organization';
 import type { ProjectMappingData, RolePermissionProfile } from 'src/services/types/user';
 
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -125,6 +125,19 @@ export default forwardRef<ProjectMappingStepHandle, Props>(({ initialData }: Pro
   const activeRoles = useMemo(() => roles ?? [], [roles]);
   const projects = useMemo(() => allProjects ?? [], [allProjects]);
   const locations = useMemo(() => allLocations ?? [], [allLocations]);
+
+  const zoneNameToId = useMemo(() => {
+    const map = new Map<string, number>();
+    (zones ?? []).forEach((z: Zone) => map.set(z.name, z.id));
+    return map;
+  }, [zones]);
+
+  const filteredDepartments = useMemo(() => {
+    if (zoneIds.length === 0) return activeDepartments;
+    return activeDepartments.filter((dept: any) =>
+      dept.zones?.some((zoneName: string) => zoneIds.includes(zoneNameToId.get(zoneName) ?? -1))
+    );
+  }, [activeDepartments, zoneIds, zoneNameToId]);
 
   const deptRoleMap = useMemo(() => {
     const map = new Map<number, number[]>();
@@ -267,7 +280,20 @@ export default forwardRef<ProjectMappingStepHandle, Props>(({ initialData }: Pro
             multiple
             value={zoneIds}
             label="Zone *"
-            onChange={(e) => { setZoneIds(e.target.value as number[]); setErrList([]); }}
+            onChange={(e) => {
+              const newZoneIds = e.target.value as number[];
+              setZoneIds(newZoneIds);
+              const deptsInZones = newZoneIds.length === 0
+                ? activeDepartments
+                : activeDepartments.filter((d: any) =>
+                    d.zones?.some((zn: string) => newZoneIds.includes(zoneNameToId.get(zn) ?? -1))
+                  );
+              if (departmentId && !deptsInZones.some((d: any) => d.id === departmentId)) {
+                setDepartmentId('');
+                setPrimaryRoleId('');
+              }
+              setErrList([]);
+            }}
             renderValue={(selected) => (
               <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
                 {(selected as number[]).length === 0 ? (
@@ -308,9 +334,13 @@ export default forwardRef<ProjectMappingStepHandle, Props>(({ initialData }: Pro
               setErrList([]);
             }}
           >
-            {(departments ?? []).map((dept: Department) => (
+            {filteredDepartments.length > 0 ? filteredDepartments.map((dept: any) => (
               <MenuItem key={dept.id} value={dept.id}>{dept.name}</MenuItem>
-            ))}
+            )) : (
+              <MenuItem disabled value="">
+                <Typography variant="body2" color="text.disabled">No departments in selected zones</Typography>
+              </MenuItem>
+            )}
           </Select>
         </FormControl>
 
@@ -341,7 +371,7 @@ export default forwardRef<ProjectMappingStepHandle, Props>(({ initialData }: Pro
             }}
           >
             <MenuItem value="">None</MenuItem>
-            {(departments ?? []).map((dept: Department) => (
+            {filteredDepartments.map((dept: any) => (
               <MenuItem key={dept.id} value={dept.id}>{dept.name}</MenuItem>
             ))}
           </Select>
