@@ -118,7 +118,7 @@ export default function PermissionMatrixStep2({ roleId, onSave, saving, editable
       setSelectedActionIds(ids);
 
       const modExpand: Record<number, boolean> = {};
-      treeData.modules.forEach((mod: ModuleNode) => { modExpand[mod.id] = true; });
+      treeData.modules.forEach((mod: ModuleNode, i: number) => { modExpand[mod.id] = i === 0; });
       setExpandedModules(modExpand);
 
       const firstSm = treeData.modules[0]?.subModules[0];
@@ -289,7 +289,7 @@ export default function PermissionMatrixStep2({ roleId, onSave, saving, editable
               </Typography>
             ) : (
               filteredModules.map((mod: ModuleNode) => {
-                const isExpanded = expandedModules[mod.id] ?? true;
+                const isExpanded = expandedModules[mod.id] ?? false;
                 const modState = computeModuleState(mod, selectedActionIds);
                 return (
                   <Fragment key={mod.id}>
@@ -304,7 +304,7 @@ export default function PermissionMatrixStep2({ roleId, onSave, saving, editable
                         cursor: 'pointer',
                         '&:hover': { bgcolor: 'action.hover' },
                       }}
-                      onClick={() => setExpandedModules((prev) => ({ ...prev, [mod.id]: !prev[mod.id] }))}
+                      onClick={() => setExpandedModules({ [mod.id]: !(expandedModules[mod.id] ?? false) })}
                     >
                       <Box
                         component="span"
