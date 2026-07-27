@@ -7,6 +7,7 @@ import {
   ParseIntPipe,
   Body,
 } from '@nestjs/common';
+import { RawStringPipe } from '../../../common/pipes/raw-string.pipe';
 import {
   ApiBearerAuth,
   ApiTags,
@@ -37,7 +38,7 @@ export class UserZoneController {
 
   @Get(':userId')
   @ApiOperation({ summary: 'Get zones for a user' })
-  async findByUser(@Param('userId') userId: string): Promise<UserZone[]> {
+  async findByUser(@Param('userId', RawStringPipe) userId: string): Promise<UserZone[]> {
     return this.zoneService.findByUser(userId);
   }
 
@@ -50,7 +51,7 @@ export class UserZoneController {
   @Delete(':userId/zone/:zoneId')
   @ApiOperation({ summary: 'Revoke zone from user' })
   async revoke(
-    @Param('userId') userId: string,
+    @Param('userId', RawStringPipe) userId: string,
     @Param('zoneId', ParseIntPipe) zoneId: number,
   ) {
     await this.zoneService.revoke(userId, zoneId);

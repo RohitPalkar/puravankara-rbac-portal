@@ -10,6 +10,7 @@ import {
   ParseIntPipe,
   NotFoundException,
 } from '@nestjs/common';
+import { RawStringPipe } from '../../../common/pipes/raw-string.pipe';
 import { ApiBearerAuth, ApiTags, ApiOperation } from '@nestjs/swagger';
 import {
   UserService,
@@ -49,8 +50,8 @@ export class UserController {
 
   @Get(':id')
   @ApiOperation({ summary: 'Get user by emp_id' })
-  async findById(@Param('id') id: string) {
-    return this.userService.findById(String(id));
+  async findById(@Param('id', RawStringPipe) id: string) {
+    return this.userService.findById(id);
   }
 
   @Post('fetch-employee')
@@ -76,13 +77,13 @@ export class UserController {
 
   @Patch(':id')
   @ApiOperation({ summary: 'Update user' })
-  async update(@Param('id') id: string, @Body() dto: UpdateUserDto) {
+  async update(@Param('id', RawStringPipe) id: string, @Body() dto: UpdateUserDto) {
     return this.userService.update(id, dto);
   }
 
   @Delete(':id')
   @ApiOperation({ summary: 'Soft delete user' })
-  async remove(@Param('id') id: string) {
+  async remove(@Param('id', RawStringPipe) id: string) {
     await this.userService.remove(id);
     return { message: 'User deleted successfully' };
   }
@@ -96,7 +97,7 @@ export class UserRoleController {
 
   @Get(':userId')
   @ApiOperation({ summary: 'Get roles for a user' })
-  async findByUser(@Param('userId') userId: string) {
+  async findByUser(@Param('userId', RawStringPipe) userId: string) {
     return this.userRoleService.findByUser(userId);
   }
 
@@ -109,7 +110,7 @@ export class UserRoleController {
   @Delete(':userId/department/:departmentId/role/:roleId')
   @ApiOperation({ summary: 'Revoke role from user' })
   async revoke(
-    @Param('userId') userId: string,
+    @Param('userId', RawStringPipe) userId: string,
     @Param('departmentId', ParseIntPipe) departmentId: number,
     @Param('roleId', ParseIntPipe) roleId: number,
   ) {
@@ -126,7 +127,7 @@ export class UserReportingLineController {
 
   @Get(':userId')
   @ApiOperation({ summary: 'Get reporting lines for a user' })
-  async findByUser(@Param('userId') userId: string) {
+  async findByUser(@Param('userId', RawStringPipe) userId: string) {
     return this.rlService.findByUser(userId);
   }
 
@@ -139,8 +140,8 @@ export class UserReportingLineController {
   @Delete(':userId/reports-to/:reportsToUserId/level/:levelRank')
   @ApiOperation({ summary: 'Remove reporting line' })
   async remove(
-    @Param('userId') userId: string,
-    @Param('reportsToUserId') reportsToUserId: string,
+    @Param('userId', RawStringPipe) userId: string,
+    @Param('reportsToUserId', RawStringPipe) reportsToUserId: string,
     @Param('levelRank', ParseIntPipe) levelRank: number,
   ) {
     await this.rlService.remove(userId, reportsToUserId, levelRank);
