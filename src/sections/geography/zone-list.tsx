@@ -6,10 +6,8 @@ import { useQuery } from '@tanstack/react-query';
 import { useRef, useMemo, useState, useEffect, useCallback } from 'react';
 
 import Box from '@mui/material/Box';
-import Card from '@mui/material/Card';
 import Chip from '@mui/material/Chip';
 import Stack from '@mui/material/Stack';
-import Alert from '@mui/material/Alert';
 import Button from '@mui/material/Button';
 import Dialog from '@mui/material/Dialog';
 import Tooltip from '@mui/material/Tooltip';
@@ -28,7 +26,6 @@ import { useMyPermissions } from 'src/services/hooks/use-permissions';
 
 import { Label } from 'src/components/label';
 import { Iconify } from 'src/components/iconify';
-import { EmptyState } from 'src/components/empty-state';
 import { RowActionsMenu } from 'src/components/row-actions';
 import { PageHeader, PageContainer } from 'src/components/page-layout';
 import { DataTable, type FilterOption } from 'src/components/data-table';
@@ -288,54 +285,26 @@ export default function ZoneListPage() {
           ) : null
         } />
 
-        <Card sx={{ overflow: 'hidden' }}>
-          {isError ? (
-            <Box sx={{ p: 4, textAlign: 'center' }}>
-              <Alert severity="error">Failed to load zones: {(error as Error)?.message || 'Unknown error'}</Alert>
-            </Box>
-          ) : !isLoading && zones.length === 0 && !search ? (
-            <EmptyState
-              icon="solar:map-point-bold-duotone"
-              title="No Zones Created"
-              description="Create your first geographic zone to get started"
-            />
-          ) : (
-            <DataTable
-              columns={columns}
-              rows={zones}
-              getRowId={(r) => r.id}
-              loading={isLoading}
-              paginationMode="server"
-              paginationModel={paginationModel}
-              onPaginationModelChange={setPaginationModel}
-              rowCount={meta?.total ?? 0}
-              onSearchChange={handleSearchChange}
-              searchValue={search}
-              searchPlaceholder="Search zones by name..."
-              filterOptions={filterOptions}
-              getRowHeight={() => 'auto'}
-              dataGridSx={{
-                '& .MuiDataGrid-row': { minHeight: '80px !important' },
-                '& .MuiDataGrid-cell': {
-                  py: 1.5,
-                  display: 'flex',
-                  alignItems: 'center',
-                },
-                '& .MuiDataGrid-columnHeader': {
-                  py: 1.5,
-                  px: 2,
-                },
-                '& .MuiDataGrid-columnHeaderTitle': {
-                  fontWeight: 600,
-                  fontSize: '0.8125rem',
-                  color: 'text.secondary',
-                  letterSpacing: '0.02em',
-                  textTransform: 'uppercase',
-                },
-              }}
-            />
-          )}
-        </Card>
+        <DataTable
+          columns={columns}
+          rows={zones}
+          getRowId={(r) => r.id}
+          loading={isLoading}
+          paginationMode="server"
+          paginationModel={paginationModel}
+          onPaginationModelChange={setPaginationModel}
+          rowCount={meta?.total ?? 0}
+          onSearchChange={handleSearchChange}
+          searchValue={search}
+          searchPlaceholder="Search zones by name..."
+          filterOptions={filterOptions}
+          getRowHeight={() => 56}
+          error={isError}
+          errorMessage={`Failed to load zones: ${(error as Error)?.message || 'Unknown error'}`}
+          emptyTitle="No Zones Created"
+          emptyDescription="Create your first geographic zone to get started"
+          emptyIcon="solar:map-point-bold-duotone"
+        />
       </PageContainer>
 
       <Dialog open={deleteId !== null} onClose={() => setDeleteId(null)} maxWidth="xs">

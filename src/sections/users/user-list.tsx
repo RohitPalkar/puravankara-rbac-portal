@@ -6,10 +6,8 @@ import { useQuery } from '@tanstack/react-query';
 import { useMemo, useState, useCallback } from 'react';
 
 import Box from '@mui/material/Box';
-import Card from '@mui/material/Card';
 import Chip from '@mui/material/Chip';
 import Stack from '@mui/material/Stack';
-import Alert from '@mui/material/Alert';
 import Button from '@mui/material/Button';
 import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
@@ -23,7 +21,6 @@ import { userService } from 'src/services/services/user.service';
 import { Label } from 'src/components/label';
 import { Iconify } from 'src/components/iconify';
 import { DataTable } from 'src/components/data-table';
-import { EmptyState } from 'src/components/empty-state';
 import { RowActionsMenu } from 'src/components/row-actions';
 import { PageHeader, PageContainer } from 'src/components/page-layout';
 
@@ -184,63 +181,28 @@ export default function UserListPage() {
             Create User
           </Button>
         } />
-        <Card sx={{ overflow: 'hidden' }}>
-          {isError ? (
-            <Box sx={{ p: 4, textAlign: 'center' }}>
-              <Alert severity="error">Failed to load users: {(error as Error)?.message || 'Unknown error'}</Alert>
-            </Box>
-          ) : !isLoading && users.length === 0 && !search ? (
-            <EmptyState
-              icon="solar:users-group-rounded-bold-duotone"
-              title="No Users Created"
-              description="Create your first user to get started"
-            />
-          ) : (
-            <DataTable
-              columns={columns}
-              rows={users}
-              getRowId={(r) => r.empId}
-              loading={isLoading}
-              paginationMode="server"
-              paginationModel={paginationModel}
-              onPaginationModelChange={setPaginationModel}
-              rowCount={meta?.total ?? 0}
-              onSearchChange={handleSearchChange}
-              searchValue={search}
-              searchPlaceholder="Search by name, employee ID, or email..."
-              filterOptions={filterOptions}
-              onFiltersChange={handleFiltersChange}
-              hideColumnsButton
-              columnHeaderHeight={56}
-              dataGridSx={{
-                '& .MuiDataGrid-columnHeaders': {
-                  borderBottom: '2px solid',
-                  borderColor: 'divider',
-                  bgcolor: 'grey.100',
-                },
-                '& .MuiDataGrid-columnHeader': {
-                  px: 1.5,
-                  py: 2.5,
-                },
-                '& .MuiDataGrid-cell': {
-                  px: 1.5,
-                  py: '24px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  fontSize: '0.875rem',
-                  '&:focus': { outline: 'none' },
-                  '&:focus-within': { outline: 'none' },
-                },
-                '& .MuiDataGrid-row': {
-                  minHeight: '72px !important',
-                  cursor: 'default' as any,
-                  '&:hover': { bgcolor: 'action.hover' },
-                  '&.Mui-selected': { bgcolor: 'primary.lighter' },
-                },
-              }}
-            />
-          )}
-        </Card>
+        <DataTable
+          columns={columns}
+          rows={users}
+          getRowId={(r) => r.empId}
+          loading={isLoading}
+          paginationMode="server"
+          paginationModel={paginationModel}
+          onPaginationModelChange={setPaginationModel}
+          rowCount={meta?.total ?? 0}
+          onSearchChange={handleSearchChange}
+          searchValue={search}
+          searchPlaceholder="Search by name, employee ID, or email..."
+          filterOptions={filterOptions}
+          onFiltersChange={handleFiltersChange}
+          hideColumnsButton
+          columnHeaderHeight={56}
+          error={isError}
+          errorMessage={`Failed to load users: ${(error as Error)?.message || 'Unknown error'}`}
+          emptyTitle="No Users Created"
+          emptyDescription="Create your first user to get started"
+          emptyIcon="solar:users-group-rounded-bold-duotone"
+        />
       </PageContainer>
     </>
   );

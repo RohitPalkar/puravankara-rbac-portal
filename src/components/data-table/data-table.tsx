@@ -1,6 +1,6 @@
 import type { GridColDef, GridPaginationModel } from '@mui/x-data-grid';
 
-import { useMemo, useState, useEffect, useCallback } from 'react';
+import { useRef, useMemo, useState, useEffect, useCallback } from 'react';
 
 import Box from '@mui/material/Box';
 import Card from '@mui/material/Card';
@@ -8,11 +8,13 @@ import Stack from '@mui/material/Stack';
 import Button from '@mui/material/Button';
 import MenuItem from '@mui/material/MenuItem';
 import Checkbox from '@mui/material/Checkbox';
+import Skeleton from '@mui/material/Skeleton';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 import ListItemText from '@mui/material/ListItemText';
 import ListItemIcon from '@mui/material/ListItemIcon';
-import { DataGrid, GridPagination, GridFooterContainer } from '@mui/x-data-grid';
+import TablePagination from '@mui/material/TablePagination';
+import { DataGrid, GridFooterContainer } from '@mui/x-data-grid';
 
 import { Iconify } from 'src/components/iconify';
 import { usePopover, CustomPopover } from 'src/components/custom-popover';
@@ -26,6 +28,13 @@ export type FilterOption = {
 export type GroupHeader = {
   label: string;
   fields: string[];
+};
+
+type ActionSlot = {
+  label: string;
+  icon: string;
+  onClick: () => void;
+  color?: string;
 };
 
 type Props = {
@@ -48,58 +57,121 @@ type Props = {
   groupHeaders?: GroupHeader[];
   hideColumnsButton?: boolean;
   columnHeaderHeight?: number;
+  emptyTitle?: string;
+  emptyDescription?: string;
+  emptyIcon?: string;
+  createAction?: ActionSlot;
+  error?: boolean;
+  errorMessage?: string;
+  onErrorRetry?: () => void;
 };
 
-function DataGridFooter({ rowCount, page, pageSize }: { rowCount: number; page: number; pageSize: number }) {
+const ROW_HEIGHT = 52;
+const DEFAULT_HEADER_HEIGHT = 48;
+const FOOTER_HEIGHT = 52;
+const SEARCH_BAR_HEIGHT = 57;
+
+function CustomFooter({
+  rowCount,
+  page,
+  pageSize,
+  onPageChange,
+  onPageSizeChange,
+}: {
+  rowCount: number;
+  page: number;
+  pageSize: number;
+  onPageChange: (page: number) => void;
+  onPageSizeChange: (pageSize: number) => void;
+}) {
   const start = rowCount === 0 ? 0 : page * pageSize + 1;
   const end = Math.min((page + 1) * pageSize, rowCount);
 
   return (
     <GridFooterContainer>
-      <Stack direction="row" alignItems="center" spacing={2} sx={{ px: 2, width: 1 }}>
-        <Typography variant="body2" color="text.secondary" sx={{ whiteSpace: 'nowrap', fontSize: '0.8125rem' }}>
+      <Stack direction="row" alignItems="center" sx={{ px: 2.5, width: 1 }}>
+        <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.8125rem', whiteSpace: 'nowrap' }}>
           {rowCount === 0
             ? '0 records'
             : `Showing ${start}–${end} of ${rowCount} record${rowCount !== 1 ? 's' : ''}`}
         </Typography>
         <Box sx={{ flex: 1 }} />
-        <GridPagination />
+        <TablePagination
+          component="div"
+          count={rowCount}
+          page={page}
+          onPageChange={(_, p) => onPageChange(p)}
+          rowsPerPage={pageSize}
+          onRowsPerPageChange={(e) => onPageSizeChange(parseInt(e.target.value, 10))}
+          rowsPerPageOptions={[10, 25, 50]}
+          labelRowsPerPage="Rows per page"
+          labelDisplayedRows={() => ''}
+        />
       </Stack>
     </GridFooterContainer>
   );
 }
 
-function EmptyStateContent({
+function LoadingSkeleton({ columnCount }: { columnCount: number }) {
+  return (
+    <Box sx={{ px: 2.5, py: 1 }}>
+      {Array.from({ length: 5 }).map((_row, i) => (
+        <Box
+          key={i}
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 2,
+            height: ROW_HEIGHT,
+            borderBottom: '1px solid',
+            borderColor: 'divider',
+          }}
+        >
+          {Array.from({ length: Math.min(columnCount, 6) }).map((_cell, j) => (
+            <Skeleton key={j} variant="rectangular" height={16} sx={{ flex: j === 0 ? 2 : 1, borderRadius: 0.5 }} />
+          ))}
+        </Box>
+      ))}
+    </Box>
+  );
+}
+
+function EmptyContent({
   hasSearch,
-  searchPlaceholder,
+  emptyTitle,
+  emptyDescription,
+  emptyIcon,
+  createAction,
 }: {
   hasSearch: boolean;
-  searchPlaceholder: string;
+  emptyTitle?: string;
+  emptyDescription?: string;
+  emptyIcon?: string;
+  createAction?: ActionSlot;
 }) {
   return (
-    <Box
-      sx={{
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        py: 8,
-        px: 2,
-      }}
-    >
+    <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', py: 8, px: 2 }}>
       <Iconify
-        icon={hasSearch ? 'solar:search-cross-bold' : 'solar:clipboard-list-bold'}
+        icon={hasSearch ? 'solar:search-cross-bold' : (emptyIcon ?? 'solar:clipboard-list-bold')}
         width={48}
         sx={{ color: 'text.disabled', mb: 2, opacity: 0.4 }}
       />
       <Typography variant="h6" sx={{ color: 'text.secondary', fontWeight: 500, mb: 0.5 }}>
-        {hasSearch ? 'No results found' : 'No data'}
+        {hasSearch ? 'No results found' : (emptyTitle ?? 'No data')}
       </Typography>
-      <Typography variant="body2" color="text.disabled" sx={{ textAlign: 'center' }}>
-        {hasSearch
-          ? `No records match your search. Try different keywords.`
-          : `No records to display. Add data to get started.`}
+      <Typography variant="body2" color="text.disabled" sx={{ textAlign: 'center', mb: createAction ? 2 : 0 }}>
+        {hasSearch ? 'No records match your search. Try different keywords.' : (emptyDescription ?? 'No records to display.')}
       </Typography>
+      {!hasSearch && createAction && (
+        <Button
+          variant="soft"
+          color="primary"
+          startIcon={<Iconify icon={createAction.icon} width={18} />}
+          onClick={createAction.onClick}
+        >
+          {createAction.label}
+        </Button>
+      )}
     </Box>
   );
 }
@@ -124,17 +196,38 @@ export function DataTable({
   groupHeaders,
   hideColumnsButton,
   columnHeaderHeight,
+  emptyTitle,
+  emptyDescription,
+  emptyIcon,
+  createAction,
+  error,
+  errorMessage,
+  onErrorRetry,
 }: Props) {
+  const cardRef = useRef<HTMLDivElement>(null);
+  const [cardHeight, setCardHeight] = useState(0);
+
+  useEffect(() => {
+    const el = cardRef.current;
+    if (!el) return undefined;
+    const ro = new ResizeObserver((entries) => {
+      entries.forEach((entry) => {
+        setCardHeight(entry.contentRect.height);
+      });
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
   const [localSearch, setLocalSearch] = useState('');
   const [filters, setFilters] = useState<Record<string, string>>({});
   const [hiddenColumns, setHiddenColumns] = useState<Set<string>>(new Set());
+  const filterPopover = usePopover();
+  const columnsPopover = usePopover();
 
   useEffect(() => {
     onFiltersChange?.(filters);
   }, [filters, onFiltersChange]);
-
-  const filterPopover = usePopover();
-  const columnsPopover = usePopover();
 
   const isServerSide = paginationMode === 'server';
 
@@ -143,30 +236,27 @@ export function DataTable({
   const filteredRows = useMemo(() => {
     if (isServerSide) return rows;
     let data = rows;
-    const search = localSearch;
-    if (search) {
-      const lower = search.toLowerCase();
+    const searchText = localSearch.toLowerCase();
+    if (searchText) {
       data = data.filter((row) =>
         columns.some((col) => {
           if (hiddenColumns.has(col.field)) return false;
           const val = row[col.field];
           if (val == null) return false;
-          return String(val).toLowerCase().includes(lower);
+          return String(val).toLowerCase().includes(searchText);
         })
       );
     }
     Object.entries(filters).forEach(([key, val]) => {
-      if (val) {
-        data = data.filter((row) => String(row[key]) === val);
-      }
+      if (val) data = data.filter((row) => String(row[key]) === val);
     });
     return data;
   }, [rows, localSearch, filters, columns, hiddenColumns, isServerSide]);
 
-  const processedColumns = useMemo(() => {
-    if (columns.length === 0) return [];
-    return columns.filter((col) => !hiddenColumns.has(col.field));
-  }, [columns, hiddenColumns]);
+  const processedColumns = useMemo(
+    () => columns.filter((col) => !hiddenColumns.has(col.field)),
+    [columns, hiddenColumns]
+  );
 
   const handleToggleColumn = useCallback((field: string) => {
     setHiddenColumns((prev) => {
@@ -177,64 +267,80 @@ export function DataTable({
     });
   }, []);
 
-  const handleSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const {value} = e.target;
-    if (onSearchChange) {
-      onSearchChange(value);
-    } else {
-      setLocalSearch(value);
-    }
-  }, [onSearchChange]);
+  const handleSearchChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const { value } = e.target;
+      if (onSearchChange) {
+        onSearchChange(value);
+      } else {
+        setLocalSearch(value);
+      }
+    },
+    [onSearchChange]
+  );
 
   const hasActiveFilters = Object.values(filters).some((v) => v);
-
-  const groupHeaderSections = useMemo(() => {
-    if (!groupHeaders || groupHeaders.length === 0) return null;
-    const cols = columns.filter((c) => !hiddenColumns.has(c.field));
-    const sections: { label: string | null; width: number | string }[] = [];
-    cols.forEach((col) => {
-      const group = groupHeaders.find((g) => g.fields.includes(col.field));
-      const isFirstInGroup = group && col.field === group.fields[0];
-      if (isFirstInGroup) {
-        const groupFields = group.fields;
-        let totalWidth = 0;
-        groupFields.forEach((f) => {
-          const c = cols.find((cl) => cl.field === f);
-          if (c) totalWidth += typeof c.width === 'number' ? c.width : 150;
-        });
-        if (totalWidth > 0) {
-          sections.push({ label: group.label, width: totalWidth });
-        }
-      } else if (!group) {
-        const w = typeof col.width === 'number' ? col.width : 150;
-        sections.push({ label: null, width: w });
-      }
-    });
-    return sections.length > 0 ? sections : null;
-  }, [groupHeaders, columns, hiddenColumns]);
 
   const displayRowCount = isServerSide ? (totalRowCount ?? 0) : filteredRows.length;
   const currentPage = isServerSide ? (paginationModel?.page ?? 0) : 0;
   const currentPageSize = isServerSide ? (paginationModel?.pageSize ?? 10) : 10;
-  const isEmpty = !loading && displayRowCount === 0;
+  const isEmpty = !loading && !error && displayRowCount === 0;
   const hasSearchActive = isServerSide ? !!searchValue : !!localSearch;
 
-  const DEFAULT_ROW_HEIGHT = 48;
-  const HEADER_FOOTER_HEIGHT = 112;
-  const idealHeight = (rows.length || 10) * DEFAULT_ROW_HEIGHT + HEADER_FOOTER_HEIGHT;
-  const gridMaxHeight = `min(${idealHeight}px, calc(100vh - 280px))`;
+  const handlePaginationChange = useCallback(
+    (page: number) => {
+      onPaginationModelChange?.({ page, pageSize: currentPageSize });
+    },
+    [currentPageSize, onPaginationModelChange]
+  );
+
+  const handlePageSizeChange = useCallback(
+    (pageSize: number) => {
+      onPaginationModelChange?.({ page: 0, pageSize });
+    },
+    [onPaginationModelChange]
+  );
+
+  const effectiveHeaderHeight = columnHeaderHeight ?? DEFAULT_HEADER_HEIGHT;
+  const groupHeaderHeight = groupHeaders?.length ? effectiveHeaderHeight : 0;
+
+  let rowHeight = ROW_HEIGHT;
+  if (typeof getRowHeight === 'function') {
+    const h = getRowHeight();
+    if (h !== 'auto') rowHeight = h;
+  }
+
+  const rowCount = Math.max(loading ? 5 : rows.length, isServerSide ? currentPageSize : 0);
+  const naturalHeight = rowCount * rowHeight + effectiveHeaderHeight;
+  const availableHeight = Math.max(200, cardHeight - SEARCH_BAR_HEIGHT - FOOTER_HEIGHT - groupHeaderHeight);
+  const gridHeight = Math.min(naturalHeight, availableHeight);
+
+  const gridColumns = useMemo(
+    () =>
+      processedColumns.map((col) => ({
+        ...col,
+        headerAlign: col.headerAlign ?? (col.align === 'right' ? 'right' : col.align === 'center' ? 'center' : 'left'),
+        align: col.align ?? 'left',
+      })),
+    [processedColumns]
+  );
 
   return (
     <Card
+      ref={cardRef}
       variant="outlined"
       sx={{
+        display: 'flex',
+        flexDirection: 'column',
         overflow: 'hidden',
         borderRadius: 1.5,
         borderColor: 'divider',
+        flex: 1,
+        minHeight: 0,
       }}
     >
-      <Box sx={{ borderBottom: '1px solid', borderColor: 'divider' }}>
-        <Stack direction="row" spacing={1} alignItems="center" sx={{ px: 2, py: 1.5 }}>
+      <Box sx={{ flexShrink: 0, borderBottom: '1px solid', borderColor: 'divider', bgcolor: 'background.paper' }}>
+        <Stack direction="row" spacing={1} alignItems="center" sx={{ px: 2.5, py: 1.5 }}>
           <TextField
             size="small"
             placeholder={searchPlaceholder}
@@ -243,7 +349,9 @@ export function DataTable({
             sx={{ maxWidth: 360, flex: { xs: 1, sm: 'unset' } }}
             InputProps={{
               sx: { height: 40 },
-              startAdornment: <Iconify icon="solar:magnifer-bold" width={18} style={{ marginRight: 8, opacity: 0.5 }} />,
+              startAdornment: (
+                <Iconify icon="solar:magnifer-bold" width={18} style={{ marginRight: 8, opacity: 0.5 }} />
+              ),
             }}
           />
 
@@ -258,7 +366,11 @@ export function DataTable({
             >
               Filters
             </Button>
-            <CustomPopover open={filterPopover.open} anchorEl={filterPopover.anchorEl} onClose={filterPopover.onClose}>
+            <CustomPopover
+              open={filterPopover.open}
+              anchorEl={filterPopover.anchorEl}
+              onClose={filterPopover.onClose}
+            >
               <Stack spacing={1.5} sx={{ p: 2, minWidth: 220 }}>
                 <Typography variant="subtitle2">Filter By</Typography>
                 {filterOptions && filterOptions.length > 0 ? (
@@ -274,7 +386,9 @@ export function DataTable({
                     >
                       <MenuItem value="">All</MenuItem>
                       {f.options.map((o) => (
-                        <MenuItem key={o.value} value={o.value}>{o.label}</MenuItem>
+                        <MenuItem key={o.value} value={o.value}>
+                          {o.label}
+                        </MenuItem>
                       ))}
                     </TextField>
                   ))
@@ -284,7 +398,15 @@ export function DataTable({
                   </Typography>
                 )}
                 {hasActiveFilters && (
-                  <Button size="small" color="error" variant="text" onClick={() => { setFilters({}); filterPopover.onClose(); }}>
+                  <Button
+                    size="small"
+                    color="error"
+                    variant="text"
+                    onClick={() => {
+                      setFilters({});
+                      filterPopover.onClose();
+                    }}
+                  >
                     Clear All
                   </Button>
                 )}
@@ -303,7 +425,11 @@ export function DataTable({
                 >
                   Columns
                 </Button>
-                <CustomPopover open={columnsPopover.open} anchorEl={columnsPopover.anchorEl} onClose={columnsPopover.onClose}>
+                <CustomPopover
+                  open={columnsPopover.open}
+                  anchorEl={columnsPopover.anchorEl}
+                  onClose={columnsPopover.onClose}
+                >
                   <Stack sx={{ p: 1, minWidth: 160 }}>
                     {visibleColumns.map((col) => (
                       <MenuItem key={col.field} onClick={() => handleToggleColumn(col.field)}>
@@ -321,167 +447,140 @@ export function DataTable({
         </Stack>
       </Box>
 
-      {groupHeaderSections && (
-        <Box sx={{ display: 'flex', borderBottom: '1px solid', borderColor: 'divider' }}>
-          {groupHeaderSections.map((section, i) => (
-            <Box
-              key={i}
-              sx={{
-                width: section.width,
-                py: 1.5,
-                textAlign: 'center',
-                fontWeight: 600,
-                fontSize: '0.8125rem',
-                color: 'text.secondary',
-                borderRight: i < groupHeaderSections.length - 1 ? '1px solid' : 'none',
+      <Box sx={{ flex: 1, minHeight: 0, position: 'relative', overflow: 'hidden' }}>
+        {error ? (
+          <Box sx={{ p: 4, textAlign: 'center' }}>
+            <Stack spacing={2} alignItems="center">
+              <Iconify icon="solar:danger-triangle-bold" width={40} sx={{ color: 'error.main', opacity: 0.6 }} />
+              <Box>
+                <Typography variant="h6" sx={{ color: 'text.secondary', fontWeight: 500 }}>
+                  Failed to load data
+                </Typography>
+                <Typography variant="body2" color="text.disabled" sx={{ mt: 0.5 }}>
+                  {errorMessage || 'An unexpected error occurred. Please try again.'}
+                </Typography>
+              </Box>
+              {onErrorRetry && (
+                <Button variant="outlined" size="small" onClick={onErrorRetry}>
+                  Retry
+                </Button>
+              )}
+            </Stack>
+          </Box>
+        ) : loading && rows.length === 0 ? (
+          <LoadingSkeleton columnCount={visibleColumns.length} />
+        ) : isEmpty ? (
+          <EmptyContent
+            hasSearch={hasSearchActive}
+            emptyTitle={emptyTitle}
+            emptyDescription={emptyDescription}
+            emptyIcon={emptyIcon}
+            createAction={createAction}
+          />
+        ) : (
+          <DataGrid
+            rows={isServerSide ? rows : filteredRows}
+            columns={gridColumns}
+            loading={loading}
+            getRowId={getRowId ?? ((row: any) => row.id)}
+            onRowClick={(params) => onRowClick?.(params.row)}
+            paginationMode={paginationMode}
+            {...(isServerSide && paginationModel ? { paginationModel } : {})}
+            {...(isServerSide && onPaginationModelChange ? { onPaginationModelChange } : {})}
+            {...(isServerSide && totalRowCount !== undefined ? { rowCount: totalRowCount } : {})}
+            columnHeaderHeight={effectiveHeaderHeight}
+            initialState={isServerSide ? undefined : { pagination: { paginationModel: { pageSize: 10 } } }}
+            pageSizeOptions={[10, 25, 50]}
+            disableRowSelectionOnClick
+            disableColumnMenu
+            disableColumnResize
+            slots={{
+              ...(isServerSide && {
+                footer: () => (
+                  <CustomFooter
+                    rowCount={displayRowCount}
+                    page={currentPage}
+                    pageSize={currentPageSize}
+                    onPageChange={handlePaginationChange}
+                    onPageSizeChange={handlePageSizeChange}
+                  />
+                ),
+              }),
+              noRowsOverlay: () => null,
+              loadingOverlay: () => null,
+            }}
+            getRowHeight={getRowHeight ?? (() => ROW_HEIGHT)}
+            sx={{
+              height: gridHeight,
+              borderRadius: 0,
+              border: 'none',
+              '& .MuiDataGrid-columnHeaders': {
+                position: 'sticky',
+                top: 0,
+                zIndex: 10,
+                borderBottom: '2px solid',
                 borderColor: 'divider',
                 bgcolor: 'grey.100',
-              }}
-            >
-              {section.label ?? ''}
-            </Box>
-          ))}
-        </Box>
-      )}
-
-      <DataGrid
-        rows={isServerSide ? rows : filteredRows}
-        columns={processedColumns}
-        loading={loading}
-        getRowId={getRowId ?? ((row) => row.id)}
-        onRowClick={(params) => onRowClick?.(params.row)}
-        paginationMode={paginationMode}
-        {...(isServerSide && paginationModel ? { paginationModel } : {})}
-        {...(isServerSide && onPaginationModelChange ? { onPaginationModelChange } : {})}
-        {...(isServerSide && totalRowCount !== undefined ? { rowCount: totalRowCount } : {})}
-        {...(columnHeaderHeight ? { columnHeaderHeight } : {})}
-        initialState={isServerSide ? undefined : { pagination: { paginationModel: { pageSize: 10 } } }}
-        pageSizeOptions={[10, 25, 50]}
-        disableRowSelectionOnClick
-        disableColumnMenu
-        disableColumnResize
-        autoHeight
-        sx={{
-          maxHeight: gridMaxHeight,
-          borderRadius: 0,
-          border: 'none',
-          minWidth: processedColumns.reduce((sum, col) => sum + (typeof col.width === 'number' ? col.width : 150), 0),
-          '& .MuiDataGrid-columnHeaders': {
-            position: 'sticky',
-            top: 0,
-            zIndex: 10,
-            borderBottom: '1px solid',
-            borderColor: 'divider',
-            bgcolor: 'grey.100',
-            minHeight: `${columnHeaderHeight ?? 48}px !important`,
-            maxHeight: `${columnHeaderHeight ?? 48}px !important`,
-            lineHeight: `${columnHeaderHeight ?? 48}px !important`,
-          },
-          '& .MuiDataGrid-columnHeader': {
-            px: 2,
-            py: 0,
-          },
-          '& .MuiDataGrid-columnHeaderTitle': {
-            fontWeight: 700,
-            fontSize: '0.75rem',
-            color: 'text.secondary',
-            textTransform: 'uppercase',
-            letterSpacing: '0.04em',
-          },
-          '& .MuiDataGrid-columnHeader:focus': {
-            outline: 'none',
-          },
-          '& .MuiDataGrid-columnHeader:focus-within': {
-            outline: 'none',
-          },
-          '& .MuiDataGrid-cell': {
-            px: 2,
-            py: 0,
-            display: 'flex',
-            alignItems: 'center',
-            fontSize: '0.8125rem',
-            lineHeight: `${DEFAULT_ROW_HEIGHT}px`,
-            minHeight: `${DEFAULT_ROW_HEIGHT}px !important`,
-            maxHeight: `${DEFAULT_ROW_HEIGHT}px !important`,
-            '&:focus': { outline: 'none' },
-            '&:focus-within': { outline: 'none' },
-          },
-          '& .MuiDataGrid-row': {
-            minHeight: `${DEFAULT_ROW_HEIGHT}px !important`,
-            maxHeight: `${DEFAULT_ROW_HEIGHT}px !important`,
-            cursor: onRowClick ? 'pointer' : 'default',
-            '&:hover': {
-              bgcolor: 'primary.lighter',
-            },
-            '&.Mui-selected': {
-              bgcolor: 'primary.lighter',
-            },
-            '&:nth-of-type(even)': {
-              bgcolor: 'grey.50',
-            },
-            '&:nth-of-type(even):hover': {
-              bgcolor: 'primary.lighter',
-            },
-            ...(dataGridSx?.['& .MuiDataGrid-row'] || {}),
-          },
-          '& .MuiDataGrid-cell--textLeft': { justifyContent: 'flex-start' },
-          '& .MuiDataGrid-cell--textCenter': { justifyContent: 'center' },
-          '& .MuiDataGrid-cell--textRight': { justifyContent: 'flex-end' },
-          '& .MuiDataGrid-withBorder': { borderColor: 'divider' },
-          '& .MuiDataGrid-footerContainer': {
-            borderTop: '1px solid',
-            borderColor: 'divider',
-            bgcolor: 'background.paper',
-            minHeight: 52,
-            position: 'sticky',
-            bottom: 0,
-            zIndex: 10,
-          },
-          '& .MuiDataGrid-overlayWrapperInner': {
-            position: 'relative',
-            height: 'auto',
-          },
-          '& .MuiDataGrid-virtualScroller': {
-            overflow: 'auto !important',
-          },
-          '& .MuiTablePagination-root': {
-            '& .MuiTablePagination-displayedRows': {
-              display: 'none',
-            },
-            '& .MuiTablePagination-selectLabel': {
-              fontSize: '0.8125rem',
-              color: 'text.secondary',
-            },
-            '& .MuiTablePagination-select': {
-              fontSize: '0.8125rem',
-            },
-            '& .MuiTablePagination-actions': {
-              '& .MuiButtonBase-root': {
-                fontSize: '0.8125rem',
+                minHeight: `${effectiveHeaderHeight}px !important`,
+                maxHeight: `${effectiveHeaderHeight}px !important`,
+                lineHeight: `${effectiveHeaderHeight}px !important`,
               },
-            },
-          },
-          ...(isEmpty ? { minHeight: 200 } : {}),
-          ...(dataGridSx || {}),
-        } as any}
-        slots={{
-          footer: () => (
-            <DataGridFooter
-              rowCount={displayRowCount}
-              page={currentPage}
-              pageSize={currentPageSize}
-            />
-          ),
-          noRowsOverlay: () => (
-            <EmptyStateContent hasSearch={hasSearchActive} searchPlaceholder={searchPlaceholder} />
-          ),
-          noResultsOverlay: () => (
-            <EmptyStateContent hasSearch={hasSearchActive} searchPlaceholder={searchPlaceholder} />
-          ),
-          loadingOverlay: () => null,
-        }}
-        getRowHeight={getRowHeight ?? (() => DEFAULT_ROW_HEIGHT)}
-      />
+              '& .MuiDataGrid-columnHeader': {
+                px: 2.5,
+                py: 1.75,
+              },
+              '& .MuiDataGrid-columnHeaderTitle': {
+                fontWeight: 700,
+                fontSize: '0.75rem',
+                color: 'text.secondary',
+                textTransform: 'uppercase',
+                letterSpacing: '0.04em',
+              },
+              '& .MuiDataGrid-columnHeader:focus': { outline: 'none' },
+              '& .MuiDataGrid-columnHeader:focus-within': { outline: 'none' },
+              '& .MuiDataGrid-cell': {
+                px: 2.5,
+                py: 1.5,
+                display: 'flex',
+                alignItems: 'center',
+                fontSize: '0.8125rem',
+                minHeight: `${ROW_HEIGHT}px !important`,
+                maxHeight: `${ROW_HEIGHT}px !important`,
+                '&:focus': { outline: 'none' },
+                '&:focus-within': { outline: 'none' },
+              },
+              '& .MuiDataGrid-row': {
+                minHeight: `${ROW_HEIGHT}px !important`,
+                maxHeight: `${ROW_HEIGHT}px !important`,
+                cursor: onRowClick ? 'pointer' : 'default',
+                '&:hover': { bgcolor: 'primary.lighter' },
+                '&.Mui-selected': { bgcolor: 'primary.lighter' },
+                '&:nth-of-type(even)': { bgcolor: 'grey.50' },
+                '&:nth-of-type(even):hover': { bgcolor: 'primary.lighter' },
+              },
+              '& .MuiDataGrid-cell--textLeft': { justifyContent: 'flex-start' },
+              '& .MuiDataGrid-cell--textCenter': { justifyContent: 'center' },
+              '& .MuiDataGrid-cell--textRight': { justifyContent: 'flex-end' },
+              '& .MuiDataGrid-withBorder': { borderColor: 'divider' },
+              '& .MuiDataGrid-footerContainer': {
+                borderTop: '2px solid',
+                borderColor: 'divider',
+                bgcolor: 'background.paper',
+                minHeight: FOOTER_HEIGHT,
+                position: 'sticky',
+                bottom: 0,
+                zIndex: 10,
+              },
+              '& .MuiTablePagination-root': {
+                '& .MuiTablePagination-selectLabel': { fontSize: '0.8125rem', color: 'text.secondary' },
+                '& .MuiTablePagination-select': { fontSize: '0.8125rem' },
+              },
+              ...(isEmpty ? { minHeight: 200 } : {}),
+              ...(dataGridSx || {}),
+            } as any}
+          />
+        )}
+      </Box>
     </Card>
   );
 }

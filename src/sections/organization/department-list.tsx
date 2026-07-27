@@ -6,7 +6,6 @@ import { useQuery } from '@tanstack/react-query';
 import { useMemo, useState, useCallback } from 'react';
 
 import Box from '@mui/material/Box';
-import Card from '@mui/material/Card';
 import Chip from '@mui/material/Chip';
 import Stack from '@mui/material/Stack';
 import Alert from '@mui/material/Alert';
@@ -29,7 +28,6 @@ import { departmentService } from 'src/services/services/organization.service';
 
 import { Label } from 'src/components/label';
 import { Iconify } from 'src/components/iconify';
-import { EmptyState } from 'src/components/empty-state';
 import { RowActionsMenu } from 'src/components/row-actions';
 import { PageHeader, PageContainer } from 'src/components/page-layout';
 import { DataTable, type FilterOption } from 'src/components/data-table';
@@ -276,34 +274,25 @@ export default function DepartmentListPage() {
             </Button>
           ) : null
         } />
-        <Card sx={{ overflow: 'hidden' }}>
-          {isError ? (
-            <Box sx={{ p: 4, textAlign: 'center' }}>
-              <Alert severity="error">Failed to load departments: {(error as Error)?.message || 'Unknown error'}</Alert>
-            </Box>
-          ) : !isLoading && departments.length === 0 && !search ? (
-            <EmptyState
-              icon="solar:buildings-bold-duotone"
-              title="No Departments Created"
-              description="Create your first department to get started"
-            />
-          ) : (
-            <DataTable
-              columns={columns}
-              rows={departments}
-              getRowId={(r) => r.id}
-              loading={isLoading}
-              paginationMode="server"
-              paginationModel={paginationModel}
-              onPaginationModelChange={setPaginationModel}
-              rowCount={meta?.total ?? 0}
-              onSearchChange={handleSearchChange}
-              searchValue={search}
-              searchPlaceholder="Search departments by name..."
-              filterOptions={filterOptions}
-            />
-          )}
-        </Card>
+        <DataTable
+          columns={columns}
+          rows={departments}
+          getRowId={(r) => r.id}
+          loading={isLoading}
+          paginationMode="server"
+          paginationModel={paginationModel}
+          onPaginationModelChange={setPaginationModel}
+          rowCount={meta?.total ?? 0}
+          onSearchChange={handleSearchChange}
+          searchValue={search}
+          searchPlaceholder="Search departments by name..."
+          filterOptions={filterOptions}
+          error={isError}
+          errorMessage={`Failed to load departments: ${(error as Error)?.message || 'Unknown error'}`}
+          emptyTitle="No Departments Created"
+          emptyDescription="Create your first department to get started"
+          emptyIcon="solar:buildings-bold-duotone"
+        />
       </PageContainer>
 
       <Dialog open={deleteId !== null} onClose={() => { setDeleteId(null); setDeleteError(''); }} maxWidth="xs">

@@ -2,8 +2,6 @@ import type { GridColDef } from '@mui/x-data-grid';
 
 import { Helmet } from 'react-helmet-async';
 
-import Card from '@mui/material/Card';
-
 import { CONFIG } from 'src/config-global';
 import { useChannelPartnerTypeList } from 'src/services/hooks';
 
@@ -31,9 +29,7 @@ export default function ChannelPartnerTypeListPage() {
       <Helmet><title>CP Types - {CONFIG.appName}</title></Helmet>
       <PageContainer>
         <PageHeader title="Channel Partner Types" description="Manage partner categories" />
-        <Card sx={{ overflow: 'hidden' }}>
-          <DataTable columns={columns} rows={data ?? []} getRowId={(r) => r.id} loading={isLoading} />
-        </Card>
+        <DataTable columns={columns} rows={data ?? []} getRowId={(r) => r.id} loading={isLoading} />
       </PageContainer>
     </>
   );

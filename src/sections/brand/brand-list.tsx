@@ -6,8 +6,6 @@ import { useQuery } from '@tanstack/react-query';
 import { useMemo, useState, useCallback } from 'react';
 
 import Box from '@mui/material/Box';
-import Card from '@mui/material/Card';
-import Alert from '@mui/material/Alert';
 import Button from '@mui/material/Button';
 import Typography from '@mui/material/Typography';
 
@@ -21,7 +19,6 @@ import { useMyPermissions } from 'src/services/hooks/use-permissions';
 
 import { Iconify } from 'src/components/iconify';
 import { DataTable } from 'src/components/data-table';
-import { EmptyState } from 'src/components/empty-state';
 import { RowActionsMenu } from 'src/components/row-actions';
 import { ConfirmDialog } from 'src/components/confirm-dialog';
 import { PageHeader, PageContainer } from 'src/components/page-layout';
@@ -230,62 +227,27 @@ export default function BrandListPage() {
             </Button>
           ) : null
         } />
-        <Card sx={{ overflow: 'hidden' }}>
-          {isError ? (
-            <Box sx={{ p: 4, textAlign: 'center' }}>
-              <Alert severity="error">Failed to load brands: {(error as Error)?.message || 'Unknown error'}</Alert>
-            </Box>
-          ) : !isLoading && brands.length === 0 && !search ? (
-            <EmptyState
-              icon="solar:crown-bold-duotone"
-              title="No Brands Created"
-              description="Create your first brand to get started"
-            />
-          ) : (
-            <DataTable
-              columns={columns}
-              rows={brands}
-              getRowId={(r) => r.id}
-              loading={isLoading}
-              paginationMode="server"
-              paginationModel={paginationModel}
-              onPaginationModelChange={setPaginationModel}
-              rowCount={meta?.total ?? 0}
-              onSearchChange={handleSearchChange}
-              searchValue={search}
-              searchPlaceholder="Search by brand name"
-              hideColumnsButton
-              columnHeaderHeight={76}
-              dataGridSx={{
-                '& .MuiDataGrid-columnHeaders': {
-                  borderBottom: '2px solid',
-                  borderColor: 'divider',
-                  bgcolor: 'grey.100',
-                },
-                '& .MuiDataGrid-columnHeader': {
-                  px: 1.5,
-                  py: 2.5,
-                },
-                '& .MuiDataGrid-cell': {
-                  px: 1.5,
-                  py: '24px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  fontSize: '0.875rem',
-                  '&:focus': { outline: 'none' },
-                  '&:focus-within': { outline: 'none' },
-                },
-                '& .MuiDataGrid-row': {
-                  minHeight: '72px !important',
-                  cursor: 'default' as any,
-                  '&:hover': { bgcolor: 'action.hover' },
-                  '&.Mui-selected': { bgcolor: 'primary.lighter' },
-                },
-                ...dividerSx,
-              }}
-            />
-          )}
-        </Card>
+        <DataTable
+          columns={columns}
+          rows={brands}
+          getRowId={(r) => r.id}
+          loading={isLoading}
+          paginationMode="server"
+          paginationModel={paginationModel}
+          onPaginationModelChange={setPaginationModel}
+          rowCount={meta?.total ?? 0}
+          onSearchChange={handleSearchChange}
+          searchValue={search}
+          searchPlaceholder="Search by brand name"
+          hideColumnsButton
+          columnHeaderHeight={76}
+          error={isError}
+          errorMessage={`Failed to load brands: ${(error as Error)?.message || 'Unknown error'}`}
+          emptyTitle="No Brands Created"
+          emptyDescription="Create your first brand to get started"
+          emptyIcon="solar:crown-bold-duotone"
+          dataGridSx={dividerSx}
+        />
       </PageContainer>
 
       <ConfirmDialog

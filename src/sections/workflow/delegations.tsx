@@ -7,7 +7,6 @@ import { Helmet } from 'react-helmet-async';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMemo, useState, useEffect, useCallback } from 'react';
 
-import Card from '@mui/material/Card';
 import Stack from '@mui/material/Stack';
 import Button from '@mui/material/Button';
 import Dialog from '@mui/material/Dialog';
@@ -140,9 +139,7 @@ export default function DelegationsPage() {
             Add Delegation
           </Button>
         } />
-        <Card sx={{ overflow: 'hidden' }}>
-          <DataTable columns={columns} rows={data} getRowId={(r) => r.id} loading={isLoading} />
-        </Card>
+        <DataTable columns={columns} rows={data} getRowId={(r) => r.id} loading={isLoading} />
       </PageContainer>
 
       <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>

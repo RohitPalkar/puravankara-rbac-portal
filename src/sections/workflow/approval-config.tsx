@@ -7,7 +7,6 @@ import { Helmet } from 'react-helmet-async';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMemo, useState, useCallback } from 'react';
 
-import Card from '@mui/material/Card';
 import Stack from '@mui/material/Stack';
 import Button from '@mui/material/Button';
 import Dialog from '@mui/material/Dialog';
@@ -126,9 +125,7 @@ export default function ApprovalConfigPage() {
             Add Workflow
           </Button>
         } />
-        <Card sx={{ overflow: 'hidden' }}>
-          <DataTable columns={columns} rows={data} getRowId={(r) => r.id} />
-        </Card>
+        <DataTable columns={columns} rows={data} getRowId={(r) => r.id} />
       </PageContainer>
 
       <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
