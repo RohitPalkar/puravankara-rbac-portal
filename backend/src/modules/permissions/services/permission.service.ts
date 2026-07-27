@@ -26,6 +26,7 @@ import {
   ExplainStep,
 } from '../dto/explain-permission.dto';
 import { PermissionProfile } from '../entities/permission-profile.entity';
+import { RoleActionPermission } from '../entities/role-action-permission.entity';
 
 @Injectable()
 export class PermissionService {
@@ -62,6 +63,8 @@ export class PermissionService {
     private readonly actionRepo: Repository<Action>,
     @InjectRepository(PermissionProfile)
     private readonly profileRepo: Repository<PermissionProfile>,
+    @InjectRepository(RoleActionPermission)
+    private readonly rapRepo: Repository<RoleActionPermission>,
     private readonly dataSource: DataSource,
     private readonly cacheService: PermissionCacheService,
     private readonly compilerService: PermissionCompilerService,
@@ -665,7 +668,11 @@ export class PermissionService {
         actionId,
       },
     });
-    return count > 0;
+    if (count > 0) return true;
+    const rapCount = await this.rapRepo.count({
+      where: { roleId: In(roleIds), moduleId, actionId },
+    });
+    return rapCount > 0;
   }
 
   private async hasTemplatePermission(
@@ -805,6 +812,13 @@ export class PermissionService {
               })
             : [];
 
+        const roleActionPerms =
+          roleIds.length > 0
+            ? await this.rapRepo.find({
+                where: { roleId: In(roleIds), moduleId: mod.id },
+              })
+            : [];
+
         const templates = await this.uptRepo.find({
           where: { userId, projectId },
         });
@@ -845,6 +859,9 @@ export class PermissionService {
 
             const grantedActionIds = new Set<number>();
             for (const p of smRolePerms) grantedActionIds.add(p.actionId);
+            for (const p of roleActionPerms) {
+              if (p.subModuleId == null || p.subModuleId === sm.id) grantedActionIds.add(p.actionId);
+            }
             for (const p of smTemplatePerms) grantedActionIds.add(p.actionId);
             for (const o of smOverrides) {
               if (o.permissionType === 'DENY')
@@ -883,6 +900,7 @@ export class PermissionService {
         } else {
           const grantedActionIds = new Set<number>();
           for (const p of rolePerms) grantedActionIds.add(p.actionId);
+          for (const p of roleActionPerms) grantedActionIds.add(p.actionId);
           for (const p of templatePerms) grantedActionIds.add(p.actionId);
           for (const o of overrides) {
             if (o.permissionType === 'DENY')
