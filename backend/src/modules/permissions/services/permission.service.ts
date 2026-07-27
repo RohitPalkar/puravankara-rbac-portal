@@ -438,18 +438,6 @@ export class PermissionService {
       }));
     } else {
       const projectIds = await this.getUserProjectIds(userId);
-      if (projectIds.length === 0) {
-        return {
-          user: {
-            empId: user.empId,
-            name: user.name,
-            email: user.email,
-            roles: roleNames,
-          },
-          projects: [],
-          permissions: { modules: flatModules },
-        };
-      }
       const accessRows = await this.accessRepo.find({
         where: { userId },
         relations: { project: true },
@@ -468,6 +456,26 @@ export class PermissionService {
           id: Number(p.id),
           name: p.name,
         }));
+      } else if (projectEntities.length === 0 && projectIds.length === 0) {
+        const hasProfiles = await this.profileRepo.count({ where: { userId } });
+        if (hasProfiles > 0) {
+          const allRows = await this.dataSource.query(`SELECT id, name FROM projects`);
+          projectEntities = allRows.map((p: any) => ({
+            id: Number(p.id),
+            name: p.name,
+          }));
+        } else {
+          return {
+            user: {
+              empId: user.empId,
+              name: user.name,
+              email: user.email,
+              roles: roleNames,
+            },
+            projects: [],
+            permissions: { modules: flatModules },
+          };
+        }
       }
       // Filter projects by zone scope (skip if user has no zone assignments)
       try {
