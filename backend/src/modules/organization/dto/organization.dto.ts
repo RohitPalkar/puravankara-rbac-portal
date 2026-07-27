@@ -148,6 +148,13 @@ export class UpdateRoleDto {
   isActive?: boolean;
 }
 
+export class AssignDepartmentAdminDto {
+  @ApiProperty({ description: 'Employee ID of the user to assign as admin' })
+  @IsString()
+  @IsNotEmpty()
+  userId: string;
+}
+
 export class RemoveRoleDto {
   @ApiProperty({ enum: ['MERGE', 'REPLACE'], description: 'Migration mode' })
   @IsString()

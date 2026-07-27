@@ -28,6 +28,7 @@ import {
   CreateRoleDto,
   UpdateRoleDto,
   RemoveRoleDto,
+  AssignDepartmentAdminDto,
 } from '../dto/organization.dto';
 import { QueryDepartmentDto } from '../dto/query-department.dto';
 import { Department } from '../entities/department.entity';
@@ -117,6 +118,25 @@ export class DepartmentController {
   async remove(@Param('id', ParseIntPipe) id: number) {
     await this.departmentService.remove(id);
     return { message: 'Department deleted successfully' };
+  }
+
+  @Put(':id/admin')
+  @ApiOperation({ summary: 'Assign a user as department administrator' })
+  @ApiResponse({ status: 200, description: 'Department admin assigned' })
+  @ApiResponse({ status: 404, description: 'Department not found' })
+  async assignAdmin(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: AssignDepartmentAdminDto,
+  ) {
+    return this.departmentService.assignDepartmentAdmin(id, dto.userId);
+  }
+
+  @Delete(':id/admin')
+  @ApiOperation({ summary: 'Remove the department administrator' })
+  @ApiResponse({ status: 200, description: 'Department admin removed' })
+  @ApiResponse({ status: 404, description: 'Department not found' })
+  async removeAdmin(@Param('id', ParseIntPipe) id: number) {
+    return this.departmentService.removeDepartmentAdmin(id);
   }
 }
 

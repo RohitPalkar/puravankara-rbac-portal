@@ -6,6 +6,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, DataSource, ILike, FindOptionsWhere } from 'typeorm';
+import { User } from '../../users/entities/user.entity';
 import { Department } from '../entities/department.entity';
 import { DepartmentRole } from '../entities/department-role.entity';
 import { DepartmentHierarchyLevel } from '../entities/department-hierarchy-level.entity';
@@ -372,6 +373,42 @@ export class DepartmentService {
     }
     (dept as any).deletedAt = new Date();
     await this.repository.save(dept);
+  }
+
+  async assignDepartmentAdmin(
+    id: number,
+    userId: string,
+  ): Promise<any> {
+    const dept = await this.repository.findOne({
+      where: { id, deletedAt: null },
+    });
+    if (!dept) {
+      throw new NotFoundException('Department not found');
+    }
+
+    const user = await this.repository.manager.findOne(User, {
+      where: { empId: userId, deletedAt: null },
+    });
+    if (!user) {
+      throw new BadRequestException('User not found');
+    }
+
+    dept.departmentAdminId = userId;
+    await this.repository.save(dept);
+    return this.findById(id);
+  }
+
+  async removeDepartmentAdmin(id: number): Promise<any> {
+    const dept = await this.repository.findOne({
+      where: { id, deletedAt: null },
+    });
+    if (!dept) {
+      throw new NotFoundException('Department not found');
+    }
+
+    dept.departmentAdminId = null;
+    await this.repository.save(dept);
+    return this.findById(id);
   }
 
   private async enhanceDepartment(dept: Department): Promise<any> {
