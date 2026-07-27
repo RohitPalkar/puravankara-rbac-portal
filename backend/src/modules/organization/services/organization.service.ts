@@ -129,22 +129,16 @@ export class DepartmentService {
             'Number of hierarchy levels must match numberOfLevels',
           );
         }
-        const levels = dto.hierarchyLevels.map((hl) =>
-          queryRunner.manager.create(DepartmentHierarchyLevel, {
-            departmentId: savedDept.id,
-            levelNumber: hl.levelNumber,
-            roleName: hl.roleName,
-            displayOrder: hl.displayOrder,
-          }),
-        );
-        await queryRunner.manager.save(DepartmentHierarchyLevel, levels);
 
+        // Create/find roles first, then save levels with roleId
         const roleNameToLevel = new Map<string, number>();
         for (const hl of dto.hierarchyLevels) {
           if (hl.roleName && !roleNameToLevel.has(hl.roleName)) {
             roleNameToLevel.set(hl.roleName, hl.levelNumber);
           }
         }
+
+        const roleNameToRole = new Map<string, Role>();
         for (const [roleName, levelNumber] of roleNameToLevel) {
           let role = await queryRunner.manager.findOne(Role, {
             where: { name: roleName, deletedAt: null },
@@ -157,11 +151,24 @@ export class DepartmentService {
             });
             role = await queryRunner.manager.save(Role, role);
           }
+          roleNameToRole.set(roleName, role);
           await queryRunner.manager.save(DepartmentRole, {
             departmentId: savedDept.id,
             roleId: role.id,
           });
         }
+
+        const levels = dto.hierarchyLevels.map((hl) => {
+          const role = roleNameToRole.get(hl.roleName);
+          return queryRunner.manager.create(DepartmentHierarchyLevel, {
+            departmentId: savedDept.id,
+            roleId: role!.id,
+            levelNumber: hl.levelNumber,
+            roleName: hl.roleName,
+            displayOrder: hl.displayOrder,
+          });
+        });
+        await queryRunner.manager.save(DepartmentHierarchyLevel, levels);
       }
 
       await queryRunner.commitTransaction();
@@ -232,22 +239,15 @@ export class DepartmentService {
           departmentId: id,
         });
         if (dto.hierarchyLevels.length > 0) {
-          const levels = dto.hierarchyLevels.map((hl) =>
-            queryRunner.manager.create(DepartmentHierarchyLevel, {
-              departmentId: id,
-              levelNumber: hl.levelNumber,
-              roleName: hl.roleName,
-              displayOrder: hl.displayOrder,
-            }),
-          );
-          await queryRunner.manager.save(DepartmentHierarchyLevel, levels);
-
+          // Create/find roles first, then save levels with roleId
           const roleNameToLevel = new Map<string, number>();
           for (const hl of dto.hierarchyLevels) {
             if (hl.roleName && !roleNameToLevel.has(hl.roleName)) {
               roleNameToLevel.set(hl.roleName, hl.levelNumber);
             }
           }
+
+          const roleNameToRole = new Map<string, Role>();
           for (const [roleName, levelNumber] of roleNameToLevel) {
             let role = await queryRunner.manager.findOne(Role, {
               where: { name: roleName, deletedAt: null },
@@ -260,11 +260,24 @@ export class DepartmentService {
               });
               role = await queryRunner.manager.save(Role, role);
             }
+            roleNameToRole.set(roleName, role);
             await queryRunner.manager.save(DepartmentRole, {
               departmentId: id,
               roleId: role.id,
             });
           }
+
+          const levels = dto.hierarchyLevels.map((hl) => {
+            const role = roleNameToRole.get(hl.roleName);
+            return queryRunner.manager.create(DepartmentHierarchyLevel, {
+              departmentId: id,
+              roleId: role!.id,
+              levelNumber: hl.levelNumber,
+              roleName: hl.roleName,
+              displayOrder: hl.displayOrder,
+            });
+          });
+          await queryRunner.manager.save(DepartmentHierarchyLevel, levels);
         }
       }
 
@@ -294,6 +307,7 @@ export class DepartmentService {
     return levels.map((hl) => ({
       id: hl.id,
       levelNumber: hl.levelNumber,
+      roleId: hl.roleId,
       roleName: hl.roleName,
       displayOrder: hl.displayOrder,
     }));
@@ -412,6 +426,7 @@ export class DepartmentService {
       hierarchyLevels: hierarchyLevels.map((hl) => ({
         id: hl.id,
         levelNumber: hl.levelNumber,
+        roleId: hl.roleId,
         roleName: hl.roleName,
         displayOrder: hl.displayOrder,
       })),

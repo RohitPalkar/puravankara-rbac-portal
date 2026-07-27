@@ -9,6 +9,7 @@ import {
   Index,
 } from 'typeorm';
 import { Department } from './department.entity';
+import { Role } from './role.entity';
 
 @Entity('department_hierarchy_levels')
 @Index(['departmentId', 'levelNumber'], { unique: true })
@@ -18,6 +19,9 @@ export class DepartmentHierarchyLevel {
 
   @Column({ name: 'department_id' })
   departmentId: number;
+
+  @Column({ name: 'role_id' })
+  roleId: number;
 
   @Column({ name: 'level_number' })
   levelNumber: number;
@@ -40,4 +44,8 @@ export class DepartmentHierarchyLevel {
   @ManyToOne(() => Department, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'department_id' })
   department: Department;
+
+  @ManyToOne(() => Role, { onDelete: 'SET NULL' })
+  @JoinColumn({ name: 'role_id' })
+  role: Role;
 }
