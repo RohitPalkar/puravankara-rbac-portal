@@ -83,3 +83,31 @@ export interface DepartmentRole {
   departmentName?: string;
   roleName?: string;
 }
+
+export interface LevelImpactPreview {
+  usersCount: number;
+  approvalsCount: number;
+  childLevelUsersCount: number;
+  mergingAuto: boolean;
+  mergeCandidates: number[];
+  zonesImpacted: number;
+}
+
+export interface RemoveLevelPayload {
+  mode: 'MERGE' | 'REPLACE';
+  destinationLevelNumber?: number;
+}
+
+export interface RemoveLevelResult {
+  message: string;
+  mergedRolesCount: number;
+  affectedUsers: number;
+  affectedApprovals: number;
+  autoMerged: boolean;
+}
+
+export interface AutoMergeResult {
+  autoMerge: boolean;
+  message?: string;
+  destinationLevelNumber?: number;
+}

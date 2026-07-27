@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 import { createCrudHooks } from './use-crud';
 import { queryKeys } from '../api/query-keys';
-import { roleService, departmentService, roleMigrationService, departmentRoleService } from '../services/organization.service';
+import { roleService, departmentService, roleMigrationService, levelMigrationService, departmentRoleService } from '../services/organization.service';
 
 import type {
   Role,
@@ -13,6 +13,9 @@ import type {
   DepartmentListItem,
   CreateDepartmentRequest,
   UpdateDepartmentRequest,
+  LevelImpactPreview,
+  RemoveLevelResult,
+  AutoMergeResult,
 } from '../types/organization';
 
 export const {
@@ -161,6 +164,50 @@ export function useRemoveRoleDependencies(id: number | null) {
       return res.data;
     },
     enabled: !!id,
+  });
+}
+
+export function useLevelImpact(departmentId: number | undefined, levelNumber: number | undefined) {
+  return useQuery({
+    queryKey: queryKeys.departments.levelImpact(departmentId!, levelNumber!),
+    queryFn: async () => {
+      const res = await levelMigrationService.getImpact(departmentId!, levelNumber!);
+      return res.data as LevelImpactPreview;
+    },
+    enabled: !!departmentId && !!levelNumber,
+  });
+}
+
+export function useLevelRemoveCheck(departmentId: number | undefined, levelNumber: number | undefined) {
+  return useQuery({
+    queryKey: queryKeys.departments.levelRemove(departmentId!, levelNumber!),
+    queryFn: async () => {
+      const res = await levelMigrationService.checkRemove(departmentId!, levelNumber!);
+      return res.data as AutoMergeResult;
+    },
+    enabled: !!departmentId && !!levelNumber,
+  });
+}
+
+export function useLevelRemove() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      departmentId,
+      levelNumber,
+      payload,
+    }: {
+      departmentId: number;
+      levelNumber: number;
+      payload: { mode: 'MERGE' | 'REPLACE'; destinationLevelNumber?: number };
+    }) => {
+      const res = await levelMigrationService.remove(departmentId, levelNumber, payload);
+      return res.data as RemoveLevelResult;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.departments.all });
+    },
   });
 }
 

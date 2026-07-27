@@ -11,6 +11,9 @@ import type {
   UpdateRoleRequest,
   CreateDepartmentRequest,
   UpdateDepartmentRequest,
+  LevelImpactPreview,
+  RemoveLevelResult,
+  AutoMergeResult,
 } from '../types/organization';
 
 const _departmentCrud = createCrudService<Department, CreateDepartmentRequest, UpdateDepartmentRequest>({
@@ -71,6 +74,22 @@ export const roleMigrationService = {
 
   getDependencies: async (id: number): Promise<ApiResponse<DependencyCounts>> =>
     apiGet<DependencyCounts>(endpoints.roles.removeDependencies(id)),
+};
+
+export interface LevelMigrationPayload {
+  mode: 'MERGE' | 'REPLACE';
+  destinationLevelNumber?: number;
+}
+
+export const levelMigrationService = {
+  getImpact: async (departmentId: number, levelNumber: number): Promise<ApiResponse<LevelImpactPreview>> =>
+    apiGet<LevelImpactPreview>(endpoints.departments.levelImpact(departmentId, levelNumber)),
+
+  remove: async (departmentId: number, levelNumber: number, payload: LevelMigrationPayload): Promise<ApiResponse<RemoveLevelResult>> =>
+    apiPost<RemoveLevelResult>(endpoints.departments.levelRemove(departmentId, levelNumber), payload),
+
+  checkRemove: async (departmentId: number, levelNumber: number): Promise<ApiResponse<AutoMergeResult>> =>
+    apiGet<AutoMergeResult>(endpoints.departments.levelRemoveCheck(departmentId, levelNumber)),
 };
 
 export const departmentRoleService = {

@@ -81,6 +81,8 @@ export const queryKeys = {
     list: (params?: Record<string, unknown>) => ['departments', 'list', params] as const,
     byId: (id: number) => ['departments', id] as const,
     hierarchyLevels: (id: number) => ['departments', id, 'hierarchy-levels'] as const,
+    levelRemove: (deptId: number, levelNumber: number) => ['departments', deptId, 'level', levelNumber, 'remove'] as const,
+    levelImpact: (deptId: number, levelNumber: number) => ['departments', deptId, 'level', levelNumber, 'impact'] as const,
   },
 
   roles: {
