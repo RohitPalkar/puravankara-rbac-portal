@@ -37,7 +37,7 @@ import type { ProjectMappingStepHandle } from './components/project-mapping-step
 import type { OrganisationReviewStepHandle } from './components/organisation-review-step';
 import type { BasicInfoData, BasicInformationStepHandle } from './components/basic-information-step';
 
-const STEPS = ['Basic Information', 'Project Mapping', 'Organisation & Review'];
+const STEPS = ['Basic Information', 'Project Mapping', 'Organisation Details'];
 
 export default function UserNewPage() {
   const navigate = useNavigate();
@@ -80,10 +80,6 @@ export default function UserNewPage() {
 
   const handleBack = useCallback(() => {
     setActiveStep((prev) => prev - 1);
-  }, []);
-
-  const handleNavigateStep = useCallback((step: number) => {
-    setActiveStep(step);
   }, []);
 
   const handleSubmit = useCallback(async () => {
@@ -175,12 +171,7 @@ export default function UserNewPage() {
           )}
 
           {activeStep === 2 && (
-            <OrganisationReviewStep
-              ref={step3Ref}
-              step1Data={savedStep1Data}
-              step2Data={savedStep2Data}
-              onNavigateStep={handleNavigateStep}
-            />
+            <OrganisationReviewStep ref={step3Ref} />
           )}
 
           <Stack direction="row" justifyContent="space-between" sx={{ p: 3, borderTop: '1px solid', borderColor: 'divider' }}>
