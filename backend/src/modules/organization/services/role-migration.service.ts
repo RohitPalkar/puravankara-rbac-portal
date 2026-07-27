@@ -5,7 +5,7 @@ import {
   Logger,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, DataSource, In, Not } from 'typeorm';
+import { Repository, DataSource, Not } from 'typeorm';
 import { Role } from '../entities/role.entity';
 import { DepartmentRole } from '../entities/department-role.entity';
 import { UserRole } from '../../users/entities/user-role.entity';
@@ -13,7 +13,6 @@ import { RoleActionPermission } from '../../permissions/entities/role-action-per
 import { RoleProjectPermission } from '../../permissions/entities/role-project-permission.entity';
 import { ApprovalStep } from '../../workflows/entities/approval-step.entity';
 import { AuditService } from '../../audit/services/audit.service';
-import { ConflictException } from '@nestjs/common';
 
 export class RemoveRoleDto {
   mode: 'MERGE' | 'REPLACE';
@@ -202,23 +201,9 @@ export class RoleMigrationService {
       };
     }
 
-    const queryRunner = this.dataSource.createQueryRunner();
-    await queryRunner.connect();
-    await queryRunner.startTransaction();
-
-    try {
-      await queryRunner.manager.softDelete(Role, roleId);
-      await queryRunner.commitTransaction();
-    } catch (err) {
-      await queryRunner.rollbackTransaction();
-      throw err;
-    } finally {
-      await queryRunner.release();
-    }
-
     return {
       autoMerge: true,
-      message: `Role has no dependencies. Automatically merged into "${candidate.name}".`,
+      message: `Role has no dependencies. Ready for auto-merge into "${candidate.name}".`,
       destinationRole: candidate,
     };
   }
@@ -292,18 +277,19 @@ export class RoleMigrationService {
     );
 
     // 5. Migrate DepartmentRole: update source → dest, remove duplicates
+    // Must delete conflicting rows first to avoid PK (department_id, role_id) violation
     await manager.query(
-      `WITH updated AS (
-         UPDATE department_roles
-         SET role_id = $2
-         WHERE role_id = $1
-         RETURNING id, department_id, role_id
-       )
-       DELETE FROM department_roles dr
-       USING updated u
-       WHERE dr.department_id = u.department_id
-         AND dr.role_id = $2
-         AND dr.id <> u.id`,
+      `DELETE FROM department_roles dr
+       WHERE dr.role_id = $1
+         AND EXISTS (
+           SELECT 1 FROM department_roles dr2
+           WHERE dr2.department_id = dr.department_id
+             AND dr2.role_id = $2
+         )`,
+      [sourceRoleId, destRoleId],
+    );
+    await manager.query(
+      `UPDATE department_roles SET role_id = $2 WHERE role_id = $1`,
       [sourceRoleId, destRoleId],
     );
   }
@@ -346,18 +332,19 @@ export class RoleMigrationService {
     );
 
     // 3. Migrate DepartmentRole
+    // Must delete conflicting rows first to avoid PK (department_id, role_id) violation
     await manager.query(
-      `WITH updated AS (
-         UPDATE department_roles
-         SET role_id = $2
-         WHERE role_id = $1
-         RETURNING id, department_id, role_id
-       )
-       DELETE FROM department_roles dr
-       USING updated u
-       WHERE dr.department_id = u.department_id
-         AND dr.role_id = $2
-         AND dr.id <> u.id`,
+      `DELETE FROM department_roles dr
+       WHERE dr.role_id = $1
+         AND EXISTS (
+           SELECT 1 FROM department_roles dr2
+           WHERE dr2.department_id = dr.department_id
+             AND dr2.role_id = $2
+         )`,
+      [sourceRoleId, destRoleId],
+    );
+    await manager.query(
+      `UPDATE department_roles SET role_id = $2 WHERE role_id = $1`,
       [sourceRoleId, destRoleId],
     );
   }
