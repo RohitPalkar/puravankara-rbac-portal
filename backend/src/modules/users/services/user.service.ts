@@ -575,9 +575,12 @@ export class UserService {
       take: 1,
     });
 
-    const lastNum = lastUser
-      ? parseInt(lastUser.empId.replace('PPL', ''), 10)
-      : 0;
+    let lastNum = 0;
+    if (lastUser) {
+      const match = lastUser.empId.match(/(\d+)$/);
+      lastNum = match ? parseInt(match[1], 10) : 0;
+    }
+
     const nextNum = lastNum + 1;
     return `PPL${String(nextNum).padStart(5, '0')}`;
   }
