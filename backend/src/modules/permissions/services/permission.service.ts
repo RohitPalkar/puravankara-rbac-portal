@@ -458,6 +458,17 @@ export class PermissionService {
         id: a.projectId,
         name: a.project.name,
       }));
+      if (projectEntities.length === 0 && projectIds.length > 0) {
+        const placeholders = projectIds.map((_, i) => `$${i + 1}`).join(',');
+        const rows = await this.dataSource.query(
+          `SELECT id, name FROM projects WHERE id IN (${placeholders})`,
+          projectIds,
+        );
+        projectEntities = rows.map((p: any) => ({
+          id: Number(p.id),
+          name: p.name,
+        }));
+      }
       // Filter projects by zone scope (skip if user has no zone assignments)
       try {
         const scope = await this.scopeService.resolveUserScope(userId);
@@ -644,8 +655,7 @@ export class PermissionService {
       return [...new Set([...directIds, ...groupProjectIds])];
     }
 
-    // Fallback: resolve project IDs from PermissionProfile tree
-    // (covers users created before UserProjectAccess records were added)
+    // Fallback 1: resolve project IDs from PermissionProfile → project assignments
     try {
       const rawProjects = await this.dataSource.query(
         `SELECT DISTINCT ppp.project_id
@@ -657,9 +667,21 @@ export class PermissionService {
         [userId],
       );
       const profileProjectIds = rawProjects.map((r: any) => Number(r.project_id));
-      return [...new Set([...directIds, ...profileProjectIds])];
+      if (profileProjectIds.length > 0) return [...new Set([...directIds, ...profileProjectIds])];
     } catch {
-      return directIds;
+      // ignore and continue
+    }
+
+    // Fallback 2: user has profile with modules but no explicit project assignments →
+    // grant access to all projects
+    try {
+      const profileCount = await this.profileRepo.count({ where: { userId } });
+      if (profileCount > 0) {
+        const raw = await this.dataSource.query(`SELECT id FROM projects`);
+        return raw.map((r: any) => Number(r.id));
+      }
+    } catch {
+      // ignore and continue
     }
 
     return directIds;
