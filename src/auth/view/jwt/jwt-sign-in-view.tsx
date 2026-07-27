@@ -24,6 +24,7 @@ import { CONFIG } from 'src/config-global';
 import { Iconify } from 'src/components/iconify';
 import { Form, Field } from 'src/components/hook-form';
 
+import { useAuthContext } from '../../hooks';
 import { signInWithPassword } from '../../context/jwt';
 
 export type SignInSchemaType = zod.infer<typeof SignInSchema>;
@@ -41,6 +42,7 @@ export const SignInSchema = zod.object({
 
 export function JwtSignInView() {
   const router = useRouter();
+  const { checkUserSession } = useAuthContext();
 
   const [errorMsg, setErrorMsg] = useState('');
 
@@ -64,6 +66,7 @@ export function JwtSignInView() {
   const onSubmit = handleSubmit(async (data) => {
     try {
       await signInWithPassword({ email: data.email, password: data.password });
+      await checkUserSession?.();
       router.replace(CONFIG.auth.redirectPath);
     } catch (error) {
       setErrorMsg(typeof error === 'string' ? error : error.message);
