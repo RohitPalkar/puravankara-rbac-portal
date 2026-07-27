@@ -362,68 +362,13 @@ export class LevelMigrationService {
       return { autoMerge: false };
     }
 
-    const dept = await this.deptRepo.findOne({
-      where: { id: departmentId, deletedAt: null },
-    });
-    if (!dept) throw new NotFoundException('Department not found');
-
-    const sourceLevel = await this.levelRepo.findOne({
-      where: { departmentId, levelNumber, isActive: true },
-    });
-    if (!sourceLevel) throw new NotFoundException('Hierarchy level not found');
-
-    // Auto-merge: delegate to RoleMigrationService
-    const candidate = impact.autoMerge.candidateLevel;
-    const destLevel = await this.levelRepo.findOne({
-      where: { id: candidate.id },
-    });
-    if (!destLevel) throw new NotFoundException('Destination level not found');
-
-    await this.roleMigrationService.remove(
-      sourceLevel.roleId,
-      { mode: 'MERGE', destinationRoleId: destLevel.roleId },
-      undefined,
-    );
-
-    await this.levelRepo.update(sourceLevel.id, { isActive: false });
-
-    try {
-      await this.auditService.createLog({
-        entityName: 'HierarchyLevel',
-        entityId: `dept-${departmentId}-level-${levelNumber}`,
-        action: 'LEVEL_AUTO_MERGED',
-        oldValue: {
-          department: { id: dept.id, name: dept.name },
-          sourceLevel: {
-            id: sourceLevel.id,
-            levelNumber: sourceLevel.levelNumber,
-            roleName: sourceLevel.roleName,
-          },
-        },
-        newValue: {
-          migrationMode: 'MERGE',
-          destinationLevel: {
-            id: destLevel.id,
-            levelNumber: destLevel.levelNumber,
-            roleName: destLevel.roleName,
-          },
-          reason: 'No dependencies — auto-merged',
-        },
-        source: 'level-migration',
-      });
-    } catch (auditErr) {
-      this.logger.warn(
-        `Failed to create audit log: ${(auditErr as Error).message}`,
-      );
-    }
-
     return {
       autoMerge: true,
-      message: `Level has no dependencies. Automatically merged into "${destLevel.roleName}".`,
+      message: `Level has no dependencies. Ready for auto-merge into "${impact.autoMerge.candidateLevel.roleName}".`,
       destinationLevel: {
-        id: destLevel.id,
-        levelNumber: destLevel.levelNumber,
-        roleName: destLevel.roleName,
+        id: impact.autoMerge.candidateLevel.id,
+        levelNumber: impact.autoMerge.candidateLevel.levelNumber,
+        roleName: impact.autoMerge.candidateLevel.roleName,
       },
     };
   }
