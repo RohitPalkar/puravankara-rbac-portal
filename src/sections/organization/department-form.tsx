@@ -64,17 +64,17 @@ export default function DepartmentFormPage() {
   const { mutateAsync: updateDepartment, isPending: isUpdating } = useUpdateDepartment();
 
   const { data: zones } = useQuery({
-    queryKey: queryKeys.zones.list({ limit: 200 }),
+    queryKey: queryKeys.zones.list({}),
     queryFn: async () => {
-      const res = await zoneService.list({ limit: 200 } as any);
+      const res = await zoneService.list({});
       return (res.data ?? []) as any[];
     },
   });
 
   const { data: users } = useQuery({
-    queryKey: queryKeys.users.list({ limit: 500 }),
+    queryKey: queryKeys.users.list({}),
     queryFn: async () => {
-      const res = await userService.list({ limit: 500 } as any);
+      const res = await userService.list({});
       return (res.data ?? []) as any[];
     },
   });

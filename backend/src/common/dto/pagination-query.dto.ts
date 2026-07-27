@@ -8,15 +8,15 @@ export class PaginationQueryDto {
   @Type(() => Number)
   @IsInt()
   @Min(1)
-  page?: number = 1;
+  page?: number;
 
   @ApiPropertyOptional({ default: 20 })
   @IsOptional()
   @Type(() => Number)
   @IsInt()
   @Min(1)
-  @Max(1000)
-  limit?: number = 20;
+  @Max(10000)
+  limit?: number;
 
   @ApiPropertyOptional()
   @IsOptional()

@@ -13,13 +13,15 @@ export abstract class BaseService<
     defaultSort: string = 'createdAt',
   ): Promise<PaginatedResult<T>> {
     const {
-      page = 1,
-      limit = 20,
+      page,
+      limit,
       search,
       sortBy = defaultSort,
       sortOrder = 'DESC',
       ...filters
     } = query;
+
+    const paginate = page !== undefined && limit !== undefined;
 
     const where: FindOptionsWhere<T> = { deletedAt: null };
 
@@ -41,17 +43,16 @@ export abstract class BaseService<
       const [data, total] = await this.repository.findAndCount({
         where: searchConditions,
         order: { [sortBy]: sortOrder } as any,
-        skip: (page - 1) * limit,
-        take: limit,
+        ...(paginate ? { skip: (page! - 1) * limit!, take: limit! } : {}),
       });
 
       return {
         data,
         meta: {
-          page,
-          limit,
+          page: paginate ? page! : 1,
+          limit: paginate ? limit! : total,
           total,
-          totalPages: Math.ceil(total / limit),
+          totalPages: paginate ? Math.ceil(total / limit!) : 1,
         },
       };
     }
@@ -65,17 +66,16 @@ export abstract class BaseService<
     const [data, total] = await this.repository.findAndCount({
       where,
       order: { [sortBy]: sortOrder } as any,
-      skip: (page - 1) * limit,
-      take: limit,
+      ...(paginate ? { skip: (page! - 1) * limit!, take: limit! } : {}),
     });
 
     return {
       data,
       meta: {
-        page,
-        limit,
+        page: paginate ? page! : 1,
+        limit: paginate ? limit! : total,
         total,
-        totalPages: Math.ceil(total / limit),
+        totalPages: paginate ? Math.ceil(total / limit!) : 1,
       },
     };
   }
