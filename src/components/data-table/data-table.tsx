@@ -1,6 +1,6 @@
 import type { GridColDef, GridPaginationModel } from '@mui/x-data-grid';
 
-import { useRef, useMemo, useState, useEffect, useCallback } from 'react';
+import { useMemo, useState, useEffect, useCallback } from 'react';
 
 import Box from '@mui/material/Box';
 import Card from '@mui/material/Card';
@@ -69,7 +69,6 @@ type Props = {
 const ROW_HEIGHT = 52;
 const DEFAULT_HEADER_HEIGHT = 48;
 const FOOTER_HEIGHT = 52;
-const SEARCH_BAR_HEIGHT = 57;
 
 function CustomFooter({
   rowCount,
@@ -204,21 +203,6 @@ export function DataTable({
   errorMessage,
   onErrorRetry,
 }: Props) {
-  const cardRef = useRef<HTMLDivElement>(null);
-  const [cardHeight, setCardHeight] = useState(0);
-
-  useEffect(() => {
-    const el = cardRef.current;
-    if (!el) return undefined;
-    const ro = new ResizeObserver((entries) => {
-      entries.forEach((entry) => {
-        setCardHeight(entry.contentRect.height);
-      });
-    });
-    ro.observe(el);
-    return () => ro.disconnect();
-  }, []);
-
   const [localSearch, setLocalSearch] = useState('');
   const [filters, setFilters] = useState<Record<string, string>>({});
   const [hiddenColumns, setHiddenColumns] = useState<Set<string>>(new Set());
@@ -302,18 +286,6 @@ export function DataTable({
   );
 
   const effectiveHeaderHeight = columnHeaderHeight ?? DEFAULT_HEADER_HEIGHT;
-  const groupHeaderHeight = groupHeaders?.length ? effectiveHeaderHeight : 0;
-
-  let rowHeight = ROW_HEIGHT;
-  if (typeof getRowHeight === 'function') {
-    const h = getRowHeight();
-    if (h !== 'auto') rowHeight = h;
-  }
-
-  const rowCount = Math.max(loading ? 5 : rows.length, isServerSide ? currentPageSize : 0);
-  const naturalHeight = rowCount * rowHeight + effectiveHeaderHeight;
-  const availableHeight = Math.max(200, cardHeight - SEARCH_BAR_HEIGHT - FOOTER_HEIGHT - groupHeaderHeight);
-  const gridHeight = Math.min(naturalHeight, availableHeight);
 
   const gridColumns = useMemo(
     () =>
@@ -327,19 +299,15 @@ export function DataTable({
 
   return (
     <Card
-      ref={cardRef}
       variant="outlined"
       sx={{
-        display: 'flex',
-        flexDirection: 'column',
-        overflow: 'hidden',
         borderRadius: 1.5,
         borderColor: 'divider',
-        flex: 1,
-        minHeight: 0,
+        overflow: 'hidden',
+        width: 1,
       }}
     >
-      <Box sx={{ flexShrink: 0, borderBottom: '1px solid', borderColor: 'divider', bgcolor: 'background.paper' }}>
+      <Box sx={{ borderBottom: '1px solid', borderColor: 'divider', bgcolor: 'background.paper' }}>
         <Stack direction="row" spacing={1} alignItems="center" sx={{ px: 2.5, py: 1.5 }}>
           <TextField
             size="small"
@@ -447,140 +415,131 @@ export function DataTable({
         </Stack>
       </Box>
 
-      <Box sx={{ flex: 1, minHeight: 0, position: 'relative', overflow: 'hidden' }}>
-        {error ? (
-          <Box sx={{ p: 4, textAlign: 'center' }}>
-            <Stack spacing={2} alignItems="center">
-              <Iconify icon="solar:danger-triangle-bold" width={40} sx={{ color: 'error.main', opacity: 0.6 }} />
-              <Box>
-                <Typography variant="h6" sx={{ color: 'text.secondary', fontWeight: 500 }}>
-                  Failed to load data
-                </Typography>
-                <Typography variant="body2" color="text.disabled" sx={{ mt: 0.5 }}>
-                  {errorMessage || 'An unexpected error occurred. Please try again.'}
-                </Typography>
-              </Box>
-              {onErrorRetry && (
-                <Button variant="outlined" size="small" onClick={onErrorRetry}>
-                  Retry
-                </Button>
-              )}
-            </Stack>
-          </Box>
-        ) : loading && rows.length === 0 ? (
-          <LoadingSkeleton columnCount={visibleColumns.length} />
-        ) : isEmpty ? (
-          <EmptyContent
-            hasSearch={hasSearchActive}
-            emptyTitle={emptyTitle}
-            emptyDescription={emptyDescription}
-            emptyIcon={emptyIcon}
-            createAction={createAction}
-          />
-        ) : (
-          <DataGrid
-            rows={isServerSide ? rows : filteredRows}
-            columns={gridColumns}
-            loading={loading}
-            getRowId={getRowId ?? ((row: any) => row.id)}
-            onRowClick={(params) => onRowClick?.(params.row)}
-            paginationMode={paginationMode}
-            {...(isServerSide && paginationModel ? { paginationModel } : {})}
-            {...(isServerSide && onPaginationModelChange ? { onPaginationModelChange } : {})}
-            {...(isServerSide && totalRowCount !== undefined ? { rowCount: totalRowCount } : {})}
-            columnHeaderHeight={effectiveHeaderHeight}
-            initialState={isServerSide ? undefined : { pagination: { paginationModel: { pageSize: 10 } } }}
-            pageSizeOptions={[10, 25, 50]}
-            disableRowSelectionOnClick
-            disableColumnMenu
-            disableColumnResize
-            slots={{
-              ...(isServerSide && {
-                footer: () => (
-                  <CustomFooter
-                    rowCount={displayRowCount}
-                    page={currentPage}
-                    pageSize={currentPageSize}
-                    onPageChange={handlePaginationChange}
-                    onPageSizeChange={handlePageSizeChange}
-                  />
-                ),
-              }),
-              noRowsOverlay: () => null,
-              loadingOverlay: () => null,
-            }}
-            getRowHeight={getRowHeight ?? (() => ROW_HEIGHT)}
-            sx={{
-              height: gridHeight,
-              borderRadius: 0,
-              border: 'none',
-              '& .MuiDataGrid-columnHeaders': {
-                position: 'sticky',
-                top: 0,
-                zIndex: 10,
-                borderBottom: '2px solid',
-                borderColor: 'divider',
-                bgcolor: 'grey.100',
-                minHeight: `${effectiveHeaderHeight}px !important`,
-                maxHeight: `${effectiveHeaderHeight}px !important`,
-                lineHeight: `${effectiveHeaderHeight}px !important`,
-              },
-              '& .MuiDataGrid-columnHeader': {
-                px: 2.5,
-                py: 1.75,
-              },
-              '& .MuiDataGrid-columnHeaderTitle': {
-                fontWeight: 700,
-                fontSize: '0.75rem',
-                color: 'text.secondary',
-                textTransform: 'uppercase',
-                letterSpacing: '0.04em',
-              },
-              '& .MuiDataGrid-columnHeader:focus': { outline: 'none' },
-              '& .MuiDataGrid-columnHeader:focus-within': { outline: 'none' },
-              '& .MuiDataGrid-cell': {
-                px: 2.5,
-                py: 1.5,
-                display: 'flex',
-                alignItems: 'center',
-                fontSize: '0.8125rem',
-                minHeight: `${ROW_HEIGHT}px !important`,
-                maxHeight: `${ROW_HEIGHT}px !important`,
-                '&:focus': { outline: 'none' },
-                '&:focus-within': { outline: 'none' },
-              },
-              '& .MuiDataGrid-row': {
-                minHeight: `${ROW_HEIGHT}px !important`,
-                maxHeight: `${ROW_HEIGHT}px !important`,
-                cursor: onRowClick ? 'pointer' : 'default',
-                '&:hover': { bgcolor: 'primary.lighter' },
-                '&.Mui-selected': { bgcolor: 'primary.lighter' },
-                '&:nth-of-type(even)': { bgcolor: 'grey.50' },
-                '&:nth-of-type(even):hover': { bgcolor: 'primary.lighter' },
-              },
-              '& .MuiDataGrid-cell--textLeft': { justifyContent: 'flex-start' },
-              '& .MuiDataGrid-cell--textCenter': { justifyContent: 'center' },
-              '& .MuiDataGrid-cell--textRight': { justifyContent: 'flex-end' },
-              '& .MuiDataGrid-withBorder': { borderColor: 'divider' },
-              '& .MuiDataGrid-footerContainer': {
-                borderTop: '2px solid',
-                borderColor: 'divider',
-                bgcolor: 'background.paper',
-                minHeight: FOOTER_HEIGHT,
-                position: 'sticky',
-                bottom: 0,
-                zIndex: 10,
-              },
-              '& .MuiTablePagination-root': {
-                '& .MuiTablePagination-selectLabel': { fontSize: '0.8125rem', color: 'text.secondary' },
-                '& .MuiTablePagination-select': { fontSize: '0.8125rem' },
-              },
-              ...(isEmpty ? { minHeight: 200 } : {}),
-              ...(dataGridSx || {}),
-            } as any}
-          />
-        )}
-      </Box>
+      {error ? (
+        <Box sx={{ p: 4, textAlign: 'center' }}>
+          <Stack spacing={2} alignItems="center">
+            <Iconify icon="solar:danger-triangle-bold" width={40} sx={{ color: 'error.main', opacity: 0.6 }} />
+            <Box>
+              <Typography variant="h6" sx={{ color: 'text.secondary', fontWeight: 500 }}>
+                Failed to load data
+              </Typography>
+              <Typography variant="body2" color="text.disabled" sx={{ mt: 0.5 }}>
+                {errorMessage || 'An unexpected error occurred. Please try again.'}
+              </Typography>
+            </Box>
+            {onErrorRetry && (
+              <Button variant="outlined" size="small" onClick={onErrorRetry}>
+                Retry
+              </Button>
+            )}
+          </Stack>
+        </Box>
+      ) : loading && rows.length === 0 ? (
+        <LoadingSkeleton columnCount={visibleColumns.length} />
+      ) : isEmpty ? (
+        <EmptyContent
+          hasSearch={hasSearchActive}
+          emptyTitle={emptyTitle}
+          emptyDescription={emptyDescription}
+          emptyIcon={emptyIcon}
+          createAction={createAction}
+        />
+      ) : (
+        <DataGrid
+          autoHeight
+          rows={isServerSide ? rows : filteredRows}
+          columns={gridColumns}
+          loading={loading}
+          getRowId={getRowId ?? ((row: any) => row.id)}
+          onRowClick={(params) => onRowClick?.(params.row)}
+          paginationMode={paginationMode}
+          {...(isServerSide && paginationModel ? { paginationModel } : {})}
+          {...(isServerSide && onPaginationModelChange ? { onPaginationModelChange } : {})}
+          {...(isServerSide && totalRowCount !== undefined ? { rowCount: totalRowCount } : {})}
+          columnHeaderHeight={effectiveHeaderHeight}
+          initialState={isServerSide ? undefined : { pagination: { paginationModel: { pageSize: 10 } } }}
+          pageSizeOptions={[10, 25, 50]}
+          disableRowSelectionOnClick
+          disableColumnMenu
+          disableColumnResize
+          slots={{
+            ...(isServerSide && {
+              footer: () => (
+                <CustomFooter
+                  rowCount={displayRowCount}
+                  page={currentPage}
+                  pageSize={currentPageSize}
+                  onPageChange={handlePaginationChange}
+                  onPageSizeChange={handlePageSizeChange}
+                />
+              ),
+            }),
+            noRowsOverlay: () => null,
+            loadingOverlay: () => null,
+          }}
+          getRowHeight={getRowHeight ?? (() => ROW_HEIGHT)}
+          sx={{
+            borderRadius: 0,
+            border: 'none',
+            '& .MuiDataGrid-columnHeaders': {
+              borderBottom: '2px solid',
+              borderColor: 'divider',
+              bgcolor: 'grey.100',
+              minHeight: `${effectiveHeaderHeight}px !important`,
+              maxHeight: `${effectiveHeaderHeight}px !important`,
+              lineHeight: `${effectiveHeaderHeight}px !important`,
+            },
+            '& .MuiDataGrid-columnHeader': {
+              px: 2.5,
+              py: 1.75,
+            },
+            '& .MuiDataGrid-columnHeaderTitle': {
+              fontWeight: 700,
+              fontSize: '0.75rem',
+              color: 'text.secondary',
+              textTransform: 'uppercase',
+              letterSpacing: '0.04em',
+            },
+            '& .MuiDataGrid-columnHeader:focus': { outline: 'none' },
+            '& .MuiDataGrid-columnHeader:focus-within': { outline: 'none' },
+            '& .MuiDataGrid-cell': {
+              px: 2.5,
+              py: 1.5,
+              display: 'flex',
+              alignItems: 'center',
+              fontSize: '0.8125rem',
+              minHeight: `${ROW_HEIGHT}px !important`,
+              maxHeight: `${ROW_HEIGHT}px !important`,
+              '&:focus': { outline: 'none' },
+              '&:focus-within': { outline: 'none' },
+            },
+            '& .MuiDataGrid-row': {
+              minHeight: `${ROW_HEIGHT}px !important`,
+              maxHeight: `${ROW_HEIGHT}px !important`,
+              cursor: onRowClick ? 'pointer' : 'default',
+              '&:hover': { bgcolor: 'primary.lighter' },
+              '&.Mui-selected': { bgcolor: 'primary.lighter' },
+              '&:nth-of-type(even)': { bgcolor: 'grey.50' },
+              '&:nth-of-type(even):hover': { bgcolor: 'primary.lighter' },
+            },
+            '& .MuiDataGrid-cell--textLeft': { justifyContent: 'flex-start' },
+            '& .MuiDataGrid-cell--textCenter': { justifyContent: 'center' },
+            '& .MuiDataGrid-cell--textRight': { justifyContent: 'flex-end' },
+            '& .MuiDataGrid-withBorder': { borderColor: 'divider' },
+            '& .MuiDataGrid-footerContainer': {
+              borderTop: '2px solid',
+              borderColor: 'divider',
+              bgcolor: 'background.paper',
+              minHeight: FOOTER_HEIGHT,
+            },
+            '& .MuiTablePagination-root': {
+              '& .MuiTablePagination-selectLabel': { fontSize: '0.8125rem', color: 'text.secondary' },
+              '& .MuiTablePagination-select': { fontSize: '0.8125rem' },
+            },
+            ...(dataGridSx || {}),
+          } as any}
+        />
+      )}
     </Card>
   );
 }

@@ -16,7 +16,7 @@ export function PageHeader({ title, description, action, sx, ...other }: Props) 
       alignItems={{ xs: 'flex-start', sm: 'center' }}
       justifyContent="space-between"
       spacing={{ xs: 1.5, sm: 0 }}
-      sx={{ mb: 3, ...sx }}
+      sx={{ mb: 1.5, ...sx }}
       {...other}
     >
       <Stack spacing={0.5}>

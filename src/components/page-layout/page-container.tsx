@@ -6,7 +6,7 @@ import { DashboardBreadcrumbs } from 'src/layouts/components/dashboard-breadcrum
 
 export function PageContainer({ children, sx, ...other }: StackProps) {
   return (
-    <Stack spacing={3} sx={{ width: 1, px: 4, pt: 3, flex: 1, minHeight: 0, ...sx }} {...other}>
+    <Stack spacing={1} sx={{ width: 1, px: 4, pt: 3, ...sx }} {...other}>
       <DashboardBreadcrumbs />
       {children}
     </Stack>
