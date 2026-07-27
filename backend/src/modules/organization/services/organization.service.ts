@@ -138,6 +138,19 @@ export class DepartmentService {
           }),
         );
         await queryRunner.manager.save(DepartmentHierarchyLevel, levels);
+
+        const uniqueRoleNames = [...new Set(dto.hierarchyLevels.map((hl) => hl.roleName).filter(Boolean))];
+        for (const roleName of uniqueRoleNames) {
+          const role = await queryRunner.manager.findOne(Role, {
+            where: { name: roleName, deletedAt: null },
+          });
+          if (role) {
+            await queryRunner.manager.save(DepartmentRole, {
+              departmentId: savedDept.id,
+              roleId: role.id,
+            });
+          }
+        }
       }
 
       await queryRunner.commitTransaction();
@@ -204,6 +217,9 @@ export class DepartmentService {
         await queryRunner.manager.delete(DepartmentHierarchyLevel, {
           departmentId: id,
         });
+        await queryRunner.manager.delete(DepartmentRole, {
+          departmentId: id,
+        });
         if (dto.hierarchyLevels.length > 0) {
           const levels = dto.hierarchyLevels.map((hl) =>
             queryRunner.manager.create(DepartmentHierarchyLevel, {
@@ -214,6 +230,19 @@ export class DepartmentService {
             }),
           );
           await queryRunner.manager.save(DepartmentHierarchyLevel, levels);
+
+          const uniqueRoleNames = [...new Set(dto.hierarchyLevels.map((hl) => hl.roleName).filter(Boolean))];
+          for (const roleName of uniqueRoleNames) {
+            const role = await queryRunner.manager.findOne(Role, {
+              where: { name: roleName, deletedAt: null },
+            });
+            if (role) {
+              await queryRunner.manager.save(DepartmentRole, {
+                departmentId: id,
+                roleId: role.id,
+              });
+            }
+          }
         }
       }
 
