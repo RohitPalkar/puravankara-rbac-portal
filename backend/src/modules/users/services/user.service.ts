@@ -237,28 +237,35 @@ export class UserService {
       throw new NotFoundException('User not found');
     }
 
-    const profiles = await this.profileRepo.find({
-      where: { userId: id },
-      relations: {
-        department: true,
-        role: true,
-        buddyUser: true,
-        modules: {
-          module: true,
-          subModules: {
-            subModule: true,
-            projects: { project: true },
+    let profiles: PermissionProfile[] = [];
+    try {
+      profiles = await this.profileRepo.find({
+        where: { userId: id },
+        relations: {
+          department: true,
+          role: true,
+          buddyUser: true,
+          modules: {
+            module: true,
+            subModules: {
+              subModule: true,
+              projects: { project: true },
+            },
           },
         },
-      },
-      order: { createdAt: 'ASC' },
-    });
+        order: { createdAt: 'ASC' },
+      });
 
-    // Sort modules by displayOrder for consistent frontend rendering
-    for (const profile of profiles) {
-      if (profile.modules) {
-        profile.modules.sort((a, b) => a.displayOrder - b.displayOrder);
+      // Sort modules by displayOrder for consistent frontend rendering
+      for (const profile of profiles) {
+        if (profile.modules) {
+          profile.modules.sort((a, b) => a.displayOrder - b.displayOrder);
+        }
       }
+    } catch (err) {
+      this.logger.warn(
+        `findById: failed to load profiles for user "${id}": ${(err as Error).message}`,
+      );
     }
 
     return { ...user, profiles };
@@ -700,14 +707,13 @@ export class UserService {
   }
 
   private async generateEmpId(): Promise<string> {
-    const [lastUser] = await this.repository.find({
-      order: { createdAt: 'DESC' },
-      take: 1,
-    });
+    const result = await this.repository.query(
+      `SELECT emp_id FROM users ORDER BY created_at DESC LIMIT 1`,
+    );
 
     let lastNum = 0;
-    if (lastUser) {
-      const match = lastUser.empId.match(/(\d+)$/);
+    if (result?.length) {
+      const match = result[0].emp_id.match(/(\d+)$/);
       lastNum = match ? parseInt(match[1], 10) : 0;
     }
 
