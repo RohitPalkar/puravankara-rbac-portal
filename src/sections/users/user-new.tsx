@@ -167,11 +167,11 @@ export default function UserNewPage() {
           )}
 
           {activeStep === 0 && (
-            <BasicInformationStep ref={step1Ref} />
+            <BasicInformationStep ref={step1Ref} initialData={savedStep1Data} />
           )}
 
           {activeStep === 1 && (
-            <ProjectMappingStep ref={step2Ref} />
+            <ProjectMappingStep ref={step2Ref} initialData={savedStep2Data} />
           )}
 
           {activeStep === 2 && (

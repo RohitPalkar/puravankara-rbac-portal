@@ -2,8 +2,10 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Project } from '../entities/project.entity';
+import { ProjectLocation } from '../entities/project-location.entity';
 import { ProjectPaymentGateway } from '../entities/project-payment-gateway.entity';
 import { ProjectIncentiveRule } from '../entities/project-incentive-rule.entity';
+import { CityZoneMapping } from '../../geography/entities/city-zone-mapping.entity';
 import { BaseService } from '../../../common/crud/base.service';
 import { CreateProjectDto, UpdateProjectDto } from '../dto/project.dto';
 import {
@@ -16,6 +18,8 @@ export class ProjectService extends BaseService<Project> {
   constructor(
     @InjectRepository(Project)
     readonly repository: Repository<Project>,
+    @InjectRepository(ProjectLocation)
+    private readonly projectLocationRepo: Repository<ProjectLocation>,
     @InjectRepository(ProjectPaymentGateway)
     private readonly gatewayRepo: Repository<ProjectPaymentGateway>,
     @InjectRepository(ProjectIncentiveRule)
@@ -75,6 +79,22 @@ export class ProjectService extends BaseService<Project> {
       await this.incentiveRepo.save(rules);
     }
 
+    if (projectData.cityId) {
+      const mappings = await this.repository.manager.find(CityZoneMapping, {
+        where: { cityId: projectData.cityId },
+      });
+      if (mappings.length > 0) {
+        const locations = mappings.map((m) =>
+          this.projectLocationRepo.create({
+            projectId: saved.id,
+            cityId: projectData.cityId,
+            zoneId: m.zoneId,
+          }),
+        );
+        await this.projectLocationRepo.save(locations);
+      }
+    }
+
     return this.repository.findOne({
       where: { id: saved.id },
       relations: {
@@ -111,6 +131,25 @@ export class ProjectService extends BaseService<Project> {
           this.incentiveRepo.create({ ...r, projectId: id }),
         );
         await this.incentiveRepo.save(rules);
+      }
+    }
+
+    if (projectData.cityId !== undefined) {
+      await this.projectLocationRepo.delete({ projectId: id });
+      if (projectData.cityId) {
+        const mappings = await this.repository.manager.find(CityZoneMapping, {
+          where: { cityId: projectData.cityId },
+        });
+        if (mappings.length > 0) {
+          const locations = mappings.map((m) =>
+            this.projectLocationRepo.create({
+              projectId: id,
+              cityId: projectData.cityId,
+              zoneId: m.zoneId,
+            }),
+          );
+          await this.projectLocationRepo.save(locations);
+        }
       }
     }
 
