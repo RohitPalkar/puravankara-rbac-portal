@@ -436,11 +436,11 @@ export class UserService {
         roles.push(await queryRunner.manager.save(primaryRole));
 
         if (dto.organization.secondaryRoles?.length) {
-          for (const roleId of dto.organization.secondaryRoles) {
+          for (const entry of dto.organization.secondaryRoles) {
             const sr = queryRunner.manager.create(UserRole, {
               userId: savedUser.empId,
-              departmentId: dto.basic.departmentId,
-              roleId,
+              departmentId: entry.departmentId ?? dto.basic.departmentId,
+              roleId: entry.roleId,
               assignedBy: 'SYSTEM',
               assignedAt: new Date(),
             });

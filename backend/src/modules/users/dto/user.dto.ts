@@ -212,6 +212,18 @@ export class ReportingEntryDto {
   managerId: string;
 }
 
+export class SecondaryRoleEntryDto {
+  @ApiProperty()
+  @IsInt()
+  @IsNotEmpty()
+  roleId: number;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsInt()
+  departmentId?: number;
+}
+
 export class UserOrganizationDto {
   @ApiProperty({ type: [Number] })
   @IsInt({ each: true })
@@ -221,10 +233,11 @@ export class UserOrganizationDto {
   @IsInt()
   primaryRole: number;
 
-  @ApiPropertyOptional({ type: [Number] })
+  @ApiPropertyOptional({ type: [SecondaryRoleEntryDto] })
   @IsOptional()
-  @IsInt({ each: true })
-  secondaryRoles?: number[];
+  @ValidateNested({ each: true })
+  @Type(() => SecondaryRoleEntryDto)
+  secondaryRoles?: SecondaryRoleEntryDto[];
 
   @ApiPropertyOptional({ type: [ReportingEntryDto] })
   @IsOptional()
