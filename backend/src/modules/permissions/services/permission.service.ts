@@ -438,15 +438,7 @@ export class PermissionService {
       }));
     } else {
       const projectIds = await this.getUserProjectIds(userId);
-      const accessRows = await this.accessRepo.find({
-        where: { userId },
-        relations: { project: true },
-      });
-      projectEntities = accessRows.map((a) => ({
-        id: a.projectId,
-        name: a.project.name,
-      }));
-      if (projectEntities.length === 0 && projectIds.length > 0) {
+      if (projectIds.length > 0) {
         const placeholders = projectIds.map((_, i) => `$${i + 1}`).join(',');
         const rows = await this.dataSource.query(
           `SELECT id, name FROM projects WHERE id IN (${placeholders})`,
@@ -456,26 +448,15 @@ export class PermissionService {
           id: Number(p.id),
           name: p.name,
         }));
-      } else if (projectEntities.length === 0 && projectIds.length === 0) {
-        const hasProfiles = await this.profileRepo.count({ where: { userId } });
-        if (hasProfiles > 0) {
-          const allRows = await this.dataSource.query(`SELECT id, name FROM projects`);
-          projectEntities = allRows.map((p: any) => ({
-            id: Number(p.id),
-            name: p.name,
-          }));
-        } else {
-          return {
-            user: {
-              empId: user.empId,
-              name: user.name,
-              email: user.email,
-              roles: roleNames,
-            },
-            projects: [],
-            permissions: { modules: flatModules },
-          };
-        }
+      }
+      if (projectEntities.length === 0) {
+        const rows = await this.dataSource.query(
+          `SELECT id, name FROM projects`,
+        );
+        projectEntities = rows.map((p: any) => ({
+          id: Number(p.id),
+          name: p.name,
+        }));
       }
       // Filter projects by zone scope (skip if user has no zone assignments)
       try {
@@ -662,36 +643,6 @@ export class PermissionService {
       ).map((p) => p.projectId);
       return [...new Set([...directIds, ...groupProjectIds])];
     }
-
-    // Fallback 1: resolve project IDs from PermissionProfile → project assignments
-    try {
-      const rawProjects = await this.dataSource.query(
-        `SELECT DISTINCT ppp.project_id
-         FROM permission_profiles pp
-         JOIN permission_profile_modules ppm ON ppm.profile_id = pp.id
-         JOIN permission_profile_sub_modules ppsm ON ppsm.profile_module_id = ppm.id
-         JOIN permission_profile_projects ppp ON ppp.profile_sub_module_id = ppsm.id
-         WHERE pp.user_id = $1`,
-        [userId],
-      );
-      const profileProjectIds = rawProjects.map((r: any) => Number(r.project_id));
-      if (profileProjectIds.length > 0) return [...new Set([...directIds, ...profileProjectIds])];
-    } catch {
-      // ignore and continue
-    }
-
-    // Fallback 2: user has profile with modules but no explicit project assignments →
-    // grant access to all projects
-    try {
-      const profileCount = await this.profileRepo.count({ where: { userId } });
-      if (profileCount > 0) {
-        const raw = await this.dataSource.query(`SELECT id FROM projects`);
-        return raw.map((r: any) => Number(r.id));
-      }
-    } catch {
-      // ignore and continue
-    }
-
     return directIds;
   }
 
