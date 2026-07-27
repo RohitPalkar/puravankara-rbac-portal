@@ -54,7 +54,7 @@ export class AuthService {
     });
 
     if (!user) {
-      await this.auditService.createLog({
+      this.auditService.createLog({
         entityName: 'AUTH',
         action: 'LOGIN_FAILED',
         newValue: { email: dto.email },
@@ -67,7 +67,7 @@ export class AuthService {
     }
 
     if (user.deletedAt) {
-      await this.auditService.createLog({
+      this.auditService.createLog({
         entityName: 'AUTH',
         action: 'LOGIN_FAILED',
         newValue: { email: dto.email, reason: 'deleted' },
@@ -80,7 +80,7 @@ export class AuthService {
     }
 
     if (!user.isActive) {
-      await this.auditService.createLog({
+      this.auditService.createLog({
         entityName: 'AUTH',
         action: 'LOGIN_FAILED',
         newValue: { email: dto.email, reason: 'inactive' },
@@ -105,7 +105,7 @@ export class AuthService {
     }
 
     if (userAuth.isLocked) {
-      await this.auditService.createLog({
+      this.auditService.createLog({
         entityName: 'AUTH',
         action: 'LOGIN_FAILED',
         entityId: user.empId,
@@ -121,7 +121,7 @@ export class AuthService {
     }
 
     if (userAuth.authProvider !== 'LOCAL') {
-      await this.auditService.createLog({
+      this.auditService.createLog({
         entityName: 'AUTH',
         action: 'LOGIN_FAILED',
         entityId: user.empId,
@@ -149,7 +149,7 @@ export class AuthService {
       }
       await this.userAuthRepository.save(userAuth);
 
-      await this.auditService.createLog({
+      this.auditService.createLog({
         entityName: 'AUTH',
         action: wasLocked ? 'ACCOUNT_LOCKED' : 'LOGIN_FAILED',
         entityId: user.empId,
@@ -167,7 +167,7 @@ export class AuthService {
     userAuth.lastLogin = new Date();
     await this.userAuthRepository.save(userAuth);
 
-    await this.auditService.createLog({
+    this.auditService.createLog({
       entityName: 'AUTH',
       action: 'LOGIN_SUCCESS',
       entityId: user.empId,
@@ -200,9 +200,11 @@ export class AuthService {
       userAgent,
     );
 
+    // Fire permission compilation in background - don't block login response
+    this.compilerService.compileForAllUserProjects(user.empId).catch(() => {});
+
     let permissions: any = undefined;
     try {
-      await this.compilerService.compileForAllUserProjects(user.empId);
       const accessRows = await this.accessRepo.find({
         where: { userId: user.empId },
         relations: { project: true },
@@ -427,7 +429,7 @@ export class AuthService {
     ipAddress?: string,
     userAgent?: string,
   ): Promise<void> {
-    const tokenHash = await bcrypt.hash(refreshToken, 10);
+    const tokenHash = await bcrypt.hash(refreshToken, 6);
 
     const session = this.userSessionRepository.create({
       id: sessionId,
