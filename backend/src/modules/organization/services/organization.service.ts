@@ -139,17 +139,28 @@ export class DepartmentService {
         );
         await queryRunner.manager.save(DepartmentHierarchyLevel, levels);
 
-        const uniqueRoleNames = [...new Set(dto.hierarchyLevels.map((hl) => hl.roleName).filter(Boolean))];
-        for (const roleName of uniqueRoleNames) {
-          const role = await queryRunner.manager.findOne(Role, {
+        const roleNameToLevel = new Map<string, number>();
+        for (const hl of dto.hierarchyLevels) {
+          if (hl.roleName && !roleNameToLevel.has(hl.roleName)) {
+            roleNameToLevel.set(hl.roleName, hl.levelNumber);
+          }
+        }
+        for (const [roleName, levelNumber] of roleNameToLevel) {
+          let role = await queryRunner.manager.findOne(Role, {
             where: { name: roleName, deletedAt: null },
           });
-          if (role) {
-            await queryRunner.manager.save(DepartmentRole, {
-              departmentId: savedDept.id,
-              roleId: role.id,
+          if (!role) {
+            role = queryRunner.manager.create(Role, {
+              name: roleName,
+              hierarchyLevelRank: levelNumber,
+              isActive: true,
             });
+            role = await queryRunner.manager.save(Role, role);
           }
+          await queryRunner.manager.save(DepartmentRole, {
+            departmentId: savedDept.id,
+            roleId: role.id,
+          });
         }
       }
 
@@ -231,17 +242,28 @@ export class DepartmentService {
           );
           await queryRunner.manager.save(DepartmentHierarchyLevel, levels);
 
-          const uniqueRoleNames = [...new Set(dto.hierarchyLevels.map((hl) => hl.roleName).filter(Boolean))];
-          for (const roleName of uniqueRoleNames) {
-            const role = await queryRunner.manager.findOne(Role, {
+          const roleNameToLevel = new Map<string, number>();
+          for (const hl of dto.hierarchyLevels) {
+            if (hl.roleName && !roleNameToLevel.has(hl.roleName)) {
+              roleNameToLevel.set(hl.roleName, hl.levelNumber);
+            }
+          }
+          for (const [roleName, levelNumber] of roleNameToLevel) {
+            let role = await queryRunner.manager.findOne(Role, {
               where: { name: roleName, deletedAt: null },
             });
-            if (role) {
-              await queryRunner.manager.save(DepartmentRole, {
-                departmentId: id,
-                roleId: role.id,
+            if (!role) {
+              role = queryRunner.manager.create(Role, {
+                name: roleName,
+                hierarchyLevelRank: levelNumber,
+                isActive: true,
               });
+              role = await queryRunner.manager.save(Role, role);
             }
+            await queryRunner.manager.save(DepartmentRole, {
+              departmentId: id,
+              roleId: role.id,
+            });
           }
         }
       }
