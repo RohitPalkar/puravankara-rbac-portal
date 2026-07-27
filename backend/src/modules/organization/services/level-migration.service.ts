@@ -250,16 +250,16 @@ export class LevelMigrationService {
       throw new BadRequestException(protectionResult.reason);
     }
 
+    if (dto.destinationLevelNumber === levelNumber) {
+      throw new BadRequestException('Cannot merge/replace a level with itself');
+    }
+
     const destinationLevel = allLevels.find(
       (l) =>
         l.levelNumber === dto.destinationLevelNumber && l.id !== sourceLevel.id,
     );
     if (!destinationLevel) {
       throw new BadRequestException('Destination hierarchy level not found');
-    }
-
-    if (dto.destinationLevelNumber === levelNumber) {
-      throw new BadRequestException('Cannot merge a level with itself');
     }
 
     // Collect affected user IDs before migration (for cache invalidation)
