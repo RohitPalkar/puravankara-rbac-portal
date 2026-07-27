@@ -1,6 +1,6 @@
 import { Injectable, Logger, ForbiddenException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, In } from 'typeorm';
+import { Repository, In, DataSource } from 'typeorm';
 import { User } from '../../users/entities/user.entity';
 import { UserRole } from '../../users/entities/user-role.entity';
 import { Role } from '../../organization/entities/role.entity';
@@ -26,9 +26,6 @@ import {
   ExplainStep,
 } from '../dto/explain-permission.dto';
 import { PermissionProfile } from '../entities/permission-profile.entity';
-import { PermissionProfileModule } from '../entities/permission-profile-module.entity';
-import { PermissionProfileSubModule } from '../entities/permission-profile-sub-module.entity';
-import { PermissionProfileProject } from '../entities/permission-profile-project.entity';
 
 @Injectable()
 export class PermissionService {
@@ -65,12 +62,7 @@ export class PermissionService {
     private readonly actionRepo: Repository<Action>,
     @InjectRepository(PermissionProfile)
     private readonly profileRepo: Repository<PermissionProfile>,
-    @InjectRepository(PermissionProfileModule)
-    private readonly profileModuleRepo: Repository<PermissionProfileModule>,
-    @InjectRepository(PermissionProfileSubModule)
-    private readonly profileSubModuleRepo: Repository<PermissionProfileSubModule>,
-    @InjectRepository(PermissionProfileProject)
-    private readonly profileProjectRepo: Repository<PermissionProfileProject>,
+    private readonly dataSource: DataSource,
     private readonly cacheService: PermissionCacheService,
     private readonly compilerService: PermissionCompilerService,
     private readonly scopeService: ScopeResolutionService,
@@ -654,28 +646,20 @@ export class PermissionService {
 
     // Fallback: resolve project IDs from PermissionProfile tree
     // (covers users created before UserProjectAccess records were added)
-    const profiles = await this.profileRepo.find({
-      where: { userId },
-    });
-    const profileIds = profiles.map((p) => p.id);
-    if (profileIds.length > 0) {
-      const profileModules = await this.profileModuleRepo.find({
-        where: { profileId: In(profileIds) },
-      });
-      const profileModuleIds = profileModules.map((pm) => pm.id);
-      if (profileModuleIds.length > 0) {
-        const profileSubModules = await this.profileSubModuleRepo.find({
-          where: { profileModuleId: In(profileModuleIds) },
-        });
-        const profileSubModuleIds = profileSubModules.map((psm) => psm.id);
-        if (profileSubModuleIds.length > 0) {
-          const profileProjects = await this.profileProjectRepo.find({
-            where: { profileSubModuleId: In(profileSubModuleIds) },
-          });
-          const profileProjectIds = profileProjects.map((pp) => pp.projectId);
-          return [...new Set([...directIds, ...profileProjectIds])];
-        }
-      }
+    try {
+      const rawProjects = await this.dataSource.query(
+        `SELECT DISTINCT ppp.project_id
+         FROM permission_profiles pp
+         JOIN permission_profile_modules ppm ON ppm.profile_id = pp.id
+         JOIN permission_profile_sub_modules ppsm ON ppsm.profile_module_id = ppm.id
+         JOIN permission_profile_projects ppp ON ppp.profile_sub_module_id = ppsm.id
+         WHERE pp.user_id = $1`,
+        [userId],
+      );
+      const profileProjectIds = rawProjects.map((r: any) => Number(r.project_id));
+      return [...new Set([...directIds, ...profileProjectIds])];
+    } catch {
+      return directIds;
     }
 
     return directIds;
