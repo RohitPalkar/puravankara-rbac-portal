@@ -651,6 +651,33 @@ export class PermissionService {
       ).map((p) => p.projectId);
       return [...new Set([...directIds, ...groupProjectIds])];
     }
+
+    // Fallback: resolve project IDs from PermissionProfile tree
+    // (covers users created before UserProjectAccess records were added)
+    const profiles = await this.profileRepo.find({
+      where: { userId },
+    });
+    const profileIds = profiles.map((p) => p.id);
+    if (profileIds.length > 0) {
+      const profileModules = await this.profileModuleRepo.find({
+        where: { profileId: In(profileIds) },
+      });
+      const profileModuleIds = profileModules.map((pm) => pm.id);
+      if (profileModuleIds.length > 0) {
+        const profileSubModules = await this.profileSubModuleRepo.find({
+          where: { profileModuleId: In(profileModuleIds) },
+        });
+        const profileSubModuleIds = profileSubModules.map((psm) => psm.id);
+        if (profileSubModuleIds.length > 0) {
+          const profileProjects = await this.profileProjectRepo.find({
+            where: { profileSubModuleId: In(profileSubModuleIds) },
+          });
+          const profileProjectIds = profileProjects.map((pp) => pp.projectId);
+          return [...new Set([...directIds, ...profileProjectIds])];
+        }
+      }
+    }
+
     return directIds;
   }
 
