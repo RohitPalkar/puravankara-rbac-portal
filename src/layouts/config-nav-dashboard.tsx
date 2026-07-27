@@ -8,6 +8,8 @@ import { useModuleTree } from 'src/services/hooks/use-product-catalog';
 
 import { SvgColor } from 'src/components/svg-color';
 
+import { useAuthContext } from 'src/auth/hooks/use-auth-context';
+
 const icon = (name: string) => (
   <SvgColor src={`${CONFIG.assetsDir}/assets/icons/navbar/${name}.svg`} />
 );
@@ -30,8 +32,12 @@ function slugify(text: string): string {
 }
 
 export function useNavData() {
+  const { user: authUser } = useAuthContext();
   const { data: moduleTree } = useModuleTree();
   const { data: myPermissions } = useMyPermissions();
+
+  const isSuperAdmin = Array.isArray((authUser as any)?.roles)
+    && (authUser as any).roles.includes('SUPER_ADMIN');
 
   return useMemo(() => {
     const allowedModuleIds = new Set<number>();
@@ -76,6 +82,41 @@ export function useNavData() {
         };
       });
 
+    const systemSections: {
+      subheader: string;
+      items: { title: string; path: string; icon: React.ReactNode }[];
+    }[] = [];
+
+    if (isSuperAdmin) {
+      systemSections.push(
+        {
+          subheader: 'Masters',
+          items: [
+            { title: 'Zone Master', path: paths.dashboard.zoneMaster, icon: ICONS.zone },
+            { title: 'Brand Master', path: paths.dashboard.brandMaster, icon: ICONS.brand },
+            { title: 'Department Master', path: paths.dashboard.departmentMaster, icon: ICONS.department },
+            { title: 'Project Master', path: paths.dashboard.projectMaster, icon: ICONS.project },
+            { title: 'Phase Master', path: paths.dashboard.phaseMaster, icon: ICONS.project },
+            { title: 'Channel Partner', path: paths.dashboard.channelPartnerMaster, icon: ICONS.user },
+          ],
+        },
+        {
+          subheader: 'Access Management',
+          items: [
+            { title: 'User Management', path: paths.dashboard.userManagement, icon: ICONS.user },
+            { title: 'Permission Matrix', path: paths.dashboard.permissionMatrix, icon: ICONS.permission },
+          ],
+        },
+        {
+          subheader: 'Administration',
+          items: [
+            { title: 'Audit Logs', path: paths.dashboard.auditLogs, icon: ICONS.audit },
+            { title: 'Settings', path: paths.dashboard.settings, icon: ICONS.settings },
+          ],
+        },
+      );
+    }
+
     return [
       {
         subheader: 'Dashboard',
@@ -86,31 +127,7 @@ export function useNavData() {
       ...(dynamicItems.length > 0
         ? [{ subheader: 'Business Modules', items: dynamicItems }]
         : []),
-      {
-        subheader: 'Masters',
-        items: [
-          { title: 'Zone Master', path: paths.dashboard.zoneMaster, icon: ICONS.zone },
-          { title: 'Brand Master', path: paths.dashboard.brandMaster, icon: ICONS.brand },
-          { title: 'Department Master', path: paths.dashboard.departmentMaster, icon: ICONS.department },
-          { title: 'Project Master', path: paths.dashboard.projectMaster, icon: ICONS.project },
-          { title: 'Phase Master', path: paths.dashboard.phaseMaster, icon: ICONS.project },
-          { title: 'Channel Partner', path: paths.dashboard.channelPartnerMaster, icon: ICONS.user },
-        ],
-      },
-      {
-        subheader: 'Access Management',
-        items: [
-          { title: 'User Management', path: paths.dashboard.userManagement, icon: ICONS.user },
-          { title: 'Permission Matrix', path: paths.dashboard.permissionMatrix, icon: ICONS.permission },
-        ],
-      },
-      {
-        subheader: 'Administration',
-        items: [
-          { title: 'Audit Logs', path: paths.dashboard.auditLogs, icon: ICONS.audit },
-          { title: 'Settings', path: paths.dashboard.settings, icon: ICONS.settings },
-        ],
-      },
+      ...systemSections,
     ];
-  }, [moduleTree, myPermissions]);
+  }, [moduleTree, myPermissions, isSuperAdmin]);
 }

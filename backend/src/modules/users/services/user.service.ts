@@ -280,6 +280,7 @@ export class UserService {
     await this.repository.save(user);
 
     // Handle profile updates
+    const allProjectIds = new Set<number>();
     if (dto.profiles) {
       await this.profileRepo.delete({ userId: id });
 
@@ -341,6 +342,7 @@ export class UserService {
                       selectedBy: projDto.selectedBy ?? 'SYSTEM',
                     });
                     await this.profileProjectRepo.save(ppp);
+                    allProjectIds.add(projDto.projectId);
                   }
                 }
               }
@@ -348,6 +350,19 @@ export class UserService {
           }
         }
       }
+    }
+
+    // Sync UserProjectAccess records so the permission system can resolve project IDs
+    await this.userProjectAccessRepository.delete({ userId: id });
+    for (const projectId of allProjectIds) {
+      await this.userProjectAccessRepository.save(
+        this.userProjectAccessRepository.create({
+          userId: id,
+          projectId,
+          assignedBy: 'SYSTEM',
+          assignedAt: new Date(),
+        }),
+      );
     }
 
     const result = await this.findById(id);
@@ -443,7 +458,8 @@ export class UserService {
         }
       }
 
-      // Create permission profiles
+      // Create permission profiles and UserProjectAccess records
+      const allProjectIds = new Set<number>();
       if (dto.profiles?.length) {
         const deptRolePairs = new Set<string>();
         for (const profileDto of dto.profiles) {
@@ -516,6 +532,7 @@ export class UserService {
                         selectedBy: projDto.selectedBy ?? 'SYSTEM',
                       });
                       await queryRunner.manager.save(ppp);
+                      allProjectIds.add(projDto.projectId);
                     }
                   }
                 }
@@ -525,6 +542,18 @@ export class UserService {
 
           profiles.push(savedProfile);
         }
+      }
+
+      // Create UserProjectAccess records so the permission system can resolve project IDs
+      for (const projectId of allProjectIds) {
+        await queryRunner.manager.save(
+          queryRunner.manager.create(UserProjectAccess, {
+            userId: savedUser.empId,
+            projectId,
+            assignedBy: 'SYSTEM',
+            assignedAt: new Date(),
+          }),
+        );
       }
 
       const generatedPassword = this.generateRandomPassword();
