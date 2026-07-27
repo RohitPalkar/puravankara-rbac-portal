@@ -297,14 +297,13 @@ export class RoleMigrationService {
          UPDATE department_roles
          SET role_id = $2
          WHERE role_id = $1
-         RETURNING department_id, role_id
+         RETURNING id, department_id, role_id
        )
        DELETE FROM department_roles dr
        USING updated u
        WHERE dr.department_id = u.department_id
          AND dr.role_id = $2
-         AND dr.department_id = u.department_id
-         AND dr.role_id = $1`,
+         AND dr.id <> u.id`,
       [sourceRoleId, destRoleId],
     );
   }
@@ -352,14 +351,13 @@ export class RoleMigrationService {
          UPDATE department_roles
          SET role_id = $2
          WHERE role_id = $1
-         RETURNING department_id, role_id
+         RETURNING id, department_id, role_id
        )
        DELETE FROM department_roles dr
        USING updated u
        WHERE dr.department_id = u.department_id
          AND dr.role_id = $2
-         AND dr.department_id = u.department_id
-         AND dr.role_id = $1`,
+         AND dr.id <> u.id`,
       [sourceRoleId, destRoleId],
     );
   }
