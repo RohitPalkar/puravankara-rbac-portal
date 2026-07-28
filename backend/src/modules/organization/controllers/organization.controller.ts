@@ -50,6 +50,21 @@ class SetRolePermissionsDto {
 export class DepartmentController {
   constructor(private readonly departmentService: DepartmentService) {}
 
+  @Get('check-name')
+  @ApiOperation({ summary: 'Check if a department name is available in a zone' })
+  @ApiResponse({ status: 200, description: 'Availability result' })
+  async checkName(
+    @Query('name') name: string,
+    @Query('zoneId', ParseIntPipe) zoneId: number,
+    @Query('excludeId') excludeId?: string,
+  ) {
+    return this.departmentService.checkName(
+      name,
+      zoneId,
+      excludeId ? Number(excludeId) : undefined,
+    );
+  }
+
   @Get()
   @ApiOperation({
     summary: 'List all departments with zones and hierarchy info',

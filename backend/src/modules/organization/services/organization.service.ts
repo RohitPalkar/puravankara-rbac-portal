@@ -287,6 +287,43 @@ export class DepartmentService {
     }
   }
 
+  async checkName(
+    name: string,
+    zoneId: number,
+    excludeId?: number,
+  ): Promise<any> {
+    const existing = await this.repository.findOne({
+      where: { name, zoneId },
+      withDeleted: true,
+    });
+    if (!existing) {
+      return { available: true };
+    }
+    if (excludeId && existing.id === excludeId) {
+      return { available: true };
+    }
+
+    // Find other zones where this name exists
+    const otherZones = await this.repository.find({
+      where: { name },
+      relations: { zone: true },
+    });
+    const existingInZones = otherZones
+      .filter((d) => d.zoneId !== zoneId)
+      .map((d) => ({
+        zoneId: d.zoneId,
+        zoneName: d.zone?.name ?? `Zone #${d.zoneId}`,
+      }));
+
+    return {
+      available: false,
+      existingInZones,
+      message: `"${name}" already exists in ${
+        existing.zone?.name ?? `Zone #${existing.zoneId}`
+      }. Choose another name or a different zone.`,
+    };
+  }
+
   async getHierarchyLevels(departmentId: number): Promise<any[]> {
     const dept = await this.repository.findOne({
       where: { id: departmentId, deletedAt: null },

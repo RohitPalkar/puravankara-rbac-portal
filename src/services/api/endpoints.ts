@@ -131,6 +131,8 @@ export const endpoints = {
     create: `${API_PREFIX}/departments`,
     update: (id: number) => `${API_PREFIX}/departments/${id}`,
     delete: (id: number) => `${API_PREFIX}/departments/${id}`,
+    checkName: (name: string, zoneId: number, excludeId?: number) =>
+      `${API_PREFIX}/departments/check-name?name=${encodeURIComponent(name)}&zoneId=${zoneId}${excludeId ? `&excludeId=${excludeId}` : ''}`,
     hierarchyLevels: (id: number) => `${API_PREFIX}/departments/${id}/hierarchy-levels`,
     roleForHierarchy: (id: number, levelNumber: number) => `${API_PREFIX}/departments/${id}/hierarchy-levels/${levelNumber}`,
     levelImpact: (deptId: number, levelNumber: number) =>

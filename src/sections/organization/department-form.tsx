@@ -1,13 +1,12 @@
-import type { DepartmentDetail, DepartmentHierarchyLevelInput } from 'src/services/types/organization';
+import type { DepartmentDetail, CheckDepartmentNameResult, DepartmentHierarchyLevelInput } from 'src/services/types/organization';
 
 import { Helmet } from 'react-helmet-async';
 import { useQuery } from '@tanstack/react-query';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useMemo, useState, useEffect, useCallback } from 'react';
+import { useRef, useMemo, useState, useEffect, useCallback } from 'react';
 
 import Box from '@mui/material/Box';
 import Card from '@mui/material/Card';
-import Chip from '@mui/material/Chip';
 import Alert from '@mui/material/Alert';
 import Stack from '@mui/material/Stack';
 import Button from '@mui/material/Button';
@@ -20,6 +19,8 @@ import Typography from '@mui/material/Typography';
 import IconButton from '@mui/material/IconButton';
 import Autocomplete from '@mui/material/Autocomplete';
 import LinearProgress from '@mui/material/LinearProgress';
+import InputAdornment from '@mui/material/InputAdornment';
+import CircularProgress from '@mui/material/CircularProgress';
 
 import { paths } from 'src/routes/paths';
 
@@ -28,11 +29,14 @@ import { queryKeys } from 'src/services/api/query-keys';
 import { userService } from 'src/services/services/user.service';
 import { useMyPermissions } from 'src/services/hooks/use-permissions';
 import { zoneService } from 'src/services/services/geography.service';
+import { departmentService } from 'src/services/services/organization.service';
 import { useLevelRemove, useDepartmentById, useCreateDepartment, useUpdateDepartment } from 'src/services/hooks/use-organization';
 
 import { Iconify } from 'src/components/iconify';
 import { PageHeader, PageContainer } from 'src/components/page-layout';
 import { DeleteLevelDialog } from 'src/components/delete-level-dialog';
+
+const DEBOUNCE_MS = 400;
 
 function hasDepartmentPermission(
   permissions: { projects: { modules: { subModules: { name: string; actions: { code: string; allowed: boolean }[] }[] }[] }[] } | undefined,
@@ -87,27 +91,39 @@ export default function DepartmentFormPage() {
     [users],
   );
 
-  const zoneOptions = useMemo(
-    () => (zones ?? []).map((z: any) => ({ id: z.id, name: z.name })),
+  const activeZones = useMemo(
+    () => (zones ?? [])
+      .filter((z: any) => z.isActive !== false)
+      .sort((a: any, b: any) => a.name.localeCompare(b.name))
+      .map((z: any) => ({ id: z.id, name: z.name })),
     [zones],
   );
 
   const [name, setName] = useState('');
   const [numberOfLevels, setNumberOfLevels] = useState<number>(3);
   const [levelsInputValue, setLevelsInputValue] = useState('3');
-  const [selectedZoneIds, setSelectedZoneIds] = useState<number[]>([]);
+  const [selectedZoneId, setSelectedZoneId] = useState<number | null>(null);
   const [departmentAdminId, setDepartmentAdminId] = useState<string | null>(null);
   const [isActive, setIsActive] = useState(true);
   const [hierarchyLevels, setHierarchyLevels] = useState<DepartmentHierarchyLevelInput[]>([]);
   const [levelsGenerated, setLevelsGenerated] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [saveError, setSaveError] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
 
   const [nameError, setNameError] = useState('');
   const [zoneError, setZoneError] = useState('');
   const [adminError, setAdminError] = useState('');
   const [levelsError, setLevelsError] = useState('');
   const [hierarchyErrors, setHierarchyErrors] = useState<Record<number, string>>({});
+
+  const [nameValidation, setNameValidation] = useState<{
+    state: 'idle' | 'checking' | 'available' | 'unavailable';
+    message: string;
+    existingInZones?: { zoneId: number; zoneName: string }[];
+  }>({ state: 'idle', message: '' });
+
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const saving = isCreating || isUpdating;
   const { mutateAsync: removeLevel, isPending: isRemovingLevel } = useLevelRemove();
@@ -116,9 +132,48 @@ export default function DepartmentFormPage() {
 
   const formDisabled = levelsGenerated;
 
-  const zoneSelected = selectedZoneIds.length > 0;
-  const levelsValid = numberOfLevels >= 1 && numberOfLevels <= 20;
-  const canGenerate = zoneSelected && levelsValid;
+  const zoneSelected = selectedZoneId !== null;
+  const nameValid = name.trim().length > 0;
+  const canGenerate = zoneSelected && nameValid && nameValidation.state !== 'unavailable';
+
+  const selectedZoneName = useMemo(
+    () => activeZones.find((z: any) => z.id === selectedZoneId)?.name ?? '',
+    [activeZones, selectedZoneId],
+  );
+
+  const doCheckName = useCallback(async (checkName: string, checkZoneId: number, excludeId?: number) => {
+    if (!checkName.trim() || !checkZoneId) {
+      setNameValidation({ state: 'idle', message: '' });
+      return;
+    }
+    setNameValidation({ state: 'checking', message: '' });
+    try {
+      const res = await departmentService.checkName(checkName.trim(), checkZoneId, excludeId);
+      const result = res.data as CheckDepartmentNameResult;
+      if (result.available) {
+        setNameValidation({ state: 'available', message: '' });
+        setNameError('');
+      } else {
+        setNameValidation({ state: 'unavailable', message: result.message ?? '' });
+        if (result.existingInZones && result.existingInZones.length > 0) {
+          setNameValidation((prev) => ({ ...prev, existingInZones: result.existingInZones }));
+        }
+      }
+    } catch {
+      setNameValidation({ state: 'idle', message: '' });
+    }
+  }, []);
+
+  const triggerValidation = useCallback((val: string, zone: number | null) => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    if (!val.trim() || !zone) {
+      setNameValidation({ state: 'idle', message: '' });
+      return;
+    }
+    debounceRef.current = setTimeout(() => {
+      doCheckName(val, zone, departmentId);
+    }, DEBOUNCE_MS);
+  }, [doCheckName, departmentId]);
 
   useEffect(() => {
     if (deptData) {
@@ -128,7 +183,7 @@ export default function DepartmentFormPage() {
       setLevelsInputValue(String(d.maxHierarchyLevels));
       setIsActive(d.isActive);
       setDepartmentAdminId(d.departmentAdminId);
-      setSelectedZoneIds(d.zones?.map((z) => z.zoneId) ?? []);
+      setSelectedZoneId(d.zoneId ?? null);
 
       if (d.hierarchyLevels && d.hierarchyLevels.length > 0) {
         const sorted = [...d.hierarchyLevels].sort((a, b) => a.displayOrder - b.displayOrder);
@@ -143,6 +198,10 @@ export default function DepartmentFormPage() {
       }
     }
   }, [deptData]);
+
+  useEffect(() => () => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+  }, []);
 
   const handleLevelsChange = useCallback((raw: string) => {
     const sanitized = sanitizeNumericInput(raw);
@@ -209,12 +268,15 @@ export default function DepartmentFormPage() {
     if (!name.trim()) {
       setNameError('Department name is required');
       valid = false;
+    } else if (nameValidation.state === 'unavailable') {
+      setNameError(nameValidation.message || 'This name is already taken in the selected zone');
+      valid = false;
     } else {
       setNameError('');
     }
 
-    if (selectedZoneIds.length === 0) {
-      setZoneError('At least one zone must be selected');
+    if (selectedZoneId === null) {
+      setZoneError('Zone is required');
       valid = false;
     } else {
       setZoneError('');
@@ -254,7 +316,7 @@ export default function DepartmentFormPage() {
     setHierarchyErrors(newHierarchyErrors);
 
     return valid;
-  }, [name, selectedZoneIds, departmentAdminId, numberOfLevels, levelsGenerated, hierarchyLevels]);
+  }, [name, nameValidation, selectedZoneId, departmentAdminId, numberOfLevels, levelsGenerated, hierarchyLevels]);
 
   const handleRemoveLevel = useCallback(async (payload: { mode: 'MERGE' | 'REPLACE'; destinationLevelNumber: number }) => {
     if (!deleteLevel || !departmentId) return;
@@ -278,28 +340,30 @@ export default function DepartmentFormPage() {
             name: name.trim(),
             numberOfLevels,
             departmentAdminId: departmentAdminId ?? undefined,
-            zoneIds: selectedZoneIds,
+            zoneId: selectedZoneId!,
             hierarchyLevels,
             isActive,
           },
         });
+        setSuccessMessage(`${name.trim()} has been updated successfully.`);
       } else {
         await createDepartment({
           name: name.trim(),
           numberOfLevels,
           departmentAdminId: departmentAdminId ?? undefined,
-          zoneIds: selectedZoneIds,
+          zoneId: selectedZoneId!,
           hierarchyLevels,
           isActive: true,
         });
+        setSuccessMessage(`${name.trim()} has been created successfully for ${selectedZoneName} Zone.`);
       }
       setShowSuccess(true);
-      setTimeout(() => navigate(paths.dashboard.departmentMaster), 1200);
+      setTimeout(() => navigate(paths.dashboard.departmentMaster), 1500);
     } catch (err: any) {
       const msg = err?.response?.data?.message?.[0] || err?.message || 'Failed to save department';
       setSaveError(msg);
     }
-  }, [isEdit, departmentId, name, numberOfLevels, departmentAdminId, selectedZoneIds, hierarchyLevels, isActive, validate, createDepartment, updateDepartment, navigate]);
+  }, [isEdit, departmentId, name, numberOfLevels, departmentAdminId, selectedZoneId, selectedZoneName, hierarchyLevels, isActive, validate, createDepartment, updateDepartment, navigate]);
 
   if (isEdit && isFetching) {
     return (
@@ -372,7 +436,7 @@ export default function DepartmentFormPage() {
 
         <Card sx={{ p: 3, mb: 3 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3 }}>
-            <Typography variant="subtitle1">Department Details</Typography>
+            <Typography variant="subtitle1">Department Information</Typography>
             {formDisabled && (
               <Button variant="text" size="small" onClick={() => setLevelsGenerated(false)}>
                 Edit
@@ -382,41 +446,99 @@ export default function DepartmentFormPage() {
 
           <Box display="grid" gridTemplateColumns="1fr 1fr" gap={3}>
             <Autocomplete
-              multiple
-              options={zoneOptions}
+              options={activeZones}
               getOptionLabel={(option) => option.name}
-              value={zoneOptions.filter((z) => selectedZoneIds.includes(z.id))}
+              value={activeZones.find((z: any) => z.id === selectedZoneId) ?? null}
               onChange={(_, newValue) => {
-                setSelectedZoneIds(newValue.map((v) => v.id));
+                const newZoneId = newValue ? (newValue as any).id : null;
+                setSelectedZoneId(newZoneId);
                 setZoneError('');
+                if (name.trim()) {
+                  triggerValidation(name, newZoneId);
+                }
               }}
               disabled={formDisabled}
+              noOptionsText={
+                <Typography variant="body2" color="text.secondary" sx={{ py: 1 }}>
+                  No active Zones found.<br />
+                  Create a Zone first.
+                </Typography>
+              }
               renderInput={(params) => (
                 <TextField
                   {...params}
-                  label="Zone"
-                  placeholder="Select zones"
+                  label="Zone *"
+                  placeholder="Search zone..."
                   error={!!zoneError}
                   helperText={zoneError}
+                  inputProps={{
+                    ...params.inputProps,
+                    'aria-label': 'Zone selection',
+                  }}
                 />
               )}
-              renderTags={(value, getTagProps) =>
-                value.map((option, index) => (
-                  <Chip label={option.name} size="small" {...getTagProps({ index })} />
-                ))
-              }
+              componentsProps={{
+                popper: {
+                  sx: { zIndex: 1300 },
+                },
+              }}
             />
             <TextField
-              label="Department Name"
+              label="Department Name *"
               value={name}
-              onChange={(e) => { setName(e.target.value); setNameError(''); }}
-              error={!!nameError}
-              helperText={nameError}
+              onChange={(e) => {
+                const val = e.target.value;
+                setName(val);
+                setNameError('');
+                triggerValidation(val, selectedZoneId);
+              }}
+              error={!!nameError || nameValidation.state === 'unavailable'}
+              helperText={
+                (nameValidation.state === 'checking' ? 'Checking availability...' : '') ||
+                nameError ||
+                (nameValidation.state === 'available' ? 'Name is available' : '')
+              }
+              InputProps={{
+                endAdornment: nameValidation.state === 'checking' ? (
+                  <InputAdornment position="end">
+                    <CircularProgress size={18} />
+                  </InputAdornment>
+                ) : nameValidation.state === 'unavailable' ? (
+                  <InputAdornment position="end">
+                    <Iconify icon="solar:close-circle-bold" width={20} sx={{ color: 'error.main' }} />
+                  </InputAdornment>
+                ) : nameValidation.state === 'available' ? (
+                  <InputAdornment position="end">
+                    <Iconify icon="solar:check-circle-bold" width={20} sx={{ color: 'success.main' }} />
+                  </InputAdornment>
+                ) : null,
+              }}
               required
               disabled={formDisabled}
             />
+          </Box>
+
+          {nameValidation.state === 'unavailable' && nameValidation.existingInZones && nameValidation.existingInZones.length > 0 && (
+            <Alert severity="info" icon={<Iconify icon="solar:info-circle-bold" width={20} />} sx={{ mt: 2 }}>
+              <Typography variant="body2" fontWeight={600} sx={{ mb: 0.5 }}>
+                &ldquo;{name}&rdquo; already exists in the following Zones:
+              </Typography>
+              <Box component="ul" sx={{ m: 0, pl: 2.5, '& li': { mb: 0.25 } }}>
+                {nameValidation.existingInZones.map((z) => (
+                  <li key={z.zoneId}>
+                    <Typography variant="body2">{z.zoneName}</Typography>
+                  </li>
+                ))}
+              </Box>
+              <Typography variant="body2" sx={{ mt: 1 }}>
+                Creating &ldquo;{name}&rdquo; in &ldquo;{selectedZoneName}&rdquo; will create a separate Department.
+              </Typography>
+            </Alert>
+          )}
+
+          <Box display="grid" gridTemplateColumns="1fr 1fr" gap={3}>
             <TextField
-              label="No. of Levels"
+              label="No. of Levels *"
               type="text"
               inputMode="numeric"
               placeholder="Enter number of levels"
@@ -444,7 +566,7 @@ export default function DepartmentFormPage() {
               renderInput={(params) => (
                 <TextField
                   {...params}
-                  label="Department Admin"
+                  label="Department Admin *"
                   placeholder="Select admin"
                   error={!!adminError}
                   helperText={adminError}
@@ -485,7 +607,7 @@ export default function DepartmentFormPage() {
         {levelsGenerated && hierarchyLevels.length > 0 && (
           <Card sx={{ p: 3, mb: 3 }}>
             <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3 }}>
-              <Typography variant="subtitle1">Level Mapping</Typography>
+              <Typography variant="subtitle1">Role Hierarchy</Typography>
               <Button
                 variant="text"
                 size="small"
@@ -552,9 +674,9 @@ export default function DepartmentFormPage() {
         loading={isRemovingLevel}
       />
 
-      <Snackbar open={showSuccess} autoHideDuration={2000} anchorOrigin={{ vertical: 'top', horizontal: 'center' }}>
+      <Snackbar open={showSuccess} autoHideDuration={2500} anchorOrigin={{ vertical: 'top', horizontal: 'center' }}>
         <Alert severity="success" variant="filled" sx={{ width: 1 }}>
-          Department {isEdit ? 'updated' : 'created'} successfully
+          {successMessage}
         </Alert>
       </Snackbar>
     </>

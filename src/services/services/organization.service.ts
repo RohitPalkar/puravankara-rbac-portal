@@ -14,6 +14,7 @@ import type {
   LevelImpactPreview,
   CreateDepartmentRequest,
   UpdateDepartmentRequest,
+  CheckDepartmentNameResult,
 } from '../types/organization';
 
 const _departmentCrud = createCrudService<Department, CreateDepartmentRequest, UpdateDepartmentRequest>({
@@ -30,6 +31,8 @@ export const departmentService = {
     apiGet<any[]>(endpoints.departments.hierarchyLevels(id)),
   roleForHierarchy: async (id: number, levelNumber: number): Promise<ApiResponse<{ hierarchyLevel: string; roleName: string | null; roleId: number | null }>> =>
     apiGet<{ hierarchyLevel: string; roleName: string | null; roleId: number | null }>(endpoints.departments.roleForHierarchy(id, levelNumber)),
+  checkName: async (name: string, zoneId: number, excludeId?: number): Promise<ApiResponse<CheckDepartmentNameResult>> =>
+    apiGet<CheckDepartmentNameResult>(endpoints.departments.checkName(name, zoneId, excludeId)),
 };
 
 export const roleService = createCrudService<Role, CreateRoleRequest, UpdateRoleRequest>({

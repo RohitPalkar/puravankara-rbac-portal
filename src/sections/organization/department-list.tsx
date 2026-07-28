@@ -7,12 +7,9 @@ import { useMemo, useState, useCallback } from 'react';
 
 import Box from '@mui/material/Box';
 import Chip from '@mui/material/Chip';
-import Stack from '@mui/material/Stack';
 import Alert from '@mui/material/Alert';
 import Button from '@mui/material/Button';
 import Dialog from '@mui/material/Dialog';
-import Tooltip from '@mui/material/Tooltip';
-import Popover from '@mui/material/Popover';
 import Typography from '@mui/material/Typography';
 import DialogTitle from '@mui/material/DialogTitle';
 import DialogContent from '@mui/material/DialogContent';
@@ -23,6 +20,7 @@ import { paths } from 'src/routes/paths';
 import { CONFIG } from 'src/config-global';
 import { queryKeys } from 'src/services/api/query-keys';
 import { useMyPermissions } from 'src/services/hooks/use-permissions';
+import { zoneService } from 'src/services/services/geography.service';
 import { useDeleteDepartment } from 'src/services/hooks/use-organization';
 import { departmentService } from 'src/services/services/organization.service';
 
@@ -33,29 +31,6 @@ import { PageHeader, PageContainer } from 'src/components/page-layout';
 import { DataTable, type FilterOption } from 'src/components/data-table';
 
 const PAGE_SIZE = 20;
-const MAX_ZONE_CHIPS = 3;
-
-const chipSx = {
-  height: 32,
-  borderRadius: '8px',
-  fontSize: '13px',
-  fontWeight: 500,
-  border: '1px solid',
-  borderColor: 'divider',
-  '& .MuiChip-label': { px: 1.5 },
-};
-
-const overflowChipSx = {
-  height: 32,
-  borderRadius: '8px',
-  fontSize: '13px',
-  fontWeight: 600,
-  color: '#fff',
-  bgcolor: 'primary.main',
-  cursor: 'pointer',
-  '&:hover': { bgcolor: 'primary.dark' },
-  '& .MuiChip-label': { px: 1.5 },
-};
 
 function hasDepartmentPermission(
   permissions: { projects: { modules: { subModules: { name: string; actions: { code: string; allowed: boolean }[] }[] }[] }[] } | undefined,
@@ -71,61 +46,35 @@ function hasDepartmentPermission(
   );
 }
 
-function ZoneChipCell({ zones }: { zones?: string[] }) {
-  const visible = zones?.slice(0, MAX_ZONE_CHIPS) ?? [];
-  const remaining = zones?.slice(MAX_ZONE_CHIPS) ?? [];
-  const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
-
-  const handleClick = useCallback((e: React.MouseEvent<HTMLElement>) => {
-    setAnchorEl(e.currentTarget);
-  }, []);
-
-  const handleClose = useCallback(() => {
-    setAnchorEl(null);
-  }, []);
-
-  return (
-    <Box sx={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '8px', width: 1 }}>
-      {visible.map((name) => (
-        <Chip key={name} label={name} variant="outlined" sx={chipSx} />
-      ))}
-      {remaining.length > 0 && (
-        <>
-          <Chip label={`+${remaining.length}`} sx={overflowChipSx} onClick={handleClick} />
-          <Popover
-            open={Boolean(anchorEl)}
-            anchorEl={anchorEl}
-            onClose={handleClose}
-            anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
-            transformOrigin={{ vertical: 'top', horizontal: 'left' }}
-            slotProps={{ paper: { sx: { p: 1.5, minWidth: 160, maxHeight: 240 } } }}
-          >
-            <Stack spacing={0.5}>
-              {remaining.map((name) => (
-                <Typography key={name} variant="body2">{name}</Typography>
-              ))}
-            </Stack>
-          </Popover>
-        </>
-      )}
-      {(zones?.length ?? 0) === 0 && <span style={{ color: '#999' }}>—</span>}
-    </Box>
-  );
-}
-
 export default function DepartmentListPage() {
   const navigate = useNavigate();
   const [deleteId, setDeleteId] = useState<number | null>(null);
   const [deleteError, setDeleteError] = useState('');
   const [paginationModel, setPaginationModel] = useState<GridPaginationModel>({ page: 0, pageSize: PAGE_SIZE });
   const [search, setSearch] = useState('');
-  const statusFilter = '';
+  const [filters, setFilters] = useState<Record<string, string>>({});
 
   const { data: permissions } = useMyPermissions();
 
   const canCreate = useMemo(() => hasDepartmentPermission(permissions, 'CREATE'), [permissions]);
   const canEdit = useMemo(() => hasDepartmentPermission(permissions, 'EDIT'), [permissions]);
   const canDelete = useMemo(() => hasDepartmentPermission(permissions, 'DELETE'), [permissions]);
+
+  const { data: zones } = useQuery({
+    queryKey: queryKeys.zones.list({}),
+    queryFn: async () => {
+      const res = await zoneService.list({});
+      return (res.data ?? []) as any[];
+    },
+  });
+
+  const zoneOptions = useMemo(
+    () => (zones ?? [])
+      .filter((z: any) => z.isActive !== false)
+      .sort((a: any, b: any) => a.name.localeCompare(b.name))
+      .map((z: any) => ({ value: String(z.id), label: z.name })),
+    [zones],
+  );
 
   const queryParams = useMemo(() => {
     const params: Record<string, unknown> = {
@@ -135,9 +84,10 @@ export default function DepartmentListPage() {
       sortOrder: 'DESC',
     };
     if (search) params.search = search;
-    if (statusFilter) params.isActive = statusFilter === 'active';
+    if (filters.zoneId) params.zoneId = Number(filters.zoneId);
+    if (filters.isActive) params.isActive = filters.isActive === 'active';
     return params;
-  }, [search, statusFilter, paginationModel]);
+  }, [search, filters, paginationModel]);
 
   const { data: response, isLoading, isError, error } = useQuery({
     queryKey: [...queryKeys.departments.list(queryParams as Record<string, unknown>)],
@@ -169,6 +119,11 @@ export default function DepartmentListPage() {
     setPaginationModel((prev) => ({ ...prev, page: 0 }));
   }, []);
 
+  const handleFiltersChange = useCallback((newFilters: Record<string, string>) => {
+    setFilters(newFilters);
+    setPaginationModel((prev) => ({ ...prev, page: 0 }));
+  }, []);
+
   const filterOptions: FilterOption[] = [
     {
       key: 'isActive',
@@ -178,38 +133,48 @@ export default function DepartmentListPage() {
         { value: 'inactive', label: 'Inactive' },
       ],
     },
+    {
+      key: 'zoneId',
+      label: 'Zone',
+      options: zoneOptions,
+    },
   ];
 
   const columns: GridColDef[] = [
+    {
+      field: 'zoneName',
+      headerName: 'Zone',
+      flex: 1.5,
+      minWidth: 120,
+      renderCell: (params) => (
+        <Chip
+          label={params.value || '—'}
+          variant="outlined"
+          size="small"
+          sx={{ height: 28, borderRadius: '6px', fontSize: '13px', fontWeight: 500 }}
+        />
+      ),
+    },
     {
       field: 'name',
       headerName: 'Department Name',
       flex: 3,
       minWidth: 150,
       renderCell: (params) => (
-        <Tooltip title={params.value} placement="top-start">
-          <Typography
-            variant="body2"
-            noWrap
-            sx={{ overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 1 }}
-          >
-            {params.value}
-          </Typography>
-        </Tooltip>
+        <Typography
+          variant="body2"
+          noWrap
+          sx={{ overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 1 }}
+        >
+          {params.value}
+        </Typography>
       ),
-    },
-    {
-      field: 'zones',
-      headerName: 'Zones',
-      flex: 2.4,
-      minWidth: 180,
-      renderCell: (params) => <ZoneChipCell zones={params.value} />,
     },
     {
       field: 'levels',
       headerName: 'Levels',
       flex: 1,
-      minWidth: 100,
+      minWidth: 80,
       align: 'center',
       headerAlign: 'center',
       renderCell: (params) => {
@@ -285,8 +250,9 @@ export default function DepartmentListPage() {
           rowCount={meta?.total ?? 0}
           onSearchChange={handleSearchChange}
           searchValue={search}
-          searchPlaceholder="Search departments by name..."
+          searchPlaceholder="Search departments by name or zone..."
           filterOptions={filterOptions}
+          onFiltersChange={handleFiltersChange}
           error={isError}
           errorMessage={`Failed to load departments: ${(error as Error)?.message || 'Unknown error'}`}
           emptyTitle="No Departments Created"

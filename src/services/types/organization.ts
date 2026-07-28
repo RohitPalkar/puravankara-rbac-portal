@@ -12,7 +12,8 @@ export interface DepartmentListItem {
   name: string;
   levels: number;
   maxHierarchyLevels: number;
-  zones: string[];
+  zoneId: number;
+  zoneName: string;
   departmentAdminId: string | null;
   isActive: boolean;
   createdAt: string;
@@ -25,7 +26,8 @@ export interface DepartmentDetail {
   maxHierarchyLevels: number;
   isActive: boolean;
   departmentAdminId: string | null;
-  zones: { zoneId: number; zoneName: string }[];
+  zoneId: number;
+  zoneName: string;
   hierarchyLevels: HierarchyLevel[];
   createdAt: string;
   updatedAt: string;
@@ -48,7 +50,7 @@ export interface CreateDepartmentRequest {
   name: string;
   numberOfLevels: number;
   departmentAdminId?: string;
-  zoneIds: number[];
+  zoneId: number;
   hierarchyLevels: DepartmentHierarchyLevelInput[];
   isActive?: boolean;
 }
@@ -57,7 +59,7 @@ export interface UpdateDepartmentRequest {
   name?: string;
   numberOfLevels?: number;
   departmentAdminId?: string | null;
-  zoneIds?: number[];
+  zoneId?: number;
   hierarchyLevels?: DepartmentHierarchyLevelInput[];
   isActive?: boolean;
 }
@@ -104,6 +106,12 @@ export interface RemoveLevelResult {
   affectedUsers: number;
   affectedApprovals: number;
   autoMerged: boolean;
+}
+
+export interface CheckDepartmentNameResult {
+  available: boolean;
+  existingInZones?: { zoneId: number; zoneName: string }[];
+  message?: string;
 }
 
 export interface AutoMergeResult {
