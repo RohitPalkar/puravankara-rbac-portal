@@ -189,7 +189,7 @@ export default forwardRef<ProjectMappingStepHandle, Props>(({ initialData }: Pro
     queryFn: async () => {
       if (!buddySearch || buddySearch.length < 2) return [];
       const res = await userService.list({ search: buddySearch });
-      return (res.data as any)?.data ?? [];
+      return res.data ?? [];
     },
     enabled: assignBuddyRm && buddySearch.length >= 2,
   });

@@ -1,3 +1,4 @@
+import type { Zone } from 'src/services/types/geography';
 import type { GridColDef, GridPaginationModel } from '@mui/x-data-grid';
 
 import { Helmet } from 'react-helmet-async';
@@ -17,6 +18,7 @@ import { paths } from 'src/routes/paths';
 import { CONFIG } from 'src/config-global';
 import { queryKeys } from 'src/services/api/query-keys';
 import { userService } from 'src/services/services/user.service';
+import { zoneService } from 'src/services/services/geography.service';
 
 import { Label } from 'src/components/label';
 import { Iconify } from 'src/components/iconify';
@@ -32,6 +34,16 @@ export default function UserListPage() {
   const [search, setSearch] = useState('');
   const [filters, setFilters] = useState<Record<string, string>>({});
 
+  const { data: allZones } = useQuery({
+    queryKey: queryKeys.zones.list({}),
+    queryFn: async () => {
+      const res = await zoneService.list({});
+      return (res.data ?? []) as Zone[];
+    },
+  });
+
+  const activeZones = useMemo(() => (allZones ?? []).filter((z: Zone) => z.isActive !== false), [allZones]);
+
   const queryParams = useMemo(() => {
     const params: Record<string, unknown> = {
       page: paginationModel.page + 1,
@@ -42,6 +54,7 @@ export default function UserListPage() {
     if (search) params.search = search;
     if (filters.status) params.isActive = filters.status === 'active';
     if (filters.reportsTo) params.reportsTo = filters.reportsTo;
+    if (filters.zoneId) params.zoneId = Number(filters.zoneId);
     return params;
   }, [search, paginationModel, filters]);
 
@@ -85,6 +98,12 @@ export default function UserListPage() {
         { value: 'active', label: 'Active' },
         { value: 'inactive', label: 'Inactive' },
       ],
+    },
+    {
+      key: 'zoneId',
+      label: 'Zone',
+      type: 'select' as const,
+      options: activeZones.map((z) => ({ value: String(z.id), label: z.name })),
     },
     {
       key: 'reportsTo',

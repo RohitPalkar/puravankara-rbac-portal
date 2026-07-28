@@ -81,6 +81,7 @@ export class UserService {
       limit = 20,
       search,
       reportsTo,
+      zoneId,
       sortBy = 'createdAt',
       sortOrder = 'DESC',
     } = query;
@@ -125,6 +126,12 @@ export class UserService {
           '(rm.name ILIKE :reportsTo OR rm.emp_id ILIKE :reportsTo)',
           { reportsTo: `%${reportsTo}%` },
         );
+    }
+
+    if (zoneId) {
+      userQuery = userQuery
+        .innerJoin('user_zones', 'uz', 'uz.user_id = u.emp_id')
+        .andWhere('uz.zone_id = :zoneId', { zoneId });
     }
 
     userQuery = userQuery.leftJoinAndSelect('u.department', 'department');

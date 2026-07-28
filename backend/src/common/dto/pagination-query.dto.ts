@@ -37,4 +37,10 @@ export class PaginationQueryDto {
   @IsOptional()
   @IsString()
   reportsTo?: string;
+
+  @ApiPropertyOptional({ description: 'Filter by zone ID' })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  zoneId?: number;
 }
