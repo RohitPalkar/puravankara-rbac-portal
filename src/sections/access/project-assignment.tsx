@@ -1,5 +1,7 @@
+import type { Zone } from 'src/services/types/geography';
 import { Helmet } from 'react-helmet-async';
 import { useMemo, useState, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
 
 import Box from '@mui/material/Box';
 import Card from '@mui/material/Card';
@@ -22,6 +24,8 @@ import DialogActions from '@mui/material/DialogActions';
 import ListItemAvatar from '@mui/material/ListItemAvatar';
 
 import { CONFIG } from 'src/config-global';
+import { queryKeys } from 'src/services/api/query-keys';
+import { zoneService } from 'src/services/services/geography.service';
 import { useUserList, useProjectList } from 'src/services/hooks';
 
 import { Iconify } from 'src/components/iconify';
@@ -41,6 +45,17 @@ function stringAvatar(name: string) {
 export default function ProjectAssignmentPage() {
   const { data: projectsData, isLoading: isLoadingProjects } = useProjectList();
   const { data: usersData, isLoading: isLoadingUsers } = useUserList();
+  const [selectedZoneId, setSelectedZoneId] = useState<number | ''>('');
+
+  const { data: allZones } = useQuery({
+    queryKey: queryKeys.zones.list({}),
+    queryFn: async () => {
+      const res = await zoneService.list({});
+      return (res.data ?? []) as Zone[];
+    },
+  });
+
+  const activeZones = useMemo(() => (allZones ?? []).filter((z: Zone) => z.isActive !== false), [allZones]);
 
   const projects: any[] = useMemo(() => (projectsData ?? []) as any[], [projectsData]);
   const users: any[] = useMemo(() => (usersData ?? []) as any[], [usersData]);
@@ -72,8 +87,13 @@ export default function ProjectAssignmentPage() {
     );
   };
 
-  const assignedUsers = usersWithProjects.filter((u) => u.assigned);
-  const unassignedUsers = usersWithProjects.filter((u) => !u.assigned);
+  const zoneFilteredUsers = useMemo(() => {
+    if (!selectedZoneId) return usersWithProjects;
+    return usersWithProjects.filter((u: any) => (u.zoneNames ?? []).includes(activeZones.find((z) => z.id === selectedZoneId)?.name));
+  }, [usersWithProjects, selectedZoneId, activeZones]);
+
+  const assignedUsers = zoneFilteredUsers.filter((u) => u.assigned);
+  const unassignedUsers = zoneFilteredUsers.filter((u) => !u.assigned);
 
   const handleAssignUser = () => {
     if (!selectedUserId) return;
@@ -119,6 +139,16 @@ export default function ProjectAssignmentPage() {
 
         <Card sx={{ p: 2.5, mb: 3 }}>
           <Stack direction="row" spacing={2} alignItems="center" flexWrap="wrap">
+            <TextField
+              label="Zone"
+              select
+              value={selectedZoneId}
+              onChange={(e) => setSelectedZoneId(Number(e.target.value) || '')}
+              sx={{ minWidth: 160 }}
+            >
+              <MenuItem value="">All Zones</MenuItem>
+              {activeZones.map((z) => <MenuItem key={z.id} value={z.id}>{z.name}</MenuItem>)}
+            </TextField>
             <TextField
               label="Project"
               select
