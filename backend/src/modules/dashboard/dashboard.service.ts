@@ -45,17 +45,23 @@ export class DashboardService {
     };
   }
 
-  async getOperationsSummary() {
+  async getOperationsSummary(zoneId?: number) {
+    const userZoneJoin = zoneId
+      ? `AND u.emp_id IN (SELECT user_id FROM user_zones WHERE zone_id = ${zoneId})`
+      : '';
     const [pendingApprovalsResult] = await this.dataSource.query(
       `SELECT COUNT(*)::int AS count FROM approval_requests WHERE status = 'PENDING'`,
     );
     const [usersWithoutRolesResult] = await this.dataSource.query(
       `SELECT COUNT(*)::int AS count FROM users u
-       WHERE u.deleted_at IS NULL
+       WHERE u.deleted_at IS NULL ${userZoneJoin}
        AND NOT EXISTS (SELECT 1 FROM user_roles ur WHERE ur.user_id = u.emp_id)`,
     );
+    const inactiveUserFilter = zoneId
+      ? `AND emp_id IN (SELECT user_id FROM user_zones WHERE zone_id = ${zoneId})`
+      : '';
     const [inactiveUsersResult] = await this.dataSource.query(
-      `SELECT COUNT(*)::int AS count FROM users WHERE deleted_at IS NULL AND is_active = false`,
+      `SELECT COUNT(*)::int AS count FROM users WHERE deleted_at IS NULL AND is_active = false ${inactiveUserFilter}`,
     );
     return {
       pendingApprovals: pendingApprovalsResult?.count ?? 0,
@@ -65,18 +71,27 @@ export class DashboardService {
     };
   }
 
-  async getKpis() {
+  async getKpis(zoneId?: number) {
+    const userFilter = zoneId
+      ? `AND emp_id IN (SELECT user_id FROM user_zones WHERE zone_id = ${zoneId})`
+      : '';
+    const projectFilter = zoneId
+      ? `AND id IN (SELECT project_id FROM project_locations WHERE zone_id = ${zoneId})`
+      : '';
+    const deptFilter = zoneId
+      ? `AND id IN (SELECT department_id FROM department_zone_mappings WHERE zone_id = ${zoneId})`
+      : '';
     const [totalUsersResult] = await this.dataSource.query(
-      `SELECT COUNT(*)::int AS count FROM users WHERE deleted_at IS NULL`,
+      `SELECT COUNT(*)::int AS count FROM users WHERE deleted_at IS NULL ${userFilter}`,
     );
     const [activeUsersResult] = await this.dataSource.query(
-      `SELECT COUNT(*)::int AS count FROM users WHERE deleted_at IS NULL AND is_active = true`,
+      `SELECT COUNT(*)::int AS count FROM users WHERE deleted_at IS NULL AND is_active = true ${userFilter}`,
     );
     const [totalProjectsResult] = await this.dataSource.query(
-      `SELECT COUNT(*)::int AS count FROM projects WHERE deleted_at IS NULL`,
+      `SELECT COUNT(*)::int AS count FROM projects WHERE deleted_at IS NULL ${projectFilter}`,
     );
     const [departmentsResult] = await this.dataSource.query(
-      `SELECT COUNT(*)::int AS count FROM departments WHERE deleted_at IS NULL`,
+      `SELECT COUNT(*)::int AS count FROM departments WHERE deleted_at IS NULL ${deptFilter}`,
     );
     const [rolesResult] = await this.dataSource.query(
       `SELECT COUNT(*)::int AS count FROM roles WHERE deleted_at IS NULL`,

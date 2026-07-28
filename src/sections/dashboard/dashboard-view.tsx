@@ -1,17 +1,23 @@
 import { Helmet } from 'react-helmet-async';
-import { lazy, useMemo, Suspense } from 'react';
+import { lazy, useMemo, useState, Suspense } from 'react';
+import { useQuery } from '@tanstack/react-query';
 
 import Box from '@mui/material/Box';
 import Stack from '@mui/material/Stack';
+import MenuItem from '@mui/material/MenuItem';
 import Skeleton from '@mui/material/Skeleton';
+import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 
 import { CONFIG } from 'src/config-global';
+import { queryKeys } from 'src/services/api/query-keys';
+import { zoneService } from 'src/services/services/geography.service';
 import { useMe } from 'src/services/hooks/use-auth';
 import { useAuditLogList } from 'src/services/hooks/use-audit';
 import { useMyPermissions } from 'src/services/hooks/use-permissions';
 import { useModuleTree } from 'src/services/hooks/use-product-catalog';
 
+import type { Zone } from 'src/services/types/geography';
 import { Iconify } from 'src/components/iconify';
 import { PageContainer } from 'src/components/page-layout';
 
@@ -43,6 +49,17 @@ export default function DashboardView() {
   const { data: me } = useMe();
   const { data: myPermissions } = useMyPermissions();
   const { data: moduleTree } = useModuleTree();
+  const [selectedZoneId, setSelectedZoneId] = useState<number | ''>('');
+
+  const { data: allZones } = useQuery({
+    queryKey: queryKeys.zones.list({}),
+    queryFn: async () => {
+      const res = await zoneService.list({});
+      return (res.data ?? []) as Zone[];
+    },
+  });
+
+  const activeZones = useMemo(() => (allZones ?? []).filter((z: Zone) => z.isActive !== false), [allZones]);
 
   const { data: personalAuditLogs, isLoading: personalAuditLoading } = useAuditLogList(
     me?.empId
@@ -82,9 +99,24 @@ export default function DashboardView() {
           <WelcomeBanner me={me} />
         </Box>
 
+        {/* Zone Filter */}
+        <Box sx={{ mb: 3, display: 'flex', justifyContent: 'flex-end' }}>
+          <TextField
+            select
+            label="Zone"
+            value={selectedZoneId}
+            onChange={(e) => setSelectedZoneId(Number(e.target.value) || '')}
+            sx={{ minWidth: 200 }}
+            size="small"
+          >
+            <MenuItem value="">All Zones</MenuItem>
+            {activeZones.map((z) => <MenuItem key={z.id} value={z.id}>{z.name}</MenuItem>)}
+          </TextField>
+        </Box>
+
         {/* KPI Cards */}
         <Box sx={{ mb: 3 }}>
-          <KpiCards />
+          <KpiCards zoneId={selectedZoneId || undefined} />
         </Box>
 
         {/* Analytics */}
@@ -97,7 +129,7 @@ export default function DashboardView() {
         {(isSuperAdmin || hasUserModuleAccess) && (
           <Box sx={{ mb: 3 }}>
             <SectionDivider icon="solar:inbox-archive-bold" label="Operations Hub" />
-            <OperationsHub />
+            <OperationsHub zoneId={selectedZoneId || undefined} />
           </Box>
         )}
 

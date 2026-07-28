@@ -1,4 +1,4 @@
-import { Controller, Get } from '@nestjs/common';
+import { Controller, Get, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags, ApiOperation } from '@nestjs/swagger';
 import { DashboardService } from './dashboard.service';
 
@@ -22,14 +22,14 @@ export class DashboardController {
 
   @Get('operations-summary')
   @ApiOperation({ summary: 'Operations hub summary' })
-  getOperationsSummary() {
-    return this.dashboardService.getOperationsSummary();
+  getOperationsSummary(@Query('zoneId') zoneId?: number) {
+    return this.dashboardService.getOperationsSummary(zoneId ? Number(zoneId) : undefined);
   }
 
   @Get('kpis')
   @ApiOperation({ summary: 'KPI counts' })
-  getKpis() {
-    return this.dashboardService.getKpis();
+  getKpis(@Query('zoneId') zoneId?: number) {
+    return this.dashboardService.getKpis(zoneId ? Number(zoneId) : undefined);
   }
 
   @Get('system-info')

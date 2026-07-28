@@ -53,8 +53,8 @@ function KpiCard({ item, loading }: { item: KpiItem; loading: boolean }) {
   );
 }
 
-export function KpiCards() {
-  const { data: kpis, isLoading } = useDashboardKpis();
+export function KpiCards({ zoneId }: { zoneId?: number }) {
+  const { data: kpis, isLoading } = useDashboardKpis(zoneId);
 
   const items: KpiItem[] = [
     { icon: 'solar:users-group-rounded-bold', label: 'Total Users', value: kpis?.totalUsers ?? '-', color: '#2F3C98' },

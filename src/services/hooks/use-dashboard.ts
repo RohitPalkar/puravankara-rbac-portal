@@ -19,18 +19,18 @@ export function useDashboardSecurityStats() {
   });
 }
 
-export function useDashboardOperationsSummary() {
+export function useDashboardOperationsSummary(zoneId?: number) {
   return useQuery({
-    queryKey: queryKeys.dashboard.operationsSummary,
-    queryFn: () => dashboardService.getOperationsSummary(),
+    queryKey: [...queryKeys.dashboard.operationsSummary, zoneId].filter(Boolean),
+    queryFn: () => dashboardService.getOperationsSummary(zoneId),
     staleTime: 120_000,
   });
 }
 
-export function useDashboardKpis() {
+export function useDashboardKpis(zoneId?: number) {
   return useQuery({
-    queryKey: queryKeys.dashboard.kpis,
-    queryFn: () => dashboardService.getKpis(),
+    queryKey: [...queryKeys.dashboard.kpis, zoneId].filter(Boolean),
+    queryFn: () => dashboardService.getKpis(zoneId),
     staleTime: 120_000,
   });
 }

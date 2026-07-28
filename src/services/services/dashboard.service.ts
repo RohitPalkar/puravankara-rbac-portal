@@ -49,13 +49,15 @@ export const dashboardService = {
     return res.data;
   },
 
-  getOperationsSummary: async (): Promise<OperationsSummary> => {
-    const res = await apiGet<OperationsSummary>(endpoints.dashboard.operationsSummary);
+  getOperationsSummary: async (zoneId?: number): Promise<OperationsSummary> => {
+    const params = zoneId ? { zoneId } : undefined;
+    const res = await apiGet<OperationsSummary>(endpoints.dashboard.operationsSummary, params);
     return res.data;
   },
 
-  getKpis: async (): Promise<KpiData> => {
-    const res = await apiGet<KpiData>(endpoints.dashboard.kpis);
+  getKpis: async (zoneId?: number): Promise<KpiData> => {
+    const params = zoneId ? { zoneId } : undefined;
+    const res = await apiGet<KpiData>(endpoints.dashboard.kpis, params);
     return res.data;
   },
 

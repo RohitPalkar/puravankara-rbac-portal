@@ -10,8 +10,8 @@ import { useDashboardOperationsSummary } from 'src/services/hooks/use-dashboard'
 
 import { Iconify } from 'src/components/iconify';
 
-export function OperationsHub() {
-  const { data: ops, isLoading } = useDashboardOperationsSummary();
+export function OperationsHub({ zoneId }: { zoneId?: number }) {
+  const { data: ops, isLoading } = useDashboardOperationsSummary(zoneId);
 
   const opsCards = [
     {
