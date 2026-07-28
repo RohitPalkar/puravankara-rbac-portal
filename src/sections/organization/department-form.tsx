@@ -30,7 +30,7 @@ import { userService } from 'src/services/services/user.service';
 import { useMyPermissions } from 'src/services/hooks/use-permissions';
 import { zoneService } from 'src/services/services/geography.service';
 import { departmentService } from 'src/services/services/organization.service';
-import { useLevelRemove, useDepartmentById, useCreateDepartment, useUpdateDepartment } from 'src/services/hooks/use-organization';
+import { useLevelRemove, useLevelRename, useLevelReorder, useDepartmentById, useCreateDepartment, useUpdateDepartment } from 'src/services/hooks/use-organization';
 
 import { Iconify } from 'src/components/iconify';
 import { PageHeader, PageContainer } from 'src/components/page-layout';
@@ -127,8 +127,12 @@ export default function DepartmentFormPage() {
 
   const saving = isCreating || isUpdating;
   const { mutateAsync: removeLevel, isPending: isRemovingLevel } = useLevelRemove();
+  const { mutateAsync: renameLevel, isPending: isRenaming } = useLevelRename();
+  const { mutateAsync: reorderLevels } = useLevelReorder();
 
   const [deleteLevel, setDeleteLevel] = useState<{ levelNumber: number; roleName: string } | null>(null);
+  const [editingLevelName, setEditingLevelName] = useState<number | null>(null);
+  const [renameValue, setRenameValue] = useState('');
 
   const formDisabled = levelsGenerated;
 
@@ -213,7 +217,7 @@ export default function DepartmentFormPage() {
     } else if (sanitized === '' || sanitized === '0') {
       setNumberOfLevels(0);
     } else if (!Number.isNaN(num) && num > 20) {
-      setLevelsError('Maximum 20 hierarchy levels are allowed.');
+      setLevelsError('Maximum 20 roles are allowed.');
     }
   }, []);
 
@@ -222,9 +226,9 @@ export default function DepartmentFormPage() {
     if (!Number.isNaN(num) && (num < 1 || num > 20)) {
       setLevelsInputValue(String(numberOfLevels));
       if (num > 20) {
-        setLevelsError('Maximum 20 hierarchy levels are allowed.');
+        setLevelsError('Maximum 20 roles are allowed.');
       } else {
-        setLevelsError('Minimum 1 hierarchy level is required.');
+        setLevelsError('Minimum 1 role is required.');
       }
     }
   }, [levelsInputValue, numberOfLevels]);
@@ -232,7 +236,7 @@ export default function DepartmentFormPage() {
   const handleGenerateHierarchy = useCallback(() => {
     const count = numberOfLevels;
     if (count < 1 || count > 20) {
-      setLevelsError('Maximum 20 hierarchy levels are allowed.');
+      setLevelsError('Maximum 20 roles are allowed.');
       return;
     }
     setLevelsError('');
@@ -250,17 +254,6 @@ export default function DepartmentFormPage() {
     setHierarchyLevels(generated);
     setLevelsGenerated(true);
   }, [numberOfLevels, hierarchyLevels]);
-
-  const handleRoleNameChange = useCallback((levelNumber: number, roleName: string) => {
-    setHierarchyLevels((prev) =>
-      prev.map((hl) => (hl.levelNumber === levelNumber ? { ...hl, roleName } : hl)),
-    );
-    setHierarchyErrors((prev) => {
-      const next = { ...prev };
-      delete next[levelNumber];
-      return next;
-    });
-  }, []);
 
   const validate = useCallback((): boolean => {
     let valid = true;
@@ -290,28 +283,33 @@ export default function DepartmentFormPage() {
     }
 
     if (numberOfLevels < 1 || numberOfLevels > 20 || !Number.isInteger(numberOfLevels)) {
-      setLevelsError('Maximum 20 hierarchy levels are allowed.');
+      setLevelsError('Maximum 20 roles are allowed.');
       valid = false;
     } else {
       setLevelsError('');
     }
 
     if (!levelsGenerated || hierarchyLevels.length === 0) {
-      setLevelsError('Click "Generate Hierarchy Levels" before saving');
+      setLevelsError('Click "Generate Roles" before saving');
       valid = false;
     } else if (hierarchyLevels.length !== numberOfLevels) {
-      setLevelsError(`Expected ${numberOfLevels} levels, but ${hierarchyLevels.length} generated`);
+      setLevelsError(`Expected ${numberOfLevels} roles, but ${hierarchyLevels.length} generated`);
       valid = false;
     } else {
       setLevelsError('');
     }
 
     const newHierarchyErrors: Record<number, string> = {};
+    const roleNames = new Set<string>();
     hierarchyLevels.forEach((hl) => {
       if (!hl.roleName.trim()) {
         newHierarchyErrors[hl.levelNumber] = 'Role name is required';
         valid = false;
+      } else if (roleNames.has(hl.roleName.trim().toLowerCase())) {
+        newHierarchyErrors[hl.levelNumber] = 'Duplicate role name';
+        valid = false;
       }
+      roleNames.add(hl.roleName.trim().toLowerCase());
     });
     setHierarchyErrors(newHierarchyErrors);
 
@@ -327,6 +325,75 @@ export default function DepartmentFormPage() {
       // error handled by mutation
     }
   }, [deleteLevel, departmentId, removeLevel]);
+
+  const handleRename = useCallback(async (levelNumber: number, newName: string) => {
+    if (!newName.trim()) return;
+    const duplicate = hierarchyLevels.find(
+      (hl) => hl.levelNumber !== levelNumber && hl.roleName.toLowerCase() === newName.trim().toLowerCase(),
+    );
+    if (duplicate) {
+      setHierarchyErrors((prev) => ({ ...prev, [levelNumber]: `Role name "${newName.trim()}" already exists` }));
+      return;
+    }
+    setHierarchyLevels((prev) =>
+      prev.map((hl) => (hl.levelNumber === levelNumber ? { ...hl, roleName: newName.trim() } : hl)),
+    );
+    setEditingLevelName(null);
+    setRenameValue('');
+    setHierarchyErrors((prev) => {
+      const next = { ...prev };
+      delete next[levelNumber];
+      return next;
+    });
+    if (departmentId) {
+      try {
+        await renameLevel({ departmentId, levelNumber, roleName: newName.trim() });
+      } catch (err: any) {
+        const msg = err?.response?.data?.message?.[0] || err?.response?.data?.message || 'Failed to rename role';
+        setHierarchyErrors((prev) => ({ ...prev, [levelNumber]: msg }));
+      }
+    }
+  }, [departmentId, hierarchyLevels, renameLevel]);
+
+  const startEditingName = useCallback((levelNumber: number, currentName: string) => {
+    setEditingLevelName(levelNumber);
+    setRenameValue(currentName);
+  }, []);
+
+  const cancelEditingName = useCallback(() => {
+    setEditingLevelName(null);
+    setRenameValue('');
+  }, []);
+
+  const handleMoveUp = useCallback((index: number) => {
+    if (index <= 0) return;
+    const updated = [...hierarchyLevels];
+    const temp = updated[index].displayOrder;
+    updated[index] = { ...updated[index], displayOrder: updated[index - 1].displayOrder };
+    updated[index - 1] = { ...updated[index - 1], displayOrder: temp };
+    setHierarchyLevels(updated);
+    if (departmentId) {
+      reorderLevels({
+        departmentId,
+        items: updated.map((hl) => ({ levelNumber: hl.levelNumber, displayOrder: hl.displayOrder })),
+      });
+    }
+  }, [hierarchyLevels, departmentId, reorderLevels]);
+
+  const handleMoveDown = useCallback((index: number) => {
+    if (index >= hierarchyLevels.length - 1) return;
+    const updated = [...hierarchyLevels];
+    const temp = updated[index].displayOrder;
+    updated[index] = { ...updated[index], displayOrder: updated[index + 1].displayOrder };
+    updated[index + 1] = { ...updated[index + 1], displayOrder: temp };
+    setHierarchyLevels(updated);
+    if (departmentId) {
+      reorderLevels({
+        departmentId,
+        items: updated.map((hl) => ({ levelNumber: hl.levelNumber, displayOrder: hl.displayOrder })),
+      });
+    }
+  }, [hierarchyLevels, departmentId, reorderLevels]);
 
   const handleSave = useCallback(async () => {
     if (!validate()) return;
@@ -538,7 +605,7 @@ export default function DepartmentFormPage() {
 
           <Box display="grid" gridTemplateColumns="1fr 1fr" gap={3}>
             <TextField
-              label="No. of Levels *"
+              label="No. of Roles *"
               type="text"
               inputMode="numeric"
               placeholder="Enter number of levels"
@@ -598,7 +665,7 @@ export default function DepartmentFormPage() {
                 disabled={!canGenerate}
                 sx={{ minWidth: 280 }}
               >
-                Generate Hierarchy Levels
+                Generate Roles
               </Button>
             </Box>
           )}
@@ -607,7 +674,7 @@ export default function DepartmentFormPage() {
         {levelsGenerated && hierarchyLevels.length > 0 && (
           <Card sx={{ p: 3, mb: 3 }}>
             <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3 }}>
-              <Typography variant="subtitle1">Role Hierarchy</Typography>
+              <Typography variant="subtitle1">Roles</Typography>
               <Button
                 variant="text"
                 size="small"
@@ -616,40 +683,99 @@ export default function DepartmentFormPage() {
                 Edit
               </Button>
             </Box>
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
-              {hierarchyLevels.map((hl) => (
-                <Box key={hl.levelNumber} sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                  <Typography
-                    variant="body1"
-                    sx={{ minWidth: 72, fontWeight: 500, color: 'text.secondary' }}
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+              {hierarchyLevels
+                .sort((a, b) => a.displayOrder - b.displayOrder)
+                .map((hl, index) => (
+                  <Card
+                    key={hl.levelNumber}
+                    variant="outlined"
+                    sx={{
+                      p: 2,
+                      borderRadius: 1.5,
+                      borderColor: hierarchyErrors[hl.levelNumber] ? 'error.main' : 'divider',
+                    }}
                   >
-                    Level {hl.levelNumber}
-                  </Typography>
-                  <Typography variant="body1" sx={{ color: 'text.disabled', minWidth: 24 }}>
-                    &gt;&gt;
-                  </Typography>
-                  <TextField
-                    placeholder="Enter Role Name"
-                    value={hl.roleName}
-                    onChange={(e) => handleRoleNameChange(hl.levelNumber, e.target.value)}
-                    error={!!hierarchyErrors[hl.levelNumber]}
-                    helperText={hierarchyErrors[hl.levelNumber]}
-                    size="small"
-                    sx={{ flex: 1 }}
-                  />
-                  {isEdit && (
-                    <Tooltip title="Remove this level">
-                      <IconButton
-                        size="small"
-                        color="error"
-                        onClick={() => setDeleteLevel({ levelNumber: hl.levelNumber, roleName: hl.roleName })}
-                      >
-                        <Iconify icon="solar:trash-bin-trash-bold" width={18} />
-                      </IconButton>
-                    </Tooltip>
-                  )}
-                </Box>
-              ))}
+                    <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}>
+                      <Stack direction="column" spacing={0.25} sx={{ pt: 0.5 }}>
+                        <IconButton
+                          size="small"
+                          onClick={() => handleMoveUp(index)}
+                          disabled={index === 0}
+                          sx={{ width: 24, height: 24, minWidth: 0 }}
+                        >
+                          <Iconify icon="solar:alt-arrow-up-bold" width={14} />
+                        </IconButton>
+                        <IconButton
+                          size="small"
+                          onClick={() => handleMoveDown(index)}
+                          disabled={index === hierarchyLevels.length - 1}
+                          sx={{ width: 24, height: 24, minWidth: 0 }}
+                        >
+                          <Iconify icon="solar:alt-arrow-down-bold" width={14} />
+                        </IconButton>
+                      </Stack>
+
+                      <Box sx={{ flex: 1, minWidth: 0 }}>
+                        {editingLevelName === hl.levelNumber ? (
+                          <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+                            <TextField
+                              size="small"
+                              value={renameValue}
+                              onChange={(e) => setRenameValue(e.target.value)}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') handleRename(hl.levelNumber, renameValue);
+                                if (e.key === 'Escape') cancelEditingName();
+                              }}
+                              autoFocus
+                              sx={{ flex: 1 }}
+                              error={!!hierarchyErrors[hl.levelNumber]}
+                              helperText={hierarchyErrors[hl.levelNumber]}
+                            />
+                            <IconButton size="small" color="primary" onClick={() => handleRename(hl.levelNumber, renameValue)} disabled={isRenaming}>
+                              <Iconify icon="solar:check-circle-bold" width={20} />
+                            </IconButton>
+                            <IconButton size="small" onClick={cancelEditingName}>
+                              <Iconify icon="solar:close-circle-bold" width={20} />
+                            </IconButton>
+                          </Box>
+                        ) : (
+                          <Box
+                            sx={{ display: 'flex', alignItems: 'center', gap: 1, cursor: 'pointer' }}
+                            onClick={() => startEditingName(hl.levelNumber, hl.roleName)}
+                          >
+                            <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
+                              {hl.roleName || 'Untitled Role'}
+                            </Typography>
+                            <Tooltip title="Rename role">
+                              <Iconify icon="solar:pen-bold" width={14} sx={{ color: 'text.disabled', opacity: 0.6 }} />
+                            </Tooltip>
+                          </Box>
+                        )}
+                        <Typography variant="caption" color="text.secondary">
+                          Level {hl.levelNumber}
+                        </Typography>
+                        {hierarchyErrors[hl.levelNumber] && editingLevelName !== hl.levelNumber && (
+                          <Typography variant="caption" color="error" sx={{ display: 'block', mt: 0.5 }}>
+                            {hierarchyErrors[hl.levelNumber]}
+                          </Typography>
+                        )}
+                      </Box>
+
+                      {isEdit && (
+                        <Tooltip title="Remove this role">
+                          <IconButton
+                            size="small"
+                            color="error"
+                            onClick={() => setDeleteLevel({ levelNumber: hl.levelNumber, roleName: hl.roleName })}
+                          >
+                            <Iconify icon="solar:trash-bin-trash-bold" width={18} />
+                          </IconButton>
+                        </Tooltip>
+                      )}
+                    </Box>
+                  </Card>
+                ))}
             </Box>
           </Card>
         )}

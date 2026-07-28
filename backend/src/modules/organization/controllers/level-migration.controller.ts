@@ -2,6 +2,8 @@ import {
   Controller,
   Get,
   Post,
+  Patch,
+  Put,
   Body,
   Param,
   ParseIntPipe,
@@ -13,7 +15,7 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { LevelMigrationService } from '../services/level-migration.service';
-import { RemoveLevelDto } from '../dto/remove-level.dto';
+import { RemoveLevelDto, RenameLevelDto, ReorderLevelsDto } from '../dto/remove-level.dto';
 
 @ApiTags('Organization - Hierarchy Levels')
 @ApiBearerAuth()
@@ -67,4 +69,30 @@ export class LevelMigrationController {
   ) {
     return this.levelMigrationService.checkAutoMerge(departmentId, levelNumber);
   }
+
+  @Patch(':levelNumber')
+  @ApiOperation({ summary: 'Rename a hierarchy level role name' })
+  @ApiResponse({ status: 200, description: 'Level renamed' })
+  @ApiResponse({ status: 400, description: 'Duplicate name or invalid' })
+  @ApiResponse({ status: 404, description: 'Department or level not found' })
+  async rename(
+    @Param('departmentId', ParseIntPipe) departmentId: number,
+    @Param('levelNumber', ParseIntPipe) levelNumber: number,
+    @Body() dto: RenameLevelDto,
+  ) {
+    return this.levelMigrationService.rename(departmentId, levelNumber, dto.roleName);
+  }
+
+  @Put('reorder')
+  @ApiOperation({ summary: 'Reorder hierarchy levels for a department' })
+  @ApiResponse({ status: 200, description: 'Levels reordered' })
+  @ApiResponse({ status: 400, description: 'Validation error' })
+  @ApiResponse({ status: 404, description: 'Department not found' })
+  async reorder(
+    @Param('departmentId', ParseIntPipe) departmentId: number,
+    @Body() dto: ReorderLevelsDto,
+  ) {
+    return this.levelMigrationService.reorder(departmentId, dto.items);
+  }
 }
+

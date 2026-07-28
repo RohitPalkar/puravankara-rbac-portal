@@ -211,6 +211,48 @@ export function useLevelRemove() {
   });
 }
 
+export function useLevelRename() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      departmentId,
+      levelNumber,
+      roleName,
+    }: {
+      departmentId: number;
+      levelNumber: number;
+      roleName: string;
+    }) => {
+      const res = await levelMigrationService.rename(departmentId, levelNumber, roleName);
+      return res.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.departments.all });
+    },
+  });
+}
+
+export function useLevelReorder() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      departmentId,
+      items,
+    }: {
+      departmentId: number;
+      items: { levelNumber: number; displayOrder: number }[];
+    }) => {
+      const res = await levelMigrationService.reorder(departmentId, items);
+      return res.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.departments.all });
+    },
+  });
+}
+
 export function useDeleteDepartmentRole() {
   const queryClient = useQueryClient();
 

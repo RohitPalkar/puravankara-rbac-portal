@@ -89,12 +89,44 @@ export interface DepartmentRole {
 }
 
 export interface LevelImpactPreview {
-  usersCount: number;
-  approvalsCount: number;
-  childLevelUsersCount: number;
-  mergingAuto: boolean;
-  mergeCandidates: number[];
-  zonesImpacted: number;
+  sourceLevel: {
+    id: number;
+    levelNumber: number;
+    roleName: string;
+    roleId: number;
+  };
+  department: {
+    id: number;
+    name: string;
+    zones: { zoneId: number; name: string }[];
+  };
+  dependencies: {
+    users: { count: number };
+    permissions: {
+      count: number;
+      modules: { moduleId: number; name: string; count: number }[];
+    };
+    projects: { count: number };
+    approvals: { count: number; active: number };
+    reporting: { count: number };
+    isDepartmentAdmin: boolean;
+  };
+  autoMerge: {
+    eligible: boolean;
+    candidateLevel: {
+      id: number;
+      levelNumber: number;
+      roleName: string;
+    } | null;
+    direction: 'up' | 'down' | null;
+  };
+  protected: boolean;
+  protectionReason: string | null;
+  availableDestinations: {
+    id: number;
+    levelNumber: number;
+    roleName: string;
+  }[];
 }
 
 export interface RemoveLevelPayload {
@@ -150,5 +182,10 @@ export interface MergeResult {
 export interface AutoMergeResult {
   autoMerge: boolean;
   message?: string;
+  destinationLevel?: {
+    id: number;
+    levelNumber: number;
+    roleName: string;
+  };
   destinationLevelNumber?: number;
 }

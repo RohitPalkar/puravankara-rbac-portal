@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 
 import Box from '@mui/material/Box';
 import Card from '@mui/material/Card';
@@ -37,7 +37,7 @@ export function DeleteLevelDialog({ open, departmentId, levelNumber, levelName, 
   const { data: impact } = useLevelImpact(departmentId ?? undefined, levelNumber ?? undefined);
   const { data: checkResult } = useLevelRemoveCheck(departmentId ?? undefined, levelNumber ?? undefined);
 
-  const mergeCandidates = impact?.mergeCandidates ?? [];
+  const mergeCandidates = useMemo(() => impact?.availableDestinations ?? [], [impact?.availableDestinations]);
   const autoMerge = checkResult?.autoMerge ?? false;
   const suggestedDestination = checkResult?.destinationLevelNumber;
 
@@ -50,37 +50,41 @@ export function DeleteLevelDialog({ open, departmentId, levelNumber, levelName, 
 
   useEffect(() => {
     if (autoMerge && suggestedDestination) {
-      setDestinationLevelNumber(suggestedDestination);
+      const candidate = mergeCandidates.find((c: any) => c.levelNumber === suggestedDestination);
+      if (candidate) setDestinationLevelNumber(candidate.levelNumber);
     }
-  }, [autoMerge, suggestedDestination]);
+  }, [autoMerge, suggestedDestination, mergeCandidates]);
 
   const handleConfirm = () => {
     if (!destinationLevelNumber) return;
     onConfirm({ mode, destinationLevelNumber });
   };
 
-  const impactItems = [
-    { label: 'Current users on this level', value: impact?.usersCount ?? 0, icon: 'solar:users-group-rounded-bold' },
-    { label: 'Active approval workflows', value: impact?.approvalsCount ?? 0, icon: 'solar:checklist-bold' },
-    { label: 'Users in child levels', value: impact?.childLevelUsersCount ?? 0, icon: 'solar:users-group-two-rounded-bold' },
-    { label: 'Zones impacted', value: impact?.zonesImpacted ?? 0, icon: 'solar:map-point-wave-bold' },
-  ];
+  const impactItems = impact ? [
+    { label: 'Users on this role', value: impact.dependencies?.users?.count ?? 0, icon: 'solar:users-group-rounded-bold', color: '#2F3C98' },
+    { label: 'Permission actions', value: impact.dependencies?.permissions?.count ?? 0, icon: 'solar:shield-check-bold', color: '#7B1FA2' },
+    { label: 'Projects assigned', value: impact.dependencies?.projects?.count ?? 0, icon: 'solar:folder-bold', color: '#F57C00' },
+    { label: 'Active approvals', value: impact.dependencies?.approvals?.active ?? 0, icon: 'solar:checklist-bold', color: '#00BCD4' },
+    { label: 'Reporting lines', value: impact.dependencies?.reporting?.count ?? 0, icon: 'solar:hierarchy-bold', color: '#388E3C' },
+  ] : [];
+
+  const selectedDestination = mergeCandidates.find((c: any) => c.levelNumber === destinationLevelNumber);
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
       <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
         <Iconify icon="solar:trash-bin-trash-bold" sx={{ color: 'error.main' }} />
-        Remove Hierarchy Level
+        Remove Role
       </DialogTitle>
 
       <DialogContent>
         <Stack spacing={3} sx={{ mt: 1 }}>
           <Alert severity="warning" icon={<Iconify icon="solar:danger-triangle-bold" />}>
             <Typography variant="body2" fontWeight={600}>
-              Level {levelNumber}: &quot;{levelName}&quot;
+              &quot;{levelName}&quot; (Level {levelNumber})
             </Typography>
             <Typography variant="body2">
-              This hierarchy level is currently in use. Choose how to handle affected users and roles.
+              This role is currently in use. Choose how to handle affected users, permissions, and data.
             </Typography>
           </Alert>
 
@@ -99,9 +103,12 @@ export function DeleteLevelDialog({ open, departmentId, levelNumber, levelName, 
                 control={<Radio />}
                 label={
                   <Box>
-                    <Typography variant="subtitle2">Merge Level</Typography>
+                    <Typography variant="subtitle2">Merge Role</Typography>
                     <Typography variant="caption" color="text.secondary">
-                      Combine roles, permissions, and users into an adjacent level. Nothing is lost.
+                      Combine roles, permissions, and users into an adjacent role. Nothing is lost.
+                      {selectedDestination && mode === 'MERGE' && (
+                        <> Destination role permissions remain unchanged — merged permissions are added.</>
+                      )}
                     </Typography>
                   </Box>
                 }
@@ -123,9 +130,10 @@ export function DeleteLevelDialog({ open, departmentId, levelNumber, levelName, 
                 control={<Radio />}
                 label={
                   <Box>
-                    <Typography variant="subtitle2">Replace Level</Typography>
+                    <Typography variant="subtitle2">Replace Role</Typography>
                     <Typography variant="caption" color="text.secondary">
-                      Reassign users to another level. Level-specific roles and permissions are discarded.
+                      Users will be moved to the destination role. Source role permissions and project access
+                      are discarded. Destination role permissions remain unchanged.
                     </Typography>
                   </Box>
                 }
@@ -136,73 +144,109 @@ export function DeleteLevelDialog({ open, departmentId, levelNumber, levelName, 
 
           <Box>
             <Typography variant="subtitle2" sx={{ mb: 1.5 }}>
-              {mode === 'MERGE' ? 'Merge into Level' : 'Replace with Level'}
+              {mode === 'MERGE' ? 'Merge into Role' : 'Replace with Role'}
             </Typography>
 
             {autoMerge && suggestedDestination ? (
               <Alert severity="info" icon={<Iconify icon="solar:magic-stick-3-bold" />} sx={{ mb: 1 }}>
                 <Typography variant="body2">
-                  Auto-merge detected. Level {suggestedDestination} is the recommended destination.
+                  Auto-merge detected. &quot;{mergeCandidates.find((c: any) => c.levelNumber === suggestedDestination)?.roleName ?? `Level ${suggestedDestination}`}&quot; is the recommended destination.
+                  This role has no active dependencies.
                 </Typography>
               </Alert>
             ) : null}
 
-            <Stack spacing={1}>
-              {mergeCandidates.map((candidate) => (
-                <Card
-                  key={candidate}
-                  onClick={() => setDestinationLevelNumber(candidate)}
-                  sx={{
-                    p: 1.5,
-                    cursor: 'pointer',
-                    border: '1px solid',
-                    borderColor: destinationLevelNumber === candidate ? 'primary.main' : 'divider',
-                    bgcolor: destinationLevelNumber === candidate ? 'action.selected' : 'background.paper',
-                    '&:hover': { borderColor: 'primary.light' },
-                  }}
-                >
-                  <FormControlLabel
-                    value={candidate}
-                    control={<Radio checked={destinationLevelNumber === candidate} />}
-                    label={<Typography variant="body2">Level {candidate}</Typography>}
-                    sx={{ mx: 0 }}
-                  />
-                </Card>
-              ))}
-            </Stack>
+            {mergeCandidates.length === 0 ? (
+              <Typography variant="body2" color="text.secondary" sx={{ py: 2, textAlign: 'center' }}>
+                No other roles available in this department.
+              </Typography>
+            ) : (
+              <Stack spacing={1}>
+                {mergeCandidates.map((candidate: any) => (
+                  <Card
+                    key={candidate.id}
+                    onClick={() => setDestinationLevelNumber(candidate.levelNumber)}
+                    sx={{
+                      p: 1.5,
+                      cursor: 'pointer',
+                      border: '1px solid',
+                      borderColor: destinationLevelNumber === candidate.levelNumber ? 'primary.main' : 'divider',
+                      bgcolor: destinationLevelNumber === candidate.levelNumber ? 'action.selected' : 'background.paper',
+                      '&:hover': { borderColor: 'primary.light' },
+                    }}
+                  >
+                    <FormControlLabel
+                      value={candidate.levelNumber}
+                      control={<Radio checked={destinationLevelNumber === candidate.levelNumber} />}
+                      label={
+                        <Box>
+                          <Typography variant="body2" fontWeight={500}>
+                            {candidate.roleName || `Level ${candidate.levelNumber}`}
+                          </Typography>
+                          <Typography variant="caption" color="text.secondary">
+                            Level {candidate.levelNumber}
+                          </Typography>
+                        </Box>
+                      }
+                      sx={{ mx: 0 }}
+                    />
+                  </Card>
+                ))}
+              </Stack>
+            )}
 
             {mode === 'MERGE' && destinationLevelNumber && (
-              <FormHelperText>
-                Roles and permissions from both levels will be combined.
+              <FormHelperText sx={{ mt: 1 }}>
+                <Iconify icon="solar:info-circle-bold" width={14} style={{ verticalAlign: 'text-bottom', marginRight: 4 }} />
+                Users, permissions, and project access will be combined. Approval steps will be migrated.
               </FormHelperText>
             )}
             {mode === 'REPLACE' && destinationLevelNumber && (
-              <FormHelperText>
-                Users will be reassigned. Level-specific permissions will be discarded.
+              <FormHelperText sx={{ mt: 1 }}>
+                <Iconify icon="solar:info-circle-bold" width={14} style={{ verticalAlign: 'text-bottom', marginRight: 4 }} />
+                Users will be reassigned. Source role permissions will be discarded. Destination role permissions remain unchanged.
               </FormHelperText>
             )}
           </Box>
 
-          {impact && (
+          {impact && impact.dependencies && (
             <Box>
-              <Typography variant="caption" fontWeight={600} color="text.secondary" sx={{ mb: 1, display: 'block' }}>
+              <Typography variant="caption" fontWeight={600} color="text.secondary" sx={{ mb: 1.5, display: 'block' }}>
                 Impact Summary
               </Typography>
-              <Stack spacing={0.5}>
-                {impactItems.map((item) =>
-                  item.value > 0 ? (
-                    <Stack key={item.label} direction="row" alignItems="center" spacing={1}>
-                      <Iconify icon={item.icon} width={16} sx={{ color: 'text.secondary', flexShrink: 0 }} />
-                      <Typography variant="caption" color="text.secondary" sx={{ flex: 1 }}>
-                        {item.label}
-                      </Typography>
-                      <Typography variant="caption" fontWeight={600}>
-                        {item.value}
-                      </Typography>
-                    </Stack>
-                  ) : null
-                )}
-              </Stack>
+              <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1 }}>
+                {impactItems.map((item) => (
+                  <Box
+                    key={item.label}
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 1,
+                      p: 1,
+                      borderRadius: 1,
+                      bgcolor: 'action.hover',
+                    }}
+                  >
+                    <Box
+                      sx={{
+                        width: 28,
+                        height: 28,
+                        borderRadius: 0.75,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        bgcolor: `${item.color}14`,
+                      }}
+                    >
+                      <Iconify icon={item.icon} width={14} sx={{ color: item.color }} />
+                    </Box>
+                    <Box>
+                      <Typography variant="body2" fontWeight={600}>{item.value}</Typography>
+                      <Typography variant="caption" color="text.secondary">{item.label}</Typography>
+                    </Box>
+                  </Box>
+                ))}
+              </Box>
             </Box>
           )}
         </Stack>
@@ -212,7 +256,7 @@ export function DeleteLevelDialog({ open, departmentId, levelNumber, levelName, 
         <Button onClick={onClose} color="inherit" disabled={loading}>
           Cancel
         </Button>
-        <Tooltip title={!destinationLevelNumber ? 'Select a destination level first' : ''}>
+        <Tooltip title={!destinationLevelNumber ? 'Select a destination role first' : ''}>
           <span>
             <Button
               onClick={handleConfirm}
@@ -220,7 +264,7 @@ export function DeleteLevelDialog({ open, departmentId, levelNumber, levelName, 
               color="error"
               disabled={!destinationLevelNumber || loading}
             >
-              {loading ? 'Processing...' : mode === 'MERGE' ? 'Merge Level' : 'Replace Level'}
+              {loading ? 'Processing...' : mode === 'MERGE' ? 'Merge Role' : 'Replace Role'}
             </Button>
           </span>
         </Tooltip>

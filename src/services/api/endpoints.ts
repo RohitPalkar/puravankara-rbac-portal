@@ -138,6 +138,10 @@ export const endpoints = {
       `${API_PREFIX}/departments/check-name?name=${encodeURIComponent(name)}&zoneId=${zoneId}${excludeId ? `&excludeId=${excludeId}` : ''}`,
     hierarchyLevels: (id: number) => `${API_PREFIX}/departments/${id}/hierarchy-levels`,
     roleForHierarchy: (id: number, levelNumber: number) => `${API_PREFIX}/departments/${id}/hierarchy-levels/${levelNumber}`,
+    levelRename: (deptId: number, levelNumber: number) =>
+      `${API_PREFIX}/departments/${deptId}/hierarchy-levels/${levelNumber}`,
+    levelReorder: (deptId: number) =>
+      `${API_PREFIX}/departments/${deptId}/hierarchy-levels/reorder`,
     levelImpact: (deptId: number, levelNumber: number) =>
       `${API_PREFIX}/departments/${deptId}/hierarchy-levels/${levelNumber}/impact`,
     levelRemove: (deptId: number, levelNumber: number) =>

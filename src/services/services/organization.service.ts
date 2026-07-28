@@ -1,6 +1,6 @@
 import { endpoints } from '../api/endpoints';
 import { createCrudService } from '../api/crud';
-import { apiGet, apiPost, apiDelete } from '../api/client';
+import { apiGet, apiPut, apiPost, apiPatch, apiDelete } from '../api/client';
 
 import type { ApiResponse } from '../types/api';
 import type {
@@ -103,6 +103,12 @@ export const levelMigrationService = {
 
   checkRemove: async (departmentId: number, levelNumber: number): Promise<ApiResponse<AutoMergeResult>> =>
     apiGet<AutoMergeResult>(endpoints.departments.levelRemoveCheck(departmentId, levelNumber)),
+
+  rename: async (departmentId: number, levelNumber: number, roleName: string): Promise<ApiResponse<any>> =>
+    apiPatch<any>(endpoints.departments.levelRename(departmentId, levelNumber), { roleName }),
+
+  reorder: async (departmentId: number, items: { levelNumber: number; displayOrder: number }[]): Promise<ApiResponse<any>> =>
+    apiPut<any>(endpoints.departments.levelReorder(departmentId), { items }),
 };
 
 export const departmentRoleService = {

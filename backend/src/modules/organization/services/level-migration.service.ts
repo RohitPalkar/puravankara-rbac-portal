@@ -258,6 +258,9 @@ export class LevelMigrationService {
     if (!destinationLevel) {
       throw new BadRequestException('Destination hierarchy level not found');
     }
+    if (!destinationLevel.isActive) {
+      throw new BadRequestException('Cannot merge/replace into an inactive level');
+    }
 
     // Collect affected user IDs before migration (for cache invalidation)
     const affectedUserRoles = await this.userRoleRepo.find({
@@ -363,6 +366,123 @@ export class LevelMigrationService {
         levelNumber: impact.autoMerge.candidateLevel.levelNumber,
         roleName: impact.autoMerge.candidateLevel.roleName,
       },
+    };
+  }
+
+  async rename(
+    departmentId: number,
+    levelNumber: number,
+    newRoleName: string,
+  ): Promise<any> {
+    const dept = await this.deptRepo.findOne({
+      where: { id: departmentId, deletedAt: null },
+    });
+    if (!dept) throw new NotFoundException('Department not found');
+
+    const level = await this.levelRepo.findOne({
+      where: { departmentId, levelNumber, isActive: true },
+    });
+    if (!level) throw new NotFoundException('Hierarchy level not found');
+
+    const duplicate = await this.levelRepo.findOne({
+      where: { departmentId, roleName: newRoleName, isActive: true },
+    });
+    if (duplicate && duplicate.id !== level.id) {
+      throw new BadRequestException(
+        `Role name "${newRoleName}" already exists in this department`,
+      );
+    }
+
+    const oldName = level.roleName;
+    level.roleName = newRoleName;
+    await this.levelRepo.save(level);
+
+    try {
+      await this.auditService.createLog({
+        entityName: 'HierarchyLevel',
+        entityId: `dept-${departmentId}-level-${levelNumber}`,
+        action: 'LEVEL_RENAMED',
+        oldValue: { roleName: oldName, levelNumber, departmentId },
+        newValue: { roleName: newRoleName, levelNumber, departmentId },
+      });
+    } catch (auditErr) {
+      this.logger.warn(`Audit log failed: ${(auditErr as Error).message}`);
+    }
+
+    return {
+      message: `Renamed "${oldName}" to "${newRoleName}"`,
+      id: level.id,
+      levelNumber: level.levelNumber,
+      roleName: level.roleName,
+      displayOrder: level.displayOrder,
+    };
+  }
+
+  async reorder(
+    departmentId: number,
+    items: { levelNumber: number; displayOrder: number }[],
+  ): Promise<any> {
+    const dept = await this.deptRepo.findOne({
+      where: { id: departmentId, deletedAt: null },
+    });
+    if (!dept) throw new NotFoundException('Department not found');
+
+    const allLevels = await this.levelRepo.find({
+      where: { departmentId, isActive: true },
+    });
+
+    const knownNumbers = new Set(allLevels.map((l) => l.levelNumber));
+    for (const item of items) {
+      if (!knownNumbers.has(item.levelNumber)) {
+        throw new BadRequestException(
+          `Level ${item.levelNumber} not found in department`,
+        );
+      }
+    }
+
+    const oldOrder = allLevels.map((l) => ({
+      levelNumber: l.levelNumber,
+      displayOrder: l.displayOrder,
+      roleName: l.roleName,
+    }));
+
+    for (const item of items) {
+      const level = allLevels.find((l) => l.levelNumber === item.levelNumber);
+      if (level) {
+        level.displayOrder = item.displayOrder;
+      }
+    }
+    await this.levelRepo.save(allLevels);
+
+    try {
+      await this.auditService.createLog({
+        entityName: 'HierarchyLevel',
+        entityId: `dept-${departmentId}-reorder`,
+        action: 'LEVELS_REORDERED',
+        oldValue: { departmentId, levels: oldOrder },
+        newValue: {
+          departmentId,
+          levels: allLevels.map((l) => ({
+            levelNumber: l.levelNumber,
+            displayOrder: l.displayOrder,
+            roleName: l.roleName,
+          })),
+        },
+      });
+    } catch (auditErr) {
+      this.logger.warn(`Audit log failed: ${(auditErr as Error).message}`);
+    }
+
+    return {
+      message: 'Hierarchy levels reordered',
+      levels: allLevels
+        .sort((a, b) => a.displayOrder - b.displayOrder)
+        .map((l) => ({
+          id: l.id,
+          levelNumber: l.levelNumber,
+          roleName: l.roleName,
+          displayOrder: l.displayOrder,
+        })),
     };
   }
 
