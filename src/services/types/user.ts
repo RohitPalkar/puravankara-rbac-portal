@@ -113,7 +113,6 @@ export interface ProjectMappingData {
   zoneIds: number[];
   departmentId: number;
   primaryRoleId: number;
-  secondaryDepartmentId?: number;
   secondaryRoleId?: number;
   assignBuddyRm: boolean;
   buddyRmUserId?: string;

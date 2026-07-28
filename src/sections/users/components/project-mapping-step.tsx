@@ -107,7 +107,7 @@ export default forwardRef<ProjectMappingStepHandle, Props>(({ initialData }: Pro
   const [zoneIds, setZoneIds] = useState<number[]>(initialData?.zoneIds ?? []);
   const [departmentId, setDepartmentId] = useState<number | ''>(initialData?.departmentId ?? '');
   const [primaryRoleId, setPrimaryRoleId] = useState<number | ''>(initialData?.primaryRoleId ?? '');
-  const [secondaryDepartmentId, setSecondaryDepartmentId] = useState<number | ''>(initialData?.secondaryDepartmentId ?? '');
+
   const [secondaryRoleId, setSecondaryRoleId] = useState<number | ''>(initialData?.secondaryRoleId ?? '');
   const [assignBuddyRm, setAssignBuddyRm] = useState(initialData?.assignBuddyRm ?? false);
   const [buddyRmUserId, setBuddyRmUserId] = useState(initialData?.buddyRmUserId ?? '');
@@ -160,11 +160,11 @@ export default forwardRef<ProjectMappingStepHandle, Props>(({ initialData }: Pro
 
   const rolesForSecondaryDept = useMemo(
     () => activeRoles.filter((r) => {
-      if (!secondaryDepartmentId) return true;
-      const allowed = deptRoleMap.get(secondaryDepartmentId as number) ?? [];
+      if (!departmentId) return true;
+      const allowed = deptRoleMap.get(departmentId as number) ?? [];
       return allowed.includes(r.id);
     }),
-    [activeRoles, secondaryDepartmentId, deptRoleMap],
+    [activeRoles, departmentId, deptRoleMap],
   );
 
   const projectIdsByZone = useMemo(() => {
@@ -189,7 +189,7 @@ export default forwardRef<ProjectMappingStepHandle, Props>(({ initialData }: Pro
     queryFn: async () => {
       if (!buddySearch || buddySearch.length < 2) return [];
       const res = await userService.list({ search: buddySearch });
-      return res.data ?? [];
+      return (res.data as any)?.data ?? [];
     },
     enabled: assignBuddyRm && buddySearch.length >= 2,
   });
@@ -212,20 +212,20 @@ export default forwardRef<ProjectMappingStepHandle, Props>(({ initialData }: Pro
     zoneIds: zoneIds as number[],
     departmentId: departmentId as number,
     primaryRoleId: primaryRoleId as number,
-    secondaryDepartmentId: secondaryDepartmentId || undefined,
+
     secondaryRoleId: secondaryRoleId || undefined,
     assignBuddyRm,
     buddyRmUserId: buddyRmUserId || undefined,
     profiles: {
       primary: { roleId: primaryRoleId as number, departmentId: departmentId as number, permissions: primaryPermissions },
       secondary: secondaryRoleId
-        ? { roleId: secondaryRoleId as number, departmentId: secondaryDepartmentId as number, permissions: secondaryPermissions }
+        ? { roleId: secondaryRoleId as number, departmentId: departmentId as number, permissions: secondaryPermissions }
         : undefined,
       buddyRm: assignBuddyRm && buddyRmUserId
         ? { buddyUserId: buddyRmUserId, permissions: buddyPermissions }
         : undefined,
     },
-  }), [zoneIds, departmentId, primaryRoleId, secondaryDepartmentId, secondaryRoleId, assignBuddyRm, buddyRmUserId, primaryPermissions, secondaryPermissions, buddyPermissions]);
+  }), [zoneIds, departmentId, primaryRoleId, secondaryRoleId, assignBuddyRm, buddyRmUserId, primaryPermissions, secondaryPermissions, buddyPermissions]);
 
   const validate = useCallback((): boolean => {
     const data = getData();
@@ -355,28 +355,6 @@ export default forwardRef<ProjectMappingStepHandle, Props>(({ initialData }: Pro
           fullWidth
         />
 
-        <FormControl>
-          <InputLabel>Secondary Department (Optional)</InputLabel>
-          <Select
-            value={secondaryDepartmentId}
-            label="Secondary Department (Optional)"
-            onChange={(e) => {
-              const newDeptId = e.target.value as number;
-              setSecondaryDepartmentId(newDeptId);
-              const allowedRoles = newDeptId ? (deptRoleMap.get(newDeptId) ?? []) : [];
-              if (secondaryRoleId && !allowedRoles.includes(secondaryRoleId as number)) {
-                setSecondaryRoleId('');
-              }
-              setErrList([]);
-            }}
-          >
-            <MenuItem value="">None</MenuItem>
-            {filteredDepartments.map((dept: any) => (
-              <MenuItem key={dept.id} value={dept.id}>{dept.name}</MenuItem>
-            ))}
-          </Select>
-        </FormControl>
-
         <Autocomplete
           options={rolesForSecondaryDept}
           value={rolesForSecondaryDept.find((r: Role) => r.id === secondaryRoleId) ?? null}
@@ -405,9 +383,9 @@ export default forwardRef<ProjectMappingStepHandle, Props>(({ initialData }: Pro
         <Autocomplete
           options={buddyUsers as any[]}
           getOptionLabel={(option: any) => `${option.name} (${option.empId})`}
-          isOptionEqualToValue={(o: any, v: any) => o.id === v.id}
-          value={buddyRmUserId ? (buddyUsers as any[]).find((u: any) => u.id === buddyRmUserId) ?? null : null}
-          onChange={(_, value: any) => { setBuddyRmUserId(value?.id ?? ''); setErrList([]); }}
+          isOptionEqualToValue={(o: any, v: any) => o.empId === v.empId}
+          value={buddyRmUserId ? (buddyUsers as any[]).find((u: any) => u.empId === buddyRmUserId) ?? null : null}
+          onChange={(_, value: any) => { setBuddyRmUserId(value?.empId ?? ''); setErrList([]); }}
           onInputChange={(_, val) => setBuddySearch(val)}
           renderInput={(params) => (
             <TextField {...params} label="Search Employee Name / Employee ID" size="medium" />

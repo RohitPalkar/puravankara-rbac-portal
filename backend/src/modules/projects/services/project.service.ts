@@ -40,7 +40,7 @@ export class ProjectService extends BaseService<Project> {
       ...filters
     } = query;
     const rows = await this.repository.query(
-      `SELECT * FROM public.projects WHERE deleted_at IS NULL ORDER BY created_at DESC`,
+      `SELECT p.*, c.name AS "cityName" FROM public.projects p LEFT JOIN public.cities c ON c.id = p.city_id WHERE p.deleted_at IS NULL ORDER BY p.created_at DESC`,
     );
     return {
       data: rows,
