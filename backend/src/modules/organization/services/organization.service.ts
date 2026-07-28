@@ -7,10 +7,10 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, DataSource, ILike, FindOptionsWhere } from 'typeorm';
 import { User } from '../../users/entities/user.entity';
+import { Zone } from '../../geography/entities/zone.entity';
 import { Department } from '../entities/department.entity';
 import { DepartmentRole } from '../entities/department-role.entity';
 import { DepartmentHierarchyLevel } from '../entities/department-hierarchy-level.entity';
-import { DepartmentZoneMapping } from '../entities/department-zone-mapping.entity';
 import { Role } from '../entities/role.entity';
 import { BaseService } from '../../../common/crud/base.service';
 import { DependencyValidatorService } from '../../../common/services/dependency-validator.service';
@@ -28,8 +28,6 @@ export class DepartmentService {
     readonly repository: Repository<Department>,
     @InjectRepository(DepartmentHierarchyLevel)
     private readonly hierarchyRepo: Repository<DepartmentHierarchyLevel>,
-    @InjectRepository(DepartmentZoneMapping)
-    private readonly zoneMappingRepo: Repository<DepartmentZoneMapping>,
     @InjectRepository(DepartmentRole)
     private readonly deptRoleRepo: Repository<DepartmentRole>,
     @InjectRepository(Role)
@@ -62,6 +60,7 @@ export class DepartmentService {
 
     const [data, total] = await this.repository.findAndCount({
       where,
+      relations: { zone: true },
       order: { [sortBy]: sortOrder },
       skip: (page - 1) * limit,
       take: limit,
@@ -85,6 +84,7 @@ export class DepartmentService {
   async findById(id: number): Promise<any> {
     const dept = await this.repository.findOne({
       where: { id, deletedAt: null },
+      relations: { zone: true },
     });
     if (!dept) {
       throw new NotFoundException('Department not found');
@@ -94,11 +94,13 @@ export class DepartmentService {
 
   async create(dto: CreateDepartmentDto): Promise<any> {
     const existing = await this.repository.findOne({
-      where: { name: dto.name },
+      where: { name: dto.name, zoneId: dto.zoneId },
       withDeleted: true,
     });
     if (existing) {
-      throw new ConflictException('Department with this name already exists');
+      throw new ConflictException(
+        `Department "${dto.name}" already exists in this zone`,
+      );
     }
 
     const queryRunner = this.dataSource.createQueryRunner();
@@ -108,21 +110,12 @@ export class DepartmentService {
     try {
       const dept = queryRunner.manager.create(Department, {
         name: dto.name,
+        zoneId: dto.zoneId,
         maxHierarchyLevels: dto.numberOfLevels,
         departmentAdminId: dto.departmentAdminId ?? null,
         isActive: dto.isActive ?? true,
       });
       const savedDept = await queryRunner.manager.save(Department, dept);
-
-      if (dto.zoneIds && dto.zoneIds.length > 0) {
-        const mappings = dto.zoneIds.map((zoneId) =>
-          queryRunner.manager.create(DepartmentZoneMapping, {
-            departmentId: savedDept.id,
-            zoneId,
-          }),
-        );
-        await queryRunner.manager.save(DepartmentZoneMapping, mappings);
-      }
 
       if (dto.hierarchyLevels && dto.hierarchyLevels.length > 0) {
         if (dto.hierarchyLevels.length !== dto.numberOfLevels) {
@@ -192,16 +185,33 @@ export class DepartmentService {
     try {
       const updateData: Partial<Department> = {};
       if (dto.name !== undefined) {
+        const zoneCheck = dto.zoneId ?? (
+          await this.repository.findOne({ where: { id }, withDeleted: true })
+        )?.zoneId;
         const existing = await this.repository.findOne({
-          where: { name: dto.name },
+          where: { name: dto.name, zoneId: zoneCheck },
           withDeleted: true,
         });
         if (existing && existing.id !== id) {
           throw new ConflictException(
-            'Department with this name already exists',
+            `Department "${dto.name}" already exists in this zone`,
           );
         }
         updateData.name = dto.name;
+      }
+      if (dto.zoneId !== undefined) {
+        if (dto.name !== undefined) {
+          const existing = await this.repository.findOne({
+            where: { name: dto.name, zoneId: dto.zoneId },
+            withDeleted: true,
+          });
+          if (existing && existing.id !== id) {
+            throw new ConflictException(
+              `Department "${dto.name}" already exists in this zone`,
+            );
+          }
+        }
+        updateData.zoneId = dto.zoneId;
       }
       if (dto.numberOfLevels !== undefined) {
         updateData.maxHierarchyLevels = dto.numberOfLevels;
@@ -215,21 +225,6 @@ export class DepartmentService {
 
       if (Object.keys(updateData).length > 0) {
         await queryRunner.manager.update(Department, id, updateData);
-      }
-
-      if (dto.zoneIds !== undefined) {
-        await queryRunner.manager.delete(DepartmentZoneMapping, {
-          departmentId: id,
-        });
-        if (dto.zoneIds.length > 0) {
-          const mappings = dto.zoneIds.map((zoneId) =>
-            queryRunner.manager.create(DepartmentZoneMapping, {
-              departmentId: id,
-              zoneId,
-            }),
-          );
-          await queryRunner.manager.save(DepartmentZoneMapping, mappings);
-        }
       }
 
       if (dto.hierarchyLevels !== undefined) {
@@ -412,23 +407,28 @@ export class DepartmentService {
   }
 
   private async enhanceDepartment(dept: Department): Promise<any> {
-    const [hierarchyCount, zoneMappings] = await Promise.all([
-      this.hierarchyRepo.count({ where: { departmentId: dept.id } }),
-      this.zoneMappingRepo.find({
-        where: { departmentId: dept.id },
-        relations: { zone: true },
-      }),
-    ]);
-
-    const zones = zoneMappings.map((zm) => zm.zone?.name).filter(Boolean);
+    const hierarchyCount = await this.hierarchyRepo.count({
+      where: { departmentId: dept.id },
+    });
     const levels = hierarchyCount || dept.maxHierarchyLevels;
+
+    let zoneName: string | null = null;
+    if (dept.zone) {
+      zoneName = dept.zone.name;
+    } else if (dept.zoneId) {
+      const zone = await this.repository.manager.findOne(Zone, {
+        where: { id: dept.zoneId },
+      });
+      zoneName = zone?.name ?? null;
+    }
 
     return {
       id: dept.id,
       name: dept.name,
       levels,
       maxHierarchyLevels: dept.maxHierarchyLevels,
-      zones,
+      zoneId: dept.zoneId,
+      zoneName,
       departmentAdminId: dept.departmentAdminId,
       isActive: dept.isActive,
       createdAt: dept.createdAt,
@@ -437,21 +437,20 @@ export class DepartmentService {
   }
 
   private async enhanceDepartmentDetail(dept: Department): Promise<any> {
-    const [hierarchyLevels, zoneMappings] = await Promise.all([
-      this.hierarchyRepo.find({
-        where: { departmentId: dept.id },
-        order: { displayOrder: 'ASC' },
-      }),
-      this.zoneMappingRepo.find({
-        where: { departmentId: dept.id },
-        relations: { zone: true },
-      }),
-    ]);
+    const hierarchyLevels = await this.hierarchyRepo.find({
+      where: { departmentId: dept.id },
+      order: { displayOrder: 'ASC' },
+    });
 
-    const zones = zoneMappings.map((zm) => ({
-      zoneId: zm.zoneId,
-      zoneName: zm.zone?.name ?? `Zone #${zm.zoneId}`,
-    }));
+    let zoneName: string | null = null;
+    if (dept.zone) {
+      zoneName = dept.zone.name;
+    } else if (dept.zoneId) {
+      const zone = await this.repository.manager.findOne(Zone, {
+        where: { id: dept.zoneId },
+      });
+      zoneName = zone?.name ?? null;
+    }
 
     return {
       id: dept.id,
@@ -459,7 +458,8 @@ export class DepartmentService {
       maxHierarchyLevels: dept.maxHierarchyLevels,
       isActive: dept.isActive,
       departmentAdminId: dept.departmentAdminId,
-      zones,
+      zoneId: dept.zoneId,
+      zoneName,
       hierarchyLevels: hierarchyLevels.map((hl) => ({
         id: hl.id,
         levelNumber: hl.levelNumber,

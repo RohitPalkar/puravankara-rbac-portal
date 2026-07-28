@@ -79,7 +79,7 @@ export class DashboardService {
       ? `AND id IN (SELECT project_id FROM project_locations WHERE zone_id = ${zoneId})`
       : '';
     const deptFilter = zoneId
-      ? `AND id IN (SELECT department_id FROM department_zone_mappings WHERE zone_id = ${zoneId})`
+      ? `AND zone_id = ${zoneId}`
       : '';
     const [totalUsersResult] = await this.dataSource.query(
       `SELECT COUNT(*)::int AS count FROM users WHERE deleted_at IS NULL ${userFilter}`,

@@ -51,11 +51,10 @@ export class CreateDepartmentDto {
   @Max(10)
   numberOfLevels: number;
 
-  @ApiProperty({ description: 'Zone IDs to map', type: [Number] })
-  @IsArray()
-  @ArrayMinSize(1)
-  @IsInt({ each: true })
-  zoneIds: number[];
+  @ApiProperty({ description: 'Zone ID', type: Number })
+  @IsInt()
+  @Min(1)
+  zoneId: number;
 
   @ApiProperty({
     description: 'Hierarchy level definitions',
@@ -92,12 +91,11 @@ export class UpdateDepartmentDto {
   @Max(10)
   numberOfLevels?: number;
 
-  @ApiPropertyOptional({ type: [Number] })
+  @ApiPropertyOptional({ type: Number })
   @IsOptional()
-  @IsArray()
-  @ArrayMinSize(1)
-  @IsInt({ each: true })
-  zoneIds?: number[];
+  @IsInt()
+  @Min(1)
+  zoneId?: number;
 
   @ApiPropertyOptional({ type: [HierarchyLevelDto] })
   @IsOptional()

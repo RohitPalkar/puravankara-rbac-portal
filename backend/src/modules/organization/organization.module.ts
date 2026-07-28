@@ -6,7 +6,6 @@ import { Department } from './entities/department.entity';
 import { Role } from './entities/role.entity';
 import { DepartmentRole } from './entities/department-role.entity';
 import { DepartmentHierarchyLevel } from './entities/department-hierarchy-level.entity';
-import { DepartmentZoneMapping } from './entities/department-zone-mapping.entity';
 import { UserRole } from '../users/entities/user-role.entity';
 import { UserReportingLine } from '../users/entities/user-reporting-line.entity';
 import { RoleActionPermission } from '../permissions/entities/role-action-permission.entity';
@@ -33,7 +32,6 @@ import { LevelMigrationController } from './controllers/level-migration.controll
       Role,
       DepartmentRole,
       DepartmentHierarchyLevel,
-      DepartmentZoneMapping,
       UserRole,
       UserReportingLine,
       RoleActionPermission,

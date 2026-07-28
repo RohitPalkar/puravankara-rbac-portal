@@ -352,10 +352,10 @@ describe('LevelMigrationService', () => {
 
     it('should auto-merge empty level', async () => {
       const preview = {
-        autoMerge: { eligible: true, candidateLevel: { id: 12, levelNumber: 3, roleName: 'Head' }, direction: 'up' },
+        autoMerge: { eligible: true, candidateLevel: { id: 12, levelNumber: 3, roleName: 'Head' }, direction: 'up' as const },
         sourceLevel: { id: 11, levelNumber: 2, roleName: 'Verifier', roleId: 72 },
         department: { id: 1, name: 'Finance', zones: [] },
-        dependencies: { users: { count: 0 }, permissions: { count: 0 }, projects: { count: 0 }, approvals: { count: 0, active: 0 }, reporting: { count: 0 }, isDepartmentAdmin: false },
+        dependencies: { users: { count: 0 }, permissions: { count: 0, modules: [] }, projects: { count: 0 }, approvals: { count: 0, active: 0 }, reporting: { count: 0 }, isDepartmentAdmin: false },
         protected: false, protectionReason: null,
         availableDestinations: [],
       };

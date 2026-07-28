@@ -5,19 +5,28 @@ import {
   ManyToOne,
   JoinColumn,
   Index,
+  Unique,
 } from 'typeorm';
 import { AppBaseEntity } from '../../../common/entities/app-base.entity';
+import { Zone } from '../../geography/entities/zone.entity';
 import { DepartmentRole } from './department-role.entity';
 import { DepartmentHierarchyLevel } from './department-hierarchy-level.entity';
-import { DepartmentZoneMapping } from './department-zone-mapping.entity';
 
 @Entity('departments')
+@Unique(['name', 'zoneId'])
 export class Department extends AppBaseEntity {
-  @Column({ unique: true, nullable: false })
+  @Column({ nullable: false })
   name: string;
 
   @Column({ name: 'max_hierarchy_levels', default: 4 })
   maxHierarchyLevels: number;
+
+  @Column({ name: 'zone_id' })
+  zoneId: number;
+
+  @ManyToOne(() => Zone, { onDelete: 'RESTRICT' })
+  @JoinColumn({ name: 'zone_id' })
+  zone: Zone;
 
   @Column({ name: 'is_active', default: true })
   isActive: boolean;
@@ -31,7 +40,4 @@ export class Department extends AppBaseEntity {
 
   @OneToMany(() => DepartmentHierarchyLevel, (hl) => hl.department)
   hierarchyLevels: DepartmentHierarchyLevel[];
-
-  @OneToMany(() => DepartmentZoneMapping, (zm) => zm.department)
-  zoneMappings: DepartmentZoneMapping[];
 }

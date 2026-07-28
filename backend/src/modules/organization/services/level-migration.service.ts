@@ -8,7 +8,6 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Department } from '../entities/department.entity';
 import { DepartmentHierarchyLevel } from '../entities/department-hierarchy-level.entity';
-import { DepartmentZoneMapping } from '../entities/department-zone-mapping.entity';
 import { Role } from '../entities/role.entity';
 import { RoleMigrationService } from './role-migration.service';
 import { AuditService } from '../../audit/services/audit.service';
@@ -81,8 +80,6 @@ export class LevelMigrationService {
     private readonly deptRepo: Repository<Department>,
     @InjectRepository(DepartmentHierarchyLevel)
     private readonly levelRepo: Repository<DepartmentHierarchyLevel>,
-    @InjectRepository(DepartmentZoneMapping)
-    private readonly zoneMappingRepo: Repository<DepartmentZoneMapping>,
     @InjectRepository(Role)
     private readonly roleRepo: Repository<Role>,
     @InjectRepository(UserRole)
@@ -106,6 +103,7 @@ export class LevelMigrationService {
   ): Promise<LevelImpactPreview> {
     const dept = await this.deptRepo.findOne({
       where: { id: departmentId, deletedAt: null },
+      relations: { zone: true },
     });
     if (!dept) throw new NotFoundException('Department not found');
 
@@ -114,14 +112,12 @@ export class LevelMigrationService {
     });
     if (!sourceLevel) throw new NotFoundException('Hierarchy level not found');
 
-    const deptZones = await this.zoneMappingRepo.find({
-      where: { departmentId },
-      relations: { zone: true },
-    });
-    const zones = deptZones.map((zm) => ({
-      zoneId: zm.zoneId,
-      name: zm.zone?.name ?? `Zone #${zm.zoneId}`,
-    }));
+    const zones = [
+      {
+        zoneId: dept.zoneId,
+        name: dept.zone?.name ?? `Zone #${dept.zoneId}`,
+      },
+    ];
 
     const roleId = sourceLevel.roleId;
 
@@ -227,6 +223,7 @@ export class LevelMigrationService {
   ): Promise<LevelRemoveResult> {
     const dept = await this.deptRepo.findOne({
       where: { id: departmentId, deletedAt: null },
+      relations: { zone: true },
     });
     if (!dept) throw new NotFoundException('Department not found');
 
@@ -284,11 +281,7 @@ export class LevelMigrationService {
     });
 
     // Create audit log
-    const deptZones = await this.zoneMappingRepo.find({
-      where: { departmentId },
-      relations: { zone: true },
-    });
-    const zones = deptZones.map((zm) => zm.zone?.name).filter(Boolean);
+    const zones = dept.zone ? [dept.zone.name] : [];
 
     try {
       await this.auditService.createLog({
