@@ -31,9 +31,9 @@ import { CONFIG } from 'src/config-global';
 import { queryKeys } from 'src/services/api/query-keys';
 import { brandService } from 'src/services/services/brand.service';
 import { phaseService } from 'src/services/services/phase.service';
-import { cityService, zoneService, cityZoneMappingService } from 'src/services/services/geography.service';
 import { IncentiveType, PaymentGatewayType } from 'src/services/types/enums';
 import { useProjectById, useCreateProject, useUpdateProject } from 'src/services/hooks/use-projects';
+import { cityService, zoneService, cityZoneMappingService } from 'src/services/services/geography.service';
 
 import { Iconify } from 'src/components/iconify';
 import { PageHeader, PageContainer } from 'src/components/page-layout';

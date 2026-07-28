@@ -1,6 +1,6 @@
 import type { Zone } from 'src/services/types/geography';
-import type { ProjectLocation } from 'src/services/types/project';
 import type { Role } from 'src/services/types/organization';
+import type { ProjectLocation } from 'src/services/types/project';
 import type { ProjectMappingData, RolePermissionProfile } from 'src/services/types/user';
 
 import { useQuery, useQueryClient } from '@tanstack/react-query';

@@ -1,7 +1,8 @@
 import type { Zone } from 'src/services/types/geography';
+
 import { Helmet } from 'react-helmet-async';
-import { useMemo, useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { useMemo, useState, useEffect } from 'react';
 
 import Box from '@mui/material/Box';
 import Card from '@mui/material/Card';
@@ -25,8 +26,8 @@ import ListItemAvatar from '@mui/material/ListItemAvatar';
 
 import { CONFIG } from 'src/config-global';
 import { queryKeys } from 'src/services/api/query-keys';
-import { zoneService } from 'src/services/services/geography.service';
 import { useUserList, useProjectList } from 'src/services/hooks';
+import { zoneService } from 'src/services/services/geography.service';
 
 import { Iconify } from 'src/components/iconify';
 import { PageHeader, PageContainer } from 'src/components/page-layout';
