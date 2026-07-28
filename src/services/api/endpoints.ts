@@ -130,7 +130,10 @@ export const endpoints = {
     byId: (id: number) => `${API_PREFIX}/departments/${id}`,
     create: `${API_PREFIX}/departments`,
     update: (id: number) => `${API_PREFIX}/departments/${id}`,
-    delete: (id: number) => `${API_PREFIX}/departments/${id}`,
+    delete: (id: number, mergeTo?: number) =>
+      `${API_PREFIX}/departments/${id}${mergeTo ? `?mergeTo=${mergeTo}` : ''}`,
+    stats: `${API_PREFIX}/departments/stats`,
+    deleteImpact: (id: number) => `${API_PREFIX}/departments/${id}/delete-impact`,
     checkName: (name: string, zoneId: number, excludeId?: number) =>
       `${API_PREFIX}/departments/check-name?name=${encodeURIComponent(name)}&zoneId=${zoneId}${excludeId ? `&excludeId=${excludeId}` : ''}`,
     hierarchyLevels: (id: number) => `${API_PREFIX}/departments/${id}/hierarchy-levels`,

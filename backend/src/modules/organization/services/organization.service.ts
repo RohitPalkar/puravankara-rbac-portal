@@ -41,30 +41,49 @@ export class DepartmentService {
       page = 1,
       limit = 20,
       search,
-      sortBy = 'createdAt',
-      sortOrder = 'DESC',
+      sortBy = 'zoneName',
+      sortOrder = 'ASC',
       ...filters
     } = query;
 
-    const where: FindOptionsWhere<Department> = { deletedAt: null };
+    const qb = this.repository.createQueryBuilder('dept')
+      .leftJoinAndSelect('dept.zone', 'zone')
+      .where('dept.deletedAt IS NULL');
 
     if (search) {
-      where.name = ILike(`%${search}%`);
+      qb.andWhere(
+        '(dept.name ILike :search OR zone.name ILike :search)',
+        { search: `%${search}%` },
+      );
     }
 
     for (const [key, value] of Object.entries(filters)) {
       if (value !== undefined && value !== '' && value !== null) {
-        (where as any)[key] = value;
+        if (key === 'zoneId') {
+          qb.andWhere('dept.zoneId = :zoneId', { zoneId: Number(value) });
+        } else if (key === 'isActive') {
+          qb.andWhere('dept.isActive = :isActive', { isActive: value === 'true' || value === true });
+        }
       }
     }
 
-    const [data, total] = await this.repository.findAndCount({
-      where,
-      relations: { zone: true },
-      order: { [sortBy]: sortOrder },
-      skip: (page - 1) * limit,
-      take: limit,
-    });
+    const sortMap: Record<string, string> = {
+      zoneName: 'zone.name',
+      name: 'dept.name',
+      status: 'dept.isActive',
+      createdAt: 'dept.createdAt',
+    };
+
+    const orderField = sortMap[sortBy] || 'zone.name';
+    const dir = sortOrder === 'DESC' ? 'DESC' : 'ASC';
+    qb.orderBy(orderField, dir);
+    if (sortBy === 'zoneName') {
+      qb.addOrderBy('dept.name', 'ASC');
+    }
+
+    qb.skip((page - 1) * limit).take(limit);
+
+    const [data, total] = await qb.getManyAndCount();
 
     const enhanced = await Promise.all(
       data.map((dept) => this.enhanceDepartment(dept)),
@@ -287,6 +306,161 @@ export class DepartmentService {
     }
   }
 
+  async getStats(): Promise<any> {
+    const all = await this.repository.find({ where: { deletedAt: null } });
+    const active = all.filter((d) => d.isActive).length;
+    const inactive = all.filter((d) => !d.isActive).length;
+    const zoneSet = new Set(all.map((d) => d.zoneId));
+    return {
+      total: all.length,
+      active,
+      inactive,
+      zonesCovered: zoneSet.size,
+    };
+  }
+
+  async getDeleteImpact(id: number): Promise<any> {
+    const dept = await this.repository.findOne({
+      where: { id, deletedAt: null },
+      relations: { zone: true },
+    });
+    if (!dept) throw new NotFoundException('Department not found');
+
+    const [
+      userCount,
+      deptRoleCount,
+      hlCount,
+      approvalCount,
+      reportingCount,
+    ] = await Promise.all([
+      this.repository.manager.count(User, {
+        where: { departmentId: id, deletedAt: null },
+      }),
+      this.deptRoleRepo.count({ where: { departmentId: id } }),
+      this.hierarchyRepo.count({ where: { departmentId: id } }),
+      this.repository.manager.count('approval_steps' as any, {
+        where: { department_id: id, deletedAt: null },
+      } as any).catch(() => 0),
+      this.repository.manager.count('user_reporting_lines' as any, {
+        where: { level_rank: 0 },
+      } as any).catch(() => 0),
+    ]);
+
+    return {
+      departmentId: id,
+      departmentName: dept.name,
+      zoneId: dept.zoneId,
+      zoneName: dept.zone?.name ?? `Zone #${dept.zoneId}`,
+      dependencies: {
+        users: userCount,
+        roles: deptRoleCount,
+        hierarchyLevels: hlCount,
+        approvals: approvalCount,
+        reportingLines: reportingCount,
+      },
+      hasDependencies:
+        userCount > 0 || deptRoleCount > 0 || hlCount > 0 || approvalCount > 0,
+    };
+  }
+
+  async removeWithMerge(
+    id: number,
+    targetDepartmentId: number,
+  ): Promise<any> {
+    const dept = await this.repository.findOne({
+      where: { id, deletedAt: null },
+      relations: { zone: true },
+    });
+    if (!dept) throw new NotFoundException('Source department not found');
+
+    const target = await this.repository.findOne({
+      where: { id: targetDepartmentId, deletedAt: null },
+    });
+    if (!target) throw new NotFoundException('Target department not found');
+
+    if (dept.zoneId !== target.zoneId) {
+      throw new BadRequestException(
+        'Cannot merge departments across different zones',
+      );
+    }
+    if (id === targetDepartmentId) {
+      throw new BadRequestException('Cannot merge a department into itself');
+    }
+
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    try {
+      // Move users
+      await queryRunner.manager.update(
+        User,
+        { departmentId: id },
+        { departmentId: targetDepartmentId },
+      );
+
+      // Move department roles
+      const existingRoles = await queryRunner.manager.find(DepartmentRole, {
+        where: { departmentId: targetDepartmentId },
+      });
+      const existingRoleIds = new Set(existingRoles.map((r) => r.roleId));
+      const sourceRoles = await queryRunner.manager.find(DepartmentRole, {
+        where: { departmentId: id },
+      });
+      for (const dr of sourceRoles) {
+        if (!existingRoleIds.has(dr.roleId)) {
+          await queryRunner.manager.save(
+            queryRunner.manager.create(DepartmentRole, {
+              departmentId: targetDepartmentId,
+              roleId: dr.roleId,
+            }),
+          );
+        }
+      }
+      await queryRunner.manager.delete(DepartmentRole, { departmentId: id });
+
+      // Move hierarchy levels
+      const levels = await queryRunner.manager.find(DepartmentHierarchyLevel, {
+        where: { departmentId: id },
+      });
+      for (const hl of levels) {
+        await queryRunner.manager.save(
+          queryRunner.manager.create(DepartmentHierarchyLevel, {
+            departmentId: targetDepartmentId,
+            roleId: hl.roleId,
+            levelNumber: hl.levelNumber,
+            roleName: hl.roleName,
+            displayOrder: hl.displayOrder,
+            isActive: hl.isActive,
+          }),
+        );
+      }
+      await queryRunner.manager.delete(DepartmentHierarchyLevel, {
+        departmentId: id,
+      });
+
+      // Soft-delete source department
+      await queryRunner.manager.update(
+        Department,
+        id,
+        { deletedAt: new Date() } as any,
+      );
+
+      await queryRunner.commitTransaction();
+      return {
+        message: `Merged "${dept.name}" into "${target.name}"`,
+        sourceDepartmentId: id,
+        targetDepartmentId,
+        usersMoved: existingRoles.length,
+      };
+    } catch (err) {
+      await queryRunner.rollbackTransaction();
+      throw err;
+    } finally {
+      await queryRunner.release();
+    }
+  }
+
   async checkName(
     name: string,
     zoneId: number,
@@ -396,9 +570,9 @@ export class DepartmentService {
   }
 
   async remove(id: number): Promise<void> {
-    await this.dependencyValidator.assertDepartmentDeletable(id);
     const dept = await this.repository.findOne({
       where: { id, deletedAt: null },
+      relations: { zone: true },
     });
     if (!dept) {
       throw new NotFoundException('Department not found');
@@ -459,6 +633,15 @@ export class DepartmentService {
       zoneName = zone?.name ?? null;
     }
 
+    const [userCount, roleCount] = await Promise.all([
+      this.repository.manager.count(User, {
+        where: { departmentId: dept.id, deletedAt: null },
+      }),
+      this.deptRoleRepo.count({
+        where: { departmentId: dept.id },
+      }),
+    ]);
+
     return {
       id: dept.id,
       name: dept.name,
@@ -470,6 +653,8 @@ export class DepartmentService {
       isActive: dept.isActive,
       createdAt: dept.createdAt,
       updatedAt: dept.updatedAt,
+      userCount,
+      roleCount,
     };
   }
 

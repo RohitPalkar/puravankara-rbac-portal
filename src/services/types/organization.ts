@@ -18,6 +18,8 @@ export interface DepartmentListItem {
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
+  userCount?: number;
+  roleCount?: number;
 }
 
 export interface DepartmentDetail {
@@ -112,6 +114,37 @@ export interface CheckDepartmentNameResult {
   available: boolean;
   existingInZones?: { zoneId: number; zoneName: string }[];
   message?: string;
+}
+
+export interface DepartmentStats {
+  total: number;
+  active: number;
+  inactive: number;
+  zonesCovered: number;
+}
+
+export interface DeleteDependencies {
+  users: number;
+  roles: number;
+  hierarchyLevels: number;
+  approvals: number;
+  reportingLines: number;
+}
+
+export interface DeleteImpactResult {
+  departmentId: number;
+  departmentName: string;
+  zoneId: number;
+  zoneName: string;
+  dependencies: DeleteDependencies;
+  hasDependencies: boolean;
+}
+
+export interface MergeResult {
+  message: string;
+  sourceDepartmentId: number;
+  targetDepartmentId: number;
+  usersMoved: number;
 }
 
 export interface AutoMergeResult {

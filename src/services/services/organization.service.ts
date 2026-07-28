@@ -6,15 +6,19 @@ import type { ApiResponse } from '../types/api';
 import type {
   Role,
   Department,
+  MergeResult,
   DepartmentRole,
   AutoMergeResult,
+  DepartmentStats,
   CreateRoleRequest,
   UpdateRoleRequest,
   RemoveLevelResult,
   LevelImpactPreview,
+  DeleteImpactResult,
   CreateDepartmentRequest,
   UpdateDepartmentRequest,
   CheckDepartmentNameResult,
+
 } from '../types/organization';
 
 const _departmentCrud = createCrudService<Department, CreateDepartmentRequest, UpdateDepartmentRequest>({
@@ -33,6 +37,12 @@ export const departmentService = {
     apiGet<{ hierarchyLevel: string; roleName: string | null; roleId: number | null }>(endpoints.departments.roleForHierarchy(id, levelNumber)),
   checkName: async (name: string, zoneId: number, excludeId?: number): Promise<ApiResponse<CheckDepartmentNameResult>> =>
     apiGet<CheckDepartmentNameResult>(endpoints.departments.checkName(name, zoneId, excludeId)),
+  stats: async (): Promise<ApiResponse<DepartmentStats>> =>
+    apiGet<DepartmentStats>(endpoints.departments.stats),
+  deleteImpact: async (id: number): Promise<ApiResponse<DeleteImpactResult>> =>
+    apiGet<DeleteImpactResult>(endpoints.departments.deleteImpact(id)),
+  removeWithMerge: async (id: number, mergeTo: number): Promise<ApiResponse<MergeResult>> =>
+    apiDelete<MergeResult>(endpoints.departments.delete(id, mergeTo)),
 };
 
 export const roleService = createCrudService<Role, CreateRoleRequest, UpdateRoleRequest>({

@@ -50,6 +50,21 @@ class SetRolePermissionsDto {
 export class DepartmentController {
   constructor(private readonly departmentService: DepartmentService) {}
 
+  @Get('stats')
+  @ApiOperation({ summary: 'Get department summary stats for KPI cards' })
+  @ApiResponse({ status: 200, description: 'Department stats' })
+  async getStats() {
+    return this.departmentService.getStats();
+  }
+
+  @Get(':id/delete-impact')
+  @ApiOperation({ summary: 'Get impact analysis before deleting a department' })
+  @ApiResponse({ status: 200, description: 'Impact analysis' })
+  @ApiResponse({ status: 404, description: 'Department not found' })
+  async getDeleteImpact(@Param('id', ParseIntPipe) id: number) {
+    return this.departmentService.getDeleteImpact(id);
+  }
+
   @Get('check-name')
   @ApiOperation({ summary: 'Check if a department name is available in a zone' })
   @ApiResponse({ status: 200, description: 'Availability result' })
@@ -127,10 +142,19 @@ export class DepartmentController {
   }
 
   @Delete(':id')
-  @ApiOperation({ summary: 'Soft delete department' })
-  @ApiResponse({ status: 200, description: 'Department deleted' })
+  @ApiOperation({ summary: 'Delete department, optionally merging into another' })
+  @ApiResponse({ status: 200, description: 'Department deleted/merged' })
   @ApiResponse({ status: 404, description: 'Department not found' })
-  async remove(@Param('id', ParseIntPipe) id: number) {
+  async remove(
+    @Param('id', ParseIntPipe) id: number,
+    @Query('mergeTo') mergeTo?: string,
+  ) {
+    if (mergeTo) {
+      return this.departmentService.removeWithMerge(
+        id,
+        Number(mergeTo),
+      );
+    }
     await this.departmentService.remove(id);
     return { message: 'Department deleted successfully' };
   }
