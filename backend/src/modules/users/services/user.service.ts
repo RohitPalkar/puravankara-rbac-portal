@@ -208,6 +208,7 @@ export class UserService {
       return {
         ...user,
         roleName: role?.roleName ?? null,
+        departmentName: user.department?.name ?? null,
         zoneNames: zoneMap.get(user.empId) ?? [],
         projectCount: projectCountMap.get(user.empId) ?? 0,
         reportsToName: reportsToMap.get(user.empId) ?? null,
