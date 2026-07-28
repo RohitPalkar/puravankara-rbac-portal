@@ -1,5 +1,6 @@
 import 'react-quill/dist/quill.snow.css';
 
+import type { Zone } from 'src/services/types/geography';
 import type { CreateProjectRequest, UpdateProjectRequest, IncentiveRuleRequest, PaymentGatewayRequest } from 'src/services/types/project';
 
 import ReactQuill from 'react-quill';
@@ -30,7 +31,7 @@ import { CONFIG } from 'src/config-global';
 import { queryKeys } from 'src/services/api/query-keys';
 import { brandService } from 'src/services/services/brand.service';
 import { phaseService } from 'src/services/services/phase.service';
-import { cityService } from 'src/services/services/geography.service';
+import { cityService, zoneService, cityZoneMappingService } from 'src/services/services/geography.service';
 import { IncentiveType, PaymentGatewayType } from 'src/services/types/enums';
 import { useProjectById, useCreateProject, useUpdateProject } from 'src/services/hooks/use-projects';
 
@@ -72,6 +73,7 @@ export default function ProjectFormPage() {
   const [sfdcProjectName, setSfdcProjectName] = useState('');
   const [codename, setCodename] = useState('');
   const [phaseId, setPhaseId] = useState<number | ''>('');
+  const [zoneId, setZoneId] = useState<number | ''>('');
   const [nameError, setNameError] = useState('');
   const [brandIdError, setBrandIdError] = useState('');
   const [cityIdError, setCityIdError] = useState('');
@@ -128,6 +130,26 @@ export default function ProjectFormPage() {
     },
   });
 
+  const { data: allZones } = useQuery({
+    queryKey: queryKeys.zones.list({}),
+    queryFn: async () => {
+      const res = await zoneService.list({});
+      return (res.data ?? []) as Zone[];
+    },
+  });
+
+  const activeZones = useMemo(() => (allZones ?? []).filter((z: Zone) => z.isActive !== false), [allZones]);
+
+  const { data: allMappings } = useQuery({
+    queryKey: queryKeys.cityZoneMappings.all,
+    queryFn: async () => {
+      const res = await cityZoneMappingService.list();
+      return res.data ?? [];
+    },
+  });
+
+  const mappings = useMemo(() => allMappings ?? [], [allMappings]);
+
   // Populate form on edit
   useEffect(() => {
     if (!projectData) return;
@@ -177,11 +199,15 @@ export default function ProjectFormPage() {
   }, [projectData]);
 
   const filteredCities = useMemo(() => {
-    if (!allCities || !brandId) return [];
-    const brand = allBrands?.find((b) => b.id === brandId);
-    if (!brand) return allCities;
-    return allCities;
-  }, [allCities, allBrands, brandId]);
+    if (!allCities) return [];
+    const citiesInZone = zoneId
+      ? new Set(mappings.filter((m) => m.zoneId === zoneId).map((m) => m.cityId))
+      : null;
+    return allCities.filter((c) => {
+      if (!zoneId) return true;
+      return citiesInZone?.has(c.id);
+    });
+  }, [allCities, zoneId, mappings]);
 
   // Image upload handlers
   const handleLogoUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
@@ -323,6 +349,10 @@ export default function ProjectFormPage() {
           {/* Project Details */}
           <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 3 }}>Project Details</Typography>
           <Box display="grid" gridTemplateColumns={{ xs: '1fr', sm: '1fr 1fr' }} gap={3}>
+            <TextField label="Zone" value={zoneId} onChange={(e) => { setZoneId(Number(e.target.value) || ''); setCityId(''); }} select fullWidth>
+              <MenuItem value="">All Zones</MenuItem>
+              {activeZones.map((z) => <MenuItem key={z.id} value={z.id}>{z.name}</MenuItem>)}
+            </TextField>
             <TextField label="Brand" value={brandId} onChange={(e) => { setBrandId(Number(e.target.value) || ''); setCityId(''); }} select required error={!!brandIdError} helperText={brandIdError} fullWidth>
               {allBrands?.map((b) => <MenuItem key={b.id} value={b.id}>{b.brandName}</MenuItem>)}
             </TextField>
