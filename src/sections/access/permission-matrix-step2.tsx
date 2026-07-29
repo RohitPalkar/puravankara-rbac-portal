@@ -390,10 +390,10 @@ export default function PermissionMatrixStep2({ roleId, roleName = '', projectNa
               }}
             />
           </Box>
-          <Box sx={{ flex: 1, overflow: 'auto', px: 1, py: 0.5 }}>
+          <Box sx={{ flex: 1, overflow: 'auto', px: 1.5, py: 1 }}>
             {filteredModules.length === 0 ? (
-              <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center', py: 6 }}>
-                {leftSearch ? 'No modules match your search.' : 'No modules found.'}
+              <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center', py: 8 }}>
+                {leftSearch ? 'No modules match your search.' : 'No permission modules available.'}
               </Typography>
             ) : (
               filteredModules.map((mod: ModuleNode) => {
@@ -404,12 +404,13 @@ export default function PermissionMatrixStep2({ roleId, roleName = '', projectNa
                     <Stack
                       direction="row"
                       alignItems="center"
-                      spacing={0.5}
+                      spacing={0.75}
                       sx={{
                         py: 1,
-                        px: 1,
+                        px: 1.25,
                         borderRadius: 1,
                         cursor: 'pointer',
+                        transition: 'background-color 0.15s',
                         '&:hover': { bgcolor: 'action.hover' },
                       }}
                       onClick={() => setExpandedModules((prev) => ({ ...prev, [mod.id]: !(prev[mod.id] ?? false) }))}
@@ -427,7 +428,7 @@ export default function PermissionMatrixStep2({ roleId, roleName = '', projectNa
                         }}
                       >
                         <Iconify
-                          icon={isExpanded ? 'solar:alt-arrow-down-linear' : 'solar:alt-arrow-right-linear'}
+                          icon={isExpanded ? 'solar:alt-arrow-down-bold' : 'solar:alt-arrow-right-bold'}
                           width={14}
                         />
                       </Box>
@@ -453,16 +454,17 @@ export default function PermissionMatrixStep2({ roleId, roleName = '', projectNa
                             key={sm.id}
                             direction="row"
                             alignItems="center"
-                            spacing={0.5}
+                            spacing={0.75}
                             sx={{
-                              py: 0.5,
-                              px: 1,
-                              ml: 2,
-                              borderRadius: 0.5,
+                              py: 0.75,
+                              px: 1.25,
+                              ml: 2.5,
+                              borderRadius: 1,
                               cursor: 'pointer',
                               bgcolor: isActive ? 'primary.lighter' : 'transparent',
-                              borderLeft: '2px solid',
+                              borderLeft: '3px solid',
                               borderColor: isActive ? 'primary.main' : 'transparent',
+                              transition: 'all 0.15s',
                               '&:hover': {
                                 bgcolor: isActive ? 'primary.lighter' : 'action.hover',
                               },
@@ -504,10 +506,10 @@ export default function PermissionMatrixStep2({ roleId, roleName = '', projectNa
           <Stack
             direction="row"
             alignItems="center"
-            spacing={1}
+            spacing={1.5}
             sx={{
-              px: 2,
-              py: 1,
+              px: 2.5,
+              py: 1.25,
               borderBottom: '1px solid',
               borderColor: 'divider',
               flexWrap: 'wrap',
@@ -523,7 +525,7 @@ export default function PermissionMatrixStep2({ roleId, roleName = '', projectNa
               placeholder="Search permissions..."
               value={rightSearch}
               onChange={(e) => setRightSearch(e.target.value)}
-              sx={{ minWidth: 200 }}
+              sx={{ minWidth: 220 }}
               InputProps={{
                 startAdornment: (
                   <Iconify
@@ -539,10 +541,10 @@ export default function PermissionMatrixStep2({ roleId, roleName = '', projectNa
 
             {editable && (
               <>
-                <Button size="small" variant="outlined" onClick={selectAllTree} sx={{ minWidth: 80 }}>
+                <Button size="small" variant="outlined" onClick={selectAllTree} sx={{ minWidth: 90, fontSize: '0.8125rem' }}>
                   Select All
                 </Button>
-                <Button size="small" variant="outlined" color="error" onClick={clearAllTree} sx={{ minWidth: 80 }}>
+                <Button size="small" variant="outlined" color="error" onClick={clearAllTree} sx={{ minWidth: 90, fontSize: '0.8125rem' }}>
                   Clear All
                 </Button>
               </>
@@ -552,26 +554,26 @@ export default function PermissionMatrixStep2({ roleId, roleName = '', projectNa
 
             {editable && selectedSubModule && selectedSubModule.hasActions && (
               <>
-                <Button size="small" variant="text" onClick={selectAllInSubModule} sx={{ minWidth: 80 }}>
+                <Button size="small" variant="text" onClick={selectAllInSubModule} sx={{ minWidth: 80, fontSize: '0.8125rem' }}>
                   Select Sub
                 </Button>
-                <Button size="small" variant="text" color="error" onClick={clearAllInSubModule} sx={{ minWidth: 80 }}>
+                <Button size="small" variant="text" color="error" onClick={clearAllInSubModule} sx={{ minWidth: 80, fontSize: '0.8125rem' }}>
                   Clear Sub
                 </Button>
               </>
             )}
           </Stack>
 
-          <Box sx={{ flex: 1, overflow: 'auto', p: 2.5 }}>
+          <Box sx={{ flex: 1, overflow: 'auto', p: 3 }}>
             {!selectedSubModule && (
-              <Box sx={{ textAlign: 'center', py: 10 }}>
+              <Box sx={{ textAlign: 'center', py: 12 }}>
                 <Iconify
                   icon="solar:hand-point-left-bold"
                   width={40}
                   sx={{ color: 'text.disabled', mb: 1.5 }}
                 />
                 <Typography variant="body2" color="text.secondary" sx={{ maxWidth: 440, mx: 'auto' }}>
-                  Select a Module and Submodule from the left panel to configure permissions.
+                  Select a module and submodule from the left panel to configure permissions.
                 </Typography>
               </Box>
             )}
@@ -613,7 +615,7 @@ export default function PermissionMatrixStep2({ roleId, roleName = '', projectNa
                     </Typography>
                   </Box>
                 ) : (
-                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                     {filteredActionGroups.map((ag) => {
                       const agAllSelected = ag.actions.every((a) => selectedActionIds.has(a.id));
                       const agSomeSelected = ag.actions.some((a) => selectedActionIds.has(a.id));
@@ -632,8 +634,8 @@ export default function PermissionMatrixStep2({ roleId, roleName = '', projectNa
                             alignItems="center"
                             spacing={0.75}
                             sx={{
-                              px: 1.5,
-                              py: 1,
+                              px: 2,
+                              py: 1.25,
                               bgcolor: 'grey.50',
                               borderBottom: '1px solid',
                               borderColor: 'divider',
@@ -651,20 +653,21 @@ export default function PermissionMatrixStep2({ roleId, roleName = '', projectNa
                               {ag.name}
                             </Typography>
                           </Stack>
-                          <Box sx={{ px: 1.5, py: 1 }}>
+                          <Box sx={{ px: 2, py: 1.25 }}>
                             <Grid container spacing={0.5}>
                               {ag.actions.map((a) => (
                                 <Grid item xs={12} sm={6} key={a.id}>
                                   <Stack
                                     direction="row"
                                     alignItems="center"
-                                    spacing={0.5}
+                                    spacing={0.75}
                                     sx={{
-                                      py: 0.25,
-                                      px: 0.5,
-                                      borderRadius: 0.5,
+                                      py: 0.5,
+                                      px: 0.75,
+                                      borderRadius: 0.75,
                                       '&:hover': { bgcolor: 'action.hover' },
                                       cursor: 'pointer',
+                                      transition: 'background-color 0.15s',
                                     }}
                                     onClick={() => editable && toggleAction(a.id)}
                                   >
@@ -710,16 +713,16 @@ export default function PermissionMatrixStep2({ roleId, roleName = '', projectNa
             justifyContent="flex-end"
             alignItems="center"
             spacing={2}
-            sx={{ px: 3, py: 1.5 }}
+            sx={{ px: 3, py: 2 }}
           >
-            <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 500 }}>
-              {totalSelected} of {totalActions} action{totalSelected !== 1 ? 's' : ''} selected
+            <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 600 }}>
+              {totalSelected} of {totalActions} {totalActions === 1 ? 'action' : 'actions'} selected
             </Typography>
             <Button
               variant="contained"
               onClick={() => onSave!(Array.from(selectedActionIds))}
               disabled={saving}
-              sx={{ minWidth: 150 }}
+              sx={{ minWidth: 160 }}
             >
               {saving ? 'Saving...' : 'Save Permissions'}
             </Button>

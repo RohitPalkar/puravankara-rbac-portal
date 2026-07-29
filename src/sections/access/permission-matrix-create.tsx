@@ -152,20 +152,21 @@ export default function PermissionMatrixCreatePage() {
           </Stepper>
 
           {activeStep === 0 && (
-            <Box sx={{ p: 3 }}>
-              <Box display="grid" gridTemplateColumns={{ xs: '1fr', sm: '1fr 1fr' }} gap={2.5} sx={{ maxWidth: 900 }}>
+            <Box sx={{ px: 4, pb: 4 }}>
+              <Box display="grid" gridTemplateColumns={{ xs: '1fr', sm: '1fr 1fr' }} gap={3} sx={{ maxWidth: 900 }}>
                 <Autocomplete
                   options={projectOptions}
                   getOptionLabel={(option) => option.name}
                   value={projectOptions.find((p) => p.id === Number(projectId)) ?? null}
                   onChange={(_e, val) => setProjectId(val ? val.id : '')}
                   disabled={isEditMode}
+                  noOptionsText="No projects available"
                   renderInput={(params) => (
-                    <TextField {...params} label="Project *" required />
+                    <TextField {...params} label="Project *" placeholder="Search projects..." required />
                   )}
                 />
 
-                <FormControl>
+                <FormControl fullWidth>
                   <InputLabel>Department *</InputLabel>
                   <Select
                     value={isEditMode ? (editRoleInfo?.departmentName ?? '') : departmentId}
@@ -193,9 +194,10 @@ export default function PermissionMatrixCreatePage() {
                   value={filteredRoleOptions.find((r) => r.id === Number(roleId)) ?? null}
                   onChange={(_e, val) => setRoleId(val ? val.id : '')}
                   disabled={isEditMode || !departmentId}
+                  loading={!allRoles}
                   noOptionsText={!departmentId ? 'Select a department first' : 'No roles available'}
                   renderInput={(params) => (
-                    <TextField {...params} label="Role *" required />
+                    <TextField {...params} label="Role *" placeholder="Search roles..." required />
                   )}
                 />
               </Box>
@@ -213,11 +215,11 @@ export default function PermissionMatrixCreatePage() {
             />
           )}
 
-          <Stack direction="row" justifyContent="space-between" sx={{ p: 3, borderTop: '1px solid', borderColor: 'divider' }}>
+          <Stack direction="row" justifyContent="space-between" sx={{ px: 4, py: 3, borderTop: '1px solid', borderColor: 'divider' }}>
             <Button color="inherit" onClick={() => navigate(paths.dashboard.permissionMatrix)}>
               Cancel
             </Button>
-            <Stack direction="row" spacing={1}>
+            <Stack direction="row" spacing={1.5}>
               {activeStep > 0 && (
                 <Button onClick={handleBack} color="inherit">
                   Previous
