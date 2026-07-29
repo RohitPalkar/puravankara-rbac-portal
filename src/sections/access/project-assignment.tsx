@@ -23,6 +23,7 @@ import ListItemText from '@mui/material/ListItemText';
 import DialogContent from '@mui/material/DialogContent';
 import DialogActions from '@mui/material/DialogActions';
 import ListItemAvatar from '@mui/material/ListItemAvatar';
+import CircularProgress from '@mui/material/CircularProgress';
 
 import { CONFIG } from 'src/config-global';
 import { queryKeys } from 'src/services/api/query-keys';
@@ -125,8 +126,8 @@ export default function ProjectAssignmentPage() {
     return (
       <PageContainer>
         <PageHeader title="Project Assignment" description="Assign users to projects" />
-        <Card sx={{ p: 4, textAlign: 'center' }}>
-          <Typography variant="body2" color="text.secondary">Loading...</Typography>
+        <Card sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 200 }}>
+          <CircularProgress />
         </Card>
       </PageContainer>
     );

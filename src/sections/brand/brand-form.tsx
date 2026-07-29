@@ -250,7 +250,7 @@ export default function BrandFormPage() {
         {saving && <LinearProgress />}
 
         <Card sx={{ p: 4 }}>
-          <Box display="grid" gridTemplateColumns="1fr 1fr" gap={3}>
+          <Box display="grid" gridTemplateColumns={{ xs: '1fr', sm: '1fr 1fr' }} gap={3}>
             <TextField
               label="Brand Name"
               value={brandName}
@@ -270,29 +270,29 @@ export default function BrandFormPage() {
             />
           </Box>
 
-          <Box display="grid" gridTemplateColumns="1fr 1fr" gap={3} sx={{ mt: 3 }}>
+          <Box display="grid" gridTemplateColumns={{ xs: '1fr', sm: '1fr 1fr' }} gap={3} sx={{ mt: 3 }}>
             <TextField label="RazorPay Merchant ID (Booking)" value={razorpayMerchantId} onChange={(e) => setRazorpayMerchantId(e.target.value)} placeholder="Enter RazorPay Merchant ID" />
             <TextField label="RazorPay Secret Key (Booking)" value={razorpaySecretKey} onChange={(e) => setRazorpaySecretKey(e.target.value)} type="password" placeholder="Enter RazorPay Secret Key" />
           </Box>
 
-          <Box display="grid" gridTemplateColumns="1fr 1fr" gap={3} sx={{ mt: 3 }}>
+          <Box display="grid" gridTemplateColumns={{ xs: '1fr', sm: '1fr 1fr' }} gap={3} sx={{ mt: 3 }}>
             <TextField label="Easebuzz Salt (Booking)" value={easebuzzBookingSalt} onChange={(e) => setEasebuzzBookingSalt(e.target.value)} placeholder="Enter Easebuzz Booking Salt" />
             <TextField label="Easebuzz Key (Booking)" value={easebuzzBookingKey} onChange={(e) => setEasebuzzBookingKey(e.target.value)} placeholder="Enter Easebuzz Booking Key" />
           </Box>
 
-          <Box display="grid" gridTemplateColumns="1fr 1fr" gap={3} sx={{ mt: 3 }}>
+          <Box display="grid" gridTemplateColumns={{ xs: '1fr', sm: '1fr 1fr' }} gap={3} sx={{ mt: 3 }}>
             <TextField label="Easebuzz Salt (Milestone)" value={easebuzzMilestoneSalt} onChange={(e) => setEasebuzzMilestoneSalt(e.target.value)} placeholder="Enter Easebuzz Milestone Salt" />
             <TextField label="Easebuzz Key (Milestone)" value={easebuzzMilestoneKey} onChange={(e) => setEasebuzzMilestoneKey(e.target.value)} placeholder="Enter Easebuzz Milestone Key" />
           </Box>
 
-          <Box display="grid" gridTemplateColumns="1fr 1fr" gap={3} sx={{ mt: 3 }}>
+          <Box display="grid" gridTemplateColumns={{ xs: '1fr', sm: '1fr 1fr' }} gap={3} sx={{ mt: 3 }}>
             <TextField label="Easebuzz sub-merchant ID (Booking)" value={easebuzzBookingSubMerchantId} onChange={(e) => setEasebuzzBookingSubMerchantId(e.target.value)} placeholder="Enter Easebuzz sub-merchant ID" />
             <TextField label="Easebuzz sub-merchant ID (Milestone)" value={easebuzzMilestoneSubMerchantId} onChange={(e) => setEasebuzzMilestoneSubMerchantId(e.target.value)} placeholder="Enter Easebuzz sub-merchant ID" />
           </Box>
 
           <Divider sx={{ my: 4 }} />
 
-          <Box display="grid" gridTemplateColumns="1fr 1fr" gap={3}>
+          <Box display="grid" gridTemplateColumns={{ xs: '1fr', sm: '1fr 1fr' }} gap={3}>
             <TextField label="Billing Name" value={billingName} onChange={(e) => setBillingName(e.target.value)} placeholder="Enter Billing Name" />
             <TextField label="PAN No." value={panNumber} onChange={(e) => setPanNumber(e.target.value.toUpperCase())} inputProps={{ maxLength: 10 }} placeholder="Enter PAN Number" />
             <TextField label="GSTIN" value={gstin} onChange={(e) => setGstin(e.target.value.toUpperCase())} inputProps={{ maxLength: 15 }} placeholder="Enter GSTIN" />
@@ -374,7 +374,7 @@ export default function BrandFormPage() {
             {/* Left: RERA */}
             <Box sx={{ flex: 1 }}>
               <Typography variant="subtitle2" sx={{ mb: 2.5, color: 'text.secondary' }}>RERA / Under Construction</Typography>
-              <Box display="grid" gridTemplateColumns="1fr 1fr" gap={2.5} sx={{ mb: 2.5 }}>
+              <Box display="grid" gridTemplateColumns={{ xs: '1fr', sm: '1fr 1fr' }} gap={2.5} sx={{ mb: 2.5 }}>
                 <TextField
                   label="Regularization %"
                   value={reraRegularizationPercentage}
@@ -409,7 +409,7 @@ export default function BrandFormPage() {
             {/* Right: RTM */}
             <Box sx={{ flex: 1 }}>
               <Typography variant="subtitle2" sx={{ mb: 2.5, color: 'text.secondary' }}>RTM / OC Received</Typography>
-              <Box display="grid" gridTemplateColumns="1fr 1fr" gap={2.5} sx={{ mb: 2.5 }}>
+              <Box display="grid" gridTemplateColumns={{ xs: '1fr', sm: '1fr 1fr' }} gap={2.5} sx={{ mb: 2.5 }}>
                 <TextField
                   label="Regularization %"
                   value={rtmRegularizationPercentage}

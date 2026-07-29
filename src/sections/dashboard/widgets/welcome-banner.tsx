@@ -56,7 +56,7 @@ export function WelcomeBanner({ me }: Props) {
               </Avatar>
               <Stack spacing={0.5}>
                 <Typography variant="h4" sx={{ fontWeight: 700, lineHeight: 1.2 }}>
-                  {greeting}, {me?.name ?? 'User'} 👋
+                  {greeting}, {me?.name ?? 'User'}
                 </Typography>
                 <Typography variant="body1" sx={{ opacity: 0.9 }}>
                   {me?.roles?.length

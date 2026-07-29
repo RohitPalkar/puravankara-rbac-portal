@@ -135,7 +135,7 @@ export default function SettingsPage() {
             <Stack direction="row" justifyContent="space-between" alignItems="center">
               <Box>
                 <Typography variant="body2" fontWeight={500}>Active Sessions</Typography>
-                <Typography variant="caption" color="text.secondery">1 active session</Typography>
+                <Typography variant="caption" color="text.secondary">1 active session</Typography>
               </Box>
               <Chip label="1 Session" size="small" color="success" variant="outlined" />
             </Stack>

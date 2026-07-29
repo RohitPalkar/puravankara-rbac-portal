@@ -511,7 +511,7 @@ export default function DepartmentFormPage() {
             )}
           </Box>
 
-          <Box display="grid" gridTemplateColumns="1fr 1fr" gap={3}>
+          <Box display="grid" gridTemplateColumns={{ xs: '1fr', sm: '1fr 1fr' }} gap={3}>
             <Autocomplete
               options={activeZones}
               getOptionLabel={(option) => option.name}
@@ -603,7 +603,7 @@ export default function DepartmentFormPage() {
             </Alert>
           )}
 
-          <Box display="grid" gridTemplateColumns="1fr 1fr" gap={3}>
+          <Box display="grid" gridTemplateColumns={{ xs: '1fr', sm: '1fr 1fr' }} gap={3}>
             <TextField
               label="No. of Roles *"
               type="text"

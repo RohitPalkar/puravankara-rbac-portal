@@ -7,8 +7,10 @@ import { useNavigate } from 'react-router-dom';
 
 import Card from '@mui/material/Card';
 import Stack from '@mui/material/Stack';
+import Alert from '@mui/material/Alert';
 import Button from '@mui/material/Button';
 import Dialog from '@mui/material/Dialog';
+import Snackbar from '@mui/material/Snackbar';
 import Typography from '@mui/material/Typography';
 import DialogTitle from '@mui/material/DialogTitle';
 import DialogContent from '@mui/material/DialogContent';
@@ -46,6 +48,12 @@ export default function PermissionMatrixPage() {
   const { mutateAsync: updateRole, isPending: isUpdating } = useUpdateRole();
 
   const [deactivateRow, setDeactivateRow] = useState<RoleSummaryRow | null>(null);
+  const [snackbar, setSnackbar] = useState<{ open: boolean; message: string; severity: 'success' | 'error' }>({
+    open: false,
+    message: '',
+    severity: 'success',
+  });
+  const [search, setSearch] = useState('');
 
   const handleEdit = useCallback(
     (row: RoleSummaryRow) => {
@@ -74,7 +82,16 @@ export default function PermissionMatrixPage() {
 
   const handleConfirmToggle = useCallback(async () => {
     if (!deactivateRow) return;
-    await updateRole({ id: deactivateRow.id, data: { isActive: !deactivateRow.isActive } });
+    try {
+      await updateRole({ id: deactivateRow.id, data: { isActive: !deactivateRow.isActive } });
+      setSnackbar({
+        open: true,
+        message: `Role "${deactivateRow.name}" ${deactivateRow.isActive ? 'deactivated' : 'activated'} successfully.`,
+        severity: 'success',
+      });
+    } catch {
+      setSnackbar({ open: true, message: 'Failed to update role status.', severity: 'error' });
+    }
     setDeactivateRow(null);
   }, [deactivateRow, updateRole]);
 
@@ -124,10 +141,32 @@ export default function PermissionMatrixPage() {
             </Button>
           }
         />
-        <Card sx={{ overflow: 'hidden' }}>
-          <DataTable columns={columns} rows={rows ?? []} getRowId={(r: any) => r.id} loading={isLoading} />
+          <Card sx={{ overflow: 'hidden' }}>
+          <DataTable
+            columns={columns}
+            rows={rows ?? []}
+            getRowId={(r: any) => r.id}
+            loading={isLoading}
+            searchValue={search}
+            onSearchChange={setSearch}
+            searchPlaceholder="Search roles by name or department..."
+            emptyTitle="No Role Mappings"
+            emptyDescription="Create your first permission mapping to get started"
+            emptyIcon="solar:user-id-bold-duotone"
+          />
         </Card>
       </PageContainer>
+
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={3000}
+        onClose={() => setSnackbar((prev) => ({ ...prev, open: false }))}
+        anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+      >
+        <Alert severity={snackbar.severity} onClose={() => setSnackbar((prev) => ({ ...prev, open: false }))}>
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
 
       <Dialog open={!!deactivateRow} onClose={() => setDeactivateRow(null)} maxWidth="xs">
         <DialogTitle>Confirm Status Change</DialogTitle>

@@ -7,9 +7,9 @@ import { useQuery } from '@tanstack/react-query';
 import { useMemo, useState, useCallback } from 'react';
 
 import Box from '@mui/material/Box';
+import Stack from '@mui/material/Stack';
 import Button from '@mui/material/Button';
 import Typography from '@mui/material/Typography';
-import IconButton from '@mui/material/IconButton';
 
 import { paths } from 'src/routes/paths';
 
@@ -19,6 +19,7 @@ import { projectService } from 'src/services/services/project.service';
 
 import { Iconify } from 'src/components/iconify';
 import { DataTable } from 'src/components/data-table';
+import { RowActionsMenu } from 'src/components/row-actions';
 import { PageHeader, PageContainer } from 'src/components/page-layout';
 
 const PAGE_SIZE = 20;
@@ -174,14 +175,11 @@ export default function ProjectListPage() {
       align: 'center' as const,
       renderHeader: renderBrandHeader,
       renderCell: (params: any) => (
-        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 1 }}>
-          <IconButton
-            onClick={(e) => { e.stopPropagation(); navigate(paths.dashboard.projectMasterEdit(params.row.id)); }}
-            sx={{ width: 40, height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-          >
-            <Iconify icon="solar:pen-bold" width={20} />
-          </IconButton>
-        </Box>
+        <Stack alignItems="center" sx={{ height: 1, justifyContent: 'center' }}>
+          <RowActionsMenu actions={[
+            { label: 'Edit', icon: 'solar:pen-bold', onClick: () => navigate(paths.dashboard.projectMasterEdit(params.row.id)) },
+          ]} />
+        </Stack>
       ),
     },
   ];

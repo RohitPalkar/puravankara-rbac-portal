@@ -139,7 +139,15 @@ export default function DelegationsPage() {
             Add Delegation
           </Button>
         } />
-        <DataTable columns={columns} rows={data} getRowId={(r) => r.id} loading={isLoading} />
+        <DataTable
+          columns={columns}
+          rows={data}
+          getRowId={(r) => r.id}
+          loading={isLoading}
+          emptyTitle="No Delegations"
+          emptyDescription="Add your first delegation to get started"
+          emptyIcon="solar:clock-circle-bold-duotone"
+        />
       </PageContainer>
 
       <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>

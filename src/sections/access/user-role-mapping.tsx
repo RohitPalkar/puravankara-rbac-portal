@@ -16,6 +16,7 @@ import IconButton from '@mui/material/IconButton';
 import ToggleButton from '@mui/material/ToggleButton';
 import ListItemText from '@mui/material/ListItemText';
 import ListItemAvatar from '@mui/material/ListItemAvatar';
+import CircularProgress from '@mui/material/CircularProgress';
 import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
 
 import { CONFIG } from 'src/config-global';
@@ -39,8 +40,8 @@ function stringAvatar(name: string) {
 }
 
 export default function UserRoleMappingPage() {
-  const { data: rolesData } = useRoleList();
-  const { data: usersData } = useUserList();
+  const { data: rolesData, isLoading: isRolesLoading } = useRoleList();
+  const { data: usersData, isLoading: isUsersLoading } = useUserList();
 
   const roles: any[] = useMemo(() => (rolesData ?? []) as any[], [rolesData]);
 
@@ -90,6 +91,20 @@ export default function UserRoleMappingPage() {
   const handleRemoveUserFromRole = useCallback((userId: string) => {
     setUsers((prev) => prev.filter((u) => u.id !== userId));
   }, []);
+
+  if (isRolesLoading || isUsersLoading) {
+    return (
+      <>
+        <Helmet><title>User Role Mapping - {CONFIG.appName}</title></Helmet>
+        <PageContainer>
+          <PageHeader title="User Role Mapping" description="Assign roles to users" />
+          <Card sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 300 }}>
+            <CircularProgress />
+          </Card>
+        </PageContainer>
+      </>
+    );
+  }
 
   return (
     <>
@@ -168,9 +183,10 @@ export default function UserRoleMappingPage() {
                   {isExpanded && (
                     <Box sx={{ borderTop: '1px solid', borderColor: 'divider' }}>
                       {assigned.length === 0 ? (
-                        <Typography variant="body2" color="text.secondary" sx={{ p: 3, textAlign: 'center' }}>
-                          No users assigned to this role.
-                        </Typography>
+                        <Stack spacing={1} sx={{ p: 4, textAlign: 'center' }} alignItems="center">
+                          <Iconify icon="solar:users-group-rounded-bold" width={32} sx={{ color: 'text.disabled', opacity: 0.4 }} />
+                          <Typography variant="body2" color="text.secondary">No users assigned to this role.</Typography>
+                        </Stack>
                       ) : (
                         <List disablePadding>
                           {assigned.map((user, idx) => (
@@ -241,6 +257,7 @@ export default function UserRoleMappingPage() {
               ))}
               {filteredUsers.length === 0 && (
                 <Box sx={{ p: 4, textAlign: 'center' }}>
+                  <Iconify icon="solar:users-group-rounded-bold" width={32} sx={{ color: 'text.disabled', opacity: 0.4, mb: 1 }} />
                   <Typography variant="body2" color="text.secondary">No users found.</Typography>
                 </Box>
               )}

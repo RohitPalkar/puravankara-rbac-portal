@@ -29,7 +29,15 @@ export default function ChannelPartnerTypeListPage() {
       <Helmet><title>CP Types - {CONFIG.appName}</title></Helmet>
       <PageContainer>
         <PageHeader title="Channel Partner Types" description="Manage partner categories" />
-        <DataTable columns={columns} rows={data ?? []} getRowId={(r) => r.id} loading={isLoading} />
+        <DataTable
+          columns={columns}
+          rows={data ?? []}
+          getRowId={(r) => r.id}
+          loading={isLoading}
+          emptyTitle="No CP Types"
+          emptyDescription="Channel partner types will appear here once configured"
+          emptyIcon="solar:tag-bold-duotone"
+        />
       </PageContainer>
     </>
   );

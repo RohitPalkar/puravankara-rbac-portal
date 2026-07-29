@@ -205,7 +205,7 @@ export default function UserNewPage() {
         </Card>
       </PageContainer>
 
-      <Snackbar open={showSuccess} autoHideDuration={3000} anchorOrigin={{ vertical: 'top', horizontal: 'center' }}>
+      <Snackbar open={showSuccess} autoHideDuration={3000} anchorOrigin={{ vertical: 'top', horizontal: 'right' }}>
         <Alert severity="success" variant="filled" sx={{ width: 1 }}>
           <Typography variant="body2" fontWeight={600}>User Created Successfully</Typography>
         </Alert>

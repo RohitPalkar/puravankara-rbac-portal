@@ -125,7 +125,14 @@ export default function ApprovalConfigPage() {
             Add Workflow
           </Button>
         } />
-        <DataTable columns={columns} rows={data} getRowId={(r) => r.id} />
+        <DataTable
+          columns={columns}
+          rows={data}
+          getRowId={(r) => r.id}
+          emptyTitle="No Workflows"
+          emptyDescription="Add your first approval workflow to get started"
+          emptyIcon="solar:inbox-archive-bold-duotone"
+        />
       </PageContainer>
 
       <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>

@@ -126,6 +126,9 @@ export default function AuditLogsPage() {
           loading={isLoading}
           searchPlaceholder="Search user, entity, or action..."
           filterOptions={filterOptions}
+          emptyTitle="No Audit Logs"
+          emptyDescription="System activity will be recorded here as actions are performed"
+          emptyIcon="solar:clipboard-list-bold-duotone"
         />
       </PageContainer>
     </>
