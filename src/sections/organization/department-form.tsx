@@ -1,4 +1,4 @@
-import type { DepartmentDetail, CheckDepartmentNameResult, DepartmentHierarchyLevelInput } from 'src/services/types/organization';
+import type { HierarchyLevel, DepartmentDetail, CheckDepartmentNameResult, DepartmentHierarchyLevelInput } from 'src/services/types/organization';
 
 import { Helmet } from 'react-helmet-async';
 import { useQuery } from '@tanstack/react-query';
@@ -16,7 +16,6 @@ import Snackbar from '@mui/material/Snackbar';
 import Skeleton from '@mui/material/Skeleton';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
-import IconButton from '@mui/material/IconButton';
 import Autocomplete from '@mui/material/Autocomplete';
 import LinearProgress from '@mui/material/LinearProgress';
 import InputAdornment from '@mui/material/InputAdornment';
@@ -30,11 +29,11 @@ import { userService } from 'src/services/services/user.service';
 import { useMyPermissions } from 'src/services/hooks/use-permissions';
 import { zoneService } from 'src/services/services/geography.service';
 import { departmentService } from 'src/services/services/organization.service';
-import { useLevelRemove, useLevelRename, useLevelReorder, useDepartmentById, useCreateDepartment, useUpdateDepartment } from 'src/services/hooks/use-organization';
+import { useLevelRemove, useLevelRename, useDepartmentById, useCreateDepartment, useUpdateDepartment } from 'src/services/hooks/use-organization';
 
 import { Iconify } from 'src/components/iconify';
+import { MergeLevelDialog } from 'src/components/delete-level-dialog';
 import { PageHeader, PageContainer } from 'src/components/page-layout';
-import { DeleteLevelDialog } from 'src/components/delete-level-dialog';
 
 const DEBOUNCE_MS = 400;
 
@@ -102,7 +101,7 @@ export default function DepartmentFormPage() {
   const [name, setName] = useState('');
   const [numberOfLevels, setNumberOfLevels] = useState<number>(3);
   const [levelsInputValue, setLevelsInputValue] = useState('3');
-  const [selectedZoneId, setSelectedZoneId] = useState<number | null>(null);
+  const [selectedZoneIds, setSelectedZoneIds] = useState<number[]>([]);
   const [departmentAdminId, setDepartmentAdminId] = useState<string | null>(null);
   const [isActive, setIsActive] = useState(true);
   const [hierarchyLevels, setHierarchyLevels] = useState<DepartmentHierarchyLevelInput[]>([]);
@@ -113,7 +112,6 @@ export default function DepartmentFormPage() {
 
   const [nameError, setNameError] = useState('');
   const [zoneError, setZoneError] = useState('');
-  const [adminError, setAdminError] = useState('');
   const [levelsError, setLevelsError] = useState('');
   const [hierarchyErrors, setHierarchyErrors] = useState<Record<number, string>>({});
 
@@ -127,23 +125,15 @@ export default function DepartmentFormPage() {
 
   const saving = isCreating || isUpdating;
   const { mutateAsync: removeLevel, isPending: isRemovingLevel } = useLevelRemove();
-  const { mutateAsync: renameLevel, isPending: isRenaming } = useLevelRename();
-  const { mutateAsync: reorderLevels } = useLevelReorder();
+  const { mutateAsync: renameLevel } = useLevelRename();
 
-  const [deleteLevel, setDeleteLevel] = useState<{ levelNumber: number; roleName: string } | null>(null);
+  const [mergeLevel, setMergeLevel] = useState<{ levelNumber: number; roleName: string } | null>(null);
   const [editingLevelName, setEditingLevelName] = useState<number | null>(null);
   const [renameValue, setRenameValue] = useState('');
 
   const formDisabled = levelsGenerated;
 
-  const zoneSelected = selectedZoneId !== null;
-  const nameValid = name.trim().length > 0;
-  const canGenerate = zoneSelected && nameValid && nameValidation.state !== 'unavailable';
-
-  const selectedZoneName = useMemo(
-    () => activeZones.find((z: any) => z.id === selectedZoneId)?.name ?? '',
-    [activeZones, selectedZoneId],
-  );
+  const canGenerate = name.trim().length > 0 && selectedZoneIds.length > 0 && nameValidation.state !== 'unavailable';
 
   const doCheckName = useCallback(async (checkName: string, checkZoneId: number, excludeId?: number) => {
     if (!checkName.trim() || !checkZoneId) {
@@ -187,7 +177,8 @@ export default function DepartmentFormPage() {
       setLevelsInputValue(String(d.maxHierarchyLevels));
       setIsActive(d.isActive);
       setDepartmentAdminId(d.departmentAdminId);
-      setSelectedZoneId(d.zoneId ?? null);
+      const zoneIds = (d as any).zoneIds ?? (d.zoneId ? [d.zoneId] : []);
+      setSelectedZoneIds(zoneIds);
 
       if (d.hierarchyLevels && d.hierarchyLevels.length > 0) {
         const sorted = [...d.hierarchyLevels].sort((a, b) => a.displayOrder - b.displayOrder);
@@ -268,18 +259,11 @@ export default function DepartmentFormPage() {
       setNameError('');
     }
 
-    if (selectedZoneId === null) {
+    if (selectedZoneIds.length === 0) {
       setZoneError('Zone is required');
       valid = false;
     } else {
       setZoneError('');
-    }
-
-    if (!departmentAdminId) {
-      setAdminError('Department admin is required');
-      valid = false;
-    } else {
-      setAdminError('');
     }
 
     if (numberOfLevels < 1 || numberOfLevels > 20 || !Number.isInteger(numberOfLevels)) {
@@ -314,17 +298,20 @@ export default function DepartmentFormPage() {
     setHierarchyErrors(newHierarchyErrors);
 
     return valid;
-  }, [name, nameValidation, selectedZoneId, departmentAdminId, numberOfLevels, levelsGenerated, hierarchyLevels]);
+  }, [name, nameValidation, selectedZoneIds, numberOfLevels, levelsGenerated, hierarchyLevels]);
 
-  const handleRemoveLevel = useCallback(async (payload: { mode: 'MERGE' | 'REPLACE'; destinationLevelNumber: number }) => {
-    if (!deleteLevel || !departmentId) return;
+  const handleRemoveLevel = useCallback(async (destinationLevelNumber: number) => {
+    if (!mergeLevel || !departmentId) return;
     try {
-      await removeLevel({ departmentId, levelNumber: deleteLevel.levelNumber, payload });
-      setDeleteLevel(null);
+      await removeLevel({ departmentId, levelNumber: mergeLevel.levelNumber, payload: { mode: 'MERGE', destinationLevelNumber } });
+      setHierarchyLevels((prev) => prev.filter((hl) => hl.levelNumber !== mergeLevel.levelNumber));
+      setNumberOfLevels((prev) => prev - 1);
+      setLevelsInputValue(String(numberOfLevels - 1));
+      setMergeLevel(null);
     } catch {
       // error handled by mutation
     }
-  }, [deleteLevel, departmentId, removeLevel]);
+  }, [mergeLevel, departmentId, removeLevel, numberOfLevels]);
 
   const handleRename = useCallback(async (levelNumber: number, newName: string) => {
     if (!newName.trim()) return;
@@ -365,36 +352,6 @@ export default function DepartmentFormPage() {
     setRenameValue('');
   }, []);
 
-  const handleMoveUp = useCallback((index: number) => {
-    if (index <= 0) return;
-    const updated = [...hierarchyLevels];
-    const temp = updated[index].displayOrder;
-    updated[index] = { ...updated[index], displayOrder: updated[index - 1].displayOrder };
-    updated[index - 1] = { ...updated[index - 1], displayOrder: temp };
-    setHierarchyLevels(updated);
-    if (departmentId) {
-      reorderLevels({
-        departmentId,
-        items: updated.map((hl) => ({ levelNumber: hl.levelNumber, displayOrder: hl.displayOrder })),
-      });
-    }
-  }, [hierarchyLevels, departmentId, reorderLevels]);
-
-  const handleMoveDown = useCallback((index: number) => {
-    if (index >= hierarchyLevels.length - 1) return;
-    const updated = [...hierarchyLevels];
-    const temp = updated[index].displayOrder;
-    updated[index] = { ...updated[index], displayOrder: updated[index + 1].displayOrder };
-    updated[index + 1] = { ...updated[index + 1], displayOrder: temp };
-    setHierarchyLevels(updated);
-    if (departmentId) {
-      reorderLevels({
-        departmentId,
-        items: updated.map((hl) => ({ levelNumber: hl.levelNumber, displayOrder: hl.displayOrder })),
-      });
-    }
-  }, [hierarchyLevels, departmentId, reorderLevels]);
-
   const handleSave = useCallback(async () => {
     if (!validate()) return;
     setSaveError('');
@@ -407,7 +364,7 @@ export default function DepartmentFormPage() {
             name: name.trim(),
             numberOfLevels,
             departmentAdminId: departmentAdminId ?? undefined,
-            zoneId: selectedZoneId!,
+            zoneId: selectedZoneIds[0],
             hierarchyLevels,
             isActive,
           },
@@ -418,11 +375,12 @@ export default function DepartmentFormPage() {
           name: name.trim(),
           numberOfLevels,
           departmentAdminId: departmentAdminId ?? undefined,
-          zoneId: selectedZoneId!,
+          zoneId: selectedZoneIds[0],
           hierarchyLevels,
           isActive: true,
         });
-        setSuccessMessage(`${name.trim()} has been created successfully for ${selectedZoneName} Zone.`);
+        const zoneNames = selectedZoneIds.map((zid) => activeZones.find((z: any) => z.id === zid)?.name).filter(Boolean).join(', ');
+        setSuccessMessage(`${name.trim()} has been created successfully for ${zoneNames}.`);
       }
       setShowSuccess(true);
       setTimeout(() => navigate(paths.dashboard.departmentMaster), 1500);
@@ -430,7 +388,7 @@ export default function DepartmentFormPage() {
       const msg = err?.response?.data?.message?.[0] || err?.message || 'Failed to save department';
       setSaveError(msg);
     }
-  }, [isEdit, departmentId, name, numberOfLevels, departmentAdminId, selectedZoneId, selectedZoneName, hierarchyLevels, isActive, validate, createDepartment, updateDepartment, navigate]);
+  }, [isEdit, departmentId, name, numberOfLevels, departmentAdminId, selectedZoneIds, activeZones, hierarchyLevels, isActive, validate, createDepartment, updateDepartment, navigate]);
 
   if (isEdit && isFetching) {
     return (
@@ -501,6 +459,7 @@ export default function DepartmentFormPage() {
           </Alert>
         )}
 
+        {/* ===== DEPARTMENT INFORMATION ===== */}
         <Card sx={{ p: 3, mb: 3 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3 }}>
             <Typography variant="subtitle1">Department Information</Typography>
@@ -511,17 +470,19 @@ export default function DepartmentFormPage() {
             )}
           </Box>
 
-          <Box display="grid" gridTemplateColumns={{ xs: '1fr', sm: '1fr 1fr' }} gap={3}>
+          {/* Row 1: Zone Multi Select | Department Name */}
+          <Box display="grid" gridTemplateColumns={{ xs: '1fr', sm: '1fr 1fr' }} gap={3} sx={{ mb: 3 }}>
             <Autocomplete
+              multiple
               options={activeZones}
               getOptionLabel={(option) => option.name}
-              value={activeZones.find((z: any) => z.id === selectedZoneId) ?? null}
+              value={activeZones.filter((z: any) => selectedZoneIds.includes(z.id))}
               onChange={(_, newValue) => {
-                const newZoneId = newValue ? (newValue as any).id : null;
-                setSelectedZoneId(newZoneId);
+                const ids = (newValue as any[]).map((z: any) => z.id);
+                setSelectedZoneIds(ids);
                 setZoneError('');
-                if (name.trim()) {
-                  triggerValidation(name, newZoneId);
+                if (name.trim() && ids.length > 0) {
+                  triggerValidation(name, ids[0]);
                 }
               }}
               disabled={formDisabled}
@@ -535,13 +496,9 @@ export default function DepartmentFormPage() {
                 <TextField
                   {...params}
                   label="Zone *"
-                  placeholder="Search zone..."
+                  placeholder="Search zones..."
                   error={!!zoneError}
                   helperText={zoneError}
-                  inputProps={{
-                    ...params.inputProps,
-                    'aria-label': 'Zone selection',
-                  }}
                 />
               )}
               componentsProps={{
@@ -557,7 +514,9 @@ export default function DepartmentFormPage() {
                 const val = e.target.value;
                 setName(val);
                 setNameError('');
-                triggerValidation(val, selectedZoneId);
+                if (selectedZoneIds.length > 0) {
+                  triggerValidation(val, selectedZoneIds[0]);
+                }
               }}
               error={!!nameError || nameValidation.state === 'unavailable'}
               helperText={
@@ -586,7 +545,7 @@ export default function DepartmentFormPage() {
           </Box>
 
           {nameValidation.state === 'unavailable' && nameValidation.existingInZones && nameValidation.existingInZones.length > 0 && (
-            <Alert severity="info" icon={<Iconify icon="solar:info-circle-bold" width={20} />} sx={{ mt: 2 }}>
+            <Alert severity="info" icon={<Iconify icon="solar:info-circle-bold" width={20} />} sx={{ mb: 3 }}>
               <Typography variant="body2" fontWeight={600} sx={{ mb: 0.5 }}>
                 &ldquo;{name}&rdquo; already exists in the following Zones:
               </Typography>
@@ -598,14 +557,15 @@ export default function DepartmentFormPage() {
                 ))}
               </Box>
               <Typography variant="body2" sx={{ mt: 1 }}>
-                Creating &ldquo;{name}&rdquo; in &ldquo;{selectedZoneName}&rdquo; will create a separate Department.
+                Creating &ldquo;{name}&rdquo; will create a separate Department per Zone.
               </Typography>
             </Alert>
           )}
 
+          {/* Row 2: No. of Levels | Department Admin (Optional) */}
           <Box display="grid" gridTemplateColumns={{ xs: '1fr', sm: '1fr 1fr' }} gap={3}>
             <TextField
-              label="No. of Roles *"
+              label="No. of Roles"
               type="text"
               inputMode="numeric"
               placeholder="Enter number of levels"
@@ -615,7 +575,6 @@ export default function DepartmentFormPage() {
               disabled={formDisabled}
               error={!!levelsError}
               helperText={levelsError}
-              required
               sx={{
                 '& input[type="text"]::-webkit-outer-spin-button': { display: 'none' },
                 '& input[type="text"]::-webkit-inner-spin-button': { display: 'none' },
@@ -627,16 +586,13 @@ export default function DepartmentFormPage() {
               value={activeUsers.find((u: any) => u.empId === departmentAdminId) ?? null}
               onChange={(_, newValue) => {
                 setDepartmentAdminId(newValue ? (newValue as any).empId : null);
-                setAdminError('');
               }}
               disabled={formDisabled}
               renderInput={(params) => (
                 <TextField
                   {...params}
-                  label="Department Admin *"
+                  label="Department Administrator (Optional)"
                   placeholder="Select admin"
-                  error={!!adminError}
-                  helperText={adminError}
                 />
               )}
             />
@@ -649,7 +605,7 @@ export default function DepartmentFormPage() {
                 label="Status"
                 value={isActive ? 'active' : 'inactive'}
                 onChange={(e) => setIsActive(e.target.value === 'active')}
-                sx={{ width: 300 }}
+                sx={{ width: { xs: 1, sm: 300 } }}
               >
                 <MenuItem value="active">Active</MenuItem>
                 <MenuItem value="inactive">Inactive</MenuItem>
@@ -663,18 +619,19 @@ export default function DepartmentFormPage() {
                 variant="contained"
                 onClick={handleGenerateHierarchy}
                 disabled={!canGenerate}
-                sx={{ minWidth: 280 }}
+                sx={{ width: { xs: 1, sm: 'auto' }, minWidth: { sm: 280 } }}
               >
-                Generate Roles
+                Generate Levels
               </Button>
             </Box>
           )}
         </Card>
 
+        {/* ===== LEVEL MAPPING ===== */}
         {levelsGenerated && hierarchyLevels.length > 0 && (
           <Card sx={{ p: 3, mb: 3 }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3 }}>
-              <Typography variant="subtitle1">Roles</Typography>
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
+              <Typography variant="subtitle1">Level Mapping</Typography>
               <Button
                 variant="text"
                 size="small"
@@ -683,98 +640,122 @@ export default function DepartmentFormPage() {
                 Edit
               </Button>
             </Box>
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+
+            <Box sx={{ display: 'flex', flexDirection: 'column' }}>
               {hierarchyLevels
                 .sort((a, b) => a.displayOrder - b.displayOrder)
                 .map((hl, index) => (
-                  <Card
-                    key={hl.levelNumber}
-                    variant="outlined"
-                    sx={{
-                      p: 2,
-                      borderRadius: 1.5,
-                      borderColor: hierarchyErrors[hl.levelNumber] ? 'error.main' : 'divider',
-                    }}
-                  >
-                    <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}>
-                      <Stack direction="column" spacing={0.25} sx={{ pt: 0.5 }}>
-                        <IconButton
-                          size="small"
-                          onClick={() => handleMoveUp(index)}
-                          disabled={index === 0}
-                          sx={{ width: 24, height: 24, minWidth: 0 }}
-                        >
-                          <Iconify icon="solar:alt-arrow-up-bold" width={14} />
-                        </IconButton>
-                        <IconButton
-                          size="small"
-                          onClick={() => handleMoveDown(index)}
-                          disabled={index === hierarchyLevels.length - 1}
-                          sx={{ width: 24, height: 24, minWidth: 0 }}
-                        >
-                          <Iconify icon="solar:alt-arrow-down-bold" width={14} />
-                        </IconButton>
-                      </Stack>
+                  <Box key={hl.levelNumber}>
+                    <Box
+                      sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 1.5,
+                        py: 1.25,
+                        px: 1,
+                        borderRadius: 1,
+                        bgcolor: hierarchyErrors[hl.levelNumber] ? 'error.lighter' : 'transparent',
+                        transition: 'background-color 0.15s',
+                      }}
+                    >
+                      {/* Level number */}
+                      <Typography
+                        variant="body2"
+                        fontWeight={600}
+                        sx={{ minWidth: 60, color: 'text.secondary', flexShrink: 0 }}
+                      >
+                        Level {hl.levelNumber}
+                      </Typography>
 
+                      {/* Arrow separator */}
+                      <Iconify icon="solar:alt-arrow-right-bold" width={16} sx={{ color: 'text.disabled', flexShrink: 0 }} />
+
+                      {/* Editable role name */}
                       <Box sx={{ flex: 1, minWidth: 0 }}>
                         {editingLevelName === hl.levelNumber ? (
-                          <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
-                            <TextField
-                              size="small"
-                              value={renameValue}
-                              onChange={(e) => setRenameValue(e.target.value)}
-                              onKeyDown={(e) => {
-                                if (e.key === 'Enter') handleRename(hl.levelNumber, renameValue);
-                                if (e.key === 'Escape') cancelEditingName();
-                              }}
-                              autoFocus
-                              sx={{ flex: 1 }}
-                              error={!!hierarchyErrors[hl.levelNumber]}
-                              helperText={hierarchyErrors[hl.levelNumber]}
-                            />
-                            <IconButton size="small" color="primary" onClick={() => handleRename(hl.levelNumber, renameValue)} disabled={isRenaming}>
-                              <Iconify icon="solar:check-circle-bold" width={20} />
-                            </IconButton>
-                            <IconButton size="small" onClick={cancelEditingName}>
-                              <Iconify icon="solar:close-circle-bold" width={20} />
-                            </IconButton>
-                          </Box>
+                          <TextField
+                            size="small"
+                            value={renameValue}
+                            onChange={(e) => setRenameValue(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') handleRename(hl.levelNumber, renameValue);
+                              if (e.key === 'Escape') cancelEditingName();
+                            }}
+                            onBlur={() => handleRename(hl.levelNumber, renameValue)}
+                            autoFocus
+                            fullWidth
+                            error={!!hierarchyErrors[hl.levelNumber]}
+                            helperText={hierarchyErrors[hl.levelNumber]}
+                            placeholder="Enter Role Name"
+                          />
                         ) : (
                           <Box
-                            sx={{ display: 'flex', alignItems: 'center', gap: 1, cursor: 'pointer' }}
+                            sx={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: 1,
+                              cursor: 'text',
+                              py: 0.5,
+                              px: 1.25,
+                              borderRadius: 0.75,
+                              border: '1px solid',
+                              borderColor: 'divider',
+                              bgcolor: 'background.paper',
+                              '&:hover': { borderColor: 'text.disabled' },
+                            }}
                             onClick={() => startEditingName(hl.levelNumber, hl.roleName)}
                           >
-                            <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
-                              {hl.roleName || 'Untitled Role'}
+                            <Typography
+                              variant="body2"
+                              sx={{
+                                flex: 1,
+                                color: hl.roleName ? 'text.primary' : 'text.disabled',
+                                fontStyle: hl.roleName ? 'normal' : 'italic',
+                              }}
+                            >
+                              {hl.roleName || 'Enter Role Name'}
                             </Typography>
-                            <Tooltip title="Rename role">
-                              <Iconify icon="solar:pen-bold" width={14} sx={{ color: 'text.disabled', opacity: 0.6 }} />
-                            </Tooltip>
+                            <Iconify icon="solar:pen-bold" width={14} sx={{ color: 'text.disabled', opacity: 0.5, flexShrink: 0 }} />
                           </Box>
-                        )}
-                        <Typography variant="caption" color="text.secondary">
-                          Level {hl.levelNumber}
-                        </Typography>
-                        {hierarchyErrors[hl.levelNumber] && editingLevelName !== hl.levelNumber && (
-                          <Typography variant="caption" color="error" sx={{ display: 'block', mt: 0.5 }}>
-                            {hierarchyErrors[hl.levelNumber]}
-                          </Typography>
                         )}
                       </Box>
 
-                      {isEdit && (
-                        <Tooltip title="Remove this role">
-                          <IconButton
-                            size="small"
-                            color="error"
-                            onClick={() => setDeleteLevel({ levelNumber: hl.levelNumber, roleName: hl.roleName })}
+                      {/* Minus button - triggers merge dialog */}
+                      <Tooltip title={hierarchyLevels.length <= 1 ? 'Cannot remove the last level' : 'Remove this level'}>
+                        <span>
+                          <Box
+                            component="span"
+                            onClick={() => {
+                              if (hierarchyLevels.length <= 1) return;
+                              setMergeLevel({ levelNumber: hl.levelNumber, roleName: hl.roleName });
+                            }}
+                            sx={{
+                              width: 28,
+                              height: 28,
+                              borderRadius: 0.75,
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              cursor: hierarchyLevels.length <= 1 ? 'not-allowed' : 'pointer',
+                              color: hierarchyLevels.length <= 1 ? 'text.disabled' : 'error.main',
+                              bgcolor: hierarchyLevels.length <= 1 ? 'action.disabledBackground' : 'error.lighter',
+                              '&:hover': hierarchyLevels.length <= 1 ? {} : { bgcolor: 'error.light', color: 'error.contrastText' },
+                              flexShrink: 0,
+                              transition: 'all 0.15s',
+                            }}
                           >
-                            <Iconify icon="solar:trash-bin-trash-bold" width={18} />
-                          </IconButton>
-                        </Tooltip>
-                      )}
+                            <Iconify icon="solar:minus-circle-bold" width={16} />
+                          </Box>
+                        </span>
+                      </Tooltip>
                     </Box>
-                  </Card>
+                    {index < hierarchyLevels.length - 1 && (
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, px: 1 }}>
+                        <Box sx={{ minWidth: 60 }} />
+                        <Box sx={{ flex: 1, borderTop: '1px dashed', borderColor: 'divider' }} />
+                      </Box>
+                    )}
+                  </Box>
                 ))}
             </Box>
           </Card>
@@ -790,12 +771,12 @@ export default function DepartmentFormPage() {
         </Box>
       </PageContainer>
 
-      <DeleteLevelDialog
-        open={deleteLevel !== null}
-        departmentId={departmentId ?? null}
-        levelNumber={deleteLevel?.levelNumber ?? null}
-        levelName={deleteLevel?.roleName ?? ''}
-        onClose={() => setDeleteLevel(null)}
+      <MergeLevelDialog
+        open={mergeLevel !== null}
+        levelNumber={mergeLevel?.levelNumber ?? null}
+        levelName={mergeLevel?.roleName ?? ''}
+        hierarchyLevels={hierarchyLevels as HierarchyLevel[]}
+        onClose={() => setMergeLevel(null)}
         onConfirm={handleRemoveLevel}
         loading={isRemovingLevel}
       />

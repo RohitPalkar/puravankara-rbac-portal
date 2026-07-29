@@ -1,1 +1,1 @@
-export { DeleteLevelDialog } from './delete-level-dialog';
+export { MergeLevelDialog } from './delete-level-dialog';

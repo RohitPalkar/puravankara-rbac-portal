@@ -30,6 +30,7 @@ export interface DepartmentDetail {
   departmentAdminId: string | null;
   zoneId: number;
   zoneName: string;
+  zoneIds?: number[];
   hierarchyLevels: HierarchyLevel[];
   createdAt: string;
   updatedAt: string;
