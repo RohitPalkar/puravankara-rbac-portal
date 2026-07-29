@@ -53,8 +53,9 @@ export interface SecondaryRoleEntry {
 }
 
 export interface UserOrganizationRequest {
-  zones: number[];
+  zoneId: number;
   primaryRole: number;
+  isDepartmentAdmin?: boolean;
   secondaryRoles?: SecondaryRoleEntry[];
   reporting?: ReportingEntry[];
 }
@@ -110,10 +111,11 @@ export interface UserPermissionProfile {
 }
 
 export interface ProjectMappingData {
-  zoneIds: number[];
-  departmentId: number;
-  primaryRoleId: number;
-  secondaryRoleId?: number;
+  zoneId: number | null;
+  departmentId: number | null;
+  primaryRoleId: number | null;
+  isDepartmentAdmin: boolean;
+  secondaryRoleId?: number | null;
   assignBuddyRm: boolean;
   buddyRmUserId?: string;
   profiles: {

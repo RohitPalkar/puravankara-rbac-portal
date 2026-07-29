@@ -8,26 +8,24 @@ import { useMemo, useState, useEffect, forwardRef, useCallback, useImperativeHan
 
 import Box from '@mui/material/Box';
 import Tab from '@mui/material/Tab';
-import Chip from '@mui/material/Chip';
 import Tabs from '@mui/material/Tabs';
 import Alert from '@mui/material/Alert';
 import Stack from '@mui/material/Stack';
-import Select from '@mui/material/Select';
 import Checkbox from '@mui/material/Checkbox';
-import MenuItem from '@mui/material/MenuItem';
 import TextField from '@mui/material/TextField';
-import InputLabel from '@mui/material/InputLabel';
 import Typography from '@mui/material/Typography';
 import FormControl from '@mui/material/FormControl';
 import Autocomplete from '@mui/material/Autocomplete';
 import FormControlLabel from '@mui/material/FormControlLabel';
+import CircularProgress from '@mui/material/CircularProgress';
 
 import { queryKeys } from 'src/services/api/query-keys';
 import { useZoneList } from 'src/services/hooks/use-geography';
 import { userService } from 'src/services/services/user.service';
 import { useModuleTree } from 'src/services/hooks/use-product-catalog';
 import { projectService } from 'src/services/services/project.service';
-import { useRoleList, useDepartmentList, useDepartmentRoleList } from 'src/services/hooks/use-organization';
+import { departmentService } from 'src/services/services/organization.service';
+import { useRoleList, useDepartmentRoleList } from 'src/services/hooks/use-organization';
 
 import { PermissionProfile } from './permission-profile';
 
@@ -42,7 +40,7 @@ interface Props {
 
 function validateStep(data: ProjectMappingData): string[] {
   const errs: string[] = [];
-  if (data.zoneIds.length === 0) errs.push('At least one Zone must be selected.');
+  if (!data.zoneId) errs.push('Zone is required.');
   if (!data.departmentId) errs.push('Department is required.');
   if (!data.primaryRoleId) errs.push('Primary Role is required.');
 
@@ -77,8 +75,7 @@ function validateStep(data: ProjectMappingData): string[] {
 export default forwardRef<ProjectMappingStepHandle, Props>(({ initialData }: Props, ref) => {
   const queryClient = useQueryClient();
   const { data: zones } = useZoneList();
-  const { data: departments } = useDepartmentList();
-  const { data: roles } = useRoleList();
+  const { data: allRoles } = useRoleList();
   const { data: deptRoles } = useDepartmentRoleList();
   const { data: moduleTree } = useModuleTree();
 
@@ -88,6 +85,7 @@ export default forwardRef<ProjectMappingStepHandle, Props>(({ initialData }: Pro
     queryClient.invalidateQueries({ queryKey: queryKeys.roles.all });
     queryClient.invalidateQueries({ queryKey: queryKeys.departmentRoles.all });
   }, [queryClient]);
+
   const { data: allProjects } = useQuery({
     queryKey: queryKeys.projects.list({}),
     queryFn: async () => {
@@ -104,40 +102,56 @@ export default forwardRef<ProjectMappingStepHandle, Props>(({ initialData }: Pro
     },
   });
 
-  const [zoneIds, setZoneIds] = useState<number[]>(initialData?.zoneIds ?? []);
-  const [departmentId, setDepartmentId] = useState<number | ''>(initialData?.departmentId ?? '');
-  const [primaryRoleId, setPrimaryRoleId] = useState<number | ''>(initialData?.primaryRoleId ?? '');
-
-  const [secondaryRoleId, setSecondaryRoleId] = useState<number | ''>(initialData?.secondaryRoleId ?? '');
+  // --- State ---
+  const [zoneId, setZoneId] = useState<number | null>(initialData?.zoneId ?? null);
+  const [departmentId, setDepartmentId] = useState<number | null>(initialData?.departmentId ?? null);
+  const [primaryRoleId, setPrimaryRoleId] = useState<number | null>(initialData?.primaryRoleId ?? null);
+  const [isDepartmentAdmin, setIsDepartmentAdmin] = useState(initialData?.isDepartmentAdmin ?? false);
+  const [secondaryRoleId, setSecondaryRoleId] = useState<number | null>(initialData?.secondaryRoleId ?? null);
   const [assignBuddyRm, setAssignBuddyRm] = useState(initialData?.assignBuddyRm ?? false);
   const [buddyRmUserId, setBuddyRmUserId] = useState(initialData?.buddyRmUserId ?? '');
   const [buddySearch, setBuddySearch] = useState('');
   const [tabValue, setTabValue] = useState(0);
   const [errList, setErrList] = useState<string[]>([]);
+  const [departmentSearch, setDepartmentSearch] = useState('');
 
   const [primaryPermissions, setPrimaryPermissions] = useState<RolePermissionProfile>(initialData?.profiles?.primary?.permissions ?? []);
   const [secondaryPermissions, setSecondaryPermissions] = useState<RolePermissionProfile>(initialData?.profiles?.secondary?.permissions ?? []);
   const [buddyPermissions, setBuddyPermissions] = useState<RolePermissionProfile>(initialData?.profiles?.buddyRm?.permissions ?? []);
 
+  // --- Derived data ---
   const activeModules = useMemo(() => moduleTree ?? [], [moduleTree]);
-  const activeZones = useMemo(() => (zones ?? []).filter((z: Zone) => z.isActive !== false), [zones]);
-  const activeDepartments = useMemo(() => departments ?? [], [departments]);
-  const activeRoles = useMemo(() => roles ?? [], [roles]);
+  const activeZones = useMemo(() => {
+    const list = (zones ?? []).filter((z: Zone) => z.isActive !== false);
+    return list.sort((a: Zone, b: Zone) => a.name.localeCompare(b.name));
+  }, [zones]);
+  const activeRoles = useMemo(() => allRoles ?? [], [allRoles]);
   const projects = useMemo(() => allProjects ?? [], [allProjects]);
   const locations = useMemo(() => allLocations ?? [], [allLocations]);
 
-  const zoneNameToId = useMemo(() => {
-    const map = new Map<string, number>();
-    (zones ?? []).forEach((z: Zone) => map.set(z.name, z.id));
-    return map;
-  }, [zones]);
+  const selectedZoneName = useMemo(() => {
+    if (!zoneId) return '';
+    const zone = activeZones.find((zn: Zone) => zn.id === zoneId);
+    return zone?.name ?? '';
+  }, [zoneId, activeZones]);
+
+  // Fetch departments for selected zone
+  const { data: zoneDepartments, isLoading: deptsLoading } = useQuery({
+    queryKey: ['departments-by-zone', zoneId],
+    queryFn: async () => {
+      if (!zoneId) return [];
+      const res = await departmentService.list({ zoneId: String(zoneId), limit: 200 } as any);
+      return res.data ?? [];
+    },
+    enabled: !!zoneId,
+  });
 
   const filteredDepartments = useMemo(() => {
-    if (zoneIds.length === 0) return activeDepartments;
-    return activeDepartments.filter((dept: any) =>
-      dept.zones?.some((zoneName: string) => zoneIds.includes(zoneNameToId.get(zoneName) ?? -1))
-    );
-  }, [activeDepartments, zoneIds, zoneNameToId]);
+    const depts = zoneDepartments ?? [];
+    if (!departmentSearch) return depts;
+    const lower = departmentSearch.toLowerCase();
+    return depts.filter((d: any) => d.name?.toLowerCase().includes(lower));
+  }, [zoneDepartments, departmentSearch]);
 
   const deptRoleMap = useMemo(() => {
     const map = new Map<number, number[]>();
@@ -149,38 +163,28 @@ export default forwardRef<ProjectMappingStepHandle, Props>(({ initialData }: Pro
     return map;
   }, [deptRoles]);
 
-  const rolesForPrimaryDept = useMemo(
-    () => activeRoles.filter((r) => {
-      if (!departmentId) return true;
-      const allowed = deptRoleMap.get(departmentId as number) ?? [];
-      return allowed.includes(r.id);
-    }),
-    [activeRoles, departmentId, deptRoleMap],
-  );
-
-  const rolesForSecondaryDept = useMemo(
-    () => activeRoles.filter((r) => {
-      if (!departmentId) return true;
-      const allowed = deptRoleMap.get(departmentId as number) ?? [];
+  const rolesForDepartment = useMemo(
+    () => activeRoles.filter((r: Role) => {
+      if (!departmentId) return false;
+      const allowed = deptRoleMap.get(departmentId) ?? [];
       return allowed.includes(r.id);
     }),
     [activeRoles, departmentId, deptRoleMap],
   );
 
   const projectIdsByZone = useMemo(() => {
-    if (zoneIds.length === 0) return new Set<number>();
-    const locationZoneIds = new Set(zoneIds.map(Number));
+    if (!zoneId) return new Set<number>();
     const ids = new Set<number>();
-    locations.forEach((loc) => {
-      if (locationZoneIds.has(loc.zoneId)) {
+    locations.forEach((loc: ProjectLocation) => {
+      if (loc.zoneId === zoneId) {
         ids.add(loc.projectId);
       }
     });
     return ids;
-  }, [zoneIds, locations]);
+  }, [zoneId, locations]);
 
   const zoneFilteredProjects = useMemo(
-    () => projects.filter((p) => projectIdsByZone.has(p.id)),
+    () => projects.filter((p: any) => projectIdsByZone.has(p.id)),
     [projects, projectIdsByZone],
   );
 
@@ -208,24 +212,57 @@ export default forwardRef<ProjectMappingStepHandle, Props>(({ initialData }: Pro
     return validValues.includes(tabValue) ? tabValue : (validValues[0] ?? 0);
   }, [tabs, tabValue]);
 
-  const getData = useCallback((): ProjectMappingData => ({
-    zoneIds: zoneIds as number[],
-    departmentId: departmentId as number,
-    primaryRoleId: primaryRoleId as number,
+  // --- Cascade clear helpers ---
+  const cascadeClearZone = useCallback(() => {
+    setDepartmentId(null);
+    setPrimaryRoleId(null);
+    setIsDepartmentAdmin(false);
+    setSecondaryRoleId(null);
+    setDepartmentSearch('');
+    setErrList([]);
+  }, []);
 
+  const cascadeClearDepartment = useCallback(() => {
+    setPrimaryRoleId(null);
+    setIsDepartmentAdmin(false);
+    setSecondaryRoleId(null);
+    setErrList([]);
+  }, []);
+
+  // --- Handler for zone change ---
+  const handleZoneChange = useCallback((newZoneId: number | null) => {
+    if (newZoneId !== zoneId) {
+      cascadeClearZone();
+    }
+    setZoneId(newZoneId);
+  }, [zoneId, cascadeClearZone]);
+
+  // --- Handler for department change ---
+  const handleDepartmentChange = useCallback((newDeptId: number | null) => {
+    if (newDeptId !== departmentId) {
+      cascadeClearDepartment();
+    }
+    setDepartmentId(newDeptId);
+  }, [departmentId, cascadeClearDepartment]);
+
+  const getData = useCallback((): ProjectMappingData => ({
+    zoneId,
+    departmentId,
+    primaryRoleId,
+    isDepartmentAdmin,
     secondaryRoleId: secondaryRoleId || undefined,
     assignBuddyRm,
     buddyRmUserId: buddyRmUserId || undefined,
     profiles: {
-      primary: { roleId: primaryRoleId as number, departmentId: departmentId as number, permissions: primaryPermissions },
+      primary: { roleId: primaryRoleId!, departmentId: departmentId!, permissions: primaryPermissions },
       secondary: secondaryRoleId
-        ? { roleId: secondaryRoleId as number, departmentId: departmentId as number, permissions: secondaryPermissions }
+        ? { roleId: secondaryRoleId, departmentId: departmentId!, permissions: secondaryPermissions }
         : undefined,
       buddyRm: assignBuddyRm && buddyRmUserId
         ? { buddyUserId: buddyRmUserId, permissions: buddyPermissions }
         : undefined,
     },
-  }), [zoneIds, departmentId, primaryRoleId, secondaryRoleId, assignBuddyRm, buddyRmUserId, primaryPermissions, secondaryPermissions, buddyPermissions]);
+  }), [zoneId, departmentId, primaryRoleId, isDepartmentAdmin, secondaryRoleId, assignBuddyRm, buddyRmUserId, primaryPermissions, secondaryPermissions, buddyPermissions]);
 
   const validate = useCallback((): boolean => {
     const data = getData();
@@ -251,11 +288,11 @@ export default forwardRef<ProjectMappingStepHandle, Props>(({ initialData }: Pro
     setErrList([]);
   }, []);
 
-  if (!activeModules.length && !activeDepartments.length && !activeRoles.length) {
+  if (!activeModules.length && !activeRoles.length) {
     return (
       <Box sx={{ p: 3 }}>
         <Alert severity="warning">
-          No master data available. Please configure Departments, Roles, and Modules in the system before creating a user.
+          No master data available. Please configure Zones, Departments, Roles, and Modules in the system before creating a user.
         </Alert>
       </Box>
     );
@@ -274,101 +311,108 @@ export default forwardRef<ProjectMappingStepHandle, Props>(({ initialData }: Pro
       )}
 
       <Box display="grid" gridTemplateColumns={{ xs: '1fr', sm: '1fr 1fr' }} gap={2.5} sx={{ maxWidth: 900 }}>
-        <FormControl>
-          <InputLabel>Zone *</InputLabel>
-          <Select
-            multiple
-            value={zoneIds}
-            label="Zone *"
-            onChange={(e) => {
-              const newZoneIds = e.target.value as number[];
-              setZoneIds(newZoneIds);
-              const deptsInZones = newZoneIds.length === 0
-                ? activeDepartments
-                : activeDepartments.filter((d: any) =>
-                    d.zones?.some((zn: string) => newZoneIds.includes(zoneNameToId.get(zn) ?? -1))
-                  );
-              if (departmentId && !deptsInZones.some((d: any) => d.id === departmentId)) {
-                setDepartmentId('');
-                setPrimaryRoleId('');
-              }
-              setErrList([]);
-            }}
-            renderValue={(selected) => (
-              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                {(selected as number[]).length === 0 ? (
-                  <Typography variant="body2" color="text.disabled">Select zones</Typography>
-                ) : (
-                  (selected as number[]).map((id) => {
-                    const zone = activeZones.find((z: Zone) => z.id === id);
-                    return <Chip key={id} label={zone?.name ?? id} size="small" />;
-                  })
-                )}
-              </Box>
-            )}
-          >
-            {activeZones.length > 0 ? activeZones.map((zone: Zone) => (
-              <MenuItem key={zone.id} value={zone.id}>{zone.name}</MenuItem>
-            )) : (
-              <MenuItem disabled value="">
-                <Typography variant="body2" color="text.disabled">No zones available</Typography>
-              </MenuItem>
-            )}
-          </Select>
-        </FormControl>
-
-        <Box /> {/* spacer */}
-
-        <FormControl>
-          <InputLabel>Department *</InputLabel>
-          <Select
-            value={departmentId}
-            label="Department *"
-            onChange={(e) => {
-              const newDeptId = e.target.value as number;
-              setDepartmentId(newDeptId);
-              const allowedRoles = deptRoleMap.get(newDeptId) ?? [];
-              if (primaryRoleId && !allowedRoles.includes(primaryRoleId as number)) {
-                setPrimaryRoleId('');
-              }
-              setErrList([]);
-            }}
-          >
-            {filteredDepartments.length > 0 ? filteredDepartments.map((dept: any) => (
-              <MenuItem key={dept.id} value={dept.id}>{dept.name}</MenuItem>
-            )) : (
-              <MenuItem disabled value="">
-                <Typography variant="body2" color="text.disabled">No departments in selected zones</Typography>
-              </MenuItem>
-            )}
-          </Select>
-        </FormControl>
-
+        {/* Zone - Searchable Autocomplete */}
         <Autocomplete
-          options={rolesForPrimaryDept}
-          value={rolesForPrimaryDept.find((r: Role) => r.id === primaryRoleId) ?? null}
-          onChange={(_, newValue) => { setPrimaryRoleId(newValue?.id ?? ''); setErrList([]); }}
-          getOptionLabel={(option: Role) => option.name}
-          isOptionEqualToValue={(option: Role, value: Role) => option.id === value.id}
-          renderInput={(params) => <TextField {...params} label="Primary Role *" />}
+          options={activeZones}
+          value={activeZones.find((z: Zone) => z.id === zoneId) ?? null}
+          onChange={(_, newValue) => { handleZoneChange(newValue?.id ?? null); }}
+          getOptionLabel={(option: Zone) => option.name}
+          isOptionEqualToValue={(option: Zone, value: Zone) => option.id === value.id}
+          renderInput={(params) => <TextField {...params} label="Zone *" placeholder="Search Zone" />}
+          noOptionsText="No zones available"
           disablePortal
           fullWidth
         />
 
+        {/* Department - Filtered by Zone, searchable */}
+        <FormControl>
+          <Autocomplete
+            options={filteredDepartments}
+            value={filteredDepartments.find((d: any) => d.id === departmentId) ?? null}
+            onChange={(_, newValue) => { handleDepartmentChange(newValue?.id ?? null); }}
+            getOptionLabel={(option: any) => option.name}
+            isOptionEqualToValue={(option: any, value: any) => option.id === value.id}
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                label="Department *"
+                placeholder="Search Department"
+                InputProps={{
+                  ...params.InputProps,
+                  endAdornment: (
+                    <>
+                      {deptsLoading ? <CircularProgress size={20} /> : null}
+                      {params.InputProps.endAdornment}
+                    </>
+                  ),
+                }}
+              />
+            )}
+            noOptionsText={!zoneId ? 'Select a Zone first' : 'No Departments available for this Zone.'}
+            onInputChange={(_, val) => setDepartmentSearch(val)}
+            disabled={!zoneId}
+            disablePortal
+            fullWidth
+          />
+        </FormControl>
+
+        {/* Primary Role - Searchable Autocomplete */}
         <Autocomplete
-          options={rolesForSecondaryDept}
-          value={rolesForSecondaryDept.find((r: Role) => r.id === secondaryRoleId) ?? null}
-          onChange={(_, newValue) => { setSecondaryRoleId(newValue?.id ?? ''); setErrList([]); }}
-          getOptionLabel={(option: Role) => option.name}
+          options={rolesForDepartment}
+          value={rolesForDepartment.find((r: Role) => r.id === primaryRoleId) ?? null}
+          onChange={(_, newValue) => { setPrimaryRoleId(newValue?.id ?? null); setErrList([]); }}
+          getOptionLabel={(option: Role) => `${option.name} • ${selectedZoneName}`}
           isOptionEqualToValue={(option: Role, value: Role) => option.id === value.id}
-          renderInput={(params) => <TextField {...params} label="Secondary Role (Optional)" />}
+          renderInput={(params) => <TextField {...params} label="Role *" placeholder="Search Role" />}
+          noOptionsText={!departmentId ? 'Select a Department first' : 'No roles available for this Department'}
+          disabled={!departmentId}
           disablePortal
           fullWidth
         />
 
-        <Box /> {/* spacer */}
+        {/* Secondary Role - Searchable Autocomplete */}
+        <Autocomplete
+          options={rolesForDepartment}
+          value={rolesForDepartment.find((r: Role) => r.id === secondaryRoleId) ?? null}
+          onChange={(_, newValue) => { setSecondaryRoleId(newValue?.id ?? null); setErrList([]); }}
+          getOptionLabel={(option: Role) => `${option.name} • ${selectedZoneName}`}
+          isOptionEqualToValue={(option: Role, value: Role) => option.id === value.id}
+          renderInput={(params) => (
+            <TextField
+              {...params}
+              label="Secondary Role (Optional)"
+              placeholder="Search Secondary Role"
+            />
+          )}
+          noOptionsText={!departmentId ? 'Select a Department first' : 'No roles available'}
+          disabled={!departmentId}
+          disablePortal
+          clearOnEscape
+          fullWidth
+        />
       </Box>
 
+      {/* Department Administrator Checkbox */}
+      <FormControlLabel
+        control={
+          <Checkbox
+            checked={isDepartmentAdmin}
+            onChange={(e) => { setIsDepartmentAdmin(e.target.checked); setErrList([]); }}
+            disabled={!departmentId}
+          />
+        }
+        label={
+          <Box>
+            <Typography variant="body2" fontWeight={600}>Make this user the Department Administrator</Typography>
+            <Typography variant="caption" color="text.secondary">
+              Only one active Department Administrator can exist for a Department within a Zone.
+              Checking this only assigns the designation. It does NOT grant permissions.
+            </Typography>
+          </Box>
+        }
+      />
+
+      {/* Buddy RM */}
       <FormControlLabel
         control={
           <Checkbox

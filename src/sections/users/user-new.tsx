@@ -94,6 +94,19 @@ export default function UserNewPage() {
     const projectData = savedStep2Data;
     const orgData = step3!.getData();
 
+    if (!projectData.zoneId) {
+      setSubmitError('Zone is required.');
+      return;
+    }
+    if (!projectData.departmentId) {
+      setSubmitError('Department is required.');
+      return;
+    }
+    if (!projectData.primaryRoleId) {
+      setSubmitError('Primary Role is required.');
+      return;
+    }
+
     setSubmitting(true);
 
     try {
@@ -113,8 +126,9 @@ export default function UserNewPage() {
           isActive: basicData.isActive,
         },
         organization: {
-          zones: projectData.zoneIds,
+          zoneId: projectData.zoneId,
           primaryRole: projectData.primaryRoleId,
+          isDepartmentAdmin: projectData.isDepartmentAdmin,
           secondaryRoles: projectData.secondaryRoleId
             ? [{ roleId: projectData.secondaryRoleId, departmentId: projectData.departmentId }]
             : undefined,

@@ -8,7 +8,7 @@ import {
 } from '@nestjs/common';
 import { ProfileType } from '../../../common/enums';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, DataSource, In } from 'typeorm';
+import { Repository, DataSource, In, Not } from 'typeorm';
 import { User } from '../entities/user.entity';
 import { UserRole } from '../entities/user-role.entity';
 import { UserZone } from '../entities/user-zone.entity';
@@ -31,6 +31,9 @@ import { PermissionProfileSubModule } from '../../permissions/entities/permissio
 import { PermissionProfileProject } from '../../permissions/entities/permission-profile-project.entity';
 import { PermissionCompilerService } from '../../permissions/services/permission-compiler.service';
 import { NotificationService } from '../../notifications/services/notification.service';
+import { Department } from '../../organization/entities/department.entity';
+import { DepartmentRole } from '../../organization/entities/department-role.entity';
+import { Zone } from '../../geography/entities/zone.entity';
 
 @Injectable()
 export class UserService {
@@ -483,6 +486,55 @@ export class UserService {
       });
       const savedUser = await queryRunner.manager.save(user);
 
+      // --- Zone-aware validation ---
+      const { zoneId, primaryRole, secondaryRoles } = dto.organization;
+
+      const zone = await queryRunner.manager.findOne(Zone, { where: { id: zoneId } });
+      if (!zone) {
+        throw new BadRequestException(`Zone with id ${zoneId} not found`);
+      }
+      if (zone.isActive === false) {
+        throw new BadRequestException(`Zone "${zone.name}" is not active`);
+      }
+
+      if (dto.basic.departmentId) {
+        const dept = await queryRunner.manager.findOne(Department, {
+          where: { id: dto.basic.departmentId, deletedAt: null },
+        });
+        if (!dept) {
+          throw new BadRequestException(`Department with id ${dto.basic.departmentId} not found`);
+        }
+        if (dept.zoneId !== zoneId) {
+          throw new BadRequestException(
+            `Department "${dept.name}" does not belong to the selected zone`,
+          );
+        }
+
+        if (primaryRole) {
+          const deptRole = await queryRunner.manager.findOne(DepartmentRole, {
+            where: { departmentId: dto.basic.departmentId, roleId: primaryRole },
+          });
+          if (!deptRole) {
+            throw new BadRequestException(
+              `Primary role is not assigned to the selected department`,
+            );
+          }
+        }
+
+        if (secondaryRoles?.length) {
+          for (const sr of secondaryRoles) {
+            const deptRole = await queryRunner.manager.findOne(DepartmentRole, {
+              where: { departmentId: dto.basic.departmentId, roleId: sr.roleId },
+            });
+            if (!deptRole) {
+              throw new BadRequestException(
+                `Secondary role id ${sr.roleId} is not assigned to the selected department`,
+              );
+            }
+          }
+        }
+      }
+
       const roles: UserRole[] = [];
       const zones: UserZone[] = [];
       const reportingLines: UserReportingLine[] = [];
@@ -512,16 +564,30 @@ export class UserService {
           }
         }
 
-        if (dto.organization.zones?.length) {
-          for (const zoneId of dto.organization.zones) {
-            const uz = queryRunner.manager.create(UserZone, {
-              userId: savedUser.empId,
-              zoneId,
-              assignedAt: new Date(),
-            });
-            zones.push(await queryRunner.manager.save(uz));
-          }
+        // Assign the primary zone
+        const uz = queryRunner.manager.create(UserZone, {
+          userId: savedUser.empId,
+          zoneId: dto.organization.zoneId,
+          assignedAt: new Date(),
+        });
+        zones.push(await queryRunner.manager.save(uz));
+      }
+
+      // Handle Department Administrator assignment
+      if (dto.organization.isDepartmentAdmin && dto.basic.departmentId) {
+        const deptWithAdmin = await queryRunner.manager.findOne(Department, {
+          where: { id: dto.basic.departmentId },
+        });
+        if (deptWithAdmin?.departmentAdminId) {
+          throw new BadRequestException(
+            `This department already has a Department Administrator (${deptWithAdmin.departmentAdminId}). Only one active Department Administrator is allowed per department.`,
+          );
         }
+        await queryRunner.manager.update(
+          Department,
+          { id: dto.basic.departmentId },
+          { departmentAdminId: savedUser.empId },
+        );
       }
 
       if (dto.organization.reporting?.length) {

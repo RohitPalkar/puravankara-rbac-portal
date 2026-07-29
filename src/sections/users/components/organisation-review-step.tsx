@@ -20,7 +20,6 @@ export interface OrganisationData {
   employmentStatus: 'Active' | 'Inactive';
   reportingManagerId: string;
   teamLeadId?: string;
-  departmentAdminId: string;
   userGroupId?: number;
   effectiveFrom: string;
   effectiveTill?: string;
@@ -60,8 +59,6 @@ export default forwardRef<OrganisationReviewStepHandle, Props>(
     const [reportingManagerSearch, setReportingManagerSearch] = useState('');
     const [teamLeadId, setTeamLeadId] = useState('');
     const [teamLeadSearch, setTeamLeadSearch] = useState('');
-    const [departmentAdminId, setDepartmentAdminId] = useState('');
-    const [departmentAdminSearch, setDepartmentAdminSearch] = useState('');
     const [userGroupId, setUserGroupId] = useState<number | ''>('');
     const [effectiveFrom, setEffectiveFrom] = useState(todayString());
     const [effectiveTill, setEffectiveTill] = useState('');
@@ -89,17 +86,9 @@ export default forwardRef<OrganisationReviewStepHandle, Props>(
       return allUsers.filter((u: any) => (u.name?.toLowerCase().includes(lower) || u.empId?.toLowerCase().includes(lower)));
     }, [allUsers, teamLeadSearch]);
 
-    const deptAdminResults = useMemo(() => {
-      if (!allUsers) return [];
-      if (!departmentAdminSearch) return allUsers;
-      const lower = departmentAdminSearch.toLowerCase();
-      return allUsers.filter((u: any) => (u.name?.toLowerCase().includes(lower) || u.empId?.toLowerCase().includes(lower)));
-    }, [allUsers, departmentAdminSearch]);
-
     const allUserList = useMemo(() => (allUsers as UserSearchResult[]) ?? [], [allUsers]);
     const searchUsers = useMemo(() => userSearchResults ?? [], [userSearchResults]);
     const searchTeamLeads = useMemo(() => teamLeadResults ?? [], [teamLeadResults]);
-    const searchDeptAdmins = useMemo(() => deptAdminResults ?? [], [deptAdminResults]);
     const groups = useMemo(() => userGroups ?? [], [userGroups]);
 
     useEffect(() => {
@@ -109,24 +98,22 @@ export default forwardRef<OrganisationReviewStepHandle, Props>(
     const validate = useCallback((): boolean => {
       const errs: string[] = [];
       if (!reportingManagerId) errs.push('Reporting Manager is required.');
-      if (!departmentAdminId) errs.push('Department Admin is required.');
       if (!effectiveFrom) errs.push('Effective From is required.');
       if (effectiveTill && effectiveTill <= effectiveFrom) {
         errs.push('Effective Till must be after Effective From.');
       }
       setErrors(errs);
       return errs.length === 0;
-    }, [reportingManagerId, departmentAdminId, effectiveFrom, effectiveTill]);
+    }, [reportingManagerId, effectiveFrom, effectiveTill]);
 
     const getData = useCallback((): OrganisationData => ({
       employmentStatus,
       reportingManagerId,
       teamLeadId: teamLeadId || undefined,
-      departmentAdminId,
       userGroupId: userGroupId || undefined,
       effectiveFrom,
       effectiveTill: effectiveTill || undefined,
-    }), [employmentStatus, reportingManagerId, teamLeadId, departmentAdminId, userGroupId, effectiveFrom, effectiveTill]);
+    }), [employmentStatus, reportingManagerId, teamLeadId, userGroupId, effectiveFrom, effectiveTill]);
 
     useImperativeHandle(ref, () => ({ getData, validate }), [getData, validate]);
 
@@ -200,32 +187,6 @@ export default forwardRef<OrganisationReviewStepHandle, Props>(
             onInputChange={(_, val) => setTeamLeadSearch(val)}
             renderInput={(params) => (
               <TextField {...params} label="Team Lead (Optional)" size="medium" />
-            )}
-            renderOption={(props, option: UserSearchResult) => (
-              <li {...props}>
-                <Box>
-                  <Typography variant="body2" fontWeight={600}>{option.name}</Typography>
-                  <Typography variant="caption" color="text.secondary">
-                    {option.empId}{option.departmentName ? ` | ${option.departmentName}` : ''}{option.roleName ? ` | ${option.roleName}` : ''}
-                  </Typography>
-                </Box>
-              </li>
-            )}
-            noOptionsText="Start typing to search users"
-          />
-
-          <Autocomplete
-            options={searchDeptAdmins as any[]}
-            getOptionLabel={(option: UserSearchResult) => `${option.name} (${option.empId})`}
-            isOptionEqualToValue={(o: UserSearchResult, v: UserSearchResult) => o.empId === v.empId}
-            value={departmentAdminId ? allUserList.find((u) => u.empId === departmentAdminId) ?? null : null}
-            onChange={(_, value: UserSearchResult | null) => {
-              setDepartmentAdminId(value?.empId ?? '');
-              setErrors([]);
-            }}
-            onInputChange={(_, val) => setDepartmentAdminSearch(val)}
-            renderInput={(params) => (
-              <TextField {...params} label="Department Admin *" size="medium" />
             )}
             renderOption={(props, option: UserSearchResult) => (
               <li {...props}>

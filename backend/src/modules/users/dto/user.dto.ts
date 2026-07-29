@@ -225,9 +225,9 @@ export class SecondaryRoleEntryDto {
 }
 
 export class UserOrganizationDto {
-  @ApiProperty({ type: [Number] })
-  @IsInt({ each: true })
-  zones: number[];
+  @ApiProperty()
+  @IsInt()
+  zoneId: number;
 
   @ApiProperty()
   @IsInt()
@@ -238,6 +238,11 @@ export class UserOrganizationDto {
   @ValidateNested({ each: true })
   @Type(() => SecondaryRoleEntryDto)
   secondaryRoles?: SecondaryRoleEntryDto[];
+
+  @ApiPropertyOptional({ default: false })
+  @IsOptional()
+  @IsBoolean()
+  isDepartmentAdmin?: boolean;
 
   @ApiPropertyOptional({ type: [ReportingEntryDto] })
   @IsOptional()
