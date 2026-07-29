@@ -7,6 +7,7 @@ import Typography from '@mui/material/Typography';
 import CardContent from '@mui/material/CardContent';
 
 import { useDashboardKpis } from 'src/services/hooks/use-dashboard';
+import { useRolePermissionsSummary } from 'src/services/hooks/use-permissions';
 
 import { Iconify } from 'src/components/iconify';
 
@@ -55,20 +56,23 @@ function KpiCard({ item, loading }: { item: KpiItem; loading: boolean }) {
 
 export function KpiCards({ zoneId }: { zoneId?: number }) {
   const { data: kpis, isLoading } = useDashboardKpis(zoneId);
+  const { data: rolesSummary } = useRolePermissionsSummary();
+
+  const activeRoles = Array.isArray(rolesSummary)
+    ? rolesSummary.filter((r: any) => r.isActive !== false).length
+    : '-';
 
   const items: KpiItem[] = [
     { icon: 'solar:users-group-rounded-bold', label: 'Total Users', value: kpis?.totalUsers ?? '-', color: '#2F3C98' },
-    { icon: 'solar:user-check-bold', label: 'Active Users', value: kpis?.activeUsers ?? '-', color: '#4CAF50' },
-    { icon: 'solar:folder-bold', label: 'Projects', value: kpis?.totalProjects ?? '-', color: '#FF9800' },
     { icon: 'solar:buildings-bold', label: 'Departments', value: kpis?.departments ?? '-', color: '#00BCD4' },
-    { icon: 'solar:user-id-bold', label: 'Permission Profiles', value: kpis?.permissionProfiles ?? '-', color: '#9C27B0' },
-    { icon: 'solar:clipboard-check-bold', label: "Today's Events", value: kpis?.todayEvents ?? '-', color: '#E91E63' },
+    { icon: 'solar:folder-bold', label: 'Projects', value: kpis?.totalProjects ?? '-', color: '#FF9800' },
+    { icon: 'solar:user-id-bold', label: 'Active Roles', value: activeRoles, color: '#4CAF50' },
   ];
 
   return (
     <Grid container spacing={2}>
       {items.map((item) => (
-        <Grid item xs={6} sm={4} md={2} key={item.label}>
+        <Grid item xs={6} sm={3} key={item.label}>
           <KpiCard item={item} loading={isLoading} />
         </Grid>
       ))}
