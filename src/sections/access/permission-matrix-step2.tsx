@@ -5,6 +5,7 @@ import Grid from '@mui/material/Grid';
 import Stack from '@mui/material/Stack';
 import Paper from '@mui/material/Paper';
 import Button from '@mui/material/Button';
+import Divider from '@mui/material/Divider';
 import Checkbox from '@mui/material/Checkbox';
 import Collapse from '@mui/material/Collapse';
 import TextField from '@mui/material/TextField';
@@ -17,6 +18,9 @@ import { Iconify } from 'src/components/iconify';
 
 interface Props {
   roleId: number;
+  roleName?: string;
+  projectName?: string;
+  departmentName?: string;
   onSave?: (actionIds: number[]) => void;
   saving?: boolean;
   editable?: boolean;
@@ -91,7 +95,7 @@ function computeModuleState(mod: ModuleNode, selectedIds: Set<number>) {
   };
 }
 
-export default function PermissionMatrixStep2({ roleId, onSave, saving, editable = true }: Props) {
+export default function PermissionMatrixStep2({ roleId, roleName = '', projectName = '', departmentName = '', onSave, saving, editable = true }: Props) {
   const { data: treeData, isLoading } = useRolePermissionsTree(roleId);
 
   const [selectedActionIds, setSelectedActionIds] = useState<Set<number>>(new Set());
@@ -125,6 +129,27 @@ export default function PermissionMatrixStep2({ roleId, onSave, saving, editable
       if (firstSm) setSelectedSubModuleId(firstSm.id);
     }
   }, [treeData]);
+
+  const totalModules = treeData?.modules?.length ?? 0;
+  const totalSubModules = useMemo(() => {
+    if (!treeData?.modules) return 0;
+    return treeData.modules.reduce((acc: number, mod: ModuleNode) => acc + mod.subModules.length, 0);
+  }, [treeData]);
+
+  const totalActions = useMemo(() => {
+    if (!treeData?.modules) return 0;
+    let count = 0;
+    treeData.modules.forEach((mod: ModuleNode) => {
+      mod.subModules.forEach((sm: SubModuleNode) => {
+        sm.actionGroups.forEach((ag: ActionGroupNode) => {
+          count += ag.actions.length;
+        });
+      });
+    });
+    return count;
+  }, [treeData]);
+
+  const totalSelected = selectedActionIds.size;
 
   const toggleAction = useCallback((actionId: number) => {
     setSelectedActionIds((prev) => {
@@ -181,7 +206,7 @@ export default function PermissionMatrixStep2({ roleId, onSave, saving, editable
     });
   }, []);
 
-  const selectAll = useCallback(() => {
+  const selectAllInSubModule = useCallback(() => {
     if (!treeData?.modules || !selectedSubModuleId) return;
     const sm = findSubModule(treeData.modules, selectedSubModuleId);
     if (!sm) return;
@@ -192,7 +217,7 @@ export default function PermissionMatrixStep2({ roleId, onSave, saving, editable
     });
   }, [treeData, selectedSubModuleId]);
 
-  const clearAll = useCallback(() => {
+  const clearAllInSubModule = useCallback(() => {
     if (!treeData?.modules || !selectedSubModuleId) return;
     const sm = findSubModule(treeData.modules, selectedSubModuleId);
     if (!sm) return;
@@ -203,7 +228,39 @@ export default function PermissionMatrixStep2({ roleId, onSave, saving, editable
     });
   }, [treeData, selectedSubModuleId]);
 
-  const totalSelected = selectedActionIds.size;
+  const selectAllTree = useCallback(() => {
+    if (!treeData?.modules) return;
+    setSelectedActionIds((prev) => {
+      const next = new Set(prev);
+      treeData.modules.forEach((mod: ModuleNode) => {
+        mod.subModules.forEach((sm: SubModuleNode) => {
+          sm.actionGroups.forEach((ag: ActionGroupNode) => {
+            ag.actions.forEach((a: ActionNode) => next.add(a.id));
+          });
+        });
+      });
+      return next;
+    });
+  }, [treeData]);
+
+  const clearAllTree = useCallback(() => {
+    if (!treeData?.modules) return;
+    setSelectedActionIds(new Set());
+  }, [treeData]);
+
+  const expandAll = useCallback(() => {
+    if (!treeData?.modules) return;
+    const allExpanded: Record<number, boolean> = {};
+    treeData.modules.forEach((mod: ModuleNode) => { allExpanded[mod.id] = true; });
+    setExpandedModules(allExpanded);
+  }, [treeData]);
+
+  const collapseAll = useCallback(() => {
+    if (!treeData?.modules) return;
+    const allCollapsed: Record<number, boolean> = {};
+    treeData.modules.forEach((mod: ModuleNode) => { allCollapsed[mod.id] = false; });
+    setExpandedModules(allCollapsed);
+  }, [treeData]);
 
   const selectedSubModule = useMemo(() => {
     if (!treeData?.modules || !selectedSubModuleId) return null;
@@ -250,10 +307,49 @@ export default function PermissionMatrixStep2({ roleId, onSave, saving, editable
     );
   }
 
+  if (!treeData?.modules || treeData.modules.length === 0) {
+    return (
+      <Box sx={{ textAlign: 'center', py: 8 }}>
+        <Iconify icon="solar:folder-with-files-bold" width={48} sx={{ color: 'text.disabled', mb: 2 }} />
+        <Typography variant="h6" color="text.secondary">No modules found</Typography>
+        <Typography variant="body2" color="text.disabled" sx={{ mt: 1 }}>
+          This role has no permission modules configured yet.
+        </Typography>
+      </Box>
+    );
+  }
+
   return (
     <Stack spacing={0} sx={{ minHeight: 500, borderTop: '1px solid', borderColor: 'divider' }}>
+      <Box
+        sx={{
+          px: 2.5,
+          py: 1.5,
+          borderBottom: '1px solid',
+          borderColor: 'divider',
+          bgcolor: 'grey.50',
+        }}
+      >
+        <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
+          {projectName && departmentName ? `${projectName} / ${departmentName}` : ''} {roleName ? `— ${roleName}` : ''}
+        </Typography>
+        <Stack direction="row" spacing={3} alignItems="center">
+          <Typography variant="caption" color="text.secondary">
+            <strong>{totalModules}</strong> module{totalModules !== 1 ? 's' : ''}
+          </Typography>
+          <Typography variant="caption" color="text.secondary">
+            <strong>{totalSubModules}</strong> submodule{totalSubModules !== 1 ? 's' : ''}
+          </Typography>
+          <Typography variant="caption" color="text.secondary">
+            <strong>{totalActions}</strong> action{totalActions !== 1 ? 's' : ''}
+          </Typography>
+          <Typography variant="caption" color="primary.main" fontWeight={600}>
+            <strong>{totalSelected}</strong> selected
+          </Typography>
+        </Stack>
+      </Box>
+
       <Box sx={{ display: 'flex', flex: 1, minHeight: 0 }}>
-        {/* LEFT PANEL */}
         <Box
           sx={{
             width: 320,
@@ -265,6 +361,14 @@ export default function PermissionMatrixStep2({ roleId, onSave, saving, editable
           }}
         >
           <Box sx={{ p: 1.5, borderBottom: '1px solid', borderColor: 'divider' }}>
+            <Stack direction="row" spacing={0.5} sx={{ mb: 1 }}>
+              <Button size="small" variant="text" onClick={expandAll} sx={{ minWidth: 0, fontSize: 12, px: 1 }}>
+                Expand All
+              </Button>
+              <Button size="small" variant="text" onClick={collapseAll} sx={{ minWidth: 0, fontSize: 12, px: 1 }}>
+                Collapse All
+              </Button>
+            </Stack>
             <TextField
               fullWidth
               size="small"
@@ -304,7 +408,7 @@ export default function PermissionMatrixStep2({ roleId, onSave, saving, editable
                         cursor: 'pointer',
                         '&:hover': { bgcolor: 'action.hover' },
                       }}
-                      onClick={() => setExpandedModules({ [mod.id]: !(expandedModules[mod.id] ?? false) })}
+                      onClick={() => setExpandedModules((prev) => ({ ...prev, [mod.id]: !(prev[mod.id] ?? false) }))}
                     >
                       <Box
                         component="span"
@@ -392,9 +496,7 @@ export default function PermissionMatrixStep2({ roleId, onSave, saving, editable
           </Box>
         </Box>
 
-        {/* RIGHT PANEL */}
         <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
-          {/* Toolbar */}
           <Stack
             direction="row"
             alignItems="center"
@@ -431,19 +533,31 @@ export default function PermissionMatrixStep2({ roleId, onSave, saving, editable
 
             <Box sx={{ flex: 1 }} />
 
-            {editable && selectedSubModule && selectedSubModule.hasActions && (
+            {editable && (
               <>
-                <Button size="small" variant="outlined" onClick={selectAll} sx={{ minWidth: 80 }}>
+                <Button size="small" variant="outlined" onClick={selectAllTree} sx={{ minWidth: 80 }}>
                   Select All
                 </Button>
-                <Button size="small" variant="outlined" color="error" onClick={clearAll} sx={{ minWidth: 80 }}>
+                <Button size="small" variant="outlined" color="error" onClick={clearAllTree} sx={{ minWidth: 80 }}>
                   Clear All
+                </Button>
+              </>
+            )}
+
+            <Divider orientation="vertical" flexItem />
+
+            {editable && selectedSubModule && selectedSubModule.hasActions && (
+              <>
+                <Button size="small" variant="text" onClick={selectAllInSubModule} sx={{ minWidth: 80 }}>
+                  Select Sub
+                </Button>
+                <Button size="small" variant="text" color="error" onClick={clearAllInSubModule} sx={{ minWidth: 80 }}>
+                  Clear Sub
                 </Button>
               </>
             )}
           </Stack>
 
-          {/* Content */}
           <Box sx={{ flex: 1, overflow: 'auto', p: 2.5 }}>
             {!selectedSubModule && (
               <Box sx={{ textAlign: 'center', py: 10 }}>
@@ -576,25 +690,36 @@ export default function PermissionMatrixStep2({ roleId, onSave, saving, editable
       </Box>
 
       {editable && (
-        <Stack
-          direction="row"
-          justifyContent="flex-end"
-          alignItems="center"
-          spacing={2}
-          sx={{ px: 2.5, py: 1.5, borderTop: '1px solid', borderColor: 'divider', bgcolor: 'grey.50' }}
+        <Box
+          sx={{
+            position: 'sticky',
+            bottom: 0,
+            zIndex: 10,
+            borderTop: '1px solid',
+            borderColor: 'divider',
+            bgcolor: 'grey.50',
+          }}
         >
-          <Typography variant="body2" color="text.secondary">
-            {totalSelected} permission{totalSelected !== 1 ? 's' : ''} selected
-          </Typography>
-          <Button
-            variant="contained"
-            onClick={() => onSave!(Array.from(selectedActionIds))}
-            disabled={saving}
-            sx={{ minWidth: 140 }}
+          <Stack
+            direction="row"
+            justifyContent="flex-end"
+            alignItems="center"
+            spacing={2}
+            sx={{ px: 2.5, py: 1.5 }}
           >
-            {saving ? 'Saving...' : 'Save Permissions'}
-          </Button>
-        </Stack>
+            <Typography variant="body2" color="text.secondary">
+              {totalSelected} of {totalActions} permission{totalSelected !== 1 ? 's' : ''} selected
+            </Typography>
+            <Button
+              variant="contained"
+              onClick={() => onSave!(Array.from(selectedActionIds))}
+              disabled={saving}
+              sx={{ minWidth: 140 }}
+            >
+              {saving ? 'Saving...' : 'Save Permissions'}
+            </Button>
+          </Stack>
+        </Box>
       )}
     </Stack>
   );

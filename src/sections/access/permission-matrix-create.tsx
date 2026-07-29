@@ -10,20 +10,20 @@ import Alert from '@mui/material/Alert';
 import Button from '@mui/material/Button';
 import Select from '@mui/material/Select';
 import Stepper from '@mui/material/Stepper';
-import Skeleton from '@mui/material/Skeleton';
 import MenuItem from '@mui/material/MenuItem';
 import Snackbar from '@mui/material/Snackbar';
 import StepLabel from '@mui/material/StepLabel';
 import TextField from '@mui/material/TextField';
 import InputLabel from '@mui/material/InputLabel';
 import FormControl from '@mui/material/FormControl';
-import FormHelperText from '@mui/material/FormHelperText';
+import Autocomplete from '@mui/material/Autocomplete';
 
 import { paths } from 'src/routes/paths';
 
 import { CONFIG } from 'src/config-global';
+import { useProjectList } from 'src/services/hooks/use-projects';
+import { useRoleList, useDepartmentList } from 'src/services/hooks/use-organization';
 import { useSetRolePermissions, useRolePermissionsSummary } from 'src/services/hooks/use-permissions';
-import { useDepartmentList, useRoleForHierarchy, useDepartmentHierarchyLevels } from 'src/services/hooks/use-organization';
 
 import { PageHeader, PageContainer } from 'src/components/page-layout';
 
@@ -37,8 +37,9 @@ export default function PermissionMatrixCreatePage() {
   const isEditMode = !!editRoleId;
 
   const [activeStep, setActiveStep] = useState(isEditMode ? 1 : 0);
+  const [projectId, setProjectId] = useState<number | ''>('');
   const [departmentId, setDepartmentId] = useState<number | ''>('');
-  const [levelNumber, setLevelNumber] = useState<number | ''>('');
+  const [roleId, setRoleId] = useState<number | ''>('');
   const [snackbar, setSnackbar] = useState<{ open: boolean; message: string; severity: 'success' | 'error' }>({
     open: false,
     message: '',
@@ -51,6 +52,20 @@ export default function PermissionMatrixCreatePage() {
     [departments],
   );
 
+  const { data: projects } = useProjectList({});
+  const projectOptions: { id: number; name: string }[] = useMemo(
+    () => projects ?? [],
+    [projects],
+  );
+
+  const { data: allRoles } = useRoleList({});
+  const filteredRoleOptions = useMemo(() => {
+    if (!allRoles || !departmentId) return [];
+    return (allRoles as { id: number; name: string; departmentId?: number | null }[]).filter(
+      (r) => r.departmentId === Number(departmentId),
+    );
+  }, [allRoles, departmentId]);
+
   const { data: summary } = useRolePermissionsSummary();
   const editRoleInfo = useMemo(() => {
     if (!isEditMode || !summary || !editRoleId) return null;
@@ -60,27 +75,15 @@ export default function PermissionMatrixCreatePage() {
   useEffect(() => {
     if (editRoleInfo && isEditMode) {
       if (editRoleInfo.departmentId) setDepartmentId(editRoleInfo.departmentId);
-      if (editRoleInfo.hierarchyLevelRank) setLevelNumber(editRoleInfo.hierarchyLevelRank);
+      if (editRoleInfo.id) setRoleId(editRoleInfo.id);
     }
   }, [editRoleInfo, isEditMode]);
 
-  const hierarchyDeptId = isEditMode ? (editRoleInfo?.departmentId ?? undefined) : (departmentId ? Number(departmentId) : undefined);
-  const { data: hierarchyLevels } = useDepartmentHierarchyLevels(hierarchyDeptId);
-  const effectiveDeptId = isEditMode ? (editRoleInfo?.departmentId ?? undefined) : (departmentId ? Number(departmentId) : undefined);
-  const effectiveLevel = isEditMode ? (editRoleInfo?.hierarchyLevelRank ?? undefined) : (levelNumber ? Number(levelNumber) : undefined);
-  const { data: roleData, isLoading: roleLoading } = useRoleForHierarchy(
-    effectiveDeptId,
-    effectiveLevel,
-  );
-
-  const targetRoleId = isEditMode ? Number(editRoleId) : (roleData?.roleId ?? 0);
-  const noRoleConfigured = !isEditMode && levelNumber !== '' && !roleLoading && roleData && !roleData.roleId;
+  const targetRoleId = isEditMode ? Number(editRoleId) : (roleId ? Number(roleId) : 0);
   const saveMutation = useSetRolePermissions(targetRoleId);
 
-  const levelOptions = useMemo(() => (hierarchyLevels ?? []), [hierarchyLevels]);
-
   const canGoNext = activeStep === 0
-    ? !!departmentId && levelNumber !== '' && !!roleData?.roleId
+    ? !!projectId && !!departmentId && !!roleId
     : true;
 
   const handleNext = useCallback(() => {
@@ -108,6 +111,24 @@ export default function PermissionMatrixCreatePage() {
     [saveMutation, navigate],
   );
 
+  const selectedRoleName = useMemo(() => {
+    if (!allRoles || !roleId) return '';
+    const role = (allRoles as { id: number; name: string }[]).find((r) => r.id === Number(roleId));
+    return role?.name ?? '';
+  }, [allRoles, roleId]);
+
+  const selectedProjectName = useMemo(() => {
+    if (!projectOptions || !projectId) return '';
+    const proj = projectOptions.find((p) => p.id === Number(projectId));
+    return proj?.name ?? '';
+  }, [projectOptions, projectId]);
+
+  const selectedDepartmentName = useMemo(() => {
+    if (!departmentOptions || !departmentId) return '';
+    const dept = departmentOptions.find((d) => d.id === Number(departmentId));
+    return dept?.name ?? '';
+  }, [departmentOptions, departmentId]);
+
   return (
     <>
       <Helmet><title>{isEditMode ? 'Edit Mapping' : 'Create Mapping'} - Permission Matrix - {CONFIG.appName}</title></Helmet>
@@ -129,6 +150,17 @@ export default function PermissionMatrixCreatePage() {
           {activeStep === 0 && (
             <Box sx={{ p: 3 }}>
               <Box display="grid" gridTemplateColumns={{ xs: '1fr', sm: '1fr 1fr' }} gap={2.5} sx={{ maxWidth: 900 }}>
+                <Autocomplete
+                  options={projectOptions}
+                  getOptionLabel={(option) => option.name}
+                  value={projectOptions.find((p) => p.id === Number(projectId)) ?? null}
+                  onChange={(_e, val) => setProjectId(val ? val.id : '')}
+                  disabled={isEditMode}
+                  renderInput={(params) => (
+                    <TextField {...params} label="Project *" required />
+                  )}
+                />
+
                 <FormControl>
                   <InputLabel>Department *</InputLabel>
                   <Select
@@ -137,7 +169,7 @@ export default function PermissionMatrixCreatePage() {
                     onChange={(e) => {
                       const val = e.target.value as number;
                       setDepartmentId(val);
-                      setLevelNumber('');
+                      setRoleId('');
                     }}
                     disabled={isEditMode}
                   >
@@ -151,52 +183,27 @@ export default function PermissionMatrixCreatePage() {
                   </Select>
                 </FormControl>
 
-                <FormControl>
-                  <InputLabel>Hierarchy Level *</InputLabel>
-                  <Select
-                    value={isEditMode ? `L${editRoleInfo?.hierarchyLevelRank}` : levelNumber}
-                    label="Hierarchy Level *"
-                    onChange={(e) => setLevelNumber(e.target.value as number)}
-                    disabled={isEditMode || !departmentId}
-                  >
-                    {isEditMode ? (
-                      <MenuItem value={`L${editRoleInfo?.hierarchyLevelRank}`}>L{editRoleInfo?.hierarchyLevelRank}</MenuItem>
-                    ) : (
-                      levelOptions.map((hl) => (
-                        <MenuItem key={hl.id} value={hl.levelNumber}>
-                          L{hl.levelNumber} - {hl.roleName}
-                        </MenuItem>
-                      ))
-                    )}
-                  </Select>
-                </FormControl>
-
-                {roleLoading && !isEditMode ? (
-                  <Skeleton variant="rectangular" height={52} sx={{ borderRadius: 1 }} />
-                ) : (
-                  <TextField
-                    label="Role"
-                    value={isEditMode ? (editRoleInfo?.name ?? '') : (roleData?.roleName ?? '')}
-                    inputProps={{ readOnly: true }}
-                    disabled={isEditMode || !levelNumber}
-                    error={!isEditMode && noRoleConfigured}
-                    helperText={!isEditMode && noRoleConfigured ? 'No role is configured for the selected Department and Hierarchy Level. Please configure it in Department Master first.' : ''}
-                    fullWidth
-                  />
-                )}
+                <Autocomplete
+                  options={filteredRoleOptions}
+                  getOptionLabel={(option) => option.name}
+                  value={filteredRoleOptions.find((r) => r.id === Number(roleId)) ?? null}
+                  onChange={(_e, val) => setRoleId(val ? val.id : '')}
+                  disabled={isEditMode || !departmentId}
+                  noOptionsText={!departmentId ? 'Select a department first' : 'No roles available'}
+                  renderInput={(params) => (
+                    <TextField {...params} label="Role *" required />
+                  )}
+                />
               </Box>
-
-              {noRoleConfigured && (
-                <FormHelperText error sx={{ mt: 1 }}>
-                  No role is configured for the selected Department and Hierarchy Level. Please configure it in Department Master first.
-                </FormHelperText>
-              )}
             </Box>
           )}
 
           {activeStep === 1 && targetRoleId > 0 && (
             <PermissionMatrixStep2
               roleId={targetRoleId}
+              roleName={selectedRoleName}
+              projectName={selectedProjectName}
+              departmentName={selectedDepartmentName}
               onSave={handleSave}
               saving={saveMutation.isPending}
             />
