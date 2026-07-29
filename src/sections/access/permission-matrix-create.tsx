@@ -1,4 +1,5 @@
 import { Helmet } from 'react-helmet-async';
+import { useQuery } from '@tanstack/react-query';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useMemo, useState, useEffect, useCallback } from 'react';
 
@@ -21,7 +22,8 @@ import Autocomplete from '@mui/material/Autocomplete';
 import { paths } from 'src/routes/paths';
 
 import { CONFIG } from 'src/config-global';
-import { useProjectList } from 'src/services/hooks/use-projects';
+import { queryKeys } from 'src/services/api/query-keys';
+import { zoneService } from 'src/services/services/geography.service';
 import { useRoleList, useDepartmentList } from 'src/services/hooks/use-organization';
 import { useSetRolePermissions, useRolePermissionsSummary } from 'src/services/hooks/use-permissions';
 
@@ -37,7 +39,7 @@ export default function PermissionMatrixCreatePage() {
   const isEditMode = !!editRoleId;
 
   const [activeStep, setActiveStep] = useState(isEditMode ? 1 : 0);
-  const [projectId, setProjectId] = useState<number | ''>('');
+  const [zoneId, setZoneId] = useState<number | ''>('');
   const [departmentId, setDepartmentId] = useState<number | ''>('');
   const [roleId, setRoleId] = useState<number | ''>('');
   const [snackbar, setSnackbar] = useState<{ open: boolean; message: string; severity: 'success' | 'error' }>({
@@ -46,16 +48,23 @@ export default function PermissionMatrixCreatePage() {
     severity: 'success',
   });
 
-  const { data: departments } = useDepartmentList({});
+  const { data: allZones } = useQuery({
+    queryKey: queryKeys.zones.list({}),
+    queryFn: async () => {
+      const res = await zoneService.list({});
+      return (res.data ?? []) as { id: number; name: string; isActive?: boolean }[];
+    },
+  });
+
+  const zoneOptions = useMemo(
+    () => (allZones ?? []).filter((z) => z.isActive !== false),
+    [allZones],
+  );
+
+  const { data: departments } = useDepartmentList(zoneId ? { zoneId } as any : {});
   const departmentOptions: { id: number; name: string }[] = useMemo(
     () => departments ?? [],
     [departments],
-  );
-
-  const { data: projects } = useProjectList({});
-  const projectOptions: { id: number; name: string }[] = useMemo(
-    () => projects ?? [],
-    [projects],
   );
 
   const { data: allRoles } = useRoleList({});
@@ -83,7 +92,7 @@ export default function PermissionMatrixCreatePage() {
   const saveMutation = useSetRolePermissions(targetRoleId);
 
   const canGoNext = activeStep === 0
-    ? !!projectId && !!departmentId && !!roleId
+    ? !!zoneId && !!departmentId && !!roleId
     : true;
 
   const handleNext = useCallback(() => {
@@ -102,11 +111,11 @@ export default function PermissionMatrixCreatePage() {
     return role?.name ?? '';
   }, [allRoles, roleId]);
 
-  const selectedProjectName = useMemo(() => {
-    if (!projectOptions || !projectId) return '';
-    const proj = projectOptions.find((p) => p.id === Number(projectId));
-    return proj?.name ?? '';
-  }, [projectOptions, projectId]);
+  const selectedZoneName = useMemo(() => {
+    if (!zoneOptions || !zoneId) return '';
+    const match = zoneOptions.find((z) => z.id === Number(zoneId));
+    return match?.name ?? '';
+  }, [zoneOptions, zoneId]);
 
   const selectedDepartmentName = useMemo(() => {
     if (!departmentOptions || !departmentId) return '';
@@ -155,14 +164,14 @@ export default function PermissionMatrixCreatePage() {
             <Box sx={{ px: 4, pb: 4 }}>
               <Box display="grid" gridTemplateColumns={{ xs: '1fr', sm: '1fr 1fr' }} gap={3} sx={{ maxWidth: 900 }}>
                 <Autocomplete
-                  options={projectOptions}
+                  options={zoneOptions}
                   getOptionLabel={(option) => option.name}
-                  value={projectOptions.find((p) => p.id === Number(projectId)) ?? null}
-                  onChange={(_e, val) => setProjectId(val ? val.id : '')}
+                  value={zoneOptions.find((z) => z.id === Number(zoneId)) ?? null}
+                  onChange={(_e, val) => { setZoneId(val ? val.id : ''); setDepartmentId(''); setRoleId(''); }}
                   disabled={isEditMode}
-                  noOptionsText="No projects available"
+                  noOptionsText="No zones available"
                   renderInput={(params) => (
-                    <TextField {...params} label="Project *" placeholder="Search projects..." required />
+                    <TextField {...params} label="Zone *" placeholder="Search zones..." required />
                   )}
                 />
 
@@ -208,7 +217,7 @@ export default function PermissionMatrixCreatePage() {
             <PermissionMatrixStep2
               roleId={targetRoleId}
               roleName={selectedRoleName}
-              projectName={selectedProjectName}
+              zoneName={selectedZoneName}
               departmentName={selectedDepartmentName}
               onSave={handleSave}
               saving={saveMutation.isPending}

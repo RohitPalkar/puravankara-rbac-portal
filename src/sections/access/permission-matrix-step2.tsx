@@ -19,7 +19,7 @@ import { Iconify } from 'src/components/iconify';
 interface Props {
   roleId: number;
   roleName?: string;
-  projectName?: string;
+  zoneName?: string;
   departmentName?: string;
   onSave?: (actionIds: number[]) => void;
   saving?: boolean;
@@ -95,7 +95,7 @@ function computeModuleState(mod: ModuleNode, selectedIds: Set<number>) {
   };
 }
 
-export default function PermissionMatrixStep2({ roleId, roleName = '', projectName = '', departmentName = '', onSave, saving, editable = true }: Props) {
+export default function PermissionMatrixStep2({ roleId, roleName = '', zoneName = '', departmentName = '', onSave, saving, editable = true }: Props) {
   const { data: treeData, isLoading } = useRolePermissionsTree(roleId);
 
   const [selectedActionIds, setSelectedActionIds] = useState<Set<number>>(new Set());
@@ -332,7 +332,7 @@ export default function PermissionMatrixStep2({ roleId, roleName = '', projectNa
         }}
       >
         <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5, fontWeight: 500 }}>
-          {[projectName, departmentName].filter(Boolean).join(' / ')}{roleName ? ` — ${roleName}` : ''}
+          {[zoneName, departmentName].filter(Boolean).join(' / ')}{roleName ? ` — ${roleName}` : ''}
         </Typography>
         <Stack direction="row" spacing={4} divider={<Divider orientation="vertical" flexItem />}>
           {[
