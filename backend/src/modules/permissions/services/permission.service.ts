@@ -1,6 +1,6 @@
 import { Injectable, Logger, ForbiddenException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, In, DataSource } from 'typeorm';
+import { Repository, In, IsNull, DataSource } from 'typeorm';
 import { User } from '../../users/entities/user.entity';
 import { UserRole } from '../../users/entities/user-role.entity';
 import { Role } from '../../organization/entities/role.entity';
@@ -669,8 +669,27 @@ export class PermissionService {
       },
     });
     if (count > 0) return true;
+
+    const deptIds = userRoles
+      .map((ur) => ur.departmentId)
+      .filter((d): d is number => d != null);
+    const zoneDeptPairs = deptIds.length > 0
+      ? await this.dataSource.query(
+          `SELECT d.id as dept_id, d.zone_id FROM departments d WHERE d.id IN (${deptIds.join(',')})`,
+        )
+      : [];
+
     const rapCount = await this.rapRepo.count({
-      where: { roleId: In(roleIds), moduleId, actionId },
+      where: [
+        { roleId: In(roleIds), moduleId, actionId, zoneId: IsNull(), departmentId: IsNull() },
+        ...zoneDeptPairs.map((pair: any) => ({
+          roleId: In(roleIds),
+          moduleId,
+          actionId,
+          zoneId: pair.zone_id,
+          departmentId: pair.dept_id,
+        })),
+      ],
     });
     return rapCount > 0;
   }

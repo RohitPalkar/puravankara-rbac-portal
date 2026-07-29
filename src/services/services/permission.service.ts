@@ -113,13 +113,24 @@ export const permissionService = {
     summary: async (): Promise<ApiResponse<any[]>> =>
       apiGet<any[]>(endpoints.roles.permissionsSummary),
 
-    byRole: async (roleId: number): Promise<ApiResponse<{ roleId: number; actionIds: number[] }>> =>
-      apiGet<{ roleId: number; actionIds: number[] }>(endpoints.roles.permissions.byRole(roleId)),
+    byRole: async (
+      roleId: number,
+      zoneId?: number,
+      departmentId?: number,
+    ): Promise<ApiResponse<{ roleId: number; actionIds: number[] }>> =>
+      apiGet<{ roleId: number; actionIds: number[] }>(endpoints.roles.permissions.byRole(roleId), { zoneId, departmentId }),
 
-    tree: async (roleId: number): Promise<ApiResponse<any>> =>
-      apiGet<any>(endpoints.roles.permissions.tree(roleId)),
+    tree: async (
+      roleId: number,
+      zoneId?: number,
+      departmentId?: number,
+    ): Promise<ApiResponse<any>> =>
+      apiGet<any>(endpoints.roles.permissions.tree(roleId), { zoneId, departmentId }),
 
-    set: async (roleId: number, data: { actionIds: number[] }): Promise<ApiResponse<{ message: string }>> =>
+    set: async (
+      roleId: number,
+      data: { actionIds: number[]; zoneId?: number; departmentId?: number },
+    ): Promise<ApiResponse<{ message: string }>> =>
       apiPut<{ message: string }>(endpoints.roles.permissions.set(roleId), data),
   },
 };

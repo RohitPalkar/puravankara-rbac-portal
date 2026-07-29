@@ -17,7 +17,7 @@ import {
   ApiTags,
   ApiProperty,
 } from '@nestjs/swagger';
-import { IsArray, IsInt } from 'class-validator';
+import { IsArray, IsInt, IsOptional } from 'class-validator';
 import {
   DepartmentService,
   RoleService,
@@ -38,6 +38,16 @@ import { RoleActionPermissionService } from '../../permissions/services/role-act
 import { RoleMigrationService } from '../services/role-migration.service';
 
 class SetRolePermissionsDto {
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsInt()
+  zoneId?: number;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsInt()
+  departmentId?: number;
+
   @ApiProperty({ type: [Number] })
   @IsArray()
   @IsInt({ each: true })
@@ -205,8 +215,16 @@ export class RoleController extends BaseController<
 
   @Get(':roleId/permissions')
   @ApiOperation({ summary: 'Get permission action IDs for a role' })
-  async getPermissions(@Param('roleId', ParseIntPipe) roleId: number) {
-    const actionIds = await this.roleActionPermissionService.findByRole(roleId);
+  async getPermissions(
+    @Param('roleId', ParseIntPipe) roleId: number,
+    @Query('zoneId') zoneId?: number,
+    @Query('departmentId') departmentId?: number,
+  ) {
+    const actionIds = await this.roleActionPermissionService.findByRole(
+      roleId,
+      zoneId ? Number(zoneId) : undefined,
+      departmentId ? Number(departmentId) : undefined,
+    );
     return { roleId, actionIds };
   }
 
@@ -214,8 +232,16 @@ export class RoleController extends BaseController<
   @ApiOperation({
     summary: 'Get module tree with permission counts for a role',
   })
-  async getPermissionsTree(@Param('roleId', ParseIntPipe) roleId: number) {
-    return this.roleActionPermissionService.getTreeWithPermissions(roleId);
+  async getPermissionsTree(
+    @Param('roleId', ParseIntPipe) roleId: number,
+    @Query('zoneId') zoneId?: number,
+    @Query('departmentId') departmentId?: number,
+  ) {
+    return this.roleActionPermissionService.getTreeWithPermissions(
+      roleId,
+      zoneId ? Number(zoneId) : undefined,
+      departmentId ? Number(departmentId) : undefined,
+    );
   }
 
   @Put(':roleId/permissions')
@@ -224,7 +250,12 @@ export class RoleController extends BaseController<
     @Param('roleId', ParseIntPipe) roleId: number,
     @Body() dto: SetRolePermissionsDto,
   ) {
-    await this.roleActionPermissionService.setByRole(roleId, dto.actionIds);
+    await this.roleActionPermissionService.setByRole(
+      roleId,
+      dto.actionIds,
+      dto.zoneId,
+      dto.departmentId,
+    );
     return { message: 'Permissions updated successfully' };
   }
 

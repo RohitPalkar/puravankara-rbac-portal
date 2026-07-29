@@ -27,6 +27,11 @@ export class CreateBrandDto {
 
   @ApiPropertyOptional()
   @IsOptional()
+  @IsInt()
+  cityId?: number;
+
+  @ApiPropertyOptional()
+  @IsOptional()
   @IsString()
   razorpayMerchantId?: string;
 
@@ -189,6 +194,11 @@ export class UpdateBrandDto {
 
   @ApiPropertyOptional()
   @IsOptional()
+  @IsInt()
+  cityId?: number;
+
+  @ApiPropertyOptional()
+  @IsOptional()
   @IsString()
   razorpayMerchantId?: string;
 
@@ -343,6 +353,12 @@ export class BrandResponseDto {
 
   @ApiProperty()
   salaryMultiplier: number;
+
+  @ApiPropertyOptional()
+  cityId?: number;
+
+  @ApiPropertyOptional()
+  cityName?: string;
 
   @ApiPropertyOptional()
   razorpayMerchantId?: string;

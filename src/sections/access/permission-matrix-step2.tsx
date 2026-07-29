@@ -20,7 +20,9 @@ interface Props {
   roleId: number;
   roleName?: string;
   zoneName?: string;
+  zoneId?: number;
   departmentName?: string;
+  departmentId?: number;
   onSave?: (actionIds: number[]) => void;
   saving?: boolean;
   editable?: boolean;
@@ -95,8 +97,8 @@ function computeModuleState(mod: ModuleNode, selectedIds: Set<number>) {
   };
 }
 
-export default function PermissionMatrixStep2({ roleId, roleName = '', zoneName = '', departmentName = '', onSave, saving, editable = true }: Props) {
-  const { data: treeData, isLoading } = useRolePermissionsTree(roleId);
+export default function PermissionMatrixStep2({ roleId, roleName = '', zoneName = '', zoneId, departmentName = '', departmentId, onSave, saving, editable = true }: Props) {
+  const { data: treeData, isLoading } = useRolePermissionsTree(roleId, zoneId, departmentId);
 
   const [selectedActionIds, setSelectedActionIds] = useState<Set<number>>(new Set());
   const [expandedModules, setExpandedModules] = useState<Record<number, boolean>>({});

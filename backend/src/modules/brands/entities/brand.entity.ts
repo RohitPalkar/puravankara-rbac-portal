@@ -1,11 +1,19 @@
 import { Exclude } from 'class-transformer';
-import { Entity, Column } from 'typeorm';
+import { Entity, Column, ManyToOne, JoinColumn } from 'typeorm';
 import { AppBaseEntity } from '../../../common/entities/app-base.entity';
+import { City } from '../../geography/entities/city.entity';
 
 @Entity('brands')
 export class Brand extends AppBaseEntity {
   @Column({ name: 'brand_name', unique: true, nullable: false })
   brandName: string;
+
+  @Column({ name: 'city_id', nullable: true })
+  cityId: number;
+
+  @ManyToOne(() => City, { onDelete: 'SET NULL' })
+  @JoinColumn({ name: 'city_id' })
+  cityRef: City;
 
   @Column({
     name: 'salary_multiplier',

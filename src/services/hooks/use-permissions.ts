@@ -219,22 +219,22 @@ export function useRolePermissionsSummary() {
   });
 }
 
-export function useRolePermissions(roleId: number | undefined) {
+export function useRolePermissions(roleId: number | undefined, zoneId?: number, departmentId?: number) {
   return useQuery({
-    queryKey: queryKeys.roles.permissions.byRole(roleId!),
+    queryKey: [...queryKeys.roles.permissions.byRole(roleId!), zoneId, departmentId],
     queryFn: async () => {
-      const res = await permissionService.rolePermissions.byRole(roleId!);
+      const res = await permissionService.rolePermissions.byRole(roleId!, zoneId, departmentId);
       return res.data;
     },
     enabled: !!roleId,
   });
 }
 
-export function useRolePermissionsTree(roleId: number | undefined) {
+export function useRolePermissionsTree(roleId: number | undefined, zoneId?: number, departmentId?: number) {
   return useQuery({
-    queryKey: queryKeys.roles.permissions.tree(roleId!),
+    queryKey: [...queryKeys.roles.permissions.tree(roleId!), zoneId, departmentId],
     queryFn: async () => {
-      const res = await permissionService.rolePermissions.tree(roleId!);
+      const res = await permissionService.rolePermissions.tree(roleId!, zoneId, departmentId);
       return res.data;
     },
     enabled: !!roleId,
@@ -245,8 +245,8 @@ export function useSetRolePermissions(roleId: number) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (actionIds: number[]) => {
-      const res = await permissionService.rolePermissions.set(roleId, { actionIds });
+    mutationFn: async (data: { actionIds: number[]; zoneId?: number; departmentId?: number }) => {
+      const res = await permissionService.rolePermissions.set(roleId, data);
       return res.data;
     },
     onSuccess: () => {

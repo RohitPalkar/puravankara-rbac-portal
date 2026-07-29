@@ -3,7 +3,6 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Brand } from '../entities/brand.entity';
 import { BaseService } from '../../../common/crud/base.service';
-import { CreateBrandDto, UpdateBrandDto } from '../dto/brand.dto';
 
 @Injectable()
 export class BrandService extends BaseService<Brand> {
@@ -14,11 +13,13 @@ export class BrandService extends BaseService<Brand> {
     super(repository);
   }
 
-  async create(dto: CreateBrandDto): Promise<Brand> {
-    return super.create(dto);
-  }
-
-  async update(id: number, dto: UpdateBrandDto): Promise<Brand> {
-    return super.update(id, dto);
+  async findById(id: number): Promise<Brand> {
+    const brand = await super.findById(id);
+    const loaded = await this.repository
+      .createQueryBuilder('brand')
+      .leftJoinAndSelect('brand.cityRef', 'city')
+      .where('brand.id = :id', { id: brand.id })
+      .getOne();
+    return loaded ?? brand;
   }
 }

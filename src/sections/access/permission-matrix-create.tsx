@@ -83,6 +83,7 @@ export default function PermissionMatrixCreatePage() {
 
   useEffect(() => {
     if (editRoleInfo && isEditMode) {
+      if (editRoleInfo.zoneId) setZoneId(editRoleInfo.zoneId);
       if (editRoleInfo.departmentId) setDepartmentId(editRoleInfo.departmentId);
       if (editRoleInfo.id) setRoleId(editRoleInfo.id);
     }
@@ -125,21 +126,28 @@ export default function PermissionMatrixCreatePage() {
 
   const handleSave = useCallback(
     (actionIds: number[]) => {
-      saveMutation.mutate(actionIds, {
-        onSuccess: () => {
-          setSnackbar({
-            open: true,
-            message: `Permissions for "${selectedRoleName}" saved successfully (${actionIds.length} actions).`,
-            severity: 'success',
-          });
-          setTimeout(() => navigate(paths.dashboard.permissionMatrix), 2000);
+      saveMutation.mutate(
+        {
+          actionIds,
+          zoneId: zoneId ? Number(zoneId) : undefined,
+          departmentId: departmentId ? Number(departmentId) : undefined,
+        } as any,
+        {
+          onSuccess: () => {
+            setSnackbar({
+              open: true,
+              message: `Permissions for "${selectedRoleName}" saved successfully (${actionIds.length} actions).`,
+              severity: 'success',
+            });
+            setTimeout(() => navigate(paths.dashboard.permissionMatrix), 2000);
+          },
+          onError: () => {
+            setSnackbar({ open: true, message: `Failed to save permissions for "${selectedRoleName}".`, severity: 'error' });
+          },
         },
-        onError: () => {
-          setSnackbar({ open: true, message: `Failed to save permissions for "${selectedRoleName}".`, severity: 'error' });
-        },
-      });
+      );
     },
-    [saveMutation, navigate, selectedRoleName],
+    [saveMutation, navigate, selectedRoleName, zoneId, departmentId],
   );
 
   return (
@@ -218,7 +226,9 @@ export default function PermissionMatrixCreatePage() {
               roleId={targetRoleId}
               roleName={selectedRoleName}
               zoneName={selectedZoneName}
+              zoneId={zoneId ? Number(zoneId) : undefined}
               departmentName={selectedDepartmentName}
+              departmentId={departmentId ? Number(departmentId) : undefined}
               onSave={handleSave}
               saving={saveMutation.isPending}
             />

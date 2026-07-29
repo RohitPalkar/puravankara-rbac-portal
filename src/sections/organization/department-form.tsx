@@ -135,37 +135,37 @@ export default function DepartmentFormPage() {
 
   const canGenerate = name.trim().length > 0 && selectedZoneIds.length > 0 && nameValidation.state !== 'unavailable';
 
-  const doCheckName = useCallback(async (checkName: string, checkZoneId: number, excludeId?: number) => {
-    if (!checkName.trim() || !checkZoneId) {
-      setNameValidation({ state: 'idle', message: '' });
-      return;
-    }
-    setNameValidation({ state: 'checking', message: '' });
+  const doCheckName = useCallback(async (checkName: string, checkZoneId: number, excludeId?: number): Promise<{ state: 'available' | 'unavailable'; message: string; existingInZones?: { zoneId: number; zoneName: string }[] } | null> => {
+    if (!checkName.trim() || !checkZoneId) return null;
     try {
       const res = await departmentService.checkName(checkName.trim(), checkZoneId, excludeId);
       const result = res.data as CheckDepartmentNameResult;
       if (result.available) {
-        setNameValidation({ state: 'available', message: '' });
-        setNameError('');
-      } else {
-        setNameValidation({ state: 'unavailable', message: result.message ?? '' });
-        if (result.existingInZones && result.existingInZones.length > 0) {
-          setNameValidation((prev) => ({ ...prev, existingInZones: result.existingInZones }));
-        }
+        return { state: 'available', message: '' };
       }
+      return { state: 'unavailable', message: result.message ?? '', existingInZones: result.existingInZones };
     } catch {
-      setNameValidation({ state: 'idle', message: '' });
+      return null;
     }
   }, []);
 
-  const triggerValidation = useCallback((val: string, zone: number | null) => {
+  const triggerValidation = useCallback((val: string, zoneIds: number[]) => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
-    if (!val.trim() || !zone) {
+    if (!val.trim() || zoneIds.length === 0) {
       setNameValidation({ state: 'idle', message: '' });
       return;
     }
-    debounceRef.current = setTimeout(() => {
-      doCheckName(val, zone, departmentId);
+    setNameValidation({ state: 'checking', message: '' });
+    debounceRef.current = setTimeout(async () => {
+      const results = await Promise.all(zoneIds.map((zone) => doCheckName(val, zone, departmentId)));
+      const unavailable = results.find((r) => r?.state === 'unavailable');
+      if (unavailable) {
+        setNameValidation({ state: 'unavailable', message: unavailable.message ?? '' });
+        setNameError(unavailable.message ?? '');
+      } else {
+        setNameValidation({ state: 'available', message: '' });
+        setNameError('');
+      }
     }, DEBOUNCE_MS);
   }, [doCheckName, departmentId]);
 
@@ -371,16 +371,41 @@ export default function DepartmentFormPage() {
         });
         setSuccessMessage(`${name.trim()} has been updated successfully.`);
       } else {
-        await createDepartment({
-          name: name.trim(),
-          numberOfLevels,
-          departmentAdminId: departmentAdminId ?? undefined,
-          zoneId: selectedZoneIds[0],
-          hierarchyLevels,
-          isActive: true,
-        });
-        const zoneNames = selectedZoneIds.map((zid) => activeZones.find((z: any) => z.id === zid)?.name).filter(Boolean).join(', ');
-        setSuccessMessage(`${name.trim()} has been created successfully for ${zoneNames}.`);
+        const results = await Promise.allSettled(
+          selectedZoneIds.map((zoneId) =>
+            createDepartment({
+              name: name.trim(),
+              numberOfLevels,
+              departmentAdminId: departmentAdminId ?? undefined,
+              zoneId,
+              hierarchyLevels,
+              isActive: true,
+            }),
+          ),
+        );
+
+        const succeeded = results.filter((r) => r.status === 'fulfilled').length;
+        const failed = results.filter((r) => r.status === 'rejected').length;
+
+        if (failed === 0) {
+          const zoneNames = selectedZoneIds.map((zid) => activeZones.find((z: any) => z.id === zid)?.name).filter(Boolean).join(', ');
+          setSuccessMessage(`${name.trim()} created for ${zoneNames}.`);
+        } else if (succeeded > 0) {
+          const succeededZoneNames = selectedZoneIds
+            .filter((_, i) => results[i].status === 'fulfilled')
+            .map((zid) => activeZones.find((z: any) => z.id === zid)?.name)
+            .filter(Boolean)
+            .join(', ');
+          const failedZoneNames = selectedZoneIds
+            .filter((_, i) => results[i].status === 'rejected')
+            .map((zid) => activeZones.find((z: any) => z.id === zid)?.name)
+            .filter(Boolean)
+            .join(', ');
+          setSuccessMessage(`${name.trim()} created for ${succeededZoneNames}. Failed for ${failedZoneNames}.`);
+        } else {
+          const firstError = (results.find((r) => r.status === 'rejected') as PromiseRejectedResult)?.reason;
+          throw firstError;
+        }
       }
       setShowSuccess(true);
       setTimeout(() => navigate(paths.dashboard.departmentMaster), 1500);
@@ -482,7 +507,7 @@ export default function DepartmentFormPage() {
                 setSelectedZoneIds(ids);
                 setZoneError('');
                 if (name.trim() && ids.length > 0) {
-                  triggerValidation(name, ids[0]);
+                  triggerValidation(name, ids);
                 }
               }}
               disabled={formDisabled}
@@ -515,7 +540,7 @@ export default function DepartmentFormPage() {
                 setName(val);
                 setNameError('');
                 if (selectedZoneIds.length > 0) {
-                  triggerValidation(val, selectedZoneIds[0]);
+                  triggerValidation(val, selectedZoneIds);
                 }
               }}
               error={!!nameError || nameValidation.state === 'unavailable'}

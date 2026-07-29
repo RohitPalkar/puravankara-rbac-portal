@@ -757,6 +757,7 @@ export class RoleService extends BaseService<Role> {
         hierarchyLevelRank: role.hierarchyLevelRank,
         departmentId: dept?.id ?? null,
         departmentName: dept?.name ?? null,
+        zoneId: dept?.zoneId ?? null,
         isActive: role.isActive,
         isSystemRole: role.isSystemRole,
         moduleCount: counts.modules,

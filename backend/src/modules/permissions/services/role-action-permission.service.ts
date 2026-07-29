@@ -23,14 +23,23 @@ export class RoleActionPermissionService {
     private readonly dataSource: DataSource,
   ) {}
 
-  async findByRole(roleId: number): Promise<number[]> {
-    const rows = await this.repository.find({
-      where: { roleId },
-    });
+  async findByRole(
+    roleId: number,
+    zoneId?: number,
+    departmentId?: number,
+  ): Promise<number[]> {
+    const where: any = { roleId };
+    if (zoneId != null) where.zoneId = zoneId;
+    if (departmentId != null) where.departmentId = departmentId;
+    const rows = await this.repository.find({ where });
     return rows.map((r) => r.actionId);
   }
 
-  async getTreeWithPermissions(roleId: number): Promise<any> {
+  async getTreeWithPermissions(
+    roleId: number,
+    zoneId?: number,
+    departmentId?: number,
+  ): Promise<any> {
     const modules = await this.moduleRepo.find({
       where: { isActive: true, isPermissionConfigurable: true },
       order: { name: 'ASC' },
@@ -51,7 +60,7 @@ export class RoleActionPermissionService {
       order: { displayOrder: 'ASC', name: 'ASC' },
     });
 
-    const selectedActionIds = await this.findByRole(roleId);
+    const selectedActionIds = await this.findByRole(roleId, zoneId, departmentId);
     const selectedSet = new Set(selectedActionIds);
 
     let totalPermissions = 0;
@@ -142,13 +151,21 @@ export class RoleActionPermissionService {
     return { totalPermissions, modules: result };
   }
 
-  async setByRole(roleId: number, actionIds: number[]): Promise<void> {
+  async setByRole(
+    roleId: number,
+    actionIds: number[],
+    zoneId?: number,
+    departmentId?: number,
+  ): Promise<void> {
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
 
     try {
-      await queryRunner.manager.delete(RoleActionPermission, { roleId });
+      const deleteWhere: any = { roleId };
+      if (zoneId != null) deleteWhere.zoneId = zoneId;
+      if (departmentId != null) deleteWhere.departmentId = departmentId;
+      await queryRunner.manager.delete(RoleActionPermission, deleteWhere);
 
       if (actionIds.length > 0) {
         const actionIdParams = actionIds.join(',');
@@ -161,15 +178,17 @@ export class RoleActionPermissionService {
         );
 
         if (rows.length > 0) {
+          const zoneVal = zoneId ?? 'NULL';
+          const deptVal = departmentId ?? 'NULL';
           const values = rows
             .map(
               (r: any) =>
-                `(${roleId}, ${r.module_id}, ${r.sub_module_id}, ${r.action_group_id}, ${r.action_id})`,
+                `(${zoneVal}, ${deptVal}, ${roleId}, ${r.module_id}, ${r.sub_module_id}, ${r.action_group_id}, ${r.action_id})`,
             )
             .join(', ');
 
           await queryRunner.manager.query(
-            `INSERT INTO role_action_permissions (role_id, module_id, sub_module_id, action_group_id, action_id) VALUES ${values}`,
+            `INSERT INTO role_action_permissions (zone_id, department_id, role_id, module_id, sub_module_id, action_group_id, action_id) VALUES ${values}`,
           );
         }
       }

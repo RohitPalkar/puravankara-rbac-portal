@@ -4,6 +4,7 @@ import type { CreateBrandRequest, UpdateBrandRequest } from 'src/services/types/
 
 import ReactQuill from 'react-quill';
 import { Helmet } from 'react-helmet-async';
+import { useQuery } from '@tanstack/react-query';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useRef, useMemo, useState, useEffect, useCallback } from 'react';
 
@@ -18,12 +19,15 @@ import Snackbar from '@mui/material/Snackbar';
 import Skeleton from '@mui/material/Skeleton';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
+import Autocomplete from '@mui/material/Autocomplete';
 import LinearProgress from '@mui/material/LinearProgress';
 
 import { paths } from 'src/routes/paths';
 
 import { CONFIG } from 'src/config-global';
+import { queryKeys } from 'src/services/api/query-keys';
 import { useMyPermissions } from 'src/services/hooks/use-permissions';
+import { cityService, cityZoneMappingService } from 'src/services/services/geography.service';
 import {
   useBrandById,
   useCreateBrand,
@@ -72,6 +76,7 @@ export default function BrandFormPage() {
 
   const [brandName, setBrandName] = useState('');
   const [salaryMultiplier, setSalaryMultiplier] = useState(1);
+  const [cityId, setCityId] = useState<number | null>(null);
   const [razorpayMerchantId, setRazorpayMerchantId] = useState('');
   const [razorpaySecretKey, setRazorpaySecretKey] = useState('');
   const [easebuzzBookingSalt, setEasebuzzBookingSalt] = useState('');
@@ -99,10 +104,33 @@ export default function BrandFormPage() {
 
   const saving = isCreating || isUpdating;
 
+  const { data: cities } = useQuery({
+    queryKey: queryKeys.cities.list({}),
+    queryFn: async () => {
+      const res = await cityService.list({});
+      return (res.data ?? []) as { id: number; name: string; isActive?: boolean }[];
+    },
+  });
+
+  const { data: cityZoneMappings } = useQuery({
+    queryKey: queryKeys.cityZoneMappings.all,
+    queryFn: async () => {
+      const res = await cityZoneMappingService.list();
+      return (res.data ?? []) as { cityId: number; zoneId: number; zoneName?: string }[];
+    },
+  });
+
+  const derivedZoneName = useMemo(() => {
+    if (!cityId || !cityZoneMappings) return '';
+    const mapping = cityZoneMappings.find((m) => m.cityId === cityId);
+    return mapping?.zoneName ?? '';
+  }, [cityId, cityZoneMappings]);
+
   useEffect(() => {
     if (brandData) {
       setBrandName(brandData.brandName);
       setSalaryMultiplier(brandData.salaryMultiplier);
+      setCityId(brandData.cityId ?? null);
       setRazorpayMerchantId(brandData.razorpayMerchantId ?? '');
       setRazorpaySecretKey(brandData.razorpaySecretKey ?? '');
       setEasebuzzBookingSalt(brandData.easebuzzBookingSalt ?? '');
@@ -147,6 +175,7 @@ export default function BrandFormPage() {
   const buildPayload = useCallback((): CreateBrandRequest => ({
     brandName: brandName.trim(),
     salaryMultiplier,
+    cityId: cityId ?? undefined,
     razorpayMerchantId: razorpayMerchantId.trim() || undefined,
     razorpaySecretKey: razorpaySecretKey.trim() || undefined,
     easebuzzBookingSalt: easebuzzBookingSalt.trim() || undefined,
@@ -170,7 +199,7 @@ export default function BrandFormPage() {
     regularizationStartDate: regularizationStartDate || undefined,
     termsAndConditions: termsAndConditions || undefined,
     isActive: true,
-  }), [brandName, salaryMultiplier, razorpayMerchantId, razorpaySecretKey,
+  }), [brandName, salaryMultiplier, cityId, razorpayMerchantId, razorpaySecretKey,
     easebuzzBookingSalt, easebuzzBookingKey, easebuzzBookingSubMerchantId,
     easebuzzMilestoneSalt, easebuzzMilestoneKey, easebuzzMilestoneSubMerchantId,
     billingName, panNumber, gstin, address1, address2, pinCode, logoUrl,
@@ -267,6 +296,24 @@ export default function BrandFormPage() {
               type="number"
               inputProps={{ step: 0.1, min: 0 }}
               placeholder="e.g. 1.5"
+            />
+            <Autocomplete
+              options={cities ?? []}
+              getOptionLabel={(option) => option.name}
+              value={(cities ?? []).find((c) => c.id === cityId) ?? null}
+              onChange={(_, val) => setCityId(val ? val.id : null)}
+              loading={!cities}
+              noOptionsText="No cities available"
+              renderInput={(params) => (
+                <TextField {...params} label="City" placeholder="Search cities..." />
+              )}
+            />
+            <TextField
+              label="Zone"
+              value={derivedZoneName}
+              InputProps={{ readOnly: true }}
+              disabled
+              placeholder={cityId ? 'Deriving zone...' : 'Select a city first'}
             />
           </Box>
 

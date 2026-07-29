@@ -1,15 +1,23 @@
 import { Entity, Column, ManyToOne, JoinColumn, Unique, Index } from 'typeorm';
 import { AppBaseEntity } from '../../../common/entities/app-base.entity';
 import { Role } from '../../organization/entities/role.entity';
+import { Zone } from '../../geography/entities/zone.entity';
+import { Department } from '../../organization/entities/department.entity';
 import { Module } from '../../product-catalog/entities/module.entity';
 import { SubModule } from '../../product-catalog/entities/sub-module.entity';
 import { ActionGroup } from '../../product-catalog/entities/action-group.entity';
 import { Action } from '../../product-catalog/entities/action.entity';
 
 @Entity('role_action_permissions')
-@Unique(['roleId', 'actionId'])
+@Unique(['zoneId', 'departmentId', 'roleId', 'actionId'])
 @Index(['roleId'])
 export class RoleActionPermission extends AppBaseEntity {
+  @Column({ name: 'zone_id', nullable: true })
+  zoneId: number;
+
+  @Column({ name: 'department_id', nullable: true })
+  departmentId: number;
+
   @Column({ name: 'role_id', nullable: false })
   roleId: number;
 
@@ -24,6 +32,14 @@ export class RoleActionPermission extends AppBaseEntity {
 
   @Column({ name: 'action_id', nullable: false })
   actionId: number;
+
+  @ManyToOne(() => Zone, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'zone_id' })
+  zone: Zone;
+
+  @ManyToOne(() => Department, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'department_id' })
+  department: Department;
 
   @ManyToOne(() => Role, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'role_id' })
