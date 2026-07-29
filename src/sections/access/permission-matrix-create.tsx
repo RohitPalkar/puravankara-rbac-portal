@@ -96,21 +96,6 @@ export default function PermissionMatrixCreatePage() {
     setActiveStep((prev) => Math.max(0, prev - 1));
   }, []);
 
-  const handleSave = useCallback(
-    (actionIds: number[]) => {
-      saveMutation.mutate(actionIds, {
-        onSuccess: () => {
-          setSnackbar({ open: true, message: 'Permissions saved successfully.', severity: 'success' });
-          setTimeout(() => navigate(paths.dashboard.permissionMatrix), 1500);
-        },
-        onError: () => {
-          setSnackbar({ open: true, message: 'Failed to save permissions.', severity: 'error' });
-        },
-      });
-    },
-    [saveMutation, navigate],
-  );
-
   const selectedRoleName = useMemo(() => {
     if (!allRoles || !roleId) return '';
     const role = (allRoles as { id: number; name: string }[]).find((r) => r.id === Number(roleId));
@@ -128,6 +113,25 @@ export default function PermissionMatrixCreatePage() {
     const dept = departmentOptions.find((d) => d.id === Number(departmentId));
     return dept?.name ?? '';
   }, [departmentOptions, departmentId]);
+
+  const handleSave = useCallback(
+    (actionIds: number[]) => {
+      saveMutation.mutate(actionIds, {
+        onSuccess: () => {
+          setSnackbar({
+            open: true,
+            message: `Permissions for "${selectedRoleName}" saved successfully (${actionIds.length} actions).`,
+            severity: 'success',
+          });
+          setTimeout(() => navigate(paths.dashboard.permissionMatrix), 2000);
+        },
+        onError: () => {
+          setSnackbar({ open: true, message: `Failed to save permissions for "${selectedRoleName}".`, severity: 'error' });
+        },
+      });
+    },
+    [saveMutation, navigate, selectedRoleName],
+  );
 
   return (
     <>

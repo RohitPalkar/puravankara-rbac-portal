@@ -301,8 +301,9 @@ export default function PermissionMatrixStep2({ roleId, roleName = '', projectNa
 
   if (isLoading) {
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 400 }}>
-        <CircularProgress />
+      <Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', minHeight: 400, gap: 2 }}>
+        <CircularProgress size={40} />
+        <Typography variant="body2" color="text.secondary">Loading permissions...</Typography>
       </Box>
     );
   }
@@ -311,9 +312,9 @@ export default function PermissionMatrixStep2({ roleId, roleName = '', projectNa
     return (
       <Box sx={{ textAlign: 'center', py: 8 }}>
         <Iconify icon="solar:folder-with-files-bold" width={48} sx={{ color: 'text.disabled', mb: 2 }} />
-        <Typography variant="h6" color="text.secondary">No modules found</Typography>
-        <Typography variant="body2" color="text.disabled" sx={{ mt: 1 }}>
-          This role has no permission modules configured yet.
+        <Typography variant="h6" color="text.secondary">No Permission Modules</Typography>
+        <Typography variant="body2" color="text.disabled" sx={{ mt: 1, maxWidth: 400, mx: 'auto' }}>
+          {roleName ? `"${roleName}"` : 'This role'} has no permission modules configured yet. Contact your system administrator to set up module access.
         </Typography>
       </Box>
     );
@@ -323,29 +324,32 @@ export default function PermissionMatrixStep2({ roleId, roleName = '', projectNa
     <Stack spacing={0} sx={{ minHeight: 500, borderTop: '1px solid', borderColor: 'divider' }}>
       <Box
         sx={{
-          px: 2.5,
-          py: 1.5,
+          px: 3,
+          py: 2,
           borderBottom: '1px solid',
           borderColor: 'divider',
           bgcolor: 'grey.50',
         }}
       >
-        <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
-          {projectName && departmentName ? `${projectName} / ${departmentName}` : ''} {roleName ? `— ${roleName}` : ''}
+        <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5, fontWeight: 500 }}>
+          {[projectName, departmentName].filter(Boolean).join(' / ')}{roleName ? ` — ${roleName}` : ''}
         </Typography>
-        <Stack direction="row" spacing={3} alignItems="center">
-          <Typography variant="caption" color="text.secondary">
-            <strong>{totalModules}</strong> module{totalModules !== 1 ? 's' : ''}
-          </Typography>
-          <Typography variant="caption" color="text.secondary">
-            <strong>{totalSubModules}</strong> submodule{totalSubModules !== 1 ? 's' : ''}
-          </Typography>
-          <Typography variant="caption" color="text.secondary">
-            <strong>{totalActions}</strong> action{totalActions !== 1 ? 's' : ''}
-          </Typography>
-          <Typography variant="caption" color="primary.main" fontWeight={600}>
-            <strong>{totalSelected}</strong> selected
-          </Typography>
+        <Stack direction="row" spacing={4} divider={<Divider orientation="vertical" flexItem />}>
+          {[
+            { label: 'Modules', value: totalModules, color: 'text.primary' },
+            { label: 'Sub Modules', value: totalSubModules, color: 'text.primary' },
+            { label: 'Actions', value: totalActions, color: 'text.primary' },
+            { label: 'Selected', value: totalSelected, color: 'primary.main' },
+          ].map((item) => (
+            <Box key={item.label} sx={{ textAlign: 'center', minWidth: 64 }}>
+              <Typography variant="h5" fontWeight={700} color={item.color}>
+                {item.value}
+              </Typography>
+              <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.25 }}>
+                {item.label}
+              </Typography>
+            </Box>
+          ))}
         </Stack>
       </Box>
 
@@ -697,7 +701,8 @@ export default function PermissionMatrixStep2({ roleId, roleName = '', projectNa
             zIndex: 10,
             borderTop: '1px solid',
             borderColor: 'divider',
-            bgcolor: 'grey.50',
+            bgcolor: 'background.paper',
+            boxShadow: '0 -2px 8px rgba(0,0,0,0.06)',
           }}
         >
           <Stack
@@ -705,16 +710,16 @@ export default function PermissionMatrixStep2({ roleId, roleName = '', projectNa
             justifyContent="flex-end"
             alignItems="center"
             spacing={2}
-            sx={{ px: 2.5, py: 1.5 }}
+            sx={{ px: 3, py: 1.5 }}
           >
-            <Typography variant="body2" color="text.secondary">
-              {totalSelected} of {totalActions} permission{totalSelected !== 1 ? 's' : ''} selected
+            <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 500 }}>
+              {totalSelected} of {totalActions} action{totalSelected !== 1 ? 's' : ''} selected
             </Typography>
             <Button
               variant="contained"
               onClick={() => onSave!(Array.from(selectedActionIds))}
               disabled={saving}
-              sx={{ minWidth: 140 }}
+              sx={{ minWidth: 150 }}
             >
               {saving ? 'Saving...' : 'Save Permissions'}
             </Button>
