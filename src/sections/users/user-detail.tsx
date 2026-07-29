@@ -1,9 +1,10 @@
 import type { Project } from 'src/services/types/project';
 import type { Module, Action, SubModule } from 'src/types';
+import type { UserProjectAccess } from 'src/services/types/project-access';
 import type { UserRole, RolePermissionProfile } from 'src/services/types/user';
 
-import { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 
 import Tab from '@mui/material/Tab';
@@ -12,6 +13,7 @@ import Tabs from '@mui/material/Tabs';
 import Card from '@mui/material/Card';
 import Chip from '@mui/material/Chip';
 import Stack from '@mui/material/Stack';
+import Alert from '@mui/material/Alert';
 import Button from '@mui/material/Button';
 import Divider from '@mui/material/Divider';
 import Skeleton from '@mui/material/Skeleton';
@@ -25,6 +27,7 @@ import FormControlLabel from '@mui/material/FormControlLabel';
 import { paths } from 'src/routes/paths';
 
 import { CONFIG } from 'src/config-global';
+import { useUserProjectAccess, useRevokeProjectAccess, useAssignBulkProjectAccess } from 'src/services/hooks/use-project-access';
 import {
   useUserById,
   useUpdateUser,
@@ -41,8 +44,6 @@ import { PermissionTree, type PermissionSelection } from 'src/components/permiss
 
 import { PermissionProfile } from './components/permission-profile';
 
-// ----------------------------------------------------------------------
-
 interface EnrichedUser {
   empId: string;
   name: string;
@@ -55,7 +56,22 @@ interface EnrichedUser {
   updatedBy?: string;
   createdAt: string;
   updatedAt: string;
-  profiles?: RolePermissionProfile[];
+  profiles?: {
+    profileType: string;
+    departmentId: number | null;
+    roleId: number | null;
+    buddyUserId: string | null;
+    modules?: {
+      moduleId: number;
+      module?: { id: number; name: string };
+      subModules?: {
+        subModuleId: number;
+        inheritFutureProjects: boolean;
+        subModule?: { id: number; name: string };
+        projects?: { projectId: number; project?: { id: number; name: string } }[];
+      }[];
+    }[];
+  }[];
   userRoles?: UserRole[];
   userZones?: { zoneId: number; zoneName: string }[];
   reportingManager?: { empId: string; name: string } | null;
@@ -70,8 +86,6 @@ const STATUS_OPTIONS = [
   { value: 'false', label: 'Inactive' },
 ];
 
-// ----------------------------------------------------------------------
-
 function InfoField({ label, value }: { label: string; value?: React.ReactNode }) {
   return (
     <Box>
@@ -82,8 +96,6 @@ function InfoField({ label, value }: { label: string; value?: React.ReactNode })
     </Box>
   );
 }
-
-// ----------------------------------------------------------------------
 
 function LoadingSkeleton() {
   return (
@@ -99,7 +111,19 @@ function LoadingSkeleton() {
   );
 }
 
-// ----------------------------------------------------------------------
+function profileToRolePermissionProfile(profile: Record<string, unknown>): RolePermissionProfile {
+  const modules = profile?.modules as Record<string, unknown>[] | undefined;
+  if (!modules) return [];
+  return modules.map((mod) => ({
+    moduleId: mod.moduleId as number,
+    subModules: ((mod.subModules as Record<string, unknown>[]) ?? []).map((sm) => ({
+      subModuleId: sm.subModuleId as number,
+      enabled: true,
+      accessType: (sm.inheritFutureProjects ? ('all' as const) : ('selected' as const)),
+      projectIds: ((sm.projects as Record<string, unknown>[]) ?? []).map((p) => p.projectId as number),
+    })),
+  }));
+}
 
 export default function UserDetailPage() {
   const { id } = useParams();
@@ -111,6 +135,9 @@ export default function UserDetailPage() {
   const { data: actionsData } = useActionList();
   const { data: subModulesData } = useSubModuleList();
   const { data: modulesTree } = useModuleTree();
+  const { data: userProjectAccess } = useUserProjectAccess(id!);
+  const assignBulkProjects = useAssignBulkProjectAccess();
+  const revokeProjectAccess = useRevokeProjectAccess();
 
   const user = rawUser as EnrichedUser | undefined;
   const projects = (projectsData ?? []) as Project[];
@@ -119,6 +146,8 @@ export default function UserDetailPage() {
   const subModules = (subModulesData ?? []) as unknown as SubModule[];
   const [tab, setTab] = useState(0);
   const [editing, setEditing] = useState(false);
+  const [saveError, setSaveError] = useState('');
+  const [saveSuccess, setSaveSuccess] = useState(false);
 
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -129,6 +158,8 @@ export default function UserDetailPage() {
     { projectId: string; permissions: PermissionSelection[] }[]
   >([]);
 
+  const [permissionProfile, setPermissionProfile] = useState<RolePermissionProfile | undefined>();
+
   useEffect(() => {
     if (user) {
       setName(user.name);
@@ -137,7 +168,27 @@ export default function UserDetailPage() {
     }
   }, [user]);
 
-  const handleToggleProject = (projectId: string) => {
+  useEffect(() => {
+    if (userProjectAccess) {
+      const accessIds = (userProjectAccess as UserProjectAccess[])
+        .filter((a) => a.projectId != null)
+        .map((a) => String(a.projectId));
+      setSelectedProjects(accessIds);
+    }
+  }, [userProjectAccess]);
+
+  useEffect(() => {
+    if (user?.profiles && (user.profiles as Record<string, unknown>[]).length > 0) {
+      const primaryProfile = (user.profiles as Record<string, unknown>[]).find(
+        (p) => p.profileType === 'PRIMARY'
+      );
+      if (primaryProfile) {
+        setPermissionProfile(profileToRolePermissionProfile(primaryProfile));
+      }
+    }
+  }, [user]);
+
+  const handleToggleProject = useCallback((projectId: string) => {
     setSelectedProjects((prev) =>
       prev.includes(projectId) ? prev.filter((pid) => pid !== projectId) : [...prev, projectId]
     );
@@ -146,39 +197,68 @@ export default function UserDetailPage() {
         ? prev.filter((p) => p.projectId !== projectId)
         : [...prev, { projectId, permissions: [] }]
     );
-  };
+  }, []);
 
-  const handlePermissionChange = (projectId: string, permissions: PermissionSelection[]) => {
+  const handlePermissionChange = useCallback((projectId: string, permissions: PermissionSelection[]) => {
     setProjectPermissions((prev) => prev.map((p) => (p.projectId === projectId ? { ...p, permissions } : p)));
-  };
+  }, []);
 
-  const handleSave = async () => {
+  const handlePermissionProfileChange = useCallback((data: RolePermissionProfile) => {
+    setPermissionProfile(data);
+  }, []);
+
+  const handleSave = useCallback(async () => {
     if (!id) return;
+    setSaveError('');
+    setSaveSuccess(false);
     try {
-      await updateUser.mutateAsync({
-        id,
-        data: {
-          name,
-          email,
-          isActive,
-        },
-      });
+      const data: Record<string, unknown> = {
+        name,
+        email,
+        isActive,
+      };
+      await updateUser.mutateAsync({ id, data: data as any });
       setEditing(false);
-    } catch {
-      // error handled by react-query
+      setSaveSuccess(true);
+    } catch (err: any) {
+      setSaveError(err?.message ?? 'Failed to save. Please try again.');
     }
-  };
+  }, [id, name, email, isActive, updateUser]);
 
-  const handleCancel = () => {
+  const handleSaveProjectAccess = useCallback(async () => {
+    if (!id) return;
+    setSaveError('');
+    setSaveSuccess(false);
+    try {
+      const currentIds = (userProjectAccess as UserProjectAccess[] ?? [])
+        .filter((a) => a.projectId != null)
+        .map((a) => a.projectId);
+      const newIds = selectedProjects.map(Number).filter((n) => !Number.isNaN(n));
+      const toAdd = newIds.filter((pid) => !currentIds.includes(pid));
+      const toRemove = currentIds.filter((pid) => !newIds.includes(pid));
+      await Promise.all(
+        toRemove.map((projectId) => revokeProjectAccess.mutateAsync({ userId: id, projectId }))
+      );
+      if (toAdd.length > 0) {
+        await assignBulkProjects.mutateAsync({ userId: id, projectIds: toAdd });
+      }
+      setSaveSuccess(true);
+    } catch (err: any) {
+      setSaveError(err?.message ?? 'Failed to save project access. Please try again.');
+    }
+  }, [id, selectedProjects, userProjectAccess, assignBulkProjects, revokeProjectAccess]);
+
+  const handleCancel = useCallback(() => {
     if (user) {
       setName(user.name);
       setEmail(user.email);
       setIsActive(user.isActive);
     }
     setEditing(false);
-  };
+    setSaveError('');
+    setSaveSuccess(false);
+  }, [user]);
 
-  // ---- Derived data ----
   const zoneNames = user?.userZones?.map((z) => z.zoneName).join(', ') ?? '-';
   const primaryRole =
     user?.userRoles && user.userRoles.length > 0 ? user.userRoles[0].roleName : '-';
@@ -227,7 +307,16 @@ export default function UserDetailPage() {
                 <Iconify icon="solar:arrow-left-bold" width={16} sx={{ mr: 0.5 }} />
                 Back
               </Button>
-              {editing ? (
+              {tab === 1 ? (
+                <Button
+                  variant="contained"
+                  startIcon={<Iconify icon="solar:check-circle-bold" />}
+                  onClick={handleSaveProjectAccess}
+                  disabled={assignBulkProjects.isPending || revokeProjectAccess.isPending}
+                >
+                  {assignBulkProjects.isPending || revokeProjectAccess.isPending ? 'Saving...' : 'Save Project Access'}
+                </Button>
+              ) : editing ? (
                 <>
                   <Button variant="outlined" color="inherit" onClick={handleCancel}>
                     Cancel
@@ -253,6 +342,18 @@ export default function UserDetailPage() {
             </Stack>
           }
         />
+
+        {saveError && (
+          <Alert severity="error" sx={{ mb: 2 }} onClose={() => setSaveError('')}>
+            {saveError}
+          </Alert>
+        )}
+
+        {saveSuccess && (
+          <Alert severity="success" sx={{ mb: 2 }} onClose={() => setSaveSuccess(false)}>
+            Changes saved successfully.
+          </Alert>
+        )}
 
         <Tabs value={tab} onChange={(_, v) => setTab(v)} sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
           {TABS.map((label) => (
@@ -347,20 +448,26 @@ export default function UserDetailPage() {
             <Typography variant="subtitle1" sx={{ mb: 2 }}>
               Assigned Projects
             </Typography>
-            <FormGroup>
-              {projects.map((project) => (
-                <FormControlLabel
-                  key={project.id}
-                  control={
-                    <Checkbox
-                      checked={selectedProjects.includes(String(project.id))}
-                      onChange={() => handleToggleProject(String(project.id))}
-                    />
-                  }
-                  label={`${project.name} (${project.codename ?? project.name})`}
-                />
-              ))}
-            </FormGroup>
+            {projects.length === 0 ? (
+              <Typography variant="body2" color="text.secondary" sx={{ py: 4, textAlign: 'center' }}>
+                No projects available.
+              </Typography>
+            ) : (
+              <FormGroup>
+                {projects.map((project) => (
+                  <FormControlLabel
+                    key={project.id}
+                    control={
+                      <Checkbox
+                        checked={selectedProjects.includes(String(project.id))}
+                        onChange={() => handleToggleProject(String(project.id))}
+                      />
+                    }
+                    label={`${project.name} (${project.codename ?? project.name})`}
+                  />
+                ))}
+              </FormGroup>
+            )}
             {projectPermissions
               .filter((p) => selectedProjects.includes(p.projectId))
               .map((pp) => {
@@ -389,14 +496,18 @@ export default function UserDetailPage() {
             <Typography variant="subtitle1" sx={{ mb: 2 }}>
               Permission Profile
             </Typography>
-            <PermissionProfile
-              modules={modulesTree ?? []}
-              allProjects={projects}
-              initialData={user.profiles?.[0]}
-              onChange={() => {
-                // Permissions editing handled internally by PermissionProfile
-              }}
-            />
+            {modulesTree && modulesTree.length > 0 ? (
+              <PermissionProfile
+                modules={modulesTree}
+                allProjects={projects}
+                initialData={permissionProfile}
+                onChange={handlePermissionProfileChange}
+              />
+            ) : (
+              <Typography variant="body2" color="text.secondary" sx={{ py: 4, textAlign: 'center' }}>
+                No modules configured.
+              </Typography>
+            )}
           </Card>
         )}
       </PageContainer>

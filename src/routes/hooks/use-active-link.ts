@@ -21,8 +21,6 @@ export function useActiveLink(itemPath: string, deep: boolean = true): boolean {
    */
   const isDeep = deep || pathHasParams;
 
-  // console.info(isDeep ? '[deep]   :' : '[normal] :', itemPath, '-?-', pathname);
-
   if (isDeep) {
     /**
      * [1] Deep: default

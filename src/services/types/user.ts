@@ -60,9 +60,33 @@ export interface UserOrganizationRequest {
   reporting?: ReportingEntry[];
 }
 
+export interface ProfileProjectEntry {
+  projectId: number;
+}
+
+export interface ProfileSubModuleEntry {
+  subModuleId: number;
+  inheritFutureProjects?: boolean;
+  projects: ProfileProjectEntry[];
+}
+
+export interface ProfileModuleEntry {
+  moduleId: number;
+  subModules: ProfileSubModuleEntry[];
+}
+
+export interface CreatePermissionProfileEntry {
+  profileType: string;
+  roleId?: number;
+  departmentId?: number;
+  buddyUserId?: string;
+  modules?: ProfileModuleEntry[];
+}
+
 export interface CreateUserFullRequest {
   basic: CreateUserRequest;
   organization: UserOrganizationRequest;
+  profiles?: CreatePermissionProfileEntry[];
 }
 
 export interface UserRole {

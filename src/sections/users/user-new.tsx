@@ -1,5 +1,10 @@
 import type { EmploymentStatus } from 'src/services/types/enums';
-import type { ProjectMappingData } from 'src/services/types/user';
+import type {
+  ProjectMappingData,
+  UserPermissionProfile,
+  CreateUserFullRequest,
+  CreatePermissionProfileEntry,
+} from 'src/services/types/user';
 
 import { Helmet } from 'react-helmet-async';
 import { useNavigate } from 'react-router-dom';
@@ -38,6 +43,48 @@ import type { OrganisationReviewStepHandle } from './components/organisation-rev
 import type { BasicInfoData, BasicInformationStepHandle } from './components/basic-information-step';
 
 const STEPS = ['Basic Information', 'Project Mapping', 'Organisation Details'];
+
+function toBackendProfiles(profiles: ProjectMappingData['profiles']): CreatePermissionProfileEntry[] | undefined {
+  const result: CreatePermissionProfileEntry[] = [];
+  const addProfile = (
+    profile: UserPermissionProfile,
+    profileType: string,
+  ) => {
+    const enabledModules = profile.permissions
+      .map((m) => {
+        const enabledSubs = m.subModules
+          .filter((sm) => sm.enabled)
+          .map((sm) => ({
+            subModuleId: sm.subModuleId,
+            inheritFutureProjects: sm.accessType === 'all',
+            projects: sm.accessType === 'selected'
+              ? sm.projectIds.map((pid) => ({ projectId: pid }))
+              : [],
+          }));
+        if (enabledSubs.length === 0) return null;
+        return { moduleId: m.moduleId, subModules: enabledSubs };
+      })
+      .filter((x): x is NonNullable<typeof x> => x != null);
+    if (enabledModules.length === 0) return;
+
+    const entry: CreatePermissionProfileEntry = {
+      profileType,
+      roleId: profile.roleId,
+      departmentId: profile.departmentId,
+      modules: enabledModules,
+    };
+    if (profileType === 'BUDDY_RM') {
+      entry.buddyUserId = profile.buddyUserId;
+    }
+    result.push(entry);
+  };
+
+  addProfile(profiles.primary, 'PRIMARY');
+  if (profiles.secondary) addProfile(profiles.secondary, 'SECONDARY');
+  if (profiles.buddyRm) addProfile(profiles.buddyRm, 'BUDDY_RM');
+
+  return result.length > 0 ? result : undefined;
+}
 
 export default function UserNewPage() {
   const navigate = useNavigate();
@@ -117,7 +164,9 @@ export default function UserNewPage() {
         reportingEntries.push({ levelRank: 2, managerId: orgData.teamLeadId });
       }
 
-      const payload = {
+      const profiles = toBackendProfiles(projectData.profiles);
+
+      const payload: CreateUserFullRequest = {
         basic: {
           name: basicData.employeeName,
           email: basicData.email,
@@ -134,6 +183,7 @@ export default function UserNewPage() {
             : undefined,
           reporting: reportingEntries,
         },
+        profiles,
       };
 
       const result = await createUserFull(payload);
