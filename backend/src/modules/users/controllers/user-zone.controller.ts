@@ -8,6 +8,7 @@ import {
   Body,
 } from '@nestjs/common';
 import { RawStringPipe } from '../../../common/pipes/raw-string.pipe';
+import { AuditAction } from '../../audit/decorators/audit-action.decorator';
 import {
   ApiBearerAuth,
   ApiTags,
@@ -46,12 +47,14 @@ export class UserZoneController {
 
   @Post()
   @ApiOperation({ summary: 'Assign zone to user' })
+  @AuditAction({ entity: 'USERS', action: 'ZONE_ASSIGNED' })
   async assign(@Body() dto: AssignZoneDto): Promise<UserZone> {
     return this.zoneService.assign(dto.userId, dto.zoneId);
   }
 
   @Delete(':userId/zone/:zoneId')
   @ApiOperation({ summary: 'Revoke zone from user' })
+  @AuditAction({ entity: 'USERS', action: 'ZONE_REVOKED' })
   async revoke(
     @Param('userId', RawStringPipe) userId: string,
     @Param('zoneId', ParseIntPipe) zoneId: number,

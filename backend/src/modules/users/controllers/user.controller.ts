@@ -153,12 +153,14 @@ export class UserReportingLineController {
 
   @Post()
   @ApiOperation({ summary: 'Create reporting line' })
+  @AuditAction({ entity: 'USERS', action: 'REPORTING_LINE_CREATED' })
   async create(@Body() dto: CreateUserReportingLineDto) {
     return this.rlService.create(dto);
   }
 
   @Delete(':userId/reports-to/:reportsToUserId/level/:levelRank')
   @ApiOperation({ summary: 'Remove reporting line' })
+  @AuditAction({ entity: 'USERS', action: 'REPORTING_LINE_REMOVED' })
   async remove(
     @Param('userId', RawStringPipe) userId: string,
     @Param('reportsToUserId', RawStringPipe) reportsToUserId: string,

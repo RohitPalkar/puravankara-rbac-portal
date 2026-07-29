@@ -318,8 +318,8 @@ export class UserService {
 
   async findReportingManagers(zoneId: number, departmentId: number, search?: string): Promise<any[]> {
     const qb = this.repository.createQueryBuilder('u')
-      .where('u.deletedAt IS NULL')
-      .andWhere('u.isActive = :isActive', { isActive: true })
+      .where('u.deleted_at IS NULL')
+      .andWhere('u.is_active = :isActive', { isActive: true })
       .innerJoin('user_zones', 'uz', 'uz.user_id = u.emp_id AND uz.zone_id = :zoneId', { zoneId })
       .innerJoin('user_roles', 'ur', 'ur.user_id = u.emp_id')
       .innerJoin('departments', 'd', 'd.id = ur.department_id')

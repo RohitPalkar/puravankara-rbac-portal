@@ -122,7 +122,7 @@ export default function UserNewPage() {
           name: basicData.employeeName,
           email: basicData.email,
           departmentId: projectData.departmentId,
-          employmentStatus: orgData.employmentStatus as unknown as EmploymentStatus,
+          employmentStatus: 'PERMANENT' as EmploymentStatus,
           isActive: basicData.isActive,
         },
         organization: {
@@ -184,7 +184,7 @@ export default function UserNewPage() {
           )}
 
           {activeStep === 2 && (
-            <OrganisationReviewStep ref={step3Ref} />
+            <OrganisationReviewStep ref={step3Ref} zoneId={savedStep2Data?.zoneId} departmentId={savedStep2Data?.departmentId} />
           )}
 
           <Stack direction="row" justifyContent="space-between" sx={{ p: 3, borderTop: '1px solid', borderColor: 'divider' }}>

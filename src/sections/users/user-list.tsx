@@ -17,6 +17,7 @@ import { paths } from 'src/routes/paths';
 
 import { CONFIG } from 'src/config-global';
 import { queryKeys } from 'src/services/api/query-keys';
+import { useUpdateUser } from 'src/services/hooks/use-users';
 import { userService } from 'src/services/services/user.service';
 import { zoneService } from 'src/services/services/geography.service';
 import { useRoleList, useDepartmentList } from 'src/services/hooks/use-organization';
@@ -51,6 +52,8 @@ export default function UserListPage() {
   const { data: roles } = useRoleList();
   const activeRoles = useMemo(() => (roles ?? []).filter((r: any) => r.isActive !== false), [roles]);
 
+  const updateUser = useUpdateUser();
+
   const queryParams = useMemo(() => {
     const params: Record<string, unknown> = {
       page: paginationModel.page + 1,
@@ -62,6 +65,8 @@ export default function UserListPage() {
     if (filters.status) params.isActive = filters.status === 'active';
     if (filters.reportsTo) params.reportsTo = filters.reportsTo;
     if (filters.zoneId) params.zoneId = Number(filters.zoneId);
+    if (filters.departmentId) params.departmentId = Number(filters.departmentId);
+    if (filters.roleId) params.roleId = Number(filters.roleId);
     return params;
   }, [search, paginationModel, filters]);
 
@@ -87,14 +92,12 @@ export default function UserListPage() {
   }, []);
 
   const handleStatusToggle = useCallback(async (user: any) => {
-    // Toggle active/inactive via update API
     try {
-      await userService.update(user.empId, { isActive: !user.isActive });
-      // query invalidation handled by the service layer
+      await updateUser.mutateAsync({ id: user.empId, data: { isActive: !user.isActive } });
     } catch {
       // handled by react-query
     }
-  }, []);
+  }, [updateUser]);
 
   const filterOptions = [
     {
