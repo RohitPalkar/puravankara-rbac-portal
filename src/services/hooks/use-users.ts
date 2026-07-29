@@ -222,6 +222,22 @@ export function useAssignUserZone() {
   });
 }
 
+export function useReportingManagers(zoneId: number | null, departmentId: number | null, search?: string) {
+  return useQuery({
+    queryKey: ['users', 'reporting-managers', zoneId, departmentId, search],
+    queryFn: async () => {
+      if (!zoneId || !departmentId) return [];
+      const res = await userService.reportingManagers({
+        zoneId,
+        departmentId,
+        search: search || undefined,
+      });
+      return res.data ?? [];
+    },
+    enabled: !!zoneId && !!departmentId,
+  });
+}
+
 export function useRevokeUserZone() {
   const queryClient = useQueryClient();
 

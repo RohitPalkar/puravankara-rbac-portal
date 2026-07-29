@@ -137,6 +137,14 @@ export class UserService {
         .andWhere('uz.zone_id = :zoneId', { zoneId });
     }
 
+    if (query['departmentId']) {
+      userQuery = userQuery.andWhere('u.department_id = :departmentId', { departmentId: Number(query['departmentId']) });
+    }
+    if (query['roleId']) {
+      userQuery = userQuery.innerJoin('user_roles', 'ur_filter', 'ur_filter.user_id = u.emp_id')
+        .andWhere('ur_filter.role_id = :roleId', { roleId: Number(query['roleId']) });
+    }
+
     userQuery = userQuery.leftJoinAndSelect('u.department', 'department');
 
     const [data, total] = await userQuery.getManyAndCount();
@@ -206,6 +214,14 @@ export class UserService {
       }
     }
 
+    const deptAdminSet = new Set<string>();
+    const deptWithAdmins = await this.repository.manager.find(Department, {
+      where: { departmentAdminId: In(empIds) },
+    });
+    for (const d of deptWithAdmins) {
+      deptAdminSet.add(d.departmentAdminId);
+    }
+
     const enriched = data.map((user) => {
       const role = roleMap.get(user.empId);
       return {
@@ -215,6 +231,7 @@ export class UserService {
         zoneNames: zoneMap.get(user.empId) ?? [],
         projectCount: projectCountMap.get(user.empId) ?? 0,
         reportsToName: reportsToMap.get(user.empId) ?? null,
+        isDepartmentAdmin: deptAdminSet.has(user.empId),
       };
     });
 
@@ -226,7 +243,7 @@ export class UserService {
 
   async findById(
     id: string,
-  ): Promise<User & { profiles?: PermissionProfile[] }> {
+  ): Promise<User & { profiles?: PermissionProfile[]; userRoles?: any[]; userZones?: any[]; reportingManager?: any; isDepartmentAdmin?: boolean }> {
     this.logger.debug(`findById called with id="${id}" (typeof=${typeof id})`);
 
     let user: User | null = null;
@@ -279,7 +296,54 @@ export class UserService {
       );
     }
 
-    return { ...user, profiles };
+    const [userRoles, userZones, reportingLines] = await Promise.all([
+      this.userRoleRepository.find({ where: { userId: id }, relations: { role: true, department: true } }),
+      this.userZoneRepository.find({ where: { userId: id }, relations: { zone: true } }),
+      this.reportingLineRepository.find({ where: { userId: id, levelRank: 1 }, relations: { reportsTo: true } }),
+    ]);
+
+    const deptAdminCheck = user.departmentId ? await this.repository.manager.findOne(Department, {
+      where: { id: user.departmentId, departmentAdminId: id },
+    }) : null;
+
+    return {
+      ...user,
+      profiles,
+      userRoles: userRoles.map(ur => ({ roleId: ur.roleId, roleName: ur.role?.name, departmentId: ur.departmentId, departmentName: ur.department?.name })),
+      userZones: userZones.map(uz => ({ zoneId: uz.zoneId, zoneName: uz.zone?.name })),
+      reportingManager: reportingLines.length > 0 ? { empId: reportingLines[0].reportsTo.empId, name: reportingLines[0].reportsTo.name } : null,
+      isDepartmentAdmin: !!deptAdminCheck,
+    };
+  }
+
+  async findReportingManagers(zoneId: number, departmentId: number, search?: string): Promise<any[]> {
+    const qb = this.repository.createQueryBuilder('u')
+      .where('u.deletedAt IS NULL')
+      .andWhere('u.isActive = :isActive', { isActive: true })
+      .innerJoin('user_zones', 'uz', 'uz.user_id = u.emp_id AND uz.zone_id = :zoneId', { zoneId })
+      .innerJoin('user_roles', 'ur', 'ur.user_id = u.emp_id')
+      .innerJoin('departments', 'd', 'd.id = ur.department_id')
+      .innerJoin('roles', 'r', 'r.id = ur.role_id')
+      .leftJoin('department_roles', 'dr', 'dr.department_id = d.id AND dr.role_id = r.id')
+      .andWhere('ur.department_id = :departmentId', { departmentId });
+
+    if (search) {
+      qb.andWhere('(u.name ILIKE :search OR u.emp_id ILIKE :search)', { search: `%${search}%` });
+    }
+
+    qb.select([
+      'u.emp_id AS "empId"',
+      'u.name AS "name"',
+      'u.email AS "email"',
+      'd.name AS "departmentName"',
+      'r.name AS "roleName"',
+    ])
+    .orderBy('d.name', 'ASC')
+    .addOrderBy('r.name', 'ASC')
+    .addOrderBy('u.name', 'ASC')
+    .distinct(true);
+
+    return qb.getRawMany();
   }
 
   async create(

@@ -26,6 +26,7 @@ import {
   CreateUserFullDto,
 } from '../dto/user.dto';
 import { PaginationQueryDto } from '../../../common/dto/pagination-query.dto';
+import { AuditAction } from '../../audit/decorators/audit-action.decorator';
 
 @ApiTags('Users')
 @ApiBearerAuth()
@@ -35,6 +36,16 @@ export class UserController {
     private readonly userService: UserService,
     private readonly metadataService: UserMetadataService,
   ) {}
+
+  @Get('reporting-managers')
+  @ApiOperation({ summary: 'Get potential reporting managers filtered by zone and department' })
+  async getReportingManagers(
+    @Query('zoneId', ParseIntPipe) zoneId: number,
+    @Query('departmentId', ParseIntPipe) departmentId: number,
+    @Query('search') search?: string,
+  ) {
+    return this.userService.findReportingManagers(zoneId, departmentId, search);
+  }
 
   @Get('metadata')
   @ApiOperation({ summary: 'Get all dropdown metadata for user management' })
@@ -62,6 +73,7 @@ export class UserController {
 
   @Post()
   @ApiOperation({ summary: 'Create a new user' })
+  @AuditAction({ entity: 'USERS', action: 'CREATE' })
   async create(@Body() dto: CreateUserDto) {
     return this.userService.create(dto);
   }
@@ -71,12 +83,14 @@ export class UserController {
     summary:
       'Create user with roles, zones, and reporting hierarchy in a single transaction',
   })
+  @AuditAction({ entity: 'USERS', action: 'CREATE' })
   async createFull(@Body() dto: CreateUserFullDto) {
     return this.userService.createFull(dto);
   }
 
   @Patch(':id')
   @ApiOperation({ summary: 'Update user' })
+  @AuditAction({ entity: 'USERS', action: 'UPDATE' })
   async update(
     @Param('id', RawStringPipe) id: string,
     @Body() dto: UpdateUserDto,
@@ -86,6 +100,7 @@ export class UserController {
 
   @Delete(':id')
   @ApiOperation({ summary: 'Soft delete user' })
+  @AuditAction({ entity: 'USERS', action: 'DELETE' })
   async remove(@Param('id', RawStringPipe) id: string) {
     await this.userService.remove(id);
     return { message: 'User deleted successfully' };
@@ -106,12 +121,14 @@ export class UserRoleController {
 
   @Post()
   @ApiOperation({ summary: 'Assign role to user' })
+  @AuditAction({ entity: 'USERS', action: 'ROLE_ASSIGNED' })
   async assign(@Body() dto: CreateUserRoleDto) {
     return this.userRoleService.assign(dto);
   }
 
   @Delete(':userId/department/:departmentId/role/:roleId')
   @ApiOperation({ summary: 'Revoke role from user' })
+  @AuditAction({ entity: 'USERS', action: 'ROLE_REVOKED' })
   async revoke(
     @Param('userId', RawStringPipe) userId: string,
     @Param('departmentId', ParseIntPipe) departmentId: number,

@@ -19,6 +19,7 @@ import { CONFIG } from 'src/config-global';
 import { queryKeys } from 'src/services/api/query-keys';
 import { userService } from 'src/services/services/user.service';
 import { zoneService } from 'src/services/services/geography.service';
+import { useRoleList, useDepartmentList } from 'src/services/hooks/use-organization';
 
 import { Label } from 'src/components/label';
 import { Iconify } from 'src/components/iconify';
@@ -43,6 +44,12 @@ export default function UserListPage() {
   });
 
   const activeZones = useMemo(() => (allZones ?? []).filter((z: Zone) => z.isActive !== false), [allZones]);
+
+  const { data: departments } = useDepartmentList();
+  const activeDepartments = useMemo(() => (departments ?? []).filter((d: any) => d.isActive !== false), [departments]);
+
+  const { data: roles } = useRoleList();
+  const activeRoles = useMemo(() => (roles ?? []).filter((r: any) => r.isActive !== false), [roles]);
 
   const queryParams = useMemo(() => {
     const params: Record<string, unknown> = {
@@ -110,6 +117,18 @@ export default function UserListPage() {
       label: 'Reporting Manager',
       type: 'text' as const,
     },
+    {
+      key: 'departmentId',
+      label: 'Department',
+      type: 'select' as const,
+      options: activeDepartments?.map((d: any) => ({ value: String(d.id), label: d.name })) ?? [],
+    },
+    {
+      key: 'roleId',
+      label: 'Role',
+      type: 'select' as const,
+      options: activeRoles?.map((r: any) => ({ value: String(r.id), label: r.name })) ?? [],
+    },
   ];
 
   const columns: GridColDef[] = [
@@ -147,6 +166,14 @@ export default function UserListPage() {
           {params.value || '-'}
         </Typography>
       ),
+    },
+    {
+      field: 'isDepartmentAdmin',
+      headerName: 'Dept Admin',
+      width: 120,
+      renderCell: (params) => params.row.isDepartmentAdmin
+        ? <Chip label="Yes" color="primary" size="small" variant="outlined" />
+        : <Typography variant="body2" color="text.secondary">-</Typography>,
     },
     {
       field: 'reportsToName', headerName: 'Reports To', width: 160,
@@ -226,7 +253,7 @@ export default function UserListPage() {
           rowCount={meta?.total ?? 0}
           onSearchChange={handleSearchChange}
           searchValue={search}
-          searchPlaceholder="Search by name, employee ID, or email..."
+          searchPlaceholder="Search Employee, Email..."
           filterOptions={filterOptions}
           onFiltersChange={handleFiltersChange}
           hideColumnsButton

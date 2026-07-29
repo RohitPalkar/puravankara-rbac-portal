@@ -25,6 +25,7 @@ export const endpoints = {
     update: (id: string) => `${API_PREFIX}/users/${id}`,
     delete: (id: string) => `${API_PREFIX}/users/${id}`,
     fetchEmployee: `${API_PREFIX}/users/fetch-employee`,
+    reportingManagers: `${API_PREFIX}/users/reporting-managers`,
     roles: {
       byUser: (userId: string) => `${API_PREFIX}/user-roles/${userId}`,
       create: `${API_PREFIX}/user-roles`,

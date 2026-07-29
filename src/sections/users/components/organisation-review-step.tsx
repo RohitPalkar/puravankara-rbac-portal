@@ -1,6 +1,5 @@
 import type { UserGroup } from 'src/services/types/user-group';
 
-import { useQuery } from '@tanstack/react-query';
 import { useMemo, useState, useEffect, forwardRef, useCallback, useImperativeHandle } from 'react';
 
 import Box from '@mui/material/Box';
@@ -13,7 +12,7 @@ import Typography from '@mui/material/Typography';
 import FormControl from '@mui/material/FormControl';
 import Autocomplete from '@mui/material/Autocomplete';
 
-import { userService } from 'src/services/services/user.service';
+import { useReportingManagers } from 'src/services/hooks/use-users';
 import { useUserGroupList } from 'src/services/hooks/use-user-groups';
 
 export interface OrganisationData {
@@ -39,8 +38,10 @@ export interface OrganisationReviewStepHandle {
   validate: () => boolean;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type
-interface Props {}
+interface Props {
+  zoneId?: number | null;
+  departmentId?: number | null;
+}
 
 function todayString(): string {
   const d = new Date();
@@ -51,7 +52,7 @@ function todayString(): string {
 }
 
 export default forwardRef<OrganisationReviewStepHandle, Props>(
-  (_props: Props, ref) => {
+  ({ zoneId, departmentId }: Props, ref) => {
     const { data: userGroups } = useUserGroupList();
 
     const [employmentStatus, setEmploymentStatus] = useState<'Active' | 'Inactive'>('Active');
@@ -64,29 +65,22 @@ export default forwardRef<OrganisationReviewStepHandle, Props>(
     const [effectiveTill, setEffectiveTill] = useState('');
     const [errors, setErrors] = useState<string[]>([]);
 
-    const { data: allUsers } = useQuery({
-      queryKey: ['organisation-users'],
-      queryFn: async () => {
-        const res = await userService.list({});
-        return res.data ?? [];
-      },
-    });
+    const { data: potentialManagers } = useReportingManagers(
+      zoneId ?? null,
+      departmentId ?? null,
+      reportingManagerSearch || undefined,
+    );
 
-    const userSearchResults = useMemo(() => {
-      if (!allUsers) return [];
-      if (!reportingManagerSearch) return allUsers;
-      const lower = reportingManagerSearch.toLowerCase();
-      return allUsers.filter((u: any) => (u.name?.toLowerCase().includes(lower) || u.empId?.toLowerCase().includes(lower)));
-    }, [allUsers, reportingManagerSearch]);
+    const userSearchResults = useMemo(() => potentialManagers ?? [], [potentialManagers]);
 
     const teamLeadResults = useMemo(() => {
-      if (!allUsers) return [];
-      if (!teamLeadSearch) return allUsers;
+      if (!potentialManagers) return [];
+      if (!teamLeadSearch) return potentialManagers;
       const lower = teamLeadSearch.toLowerCase();
-      return allUsers.filter((u: any) => (u.name?.toLowerCase().includes(lower) || u.empId?.toLowerCase().includes(lower)));
-    }, [allUsers, teamLeadSearch]);
+      return potentialManagers.filter((u: any) => (u.name?.toLowerCase().includes(lower) || u.empId?.toLowerCase().includes(lower)));
+    }, [potentialManagers, teamLeadSearch]);
 
-    const allUserList = useMemo(() => (allUsers as UserSearchResult[]) ?? [], [allUsers]);
+    const allUserList = useMemo(() => (potentialManagers as UserSearchResult[]) ?? [], [potentialManagers]);
     const searchUsers = useMemo(() => userSearchResults ?? [], [userSearchResults]);
     const searchTeamLeads = useMemo(() => teamLeadResults ?? [], [teamLeadResults]);
     const groups = useMemo(() => userGroups ?? [], [userGroups]);
@@ -162,12 +156,12 @@ export default forwardRef<OrganisationReviewStepHandle, Props>(
             renderInput={(params) => (
               <TextField {...params} label="Reporting Manager *" size="medium" />
             )}
-            renderOption={(props, option: UserSearchResult) => (
+            renderOption={(props, option: any) => (
               <li {...props}>
                 <Box>
                   <Typography variant="body2" fontWeight={600}>{option.name}</Typography>
                   <Typography variant="caption" color="text.secondary">
-                    {option.empId}{option.departmentName ? ` | ${option.departmentName}` : ''}{option.roleName ? ` | ${option.roleName}` : ''}
+                    {option.roleName ? `${option.roleName}` : ''}{option.departmentName ? ` | ${option.departmentName}` : ''}
                   </Typography>
                 </Box>
               </li>

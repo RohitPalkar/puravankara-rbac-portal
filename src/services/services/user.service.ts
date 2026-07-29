@@ -36,6 +36,9 @@ export const userService = {
   fetchEmployee: async (employeeId: string): Promise<ApiResponse<Record<string, unknown>>> =>
     apiPost<Record<string, unknown>>(endpoints.users.fetchEmployee, { employeeId }),
 
+  reportingManagers: async (params: { zoneId: number; departmentId: number; search?: string }): Promise<ApiResponse<any[]>> =>
+    apiGet<any[]>(endpoints.users.reportingManagers, params),
+
   roles: {
     byUser: async (userId: string): Promise<ApiResponse<UserRole[]>> =>
       apiGet<UserRole[]>(endpoints.users.roles.byUser(userId)),

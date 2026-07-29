@@ -43,4 +43,16 @@ export class PaginationQueryDto {
   @Type(() => Number)
   @IsInt()
   zoneId?: number;
+
+  @ApiPropertyOptional({ description: 'Filter by department ID' })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  departmentId?: number;
+
+  @ApiPropertyOptional({ description: 'Filter by role ID' })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  roleId?: number;
 }
