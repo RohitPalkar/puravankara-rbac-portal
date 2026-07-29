@@ -121,7 +121,6 @@ export default function PhaseListPage() {
 
   const columns: GridColDef[] = [
     { field: 'phaseName', headerName: 'Phase Name', flex: 1, minWidth: 160 },
-    { field: 'projectName', headerName: 'Project', flex: 1, minWidth: 140 },
     {
       field: 'launchEnabled', headerName: 'Launch', width: 90, align: 'center', headerAlign: 'center',
       renderCell: (params) => (

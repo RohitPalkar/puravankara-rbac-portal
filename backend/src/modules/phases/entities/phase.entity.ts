@@ -9,9 +9,6 @@ export class Phase extends AppBaseEntity {
   @Column({ name: 'city_id', nullable: false })
   cityId: number;
 
-  @Column({ name: 'project_id', nullable: false })
-  projectId: number;
-
   @Column({ name: 'phase_name', nullable: false })
   phaseName: string;
 

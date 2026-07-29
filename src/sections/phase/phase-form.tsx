@@ -3,8 +3,8 @@ import type { CreatePhaseRequest, UpdatePhaseRequest } from 'src/services/types/
 import dayjs from 'dayjs';
 import { Helmet } from 'react-helmet-async';
 import { useQuery } from '@tanstack/react-query';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useMemo, useState, useEffect, useCallback } from 'react';
 
 import Box from '@mui/material/Box';
 import Card from '@mui/material/Card';
@@ -23,7 +23,6 @@ import { CONFIG } from 'src/config-global';
 import { queryKeys } from 'src/services/api/query-keys';
 import { brandService } from 'src/services/services/brand.service';
 import { cityService } from 'src/services/services/geography.service';
-import { projectService } from 'src/services/services/project.service';
 import { usePhaseById, useCreatePhase, useUpdatePhase } from 'src/services/hooks/use-phases';
 
 import { Iconify } from 'src/components/iconify';
@@ -41,7 +40,6 @@ export default function PhaseFormPage() {
 
   const [brandId, setBrandId] = useState<number | ''>('');
   const [cityId, setCityId] = useState<number | ''>('');
-  const [projectId, setProjectId] = useState<number | ''>('');
   const [phaseName, setPhaseName] = useState('');
   const [sfdcPhaseName, setSfdcPhaseName] = useState('');
   const [sfdcBlockName, setSfdcBlockName] = useState('');
@@ -64,14 +62,6 @@ export default function PhaseFormPage() {
     },
   });
 
-  const { data: allProjects } = useQuery({
-    queryKey: queryKeys.projects.list({}),
-    queryFn: async () => {
-      const res = await projectService.list({});
-      return res.data;
-    },
-  });
-
   const { data: allCities } = useQuery({
     queryKey: queryKeys.cities.list({}),
     queryFn: async () => {
@@ -84,7 +74,6 @@ export default function PhaseFormPage() {
     if (phaseData) {
       setBrandId(phaseData.brandId);
       setCityId(phaseData.cityId);
-      setProjectId(phaseData.projectId);
       setPhaseName(phaseData.phaseName);
       setSfdcPhaseName(phaseData.sfdcPhaseName);
       setSfdcBlockName(phaseData.sfdcBlockName ?? '');
@@ -95,28 +84,9 @@ export default function PhaseFormPage() {
     }
   }, [phaseData]);
 
-  const filteredProjects = useMemo(() => {
-    if (!allProjects || !brandId) return [];
-    return allProjects.filter((p) => p.brandId === brandId);
-  }, [allProjects, brandId]);
-
-  const filteredCities = useMemo(() => {
-    if (!allCities || !projectId) return [];
-    const project = allProjects?.find((p) => p.id === projectId);
-    if (!project) return [];
-    return allCities.filter((c) => c.id === project.cityId);
-  }, [allCities, allProjects, projectId]);
-
   const handleBrandChange = useCallback((value: string) => {
     const num = Number(value);
     setBrandId(num || '');
-    setProjectId('');
-    setCityId('');
-  }, []);
-
-  const handleProjectChange = useCallback((value: string) => {
-    const num = Number(value);
-    setProjectId(num || '');
     setCityId('');
   }, []);
 
@@ -131,7 +101,6 @@ export default function PhaseFormPage() {
   const buildPayload = useCallback((): CreatePhaseRequest => ({
     brandId: brandId as number,
     cityId: cityId as number,
-    projectId: projectId as number,
     phaseName: phaseName.trim(),
     sfdcPhaseName: sfdcPhaseName.trim(),
     sfdcBlockName: sfdcBlockName.trim() || undefined,
@@ -140,7 +109,7 @@ export default function PhaseFormPage() {
     bookingGatewayId: bookingGatewayId ? Number(bookingGatewayId) : undefined,
     milestoneGatewayId: milestoneGatewayId ? Number(milestoneGatewayId) : undefined,
     isActive: true,
-  }), [brandId, cityId, projectId, phaseName, sfdcPhaseName, sfdcBlockName, possessionDate, agreementExecutionPercentage, bookingGatewayId, milestoneGatewayId]);
+  }), [brandId, cityId, phaseName, sfdcPhaseName, sfdcBlockName, possessionDate, agreementExecutionPercentage, bookingGatewayId, milestoneGatewayId]);
 
   const handleSave = useCallback(async () => {
     if (!validate()) return;
@@ -217,24 +186,10 @@ export default function PhaseFormPage() {
               onChange={(e) => setCityId(Number(e.target.value) || '')}
               select
               required
-              disabled={!projectId}
               fullWidth
             >
-              {filteredCities.map((c) => (
+              {allCities?.map((c) => (
                 <MenuItem key={c.id} value={c.id}>{c.name}</MenuItem>
-              ))}
-            </TextField>
-            <TextField
-              label="Project"
-              value={projectId}
-              onChange={(e) => handleProjectChange(e.target.value)}
-              select
-              required
-              disabled={!brandId}
-              fullWidth
-            >
-              {filteredProjects.map((p) => (
-                <MenuItem key={p.id} value={p.id}>{p.name}</MenuItem>
               ))}
             </TextField>
             <TextField

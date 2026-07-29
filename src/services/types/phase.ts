@@ -5,8 +5,6 @@ export interface Phase extends AppBase {
   brandName?: string;
   cityId: number;
   cityName?: string;
-  projectId: number;
-  projectName?: string;
   phaseName: string;
   sfdcPhaseName: string;
   sfdcBlockName?: string;
@@ -25,7 +23,6 @@ export interface Phase extends AppBase {
 export interface CreatePhaseRequest {
   brandId: number;
   cityId: number;
-  projectId: number;
   phaseName: string;
   sfdcPhaseName: string;
   sfdcBlockName?: string;

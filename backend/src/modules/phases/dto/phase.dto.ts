@@ -23,11 +23,6 @@ export class CreatePhaseDto {
   cityId: number;
 
   @ApiProperty()
-  @IsInt()
-  @Type(() => Number)
-  projectId: number;
-
-  @ApiProperty()
   @IsString()
   @IsNotEmpty()
   phaseName: string;
@@ -108,12 +103,6 @@ export class UpdatePhaseDto {
   @IsInt()
   @Type(() => Number)
   cityId?: number;
-
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsInt()
-  @Type(() => Number)
-  projectId?: number;
 
   @ApiPropertyOptional()
   @IsOptional()
@@ -211,9 +200,6 @@ export class PhaseResponseDto {
 
   @ApiProperty()
   cityId: number;
-
-  @ApiProperty()
-  projectId: number;
 
   @ApiProperty()
   phaseName: string;
