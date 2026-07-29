@@ -16,6 +16,7 @@ import { queryKeys } from 'src/services/api/query-keys';
 import { useDeleteBrand } from 'src/services/hooks/use-brands';
 import { brandService } from 'src/services/services/brand.service';
 import { useMyPermissions } from 'src/services/hooks/use-permissions';
+import { cityService, cityZoneMappingService } from 'src/services/services/geography.service';
 
 import { Iconify } from 'src/components/iconify';
 import { DataTable } from 'src/components/data-table';
@@ -136,6 +137,36 @@ export default function BrandListPage() {
   const brands = response?.data ?? [];
   const meta = response?.meta;
 
+  const { data: cities } = useQuery({
+    queryKey: queryKeys.cities.list({}),
+    queryFn: async () => {
+      const res = await cityService.list({});
+      return (res.data ?? []) as { id: number; name: string }[];
+    },
+  });
+
+  const { data: mappings } = useQuery({
+    queryKey: queryKeys.cityZoneMappings.all,
+    queryFn: async () => {
+      const res = await cityZoneMappingService.list();
+      return (res.data ?? []) as { cityId: number; zoneId: number; zoneName?: string }[];
+    },
+  });
+
+  const cityMap = useMemo(() => {
+    const map = new Map<number, string>();
+    (cities ?? []).forEach((c) => map.set(c.id, c.name));
+    return map;
+  }, [cities]);
+
+  const zoneMap = useMemo(() => {
+    const map = new Map<number, string>();
+    (mappings ?? []).forEach((m) => {
+      if (m.zoneName) map.set(m.cityId, m.zoneName);
+    });
+    return map;
+  }, [mappings]);
+
   const handleSearchChange = useCallback((value: string) => {
     setSearch(value);
     setPaginationModel((prev) => ({ ...prev, page: 0 }));
@@ -151,6 +182,22 @@ export default function BrandListPage() {
 
   const columns: GridColDef[] = [
     { field: 'brandName', headerName: 'Brand Name', flex: 4, minWidth: 220, renderHeader: renderBrandHeader },
+    {
+      field: 'cityId',
+      headerName: 'City',
+      flex: 2,
+      minWidth: 140,
+      renderHeader: renderBrandHeader,
+      valueGetter: (_value: any, row: any) => row.cityRef?.name ?? cityMap.get(row.cityId) ?? '—',
+    },
+    {
+      field: 'zone',
+      headerName: 'Zone',
+      flex: 2,
+      minWidth: 120,
+      renderHeader: renderBrandHeader,
+      valueGetter: (_value: any, row: any) => zoneMap.get(row.cityId) ?? '—',
+    },
     {
       field: 'salaryMultiplier',
       headerName: 'Salary Multiplier',

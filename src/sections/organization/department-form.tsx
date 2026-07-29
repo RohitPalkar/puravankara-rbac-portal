@@ -384,28 +384,38 @@ export default function DepartmentFormPage() {
           ),
         );
 
-        const succeeded = results.filter((r) => r.status === 'fulfilled').length;
-        const failed = results.filter((r) => r.status === 'rejected').length;
+        const lines: string[] = [`${name.trim()} Department`];
+        let hasFailure = false;
+        let allAlreadyExist = true;
 
-        if (failed === 0) {
-          const zoneNames = selectedZoneIds.map((zid) => activeZones.find((z: any) => z.id === zid)?.name).filter(Boolean).join(', ');
-          setSuccessMessage(`${name.trim()} created for ${zoneNames}.`);
-        } else if (succeeded > 0) {
-          const succeededZoneNames = selectedZoneIds
-            .filter((_, i) => results[i].status === 'fulfilled')
-            .map((zid) => activeZones.find((z: any) => z.id === zid)?.name)
-            .filter(Boolean)
-            .join(', ');
-          const failedZoneNames = selectedZoneIds
-            .filter((_, i) => results[i].status === 'rejected')
-            .map((zid) => activeZones.find((z: any) => z.id === zid)?.name)
-            .filter(Boolean)
-            .join(', ');
-          setSuccessMessage(`${name.trim()} created for ${succeededZoneNames}. Failed for ${failedZoneNames}.`);
-        } else {
-          const firstError = (results.find((r) => r.status === 'rejected') as PromiseRejectedResult)?.reason;
-          throw firstError;
+        selectedZoneIds.forEach((zoneId, i) => {
+          const zoneName = activeZones.find((z: any) => z.id === zoneId)?.name ?? `Zone ${zoneId}`;
+          const r = results[i];
+          if (r.status === 'fulfilled') {
+            lines.push(`  ✓ ${zoneName}`);
+            allAlreadyExist = false;
+          } else {
+            const err: any = (r as PromiseRejectedResult).reason;
+            const errMsg = err?.response?.data?.message?.[0] || err?.message || '';
+            if (errMsg.toLowerCase().includes('already exists') || err?.response?.statusCode === 409) {
+              lines.push(`  Already exists — ${zoneName}`);
+            } else {
+              lines.push(`  ✗ ${zoneName} — ${errMsg}`);
+              hasFailure = true;
+              allAlreadyExist = false;
+            }
+          }
+        });
+
+        if (allAlreadyExist && results.length > 0) {
+          throw new Error('All selected zones already have this department.');
         }
+
+        if (hasFailure) {
+          lines.push('', 'Some entries could not be created. Existing ones were skipped.');
+        }
+
+        setSuccessMessage(lines.join('\n'));
       }
       setShowSuccess(true);
       setTimeout(() => navigate(paths.dashboard.departmentMaster), 1500);
@@ -806,8 +816,8 @@ export default function DepartmentFormPage() {
         loading={isRemovingLevel}
       />
 
-      <Snackbar open={showSuccess} autoHideDuration={2500} anchorOrigin={{ vertical: 'top', horizontal: 'center' }}>
-        <Alert severity="success" variant="filled" sx={{ width: 1 }}>
+      <Snackbar open={showSuccess} autoHideDuration={4000} anchorOrigin={{ vertical: 'top', horizontal: 'center' }}>
+        <Alert severity="success" variant="filled" sx={{ width: 1, whiteSpace: 'pre-line', '& .MuiAlert-message': { width: 1 } }}>
           {successMessage}
         </Alert>
       </Snackbar>
