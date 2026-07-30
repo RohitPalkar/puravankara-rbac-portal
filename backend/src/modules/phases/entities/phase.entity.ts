@@ -1,6 +1,7 @@
 import { Entity, Column, ManyToOne, JoinColumn, OneToMany } from 'typeorm';
 import { AppBaseEntity } from '../../../common/entities/app-base.entity';
 import { Brand } from '../../brands/entities/brand.entity';
+import { City } from '../../geography/entities/city.entity';
 import { Project } from '../../projects/entities/project.entity';
 
 @Entity('phases')
@@ -14,6 +15,10 @@ export class Phase extends AppBaseEntity {
 
   @Column({ name: 'city_id', nullable: false })
   cityId: number;
+
+  @ManyToOne(() => City)
+  @JoinColumn({ name: 'city_id' })
+  city: City;
 
   @Column({ name: 'phase_name', nullable: false })
   phaseName: string;

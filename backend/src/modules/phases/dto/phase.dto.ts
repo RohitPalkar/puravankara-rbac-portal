@@ -198,8 +198,14 @@ export class PhaseResponseDto {
   @ApiProperty()
   brandId: number;
 
+  @ApiPropertyOptional()
+  brandName?: string;
+
   @ApiProperty()
   cityId: number;
+
+  @ApiPropertyOptional()
+  cityName?: string;
 
   @ApiProperty()
   phaseName: string;
