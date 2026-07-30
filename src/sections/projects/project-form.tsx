@@ -77,6 +77,7 @@ export default function ProjectFormPage() {
   const [phaseIdError, setPhaseIdError] = useState('');
   const [cityIdError, setCityIdError] = useState('');
   const [showSuccess, setShowSuccess] = useState(false);
+  const [saveError, setSaveError] = useState('');
 
   // Payment gateways
   const [razorpayEnabled, setRazorpayEnabled] = useState(false);
@@ -266,8 +267,8 @@ export default function ProjectFormPage() {
       }
       setShowSuccess(true);
       setTimeout(() => navigate(paths.dashboard.projectMaster), 1200);
-    } catch {
-      // error handled by query cache invalidation
+    } catch (err: any) {
+      setSaveError(err?.response?.data?.message || err?.message || 'Failed to save project');
     }
   }, [validate, isEdit, projectId, buildPayload, createProject, updateProject, navigate]);
 
@@ -486,9 +487,14 @@ export default function ProjectFormPage() {
         </Box>
       </PageContainer>
 
-      <Snackbar open={showSuccess} autoHideDuration={2000} anchorOrigin={{ vertical: 'top', horizontal: 'center' }}>
+      <Snackbar open={showSuccess} autoHideDuration={2000} anchorOrigin={{ vertical: 'top', horizontal: 'center' }} onClose={() => setShowSuccess(false)}>
         <Alert severity="success" variant="filled" sx={{ width: 1 }}>
           Project {isEdit ? 'updated' : 'created'} successfully
+        </Alert>
+      </Snackbar>
+      <Snackbar open={!!saveError} autoHideDuration={6000} anchorOrigin={{ vertical: 'top', horizontal: 'center' }} onClose={() => setSaveError('')}>
+        <Alert severity="error" variant="filled" sx={{ width: 1 }}>
+          {saveError}
         </Alert>
       </Snackbar>
     </>
