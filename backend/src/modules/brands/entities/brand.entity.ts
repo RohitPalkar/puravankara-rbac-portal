@@ -1,6 +1,7 @@
 import { Exclude } from 'class-transformer';
-import { Entity, Column } from 'typeorm';
+import { Entity, Column, OneToMany } from 'typeorm';
 import { AppBaseEntity } from '../../../common/entities/app-base.entity';
+import { Phase } from '../../phases/entities/phase.entity';
 
 @Entity('brands')
 export class Brand extends AppBaseEntity {
@@ -122,4 +123,7 @@ export class Brand extends AppBaseEntity {
 
   @Column({ name: 'is_active', default: true })
   isActive: boolean;
+
+  @OneToMany(() => Phase, (phase) => phase.brand)
+  phases: Phase[];
 }

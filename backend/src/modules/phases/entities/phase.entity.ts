@@ -1,10 +1,16 @@
-import { Entity, Column } from 'typeorm';
+import { Entity, Column, ManyToOne, JoinColumn, OneToMany } from 'typeorm';
 import { AppBaseEntity } from '../../../common/entities/app-base.entity';
+import { Brand } from '../../brands/entities/brand.entity';
+import { Project } from '../../projects/entities/project.entity';
 
 @Entity('phases')
 export class Phase extends AppBaseEntity {
   @Column({ name: 'brand_id', nullable: false })
   brandId: number;
+
+  @ManyToOne(() => Brand, (brand) => brand.phases)
+  @JoinColumn({ name: 'brand_id' })
+  brand: Brand;
 
   @Column({ name: 'city_id', nullable: false })
   cityId: number;
@@ -53,4 +59,7 @@ export class Phase extends AppBaseEntity {
 
   @Column({ name: 'is_active', default: true })
   isActive: boolean;
+
+  @OneToMany(() => Project, (project) => project.phase)
+  projects: Project[];
 }

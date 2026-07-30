@@ -84,11 +84,11 @@ export class IncentiveRuleDto {
 }
 
 export class CreateProjectDto {
-  @ApiPropertyOptional()
-  @IsOptional()
+  @ApiProperty()
   @IsInt()
+  @IsNotEmpty()
   @Type(() => Number)
-  brandId?: number;
+  phaseId: number;
 
   @ApiProperty()
   @IsInt()
@@ -187,7 +187,7 @@ export class UpdateProjectDto {
   @IsOptional()
   @IsInt()
   @Type(() => Number)
-  brandId?: number;
+  phaseId?: number;
 
   @ApiPropertyOptional()
   @IsOptional()

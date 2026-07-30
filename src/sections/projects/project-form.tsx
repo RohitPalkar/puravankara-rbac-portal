@@ -28,7 +28,6 @@ import { paths } from 'src/routes/paths';
 
 import { CONFIG } from 'src/config-global';
 import { queryKeys } from 'src/services/api/query-keys';
-import { brandService } from 'src/services/services/brand.service';
 import { phaseService } from 'src/services/services/phase.service';
 import { cityService } from 'src/services/services/geography.service';
 import { IncentiveType, PaymentGatewayType } from 'src/services/types/enums';
@@ -58,7 +57,7 @@ export default function ProjectFormPage() {
   const { mutateAsync: createProject, isPending: isCreating } = useCreateProject();
   const { mutateAsync: updateProject, isPending: isUpdating } = useUpdateProject();
 
-  const [brandId, setBrandId] = useState<number | ''>('');
+  const [phaseId, setPhaseId] = useState<number | ''>('');
   const [cityId, setCityId] = useState<number | ''>('');
   const [name, setName] = useState('');
   const [billingName, setBillingName] = useState('');
@@ -71,9 +70,8 @@ export default function ProjectFormPage() {
   const [jvLogo, setJvLogo] = useState('');
   const [sfdcProjectName, setSfdcProjectName] = useState('');
   const [codename, setCodename] = useState('');
-  const [phaseId, setPhaseId] = useState<number | ''>('');
   const [nameError, setNameError] = useState('');
-  const [brandIdError, setBrandIdError] = useState('');
+  const [phaseIdError, setPhaseIdError] = useState('');
   const [cityIdError, setCityIdError] = useState('');
   const [showSuccess, setShowSuccess] = useState(false);
 
@@ -104,10 +102,10 @@ export default function ProjectFormPage() {
   const saving = isCreating || isUpdating;
 
   // Reference data
-  const { data: allBrands } = useQuery({
-    queryKey: queryKeys.brands.list({}),
+  const { data: allPhases } = useQuery({
+    queryKey: queryKeys.phases.list({}),
     queryFn: async () => {
-      const res = await brandService.list({});
+      const res = await phaseService.list({});
       return res.data;
     },
   });
@@ -120,18 +118,19 @@ export default function ProjectFormPage() {
     },
   });
 
-  const { data: allPhases } = useQuery({
-    queryKey: queryKeys.phases.list({}),
-    queryFn: async () => {
-      const res = await phaseService.list({});
-      return res.data;
-    },
-  });
+  const selectedPhase = useMemo(() => {
+    if (!phaseId || !allPhases) return null;
+    return allPhases.find((p: any) => p.id === phaseId) ?? null;
+  }, [phaseId, allPhases]);
+
+  const derivedBrandName = useMemo(() => {
+    return selectedPhase?.brandName ?? '';
+  }, [selectedPhase]);
 
   // Populate form on edit
   useEffect(() => {
     if (!projectData) return;
-    setBrandId(projectData.brandId);
+    setPhaseId(projectData.phaseId);
     setCityId(projectData.cityId);
     setName(projectData.name);
     setBillingName(projectData.billingEntityName ?? '');
@@ -144,7 +143,6 @@ export default function ProjectFormPage() {
     setJvLogo(projectData.jvImagePath ?? '');
     setSfdcProjectName(projectData.sfdcProjectName ?? '');
     setCodename(projectData.codename ?? '');
-    setPhaseId((projectData.extendedMetadata?.phaseId as number) ?? '');
 
     // Payment gateways
     const rp = projectData.paymentGateways?.find((g) => g.gatewayType === 'RAZORPAY');
@@ -198,10 +196,10 @@ export default function ProjectFormPage() {
   const validate = useCallback((): boolean => {
     let valid = true;
     if (!name.trim()) { setNameError('Project name is required'); valid = false; } else { setNameError(''); }
-    if (!brandId) { setBrandIdError('Brand is required'); valid = false; } else { setBrandIdError(''); }
+    if (!phaseId) { setPhaseIdError('Phase is required'); valid = false; } else { setPhaseIdError(''); }
     if (!cityId) { setCityIdError('City is required'); valid = false; } else { setCityIdError(''); }
     return valid;
-  }, [name, brandId, cityId]);
+  }, [name, phaseId, cityId]);
 
   const buildGateways = useCallback((): PaymentGatewayRequest[] => {
     const gateways: PaymentGatewayRequest[] = [];
@@ -237,7 +235,7 @@ export default function ProjectFormPage() {
   }, [reraRegularizationPercentage, reraPayablePercentage, reraMaxDays, rtmRegularizationPercentage, rtmPayablePercentage, rtmStartDate]);
 
   const buildPayload = useCallback((): CreateProjectRequest => ({
-    brandId: brandId as number,
+    phaseId: phaseId as number,
     cityId: cityId as number,
     name: name.trim(),
     billingEntityName: billingName.trim() || undefined,
@@ -251,11 +249,10 @@ export default function ProjectFormPage() {
     sfdcProjectName: sfdcProjectName.trim() || undefined,
     codename: codename.trim() || undefined,
     termsHtml: termsHtml || undefined,
-    extendedMetadata: phaseId ? { phaseId } : undefined,
     paymentGateways: buildGateways(),
     incentiveRules: buildIncentives(),
     isActive: true,
-  }), [brandId, cityId, name, billingName, panNumber, gstin, address1, address2, pinCode, projectImage, jvLogo, sfdcProjectName, codename, termsHtml, phaseId, buildGateways, buildIncentives]);
+  }), [phaseId, cityId, name, billingName, panNumber, gstin, address1, address2, pinCode, projectImage, jvLogo, sfdcProjectName, codename, termsHtml, buildGateways, buildIncentives]);
 
   const handleSave = useCallback(async () => {
     if (!validate()) return;
@@ -316,17 +313,15 @@ export default function ProjectFormPage() {
           {/* Project Details */}
           <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 3 }}>Project Details</Typography>
           <Box display="grid" gridTemplateColumns={{ xs: '1fr', sm: '1fr 1fr' }} gap={3}>
-            <TextField label="Brand" value={brandId} onChange={(e) => { setBrandId(Number(e.target.value) || ''); setCityId(''); }} select required error={!!brandIdError} helperText={brandIdError} fullWidth>
-              {allBrands?.map((b) => <MenuItem key={b.id} value={b.id}>{b.brandName}</MenuItem>)}
+            <TextField label="Phase" value={phaseId} onChange={(e) => { setPhaseId(Number(e.target.value) || ''); }} select required error={!!phaseIdError} helperText={phaseIdError} fullWidth>
+              <MenuItem value="">Select Phase</MenuItem>
+              {allPhases?.map((p) => <MenuItem key={p.id} value={p.id}>{p.phaseName}</MenuItem>)}
             </TextField>
+            <TextField label="Brand" value={derivedBrandName} InputProps={{ readOnly: true }} disabled placeholder={phaseId ? 'Deriving brand...' : 'Select a phase first'} fullWidth />
             <TextField label="City" value={cityId} onChange={(e) => setCityId(Number(e.target.value) || '')} select required error={!!cityIdError} helperText={cityIdError} fullWidth>
               {allCities?.map((c) => <MenuItem key={c.id} value={c.id}>{c.name}</MenuItem>)}
             </TextField>
             <TextField label="Project Name" value={name} onChange={(e) => { setName(e.target.value); setNameError(''); }} error={!!nameError} helperText={nameError} required placeholder="Enter project name" fullWidth />
-            <TextField label="Phase" value={phaseId} onChange={(e) => setPhaseId(Number(e.target.value) || '')} select fullWidth>
-              <MenuItem value="">None</MenuItem>
-              {allPhases?.map((p) => <MenuItem key={p.id} value={p.id}>{p.phaseName}</MenuItem>)}
-            </TextField>
             <TextField label="Billing Name" value={billingName} onChange={(e) => setBillingName(e.target.value)} placeholder="Enter Name" fullWidth />
             <TextField label="PAN No." value={panNumber} onChange={(e) => setPanNumber(e.target.value.toUpperCase())} inputProps={{ maxLength: 10 }} placeholder="Enter PAN no." fullWidth />
             <TextField label="GSTIN" value={gstin} onChange={(e) => setGstin(e.target.value.toUpperCase())} inputProps={{ maxLength: 15 }} placeholder="Enter GSTIN" fullWidth />

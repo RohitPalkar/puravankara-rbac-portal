@@ -1,18 +1,18 @@
 import { Entity, Column, ManyToOne, JoinColumn, OneToMany } from 'typeorm';
 import { AppBaseEntity } from '../../../common/entities/app-base.entity';
-import { Brand } from '../../brands/entities/brand.entity';
+import { Phase } from '../../phases/entities/phase.entity';
 import { City } from '../../geography/entities/city.entity';
 import { ProjectPaymentGateway } from './project-payment-gateway.entity';
 import { ProjectIncentiveRule } from './project-incentive-rule.entity';
 
 @Entity('projects')
 export class Project extends AppBaseEntity {
-  @Column({ name: 'brand_id', nullable: false })
-  brandId: number;
+  @Column({ name: 'phase_id', nullable: false })
+  phaseId: number;
 
-  @ManyToOne(() => Brand)
-  @JoinColumn({ name: 'brand_id' })
-  brand: Brand;
+  @ManyToOne(() => Phase, (phase) => phase.projects)
+  @JoinColumn({ name: 'phase_id' })
+  phase: Phase;
 
   @Column({ name: 'city_id', nullable: false })
   cityId: number;

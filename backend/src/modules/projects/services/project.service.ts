@@ -40,7 +40,7 @@ export class ProjectService extends BaseService<Project> {
       ...filters
     } = query;
     const rows = await this.repository.query(
-      `SELECT p.*, c.name AS "cityName" FROM public.projects p LEFT JOIN public.cities c ON c.id = p.city_id WHERE p.deleted_at IS NULL ORDER BY p.created_at DESC`,
+      `SELECT p.*, c.name AS "cityName", ph.phase_name AS "phaseName", b.brand_name AS "brandName" FROM public.projects p LEFT JOIN public.cities c ON c.id = p.city_id LEFT JOIN public.phases ph ON ph.id = p.phase_id LEFT JOIN public.brands b ON b.id = ph.brand_id WHERE p.deleted_at IS NULL ORDER BY p.created_at DESC`,
     );
     return {
       data: rows,
@@ -59,7 +59,7 @@ export class ProjectService extends BaseService<Project> {
       relations: {
         paymentGateways: true,
         incentiveRules: true,
-        brand: true,
+        phase: { brand: true },
         city: true,
       },
     });
@@ -112,7 +112,7 @@ export class ProjectService extends BaseService<Project> {
       relations: {
         paymentGateways: true,
         incentiveRules: true,
-        brand: true,
+        phase: { brand: true },
         city: true,
       },
     });
@@ -170,7 +170,7 @@ export class ProjectService extends BaseService<Project> {
       relations: {
         paymentGateways: true,
         incentiveRules: true,
-        brand: true,
+        phase: { brand: true },
         city: true,
       },
     });

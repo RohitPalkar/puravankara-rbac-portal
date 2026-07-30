@@ -2,7 +2,8 @@ import type { AppBase } from './common';
 import type { IncentiveType, PaymentGatewayType } from './enums';
 
 export interface Project extends AppBase {
-  brandId: number;
+  phaseId: number;
+  phaseName?: string;
   brandName?: string;
   cityId: number;
   cityName?: string;
@@ -62,7 +63,7 @@ export interface IncentiveRuleRequest {
 }
 
 export interface CreateProjectRequest {
-  brandId: number;
+  phaseId: number;
   cityId: number;
   name: string;
   billingEntityName?: string;
