@@ -17,12 +17,26 @@ import type {
   CreateRoleProjectPermissionRequest,
 } from '../types/permission';
 
+const STORAGE_KEY_PERMISSIONS = 'jwt_permissions';
+
 export function useMyPermissions() {
   return useQuery({
     queryKey: queryKeys.permissions.me,
     queryFn: async () => {
       const res = await permissionService.getMyPermissions();
-      return res.data;
+      const data = res.data;
+      if (data) {
+        sessionStorage.setItem(STORAGE_KEY_PERMISSIONS, JSON.stringify(data));
+      }
+      return data;
+    },
+    placeholderData: () => {
+      try {
+        const stored = sessionStorage.getItem(STORAGE_KEY_PERMISSIONS);
+        return stored ? JSON.parse(stored) : undefined;
+      } catch {
+        return undefined;
+      }
     },
     select: (data) => data ? {
       ...data,

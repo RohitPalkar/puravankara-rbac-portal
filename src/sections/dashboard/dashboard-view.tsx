@@ -7,6 +7,7 @@ import { useQuery } from '@tanstack/react-query';
 import Box from '@mui/material/Box';
 import Grid from '@mui/material/Grid';
 import Stack from '@mui/material/Stack';
+import Paper from '@mui/material/Paper';
 import MenuItem from '@mui/material/MenuItem';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
@@ -31,11 +32,11 @@ import type { WidgetContext, WidgetSection } from './widget-engine';
 
 function SectionHeader({ icon, label }: { icon: string; label: string }) {
   return (
-    <Stack direction="row" alignItems="center" spacing={1.5} sx={{ mb: 2, mt: 0.5 }}>
-      <Box sx={{ width: 28, height: 28, borderRadius: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', bgcolor: 'grey.100' }}>
-        <Iconify icon={icon} width={15} sx={{ color: 'text.secondary' }} />
+    <Stack direction="row" alignItems="center" spacing={1.5} sx={{ mb: 2.5, mt: 1 }}>
+      <Box sx={{ width: 30, height: 30, borderRadius: 1.5, display: 'flex', alignItems: 'center', justifyContent: 'center', bgcolor: 'primary.lighter' }}>
+        <Iconify icon={icon} width={16} sx={{ color: 'primary.main' }} />
       </Box>
-      <Typography variant="caption" sx={{ fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1, color: 'text.secondary' }}>
+      <Typography variant="subtitle2" sx={{ fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.8, color: 'text.primary' }}>
         {label}
       </Typography>
       <Box sx={{ flex: 1, height: 1, bgcolor: 'divider' }} />
@@ -120,28 +121,12 @@ export default function DashboardView() {
     'activities', 'system-status', 'security', 'health', 'quick-actions',
   ];
 
+  const nonGridSections: WidgetSection[] = ['welcome', 'quick-actions', 'system-status'];
+
   return (
     <>
       <Helmet><title>Dashboard - {CONFIG.appName}</title></Helmet>
-      <PageContainer>
-        <Box sx={{ mb: 3 }}>
-          {grouped.welcome?.[0] && <RenderWidget widget={grouped.welcome[0]} ctx={widgetCtx} />}
-        </Box>
-
-        <Box sx={{ mb: 3, display: 'flex', justifyContent: 'flex-end' }}>
-          <TextField
-            select
-            label="Zone"
-            value={selectedZoneId}
-            onChange={(e) => setSelectedZoneId(Number(e.target.value) || '')}
-            sx={{ minWidth: 200 }}
-            size="small"
-          >
-            <MenuItem value="">All Zones</MenuItem>
-            {renderDropdownItems(activeZones, (z) => <MenuItem key={z.id} value={z.id}>{z.name}</MenuItem>)}
-          </TextField>
-        </Box>
-
+      <PageContainer maxWidth="xl">
         {sectionOrder.map((section) => {
           const widgets = grouped[section];
           if (!widgets?.length) return null;
@@ -149,8 +134,74 @@ export default function DashboardView() {
           const label = SECTION_LABELS[section];
           const icon = SECTION_ICONS[section];
 
-          const isGrid = ['kpi', 'analytics', 'zone', 'operations', 'activities'].includes(section);
-          const isMultiColumn = ['security', 'health'].includes(section);
+          if (section === 'welcome') {
+            return (
+              <Box key={section} sx={{ mb: 3 }}>
+                {widgets.map((w) => (
+                  <RenderWidget key={w.id} widget={w} ctx={widgetCtx} />
+                ))}
+              </Box>
+            );
+          }
+
+          if (section === 'kpi') {
+            return (
+              <Box key={section} sx={{ mb: 3 }}>
+                <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 2.5, mt: 1 }}>
+                  <Stack direction="row" alignItems="center" spacing={1.5}>
+                    <Box sx={{ width: 30, height: 30, borderRadius: 1.5, display: 'flex', alignItems: 'center', justifyContent: 'center', bgcolor: 'primary.lighter' }}>
+                      <Iconify icon={icon} width={16} sx={{ color: 'primary.main' }} />
+                    </Box>
+                    <Typography variant="subtitle2" sx={{ fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.8, color: 'text.primary' }}>
+                      {label}
+                    </Typography>
+                  </Stack>
+                  <TextField
+                    select
+                    label="Zone"
+                    value={selectedZoneId}
+                    onChange={(e) => setSelectedZoneId(Number(e.target.value) || '')}
+                    sx={{ minWidth: 180 }}
+                    size="small"
+                  >
+                    <MenuItem value="">All Zones</MenuItem>
+                    {renderDropdownItems(activeZones, (z) => <MenuItem key={z.id} value={z.id}>{z.name}</MenuItem>)}
+                  </TextField>
+                </Stack>
+                <Paper variant="outlined" sx={{ borderRadius: 2, p: 2.5, bgcolor: 'background.default' }}>
+                  {widgets.map((w) => (
+                    <RenderWidget key={w.id} widget={w} ctx={widgetCtx} />
+                  ))}
+                </Paper>
+              </Box>
+            );
+          }
+
+          if (section === 'analytics') {
+            return (
+              <Box key={section} sx={{ mb: 3 }}>
+                <SectionHeader icon={icon} label={label} />
+                <Paper variant="outlined" sx={{ borderRadius: 2, p: 2, bgcolor: 'background.default' }}>
+                  {widgets.map((w) => (
+                    <RenderWidget key={w.id} widget={w} ctx={widgetCtx} />
+                  ))}
+                </Paper>
+              </Box>
+            );
+          }
+
+          if (section === 'zone' || section === 'operations') {
+            return (
+              <Box key={section} sx={{ mb: 3 }}>
+                <SectionHeader icon={icon} label={label} />
+                <Paper variant="outlined" sx={{ borderRadius: 2, p: 2, bgcolor: 'background.default' }}>
+                  {widgets.map((w) => (
+                    <RenderWidget key={w.id} widget={w} ctx={widgetCtx} />
+                  ))}
+                </Paper>
+              </Box>
+            );
+          }
 
           if (section === 'activities') {
             return (
@@ -167,14 +218,16 @@ export default function DashboardView() {
             );
           }
 
-          if (isGrid) {
+          if (section === 'security' || section === 'health') {
             return (
               <Box key={section} sx={{ mb: 3 }}>
-                {label && <SectionHeader icon={icon} label={label} />}
+                <SectionHeader icon={icon} label={label} />
                 <Grid container spacing={2}>
                   {widgets.map((w) => (
-                    <Grid item key={w.id} xs={12}>
-                      <RenderWidget widget={w} ctx={widgetCtx} />
+                    <Grid item key={w.id} xs={12} md={6}>
+                      <Paper variant="outlined" sx={{ borderRadius: 2, height: 1, bgcolor: 'background.default' }}>
+                        <RenderWidget widget={w} ctx={widgetCtx} />
+                      </Paper>
                     </Grid>
                   ))}
                 </Grid>
@@ -182,17 +235,15 @@ export default function DashboardView() {
             );
           }
 
-          if (isMultiColumn) {
+          if (section === 'system-status') {
             return (
               <Box key={section} sx={{ mb: 3 }}>
                 <SectionHeader icon={icon} label={label} />
-                <Grid container spacing={2}>
+                <Paper variant="outlined" sx={{ borderRadius: 2, p: 2, bgcolor: 'background.default' }}>
                   {widgets.map((w) => (
-                    <Grid item key={w.id} xs={w.gridWidth?.xs ?? 12} md={w.gridWidth?.md ?? 6}>
-                      <RenderWidget widget={w} ctx={widgetCtx} />
-                    </Grid>
+                    <RenderWidget key={w.id} widget={w} ctx={widgetCtx} />
                   ))}
-                </Grid>
+                </Paper>
               </Box>
             );
           }
