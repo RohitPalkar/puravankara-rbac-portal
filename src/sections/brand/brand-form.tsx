@@ -2,12 +2,12 @@ import 'react-quill/dist/quill.snow.css';
 
 import type { CreateBrandRequest, UpdateBrandRequest } from 'src/services/types/brand';
 
+import dayjs from 'dayjs';
 import ReactQuill from 'react-quill';
 import { Helmet } from 'react-helmet-async';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useRef, useMemo, useState, useEffect, useCallback } from 'react';
 
-import dayjs from 'dayjs';
 import Box from '@mui/material/Box';
 import Card from '@mui/material/Card';
 import Stack from '@mui/material/Stack';

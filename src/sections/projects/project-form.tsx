@@ -2,13 +2,13 @@ import 'react-quill/dist/quill.snow.css';
 
 import type { CreateProjectRequest, UpdateProjectRequest, IncentiveRuleRequest, PaymentGatewayRequest } from 'src/services/types/project';
 
+import dayjs from 'dayjs';
 import ReactQuill from 'react-quill';
 import { Helmet } from 'react-helmet-async';
 import { useQuery } from '@tanstack/react-query';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useRef, useMemo, useState, useEffect, useCallback } from 'react';
 
-import dayjs from 'dayjs';
 import Box from '@mui/material/Box';
 import Card from '@mui/material/Card';
 import Stack from '@mui/material/Stack';
@@ -23,8 +23,8 @@ import Skeleton from '@mui/material/Skeleton';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 import LinearProgress from '@mui/material/LinearProgress';
-import FormControlLabel from '@mui/material/FormControlLabel';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import FormControlLabel from '@mui/material/FormControlLabel';
 
 import { paths } from 'src/routes/paths';
 
