@@ -748,24 +748,26 @@ export class RoleService extends BaseService<Role> {
       }),
     );
 
-    return roles.map((role) => {
-      const dept = roleDeptMap.get(role.id);
-      const counts = countMap.get(role.id) ?? { modules: 0, permissions: 0 };
-      return {
-        id: role.id,
-        name: role.name,
-        hierarchyLevelRank: role.hierarchyLevelRank,
-        departmentId: dept?.id ?? null,
-        departmentName: dept?.name ?? null,
-        zoneId: dept?.zoneId ?? null,
-        isActive: role.isActive,
-        isSystemRole: role.isSystemRole,
-        moduleCount: counts.modules,
-        permissionCount: counts.permissions,
-        createdAt: role.createdAt,
-        updatedAt: role.updatedAt,
-      };
-    });
+    return roles
+      .map((role) => {
+        const dept = roleDeptMap.get(role.id);
+        const counts = countMap.get(role.id) ?? { modules: 0, permissions: 0 };
+        return {
+          id: role.id,
+          name: role.name,
+          hierarchyLevelRank: role.hierarchyLevelRank,
+          departmentId: dept?.id ?? null,
+          departmentName: dept?.name ?? null,
+          zoneId: dept?.zoneId ?? null,
+          isActive: role.isActive,
+          isSystemRole: role.isSystemRole,
+          moduleCount: counts.modules,
+          permissionCount: counts.permissions,
+          createdAt: role.createdAt,
+          updatedAt: role.updatedAt,
+        };
+      })
+      .filter((r) => r.permissionCount > 0);
   }
 
   async findAll(
