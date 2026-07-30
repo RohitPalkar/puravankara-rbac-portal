@@ -3,7 +3,6 @@ import type { AppBase } from './common';
 export interface Brand extends AppBase {
   brandName: string;
   salaryMultiplier: number;
-  cityId?: number;
   razorpayMerchantId?: string;
   razorpaySecretKey?: string;
   easebuzzBookingSalt?: string;
@@ -35,7 +34,6 @@ export interface Brand extends AppBase {
 export interface CreateBrandRequest {
   brandName: string;
   salaryMultiplier: number;
-  cityId?: number;
   razorpayMerchantId?: string;
   razorpaySecretKey?: string;
   easebuzzBookingSalt?: string;
