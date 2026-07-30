@@ -1,5 +1,6 @@
-import { Entity, Column } from 'typeorm';
+import { Entity, Column, ManyToOne, JoinColumn } from 'typeorm';
 import { AppBaseEntity } from '../../../common/entities/app-base.entity';
+import { ChannelPartnerType } from '../../channel-partner-types/entities/channel-partner-type.entity';
 
 @Entity('channel_partners')
 export class ChannelPartner extends AppBaseEntity {
@@ -11,6 +12,10 @@ export class ChannelPartner extends AppBaseEntity {
 
   @Column({ name: 'cp_type_id', nullable: false })
   cpTypeId: number;
+
+  @ManyToOne(() => ChannelPartnerType)
+  @JoinColumn({ name: 'cp_type_id' })
+  cpType: ChannelPartnerType;
 
   @Column({ name: 'start_date', type: 'date', nullable: false })
   startDate: string;

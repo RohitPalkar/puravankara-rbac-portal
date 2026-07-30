@@ -88,6 +88,9 @@ export class ChannelPartnerResponseDto {
   @ApiProperty()
   cpTypeId: number;
 
+  @ApiPropertyOptional()
+  cpTypeName?: string;
+
   @ApiProperty()
   startDate: string;
 
