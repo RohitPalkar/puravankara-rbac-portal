@@ -25,7 +25,7 @@ export const Logo = forwardRef<HTMLDivElement, LogoProps>(
       <Box
         component="img"
         alt="Puravankara"
-        src={`${CONFIG.assetsDir}/logo/logo-single.svg`}
+        src={`${CONFIG.assetsDir}/logo/logo-single.png`}
         sx={{ width: 1, height: 1, objectFit: 'contain' }}
       />
     );
@@ -34,7 +34,7 @@ export const Logo = forwardRef<HTMLDivElement, LogoProps>(
       <Box
         component="img"
         alt="Puravankara"
-        src={`${CONFIG.assetsDir}/logo/logo-full.svg`}
+        src={`${CONFIG.assetsDir}/logo/logo-full.png`}
         sx={{ width: 1, height: 1, objectFit: 'contain' }}
       />
     );
