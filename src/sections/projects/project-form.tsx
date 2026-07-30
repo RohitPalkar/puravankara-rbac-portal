@@ -6,7 +6,7 @@ import ReactQuill from 'react-quill';
 import { Helmet } from 'react-helmet-async';
 import { useQuery } from '@tanstack/react-query';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useRef, useState, useEffect, useCallback } from 'react';
+import { useRef, useMemo, useState, useEffect, useCallback } from 'react';
 
 import Box from '@mui/material/Box';
 import Card from '@mui/material/Card';
@@ -123,9 +123,7 @@ export default function ProjectFormPage() {
     return allPhases.find((p: any) => p.id === phaseId) ?? null;
   }, [phaseId, allPhases]);
 
-  const derivedBrandName = useMemo(() => {
-    return selectedPhase?.brandName ?? '';
-  }, [selectedPhase]);
+  const derivedBrandName = useMemo(() => selectedPhase?.brandName ?? '', [selectedPhase]);
 
   // Populate form on edit
   useEffect(() => {
