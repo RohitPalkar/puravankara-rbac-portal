@@ -24,6 +24,7 @@ import { useZoneList } from 'src/services/hooks/use-geography';
 import { userService } from 'src/services/services/user.service';
 import { useModuleTree } from 'src/services/hooks/use-product-catalog';
 import { projectService } from 'src/services/services/project.service';
+import { useRolePermissionsTree } from 'src/services/hooks/use-permissions';
 import { departmentService } from 'src/services/services/organization.service';
 import { useRoleList, useDepartmentRoleList } from 'src/services/hooks/use-organization';
 
@@ -187,6 +188,31 @@ export default forwardRef<ProjectMappingStepHandle, Props>(({ initialData }: Pro
     () => projects.filter((p: any) => projectIdsByZone.has(p.id)),
     [projects, projectIdsByZone],
   );
+
+  // Fetch role permissions tree for the selected role to filter modules
+  const { data: rolePermissionsTree, isLoading: permsLoading } = useRolePermissionsTree(
+    primaryRoleId ?? undefined,
+    zoneId ?? undefined,
+    departmentId ?? undefined,
+  );
+
+  const filteredModules = useMemo(() => {
+    if (!primaryRoleId || !rolePermissionsTree?.modules?.length) return [];
+    const allowedIds = new Set<number>();
+    rolePermissionsTree.modules.forEach((mod: any) => {
+      mod.subModules?.forEach((sm: any) => {
+        if (sm.totalCount === 0 || sm.selectedCount > 0) {
+          allowedIds.add(sm.id);
+        }
+      });
+    });
+    return activeModules
+      .map((mod) => ({
+        ...mod,
+        subModules: mod.subModules.filter((sm) => allowedIds.has(sm.id)),
+      }))
+      .filter((mod) => mod.subModules.length > 0);
+  }, [primaryRoleId, rolePermissionsTree, activeModules]);
 
   const { data: buddyResults } = useQuery({
     queryKey: ['buddy-user-search', buddySearch],
@@ -462,13 +488,28 @@ export default forwardRef<ProjectMappingStepHandle, Props>(({ initialData }: Pro
       </Box>
 
       <Box sx={{ display: safeTabIndex === 0 ? 'block' : 'none' }}>
-        {activeModules.length > 0 && (
+        {!primaryRoleId ? (
+          <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center', py: 8 }}>
+            Select a Role first to configure permissions.
+          </Typography>
+        ) : permsLoading ? (
+          <Stack alignItems="center" sx={{ py: 8 }}>
+            <CircularProgress size={24} />
+            <Typography variant="body2" color="text.secondary" sx={{ mt: 1.5 }}>
+              Loading permissions for the selected role...
+            </Typography>
+          </Stack>
+        ) : filteredModules.length > 0 ? (
           <PermissionProfile
-            modules={activeModules}
+            modules={filteredModules}
             allProjects={zoneFilteredProjects}
             initialData={primaryPermissions}
             onChange={handlePrimaryPermissionsChange}
           />
+        ) : (
+          <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center', py: 8 }}>
+            No permission-configurable modules found for the selected role.
+          </Typography>
         )}
       </Box>
 
