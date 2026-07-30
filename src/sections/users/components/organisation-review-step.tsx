@@ -35,6 +35,8 @@ interface UserSearchResult {
   id?: string;
 }
 
+const SUPER_ADMIN_USER: UserSearchResult = { empId: 'ADMIN001', name: 'Super Admin', email: 'admin@puravankara.com' };
+
 export interface OrganisationReviewStepHandle {
   getData: () => OrganisationData;
   validate: () => boolean;
@@ -74,8 +76,23 @@ export default forwardRef<OrganisationReviewStepHandle, Props>(
       return potentialManagers.filter((u: any) => (u.name?.toLowerCase().includes(lower) || u.empId?.toLowerCase().includes(lower)));
     }, [potentialManagers, teamLeadSearch]);
 
-    const allUserList = useMemo(() => (potentialManagers as UserSearchResult[]) ?? [], [potentialManagers]);
-    const searchUsers = useMemo(() => userSearchResults ?? [], [userSearchResults]);
+    const allUserList = useMemo(() => {
+      const list = (potentialManagers as UserSearchResult[]) ?? [];
+      const exists = list.some((u) => u.empId === 'ADMIN001');
+      return exists ? list : [SUPER_ADMIN_USER, ...list];
+    }, [potentialManagers]);
+
+    const searchUsers = useMemo(() => {
+      const list = userSearchResults ?? [];
+      if (list.some((u) => u.empId === 'ADMIN001')) return list;
+      if (!reportingManagerSearch || reportingManagerSearch.length < 2) return [SUPER_ADMIN_USER, ...list];
+      const lower = reportingManagerSearch.toLowerCase();
+      if (SUPER_ADMIN_USER.name.toLowerCase().includes(lower) || SUPER_ADMIN_USER.empId.toLowerCase().includes(lower)) {
+        return [SUPER_ADMIN_USER, ...list];
+      }
+      return list;
+    }, [userSearchResults, reportingManagerSearch]);
+
     const searchTeamLeads = useMemo(() => teamLeadResults ?? [], [teamLeadResults]);
     const groups = useMemo(() => userGroups ?? [], [userGroups]);
 
