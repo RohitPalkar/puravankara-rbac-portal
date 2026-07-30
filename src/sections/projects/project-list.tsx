@@ -31,7 +31,7 @@ const groupMap: Record<string, string> = {
   rtmQualificationPercentage: 'RTM',
 };
 
-const groupDividerFields = ['phaseName', 'reraQualificationPercentage', 'rtmQualificationPercentage'];
+const groupDividerFields = ['reraQualificationPercentage', 'rtmQualificationPercentage'];
 
 function renderBrandHeader(params: GridColumnHeaderParams) {
   const group = groupMap[params.field];
@@ -125,7 +125,6 @@ export default function ProjectListPage() {
   const columns: GridColDef[] = [
     { field: 'name', headerName: 'Project Name', flex: 4, minWidth: 220, renderHeader: renderBrandHeader },
     { field: 'cityName', headerName: 'City', flex: 2, minWidth: 130, renderHeader: renderBrandHeader },
-    { field: 'phaseName', headerName: 'Phase', flex: 2, minWidth: 130, renderHeader: renderBrandHeader },
     { field: 'brandName', headerName: 'Brand', flex: 2, minWidth: 130, renderHeader: renderBrandHeader },
     {
       field: 'reraRegularizationPercentage',
