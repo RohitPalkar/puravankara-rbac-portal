@@ -40,40 +40,13 @@ export function useNavData() {
     && (authUser as any).roles.includes('SUPER_ADMIN');
 
   return useMemo(() => {
-    const allowedModuleIds = new Set<number>();
-    const allowedSubModuleIds = new Set<number>();
-
-    if (myPermissions?.projects) {
-      myPermissions.projects.forEach((project) => {
-        project.modules.forEach((mod) => {
-          const hasAnyAction = mod.subModules.some((sm) =>
-            sm.actions.some((a) => a.allowed),
-          );
-          if (hasAnyAction) {
-            allowedModuleIds.add(mod.id);
-          }
-          mod.subModules.forEach((sm) => {
-            if (sm.actions.some((a) => a.allowed)) {
-              allowedSubModuleIds.add(sm.id);
-            }
-          });
-        });
-      });
-    }
-
-    const permissionsReady = !!myPermissions;
-
-    const dynamicItems = !permissionsReady ? [] : (moduleTree ?? [])
-      .filter((mod) => allowedModuleIds.has(mod.id))
-      .map((mod) => {
+    if (isSuperAdmin) {
+      const allModules = (moduleTree ?? []).map((mod) => {
         const moduleSlug = slugify(mod.code ?? mod.name);
-        const subItems = mod.subModules
-          .filter((sm) => allowedSubModuleIds.has(sm.id))
-          .map((sm) => ({
-            title: sm.name,
-            path: paths.dashboard.modules.dashboard(moduleSlug),
-          }));
-
+        const subItems = mod.subModules.map((sm) => ({
+          title: sm.name,
+          path: paths.dashboard.modules.dashboard(moduleSlug),
+        }));
         return {
           title: mod.name,
           path: paths.dashboard.modules.dashboard(moduleSlug),
@@ -82,13 +55,14 @@ export function useNavData() {
         };
       });
 
-    const systemSections: {
-      subheader: string;
-      items: { title: string; path: string; icon: React.ReactNode }[];
-    }[] = [];
-
-    if (isSuperAdmin) {
-      systemSections.push(
+      return [
+        {
+          subheader: 'Dashboard',
+          items: [{ title: 'Dashboard', path: paths.dashboard.root, icon: ICONS.dashboard }],
+        },
+        ...(allModules.length > 0
+          ? [{ subheader: 'Business Modules', items: allModules }]
+          : []),
         {
           subheader: 'Masters',
           items: [
@@ -114,20 +88,57 @@ export function useNavData() {
             { title: 'Settings', path: paths.dashboard.settings, icon: ICONS.settings },
           ],
         },
-      );
+      ];
     }
+
+    const allowedModuleIds = new Set<number>();
+    const allowedSubModuleIds = new Set<number>();
+
+    if (myPermissions?.projects) {
+      myPermissions.projects.forEach((project) => {
+        project.modules.forEach((mod) => {
+          const hasAnyAction = mod.subModules.some((sm) =>
+            sm.actions.some((a) => a.allowed),
+          );
+          if (hasAnyAction) {
+            allowedModuleIds.add(mod.id);
+          }
+          mod.subModules.forEach((sm) => {
+            if (sm.actions.some((a) => a.allowed)) {
+              allowedSubModuleIds.add(sm.id);
+            }
+          });
+        });
+      });
+    }
+
+    const dynamicItems = !myPermissions ? [] : (moduleTree ?? [])
+      .filter((mod) => allowedModuleIds.has(mod.id))
+      .map((mod) => {
+        const moduleSlug = slugify(mod.code ?? mod.name);
+        const subItems = mod.subModules
+          .filter((sm) => allowedSubModuleIds.has(sm.id))
+          .map((sm) => ({
+            title: sm.name,
+            path: paths.dashboard.modules.dashboard(moduleSlug),
+          }));
+
+        return {
+          title: mod.name,
+          path: paths.dashboard.modules.dashboard(moduleSlug),
+          icon: ICONS.module,
+          ...(subItems.length > 0 && { children: subItems }),
+        };
+      });
 
     return [
       {
         subheader: 'Dashboard',
-        items: [
-          { title: 'Dashboard', path: paths.dashboard.root, icon: ICONS.dashboard },
-        ],
+        items: [{ title: 'Dashboard', path: paths.dashboard.root, icon: ICONS.dashboard }],
       },
       ...(dynamicItems.length > 0
         ? [{ subheader: 'Business Modules', items: dynamicItems }]
         : []),
-      ...systemSections,
     ];
   }, [moduleTree, myPermissions, isSuperAdmin]);
 }
