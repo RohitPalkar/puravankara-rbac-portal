@@ -22,8 +22,6 @@ import InputAdornment from '@mui/material/InputAdornment';
 import LinearProgress from '@mui/material/LinearProgress';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import FormControlLabel from '@mui/material/FormControlLabel';
-import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
-import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 
 import { paths } from 'src/routes/paths';
 
@@ -347,22 +345,18 @@ export default function ZoneFormPage() {
               InputProps={{ endAdornment: <InputAdornment position="end">x</InputAdornment> }}
               fullWidth
             />
-            <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="en">
-              <DatePicker
-                label="Start Date"
-                value={startDate}
-                onChange={(newValue) => setStartDate(newValue)}
-                slotProps={{ textField: { fullWidth: true, required: true } }}
-              />
-            </LocalizationProvider>
-            <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="en">
-              <DatePicker
-                label="End Date"
-                value={endDate}
-                onChange={(newValue) => setEndDate(newValue)}
-                slotProps={{ textField: { fullWidth: true } }}
-              />
-            </LocalizationProvider>
+            <DatePicker
+              label="Start Date"
+              value={startDate}
+              onChange={(newValue) => setStartDate(newValue)}
+              slotProps={{ textField: { fullWidth: true, required: true } }}
+            />
+            <DatePicker
+              label="End Date"
+              value={endDate}
+              onChange={(newValue) => setEndDate(newValue)}
+              slotProps={{ textField: { fullWidth: true } }}
+            />
             {isEdit && (
               <TextField
                 select

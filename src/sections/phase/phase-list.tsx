@@ -12,12 +12,12 @@ import Stack from '@mui/material/Stack';
 import Radio from '@mui/material/Radio';
 import Button from '@mui/material/Button';
 import Dialog from '@mui/material/Dialog';
-import TextField from '@mui/material/TextField';
 import RadioGroup from '@mui/material/RadioGroup';
 import DialogTitle from '@mui/material/DialogTitle';
 import DialogContent from '@mui/material/DialogContent';
 import DialogActions from '@mui/material/DialogActions';
 import FormControlLabel from '@mui/material/FormControlLabel';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 
 import { paths } from 'src/routes/paths';
 
@@ -45,8 +45,8 @@ export default function PhaseListPage() {
 
   const [launchPhase, setLaunchPhase] = useState<Phase | null>(null);
   const [launchMode, setLaunchMode] = useState<LaunchDialogMode>('edit');
-  const [launchStartDate, setLaunchStartDate] = useState('');
-  const [launchEndDate, setLaunchEndDate] = useState('');
+  const [launchStartDate, setLaunchStartDate] = useState<dayjs.Dayjs | null>(null);
+  const [launchEndDate, setLaunchEndDate] = useState<dayjs.Dayjs | null>(null);
 
   const { mutateAsync: deletePhase, isPending: isDeleting } = useDeletePhase();
   const { mutateAsync: updateLaunch, isPending: isLaunching } = useUpdateLaunch();
@@ -64,15 +64,15 @@ export default function PhaseListPage() {
   const handleOpenLaunch = useCallback((phase: Phase) => {
     setLaunchPhase(phase);
     setLaunchMode(phase.launchEnabled ? 'edit' : 'edit');
-    setLaunchStartDate(phase.launchStartDate ?? '');
-    setLaunchEndDate(phase.launchEndDate ?? '');
+    setLaunchStartDate(phase.launchStartDate ? dayjs(phase.launchStartDate) : null);
+    setLaunchEndDate(phase.launchEndDate ? dayjs(phase.launchEndDate) : null);
   }, []);
 
   const handleCloseLaunch = useCallback(() => {
     setLaunchPhase(null);
     setLaunchMode('edit');
-    setLaunchStartDate('');
-    setLaunchEndDate('');
+    setLaunchStartDate(null);
+    setLaunchEndDate(null);
   }, []);
 
   const handleApplyLaunch = useCallback(async () => {
@@ -82,8 +82,8 @@ export default function PhaseListPage() {
         id: launchPhase.id,
         data: {
           launchEnabled: launchMode === 'edit',
-          launchStartDate: launchMode === 'edit' ? launchStartDate || undefined : undefined,
-          launchEndDate: launchMode === 'edit' ? launchEndDate || undefined : undefined,
+          launchStartDate: launchMode === 'edit' && launchStartDate ? launchStartDate.format('YYYY-MM-DD') : undefined,
+          launchEndDate: launchMode === 'edit' && launchEndDate ? launchEndDate.format('YYYY-MM-DD') : undefined,
         },
       });
       handleCloseLaunch();
@@ -216,21 +216,17 @@ export default function PhaseListPage() {
               <FormControlLabel value="edit" control={<Radio />} label="Edit Launch Period" />
               {launchMode === 'edit' && (
                 <Stack spacing={2.5} sx={{ ml: 3.5, mt: 1.5 }}>
-                  <TextField
+                  <DatePicker
                     label="Launch Start Date"
-                    type="date"
                     value={launchStartDate}
-                    onChange={(e) => setLaunchStartDate(e.target.value)}
-                    InputLabelProps={{ shrink: true }}
-                    fullWidth
+                    onChange={(newValue) => setLaunchStartDate(newValue)}
+                    slotProps={{ textField: { fullWidth: true } }}
                   />
-                  <TextField
+                  <DatePicker
                     label="Launch End Date"
-                    type="date"
                     value={launchEndDate}
-                    onChange={(e) => setLaunchEndDate(e.target.value)}
-                    InputLabelProps={{ shrink: true }}
-                    fullWidth
+                    onChange={(newValue) => setLaunchEndDate(newValue)}
+                    slotProps={{ textField: { fullWidth: true } }}
                   />
                 </Stack>
               )}

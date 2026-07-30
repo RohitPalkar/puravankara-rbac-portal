@@ -16,6 +16,7 @@ import Snackbar from '@mui/material/Snackbar';
 import Skeleton from '@mui/material/Skeleton';
 import TextField from '@mui/material/TextField';
 import LinearProgress from '@mui/material/LinearProgress';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 
 import { paths } from 'src/routes/paths';
 
@@ -43,7 +44,7 @@ export default function PhaseFormPage() {
   const [phaseName, setPhaseName] = useState('');
   const [sfdcPhaseName, setSfdcPhaseName] = useState('');
   const [sfdcBlockName, setSfdcBlockName] = useState('');
-  const [possessionDate, setPossessionDate] = useState('');
+  const [possessionDate, setPossessionDate] = useState<dayjs.Dayjs | null>(null);
   const [agreementExecutionPercentage, setAgreementExecutionPercentage] = useState<number>(0);
   const [bookingGatewayId, setBookingGatewayId] = useState('');
   const [milestoneGatewayId, setMilestoneGatewayId] = useState('');
@@ -77,7 +78,7 @@ export default function PhaseFormPage() {
       setPhaseName(phaseData.phaseName);
       setSfdcPhaseName(phaseData.sfdcPhaseName);
       setSfdcBlockName(phaseData.sfdcBlockName ?? '');
-      setPossessionDate(phaseData.possessionDate ? dayjs(phaseData.possessionDate).format('YYYY-MM-DD') : '');
+      setPossessionDate(phaseData.possessionDate ? dayjs(phaseData.possessionDate) : null);
       setAgreementExecutionPercentage(phaseData.agreementExecutionPercentage ?? 0);
       setBookingGatewayId(phaseData.bookingGatewayId?.toString() ?? '');
       setMilestoneGatewayId(phaseData.milestoneGatewayId?.toString() ?? '');
@@ -104,7 +105,7 @@ export default function PhaseFormPage() {
     phaseName: phaseName.trim(),
     sfdcPhaseName: sfdcPhaseName.trim(),
     sfdcBlockName: sfdcBlockName.trim() || undefined,
-    possessionDate,
+    possessionDate: possessionDate ? possessionDate.format('YYYY-MM-DD') : '',
     agreementExecutionPercentage: agreementExecutionPercentage || undefined,
     bookingGatewayId: bookingGatewayId ? Number(bookingGatewayId) : undefined,
     milestoneGatewayId: milestoneGatewayId ? Number(milestoneGatewayId) : undefined,
@@ -216,16 +217,18 @@ export default function PhaseFormPage() {
               onChange={(e) => setSfdcBlockName(e.target.value)}
               fullWidth
             />
-            <TextField
+            <DatePicker
               label="Possession Date"
-              type="date"
               value={possessionDate}
-              onChange={(e) => { setPossessionDate(e.target.value); setPossessionDateError(''); }}
-              error={!!possessionDateError}
-              helperText={possessionDateError}
-              InputLabelProps={{ shrink: true }}
-              required
-              fullWidth
+              onChange={(newValue) => { setPossessionDate(newValue); setPossessionDateError(''); }}
+              slotProps={{
+                textField: {
+                  fullWidth: true,
+                  required: true,
+                  error: !!possessionDateError,
+                  helperText: possessionDateError,
+                },
+              }}
             />
             <TextField
               label="Agreement Execution at X% AV"

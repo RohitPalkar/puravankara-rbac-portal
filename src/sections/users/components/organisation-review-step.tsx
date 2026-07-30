@@ -1,5 +1,6 @@
 import type { UserGroup } from 'src/services/types/user-group';
 
+import dayjs from 'dayjs';
 import { useMemo, useState, useEffect, forwardRef, useCallback, useImperativeHandle } from 'react';
 
 import Box from '@mui/material/Box';
@@ -11,6 +12,7 @@ import InputLabel from '@mui/material/InputLabel';
 import Typography from '@mui/material/Typography';
 import FormControl from '@mui/material/FormControl';
 import Autocomplete from '@mui/material/Autocomplete';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 
 import { useReportingManagers } from 'src/services/hooks/use-users';
 import { useUserGroupList } from 'src/services/hooks/use-user-groups';
@@ -43,14 +45,6 @@ interface Props {
   departmentId?: number | null;
 }
 
-function todayString(): string {
-  const d = new Date();
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
-  return `${y}-${m}-${day}`;
-}
-
 export default forwardRef<OrganisationReviewStepHandle, Props>(
   ({ zoneId, departmentId }: Props, ref) => {
     const { data: userGroups } = useUserGroupList();
@@ -61,8 +55,8 @@ export default forwardRef<OrganisationReviewStepHandle, Props>(
     const [teamLeadId, setTeamLeadId] = useState('');
     const [teamLeadSearch, setTeamLeadSearch] = useState('');
     const [userGroupId, setUserGroupId] = useState<number | ''>('');
-    const [effectiveFrom, setEffectiveFrom] = useState(todayString());
-    const [effectiveTill, setEffectiveTill] = useState('');
+    const [effectiveFrom, setEffectiveFrom] = useState<dayjs.Dayjs | null>(dayjs());
+    const [effectiveTill, setEffectiveTill] = useState<dayjs.Dayjs | null>(null);
     const [errors, setErrors] = useState<string[]>([]);
 
     const { data: potentialManagers } = useReportingManagers(
@@ -93,7 +87,7 @@ export default forwardRef<OrganisationReviewStepHandle, Props>(
       const errs: string[] = [];
       if (!reportingManagerId) errs.push('Reporting Manager is required.');
       if (!effectiveFrom) errs.push('Effective From is required.');
-      if (effectiveTill && effectiveTill <= effectiveFrom) {
+      if (effectiveTill && effectiveFrom && effectiveTill.isBefore(effectiveFrom)) {
         errs.push('Effective Till must be after Effective From.');
       }
       setErrors(errs);
@@ -105,8 +99,8 @@ export default forwardRef<OrganisationReviewStepHandle, Props>(
       reportingManagerId,
       teamLeadId: teamLeadId || undefined,
       userGroupId: userGroupId || undefined,
-      effectiveFrom,
-      effectiveTill: effectiveTill || undefined,
+      effectiveFrom: effectiveFrom ? effectiveFrom.format('YYYY-MM-DD') : '',
+      effectiveTill: effectiveTill ? effectiveTill.format('YYYY-MM-DD') : undefined,
     }), [employmentStatus, reportingManagerId, teamLeadId, userGroupId, effectiveFrom, effectiveTill]);
 
     useImperativeHandle(ref, () => ({ getData, validate }), [getData, validate]);
@@ -195,22 +189,18 @@ export default forwardRef<OrganisationReviewStepHandle, Props>(
             noOptionsText="Start typing to search users"
           />
 
-          <TextField
+          <DatePicker
             label="Effective From *"
-            type="date"
             value={effectiveFrom}
-            onChange={(e) => { setEffectiveFrom(e.target.value); setErrors([]); }}
-            InputLabelProps={{ shrink: true }}
-            fullWidth
+            onChange={(newValue) => { setEffectiveFrom(newValue); setErrors([]); }}
+            slotProps={{ textField: { fullWidth: true, required: true } }}
           />
 
-          <TextField
+          <DatePicker
             label="Effective Till (Optional)"
-            type="date"
             value={effectiveTill}
-            onChange={(e) => { setEffectiveTill(e.target.value); setErrors([]); }}
-            InputLabelProps={{ shrink: true }}
-            fullWidth
+            onChange={(newValue) => { setEffectiveTill(newValue); setErrors([]); }}
+            slotProps={{ textField: { fullWidth: true } }}
           />
         </Box>
 

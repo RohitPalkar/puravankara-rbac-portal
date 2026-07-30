@@ -8,6 +8,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useRef, useMemo, useState, useEffect, useCallback } from 'react';
 
+import dayjs from 'dayjs';
 import Box from '@mui/material/Box';
 import Card from '@mui/material/Card';
 import Stack from '@mui/material/Stack';
@@ -23,6 +24,7 @@ import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 import LinearProgress from '@mui/material/LinearProgress';
 import FormControlLabel from '@mui/material/FormControlLabel';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 
 import { paths } from 'src/routes/paths';
 
@@ -94,7 +96,7 @@ export default function ProjectFormPage() {
   const [reraMaxDays, setReraMaxDays] = useState<number>(0);
   const [rtmRegularizationPercentage, setRtmRegularizationPercentage] = useState<number>(0);
   const [rtmPayablePercentage, setRtmPayablePercentage] = useState<number>(0);
-  const [rtmStartDate, setRtmStartDate] = useState('');
+  const [rtmStartDate, setRtmStartDate] = useState<dayjs.Dayjs | null>(null);
 
   // Terms
   const [termsHtml, setTermsHtml] = useState('');
@@ -167,7 +169,7 @@ export default function ProjectFormPage() {
     const rtm = projectData.incentiveRules?.find((r) => r.incentiveType === IncentiveType.RTM);
     setRtmRegularizationPercentage(rtm?.regularizationPercentage ?? 0);
     setRtmPayablePercentage(rtm?.payablePercentage ?? 0);
-    setRtmStartDate(rtm?.startDate ?? '');
+    setRtmStartDate(rtm?.startDate ? dayjs(rtm.startDate) : null);
 
     setTermsHtml(projectData.termsHtml ?? '');
   }, [projectData]);
@@ -226,7 +228,7 @@ export default function ProjectFormPage() {
         incentiveType: IncentiveType.RTM,
         regularizationPercentage: rtmRegularizationPercentage || undefined,
         payablePercentage: rtmPayablePercentage || undefined,
-        startDate: rtmStartDate || undefined,
+        startDate: rtmStartDate ? rtmStartDate.format('YYYY-MM-DD') : undefined,
       });
     }
     return rules;
@@ -458,7 +460,7 @@ export default function ProjectFormPage() {
                 <TextField label="Regularization" value={rtmRegularizationPercentage} onChange={(e) => setRtmRegularizationPercentage(Number(e.target.value))} type="number" inputProps={{ min: 0, max: 100 }} placeholder="0.0" />
                 <TextField label="Payable" value={rtmPayablePercentage} onChange={(e) => setRtmPayablePercentage(Number(e.target.value))} type="number" inputProps={{ min: 0, max: 100 }} placeholder="0.0" />
               </Box>
-              <TextField label="Regularization Start Date" value={rtmStartDate} onChange={(e) => setRtmStartDate(e.target.value)} type="date" InputLabelProps={{ shrink: true }} placeholder="Select regularization start date" fullWidth />
+              <DatePicker label="Regularization Start Date" value={rtmStartDate} onChange={(newValue) => setRtmStartDate(newValue)} slotProps={{ textField: { fullWidth: true } }} />
             </Box>
           </Box>
 

@@ -2,6 +2,9 @@ import 'src/global.css';
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+
 import { Router } from 'src/routes/sections';
 
 import { useScrollToTop } from 'src/hooks/use-scroll-to-top';
@@ -28,11 +31,13 @@ export default function App() {
       <AuthProvider>
         <SettingsProvider settings={defaultSettings}>
           <ThemeProvider>
-            <MotionLazy>
-              <ProgressBar />
-              <SettingsDrawer />
-              <Router />
-            </MotionLazy>
+            <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="en">
+              <MotionLazy>
+                <ProgressBar />
+                <SettingsDrawer />
+                <Router />
+              </MotionLazy>
+            </LocalizationProvider>
           </ThemeProvider>
         </SettingsProvider>
       </AuthProvider>

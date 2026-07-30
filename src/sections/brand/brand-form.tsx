@@ -7,6 +7,7 @@ import { Helmet } from 'react-helmet-async';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useRef, useMemo, useState, useEffect, useCallback } from 'react';
 
+import dayjs from 'dayjs';
 import Box from '@mui/material/Box';
 import Card from '@mui/material/Card';
 import Stack from '@mui/material/Stack';
@@ -19,6 +20,7 @@ import Skeleton from '@mui/material/Skeleton';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 import LinearProgress from '@mui/material/LinearProgress';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 
 import { paths } from 'src/routes/paths';
 
@@ -92,7 +94,7 @@ export default function BrandFormPage() {
   const [maximumRegularizationDays, setMaximumRegularizationDays] = useState(30);
   const [rtmRegularizationPercentage, setRtmRegularizationPercentage] = useState(3);
   const [rtmQualificationPercentage, setRtmQualificationPercentage] = useState(90);
-  const [regularizationStartDate, setRegularizationStartDate] = useState('');
+  const [regularizationStartDate, setRegularizationStartDate] = useState<dayjs.Dayjs | null>(null);
   const [termsAndConditions, setTermsAndConditions] = useState('');
   const [showSuccess, setShowSuccess] = useState(false);
   const [brandNameError, setBrandNameError] = useState('');
@@ -123,7 +125,7 @@ export default function BrandFormPage() {
       setMaximumRegularizationDays(brandData.maximumRegularizationDays ?? 30);
       setRtmRegularizationPercentage(brandData.rtmRegularizationPercentage ?? 3);
       setRtmQualificationPercentage(brandData.rtmQualificationPercentage ?? 90);
-      setRegularizationStartDate(brandData.regularizationStartDate ?? '');
+      setRegularizationStartDate(brandData.regularizationStartDate ? dayjs(brandData.regularizationStartDate) : null);
       setTermsAndConditions(brandData.termsAndConditions ?? '');
     }
   }, [brandData]);
@@ -167,7 +169,7 @@ export default function BrandFormPage() {
     maximumRegularizationDays: maximumRegularizationDays || undefined,
     rtmRegularizationPercentage: rtmRegularizationPercentage || undefined,
     rtmQualificationPercentage: rtmQualificationPercentage || undefined,
-    regularizationStartDate: regularizationStartDate || undefined,
+    regularizationStartDate: regularizationStartDate ? regularizationStartDate.format('YYYY-MM-DD') : undefined,
     termsAndConditions: termsAndConditions || undefined,
     isActive: true,
   }), [brandName, salaryMultiplier, razorpayMerchantId, razorpaySecretKey,
@@ -427,14 +429,11 @@ export default function BrandFormPage() {
                   placeholder="0.0"
                 />
               </Box>
-              <TextField
+              <DatePicker
                 label="Regularization Start Date"
                 value={regularizationStartDate}
-                onChange={(e) => setRegularizationStartDate(e.target.value)}
-                type="date"
-                InputLabelProps={{ shrink: true }}
-                placeholder="Select Date"
-                fullWidth
+                onChange={(newValue) => setRegularizationStartDate(newValue)}
+                slotProps={{ textField: { fullWidth: true } }}
               />
             </Box>
           </Box>

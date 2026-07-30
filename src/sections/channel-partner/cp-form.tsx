@@ -1,5 +1,6 @@
 import type { CreateChannelPartnerRequest, UpdateChannelPartnerRequest } from 'src/services/types/channel-partner';
 
+import dayjs from 'dayjs';
 import { Helmet } from 'react-helmet-async';
 import { useQuery } from '@tanstack/react-query';
 import { useState, useEffect, useCallback } from 'react';
@@ -16,6 +17,7 @@ import Skeleton from '@mui/material/Skeleton';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 import LinearProgress from '@mui/material/LinearProgress';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 
 import { paths } from 'src/routes/paths';
 
@@ -45,8 +47,8 @@ export default function ChannelPartnerFormPage() {
   const [cpIdField, setCpIdField] = useState('');
   const [cpName, setCpName] = useState('');
   const [cpTypeId, setCpTypeId] = useState<number | ''>('');
-  const [startDate, setStartDate] = useState('');
-  const [endDate, setEndDate] = useState('');
+  const [startDate, setStartDate] = useState<dayjs.Dayjs | null>(null);
+  const [endDate, setEndDate] = useState<dayjs.Dayjs | null>(null);
 
   const [showSuccess, setShowSuccess] = useState(false);
   const [cpNameError, setCpNameError] = useState('');
@@ -66,8 +68,8 @@ export default function ChannelPartnerFormPage() {
       setCpIdField(cpData.cpId);
       setCpName(cpData.cpName);
       setCpTypeId(cpData.cpTypeId);
-      setStartDate(cpData.startDate ? cpData.startDate.slice(0, 10) : '');
-      setEndDate(cpData.endDate ? cpData.endDate.slice(0, 10) : '');
+      setStartDate(cpData.startDate ? dayjs(cpData.startDate) : null);
+      setEndDate(cpData.endDate ? dayjs(cpData.endDate) : null);
     }
   }, [cpData]);
 
@@ -82,8 +84,8 @@ export default function ChannelPartnerFormPage() {
       cpId: cpIdField.trim(),
       cpName: cpName.trim(),
       cpTypeId: cpTypeId as number,
-      startDate,
-      endDate: endDate || undefined,
+      startDate: startDate ? startDate.format('YYYY-MM-DD') : '',
+      endDate: endDate ? endDate.format('YYYY-MM-DD') : undefined,
       isActive: true,
     };
 
@@ -146,8 +148,8 @@ export default function ChannelPartnerFormPage() {
             <TextField label="CP Type" value={cpTypeId} onChange={(e) => setCpTypeId(Number(e.target.value) || '')} select required fullWidth>
               {cpTypes?.map((t) => <MenuItem key={t.id} value={t.id}>{t.name}</MenuItem>)}
             </TextField>
-            <TextField label="Start Date" value={startDate} onChange={(e) => setStartDate(e.target.value)} type="date" InputLabelProps={{ shrink: true }} required fullWidth />
-            <TextField label="End Date" value={endDate} onChange={(e) => setEndDate(e.target.value)} type="date" InputLabelProps={{ shrink: true }} fullWidth />
+            <DatePicker label="Start Date" value={startDate} onChange={(newValue) => setStartDate(newValue)} slotProps={{ textField: { fullWidth: true, required: true } }} />
+            <DatePicker label="End Date" value={endDate} onChange={(newValue) => setEndDate(newValue)} slotProps={{ textField: { fullWidth: true } }} />
           </FormSection>
         </Card>
 
