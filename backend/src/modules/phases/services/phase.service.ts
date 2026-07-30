@@ -10,7 +10,7 @@ import {
   UpdateLaunchDto,
 } from '../dto/phase.dto';
 
-const PHASE_RELATIONS = ['brand', 'city'] as const;
+const PHASE_RELATIONS = { brand: true, city: true };
 
 function flattenBrandCity(phase: Phase): Phase {
   const p = phase as any;
@@ -61,7 +61,7 @@ export class PhaseService extends BaseService<Phase> {
 
       const [data, total] = await this.repository.findAndCount({
         where: searchConditions,
-        relations: PHASE_RELATIONS as any,
+        relations: PHASE_RELATIONS,
         order: { [sortBy]: sortOrder } as any,
         ...(paginate ? { skip: (page - 1) * limit, take: limit } : {}),
       });
@@ -85,7 +85,7 @@ export class PhaseService extends BaseService<Phase> {
 
     const [data, total] = await this.repository.findAndCount({
       where,
-      relations: PHASE_RELATIONS as any,
+      relations: PHASE_RELATIONS,
       order: { [sortBy]: sortOrder } as any,
       ...(paginate ? { skip: (page - 1) * limit, take: limit } : {}),
     });
@@ -104,7 +104,7 @@ export class PhaseService extends BaseService<Phase> {
   async findById(id: number): Promise<Phase> {
     const entity = await this.repository.findOne({
       where: { id } as any,
-      relations: PHASE_RELATIONS as any,
+      relations: PHASE_RELATIONS,
     });
 
     if (!entity || (entity as any).deletedAt) {
@@ -115,11 +115,13 @@ export class PhaseService extends BaseService<Phase> {
   }
 
   async create(dto: CreatePhaseDto): Promise<Phase> {
-    return super.create(dto);
+    const entity = await super.create(dto);
+    return this.findById(entity.id);
   }
 
   async update(id: number, dto: UpdatePhaseDto): Promise<Phase> {
-    return super.update(id, dto);
+    const entity = await super.update(id, dto);
+    return this.findById(entity.id);
   }
 
   async updateLaunch(id: number, dto: UpdateLaunchDto): Promise<Phase> {
