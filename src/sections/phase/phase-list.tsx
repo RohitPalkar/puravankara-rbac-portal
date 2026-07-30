@@ -134,7 +134,7 @@ export default function PhaseListPage() {
       ),
     },
     {
-      field: 'launchStartDate', headerName: 'Launch Dates', width: 180,
+      field: 'launchStartDate', headerName: 'Launch Date Range', width: 180,
       renderCell: (params) => {
         const start = params.value ? dayjs(params.value).format('DD MMM YYYY') : '';
         const end = params.row.launchEndDate ? dayjs(params.row.launchEndDate).format('DD MMM YYYY') : '';
@@ -143,11 +143,11 @@ export default function PhaseListPage() {
       },
     },
     {
-      field: 'sustenanceDate', headerName: 'Sustenance', width: 120,
+      field: 'sustenanceDate', headerName: 'Sustenance Date', width: 120,
       valueFormatter: (value: string | null) => (value ? dayjs(value).format('DD MMM YYYY') : '—'),
     },
     {
-      field: 'possessionDate', headerName: 'Possession', width: 120,
+      field: 'possessionDate', headerName: 'Possession Date', width: 120,
       valueFormatter: (value: string) => dayjs(value).format('DD MMM YYYY'),
     },
     { field: 'brandName', headerName: 'Brand', width: 110 },
