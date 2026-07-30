@@ -220,7 +220,8 @@ export default function RoleListPage() {
             <EmptyState
               icon="solar:user-id-bold-duotone"
               title="No Roles Created"
-              description="Create your first role to get started"
+              description="Create your first role to assign hierarchy levels and link to departments"
+              action={{ icon: 'solar:add-circle-bold', label: 'Add Role', onClick: handleNew }}
             />
           ) : (
             <DataTable

@@ -264,8 +264,9 @@ export default function UserListPage() {
           error={isError}
           errorMessage={`Failed to load users: ${(error as Error)?.message || 'Unknown error'}`}
           emptyTitle="No Users Created"
-          emptyDescription="Create your first user to get started"
+          emptyDescription="Create your first user to assign roles, departments, and project access"
           emptyIcon="solar:users-group-rounded-bold-duotone"
+          createAction={{ icon: 'solar:add-circle-bold', label: 'Create User', onClick: () => navigate(paths.dashboard.userNew) }}
         />
       </PageContainer>
     </>

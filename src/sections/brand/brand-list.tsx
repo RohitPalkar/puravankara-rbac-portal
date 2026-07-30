@@ -291,8 +291,9 @@ export default function BrandListPage() {
           error={isError}
           errorMessage={`Failed to load brands: ${(error as Error)?.message || 'Unknown error'}`}
           emptyTitle="No Brands Created"
-          emptyDescription="Create your first brand to get started"
+          emptyDescription="Create your first brand to get started with city and zone mapping"
           emptyIcon="solar:crown-bold-duotone"
+          createAction={canCreate ? { icon: 'solar:add-circle-bold', label: 'Create Brand', onClick: () => navigate(paths.dashboard.brandMasterCreate) } : undefined}
           dataGridSx={dividerSx}
         />
       </PageContainer>

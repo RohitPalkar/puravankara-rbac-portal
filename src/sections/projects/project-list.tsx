@@ -210,8 +210,9 @@ export default function ProjectListPage() {
           error={isError}
           errorMessage={`Failed to load projects: ${(error as Error)?.message || 'Unknown error'}`}
           emptyTitle="No Projects Created"
-          emptyDescription="Create your first project to get started"
+          emptyDescription="Create your first project to define phases, incentives, and locations"
           emptyIcon="solar:building-bold-duotone"
+          createAction={{ icon: 'solar:add-circle-bold', label: 'Create Project', onClick: () => navigate(paths.dashboard.projectMasterCreate) }}
           dataGridSx={dividerSx}
         />
       </PageContainer>

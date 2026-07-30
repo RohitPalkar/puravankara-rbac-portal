@@ -192,8 +192,9 @@ export default function PhaseListPage() {
           error={isError}
           errorMessage={`Failed to load phases: ${(error as Error)?.message || 'Unknown error'}`}
           emptyTitle="No Phases Created"
-          emptyDescription="Create your first phase to get started"
+          emptyDescription="Create your first phase to manage launch and sustenance timelines"
           emptyIcon="solar:calendar-bold-duotone"
+          createAction={{ icon: 'solar:add-circle-bold', label: 'Create Phase', onClick: () => navigate(paths.dashboard.phaseMasterCreate) }}
         />
       </PageContainer>
 

@@ -436,8 +436,9 @@ export default function DepartmentListPage() {
           error={isError}
           errorMessage={`Failed to load departments: ${(error as Error)?.message || 'Unknown error'}`}
           emptyTitle="No Departments Created"
-          emptyDescription="Create your first Department to start managing Roles and Users."
+          emptyDescription="Create your first department to assign roles and manage users by zone"
           emptyIcon="solar:buildings-bold-duotone"
+          createAction={canCreate ? { icon: 'solar:add-circle-bold', label: 'Add Department', onClick: () => navigate(paths.dashboard.departmentMasterCreate) } : undefined}
         />
       </PageContainer>
 

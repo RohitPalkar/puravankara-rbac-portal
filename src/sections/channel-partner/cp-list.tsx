@@ -122,7 +122,8 @@ export default function ChannelPartnerListPage() {
             <EmptyState
               icon="solar:handshake-bold-duotone"
               title="No Channel Partners Created"
-              description="Create your first channel partner to get started"
+              description="Create your first channel partner to manage partnerships"
+              action={{ icon: 'solar:add-circle-bold', label: 'Create Channel Partner', onClick: () => navigate(paths.dashboard.channelPartnerMasterCreate) }}
             />
           ) : (
             <DataTable

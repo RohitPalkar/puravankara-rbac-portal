@@ -430,13 +430,21 @@ export function DataTable({
       {error ? (
         <Box sx={{ p: 4, textAlign: 'center' }}>
           <Stack spacing={2} alignItems="center">
-            <Iconify icon="solar:danger-triangle-bold" width={40} sx={{ color: 'error.main', opacity: 0.6 }} />
+            <Iconify
+              icon={errorMessage?.toLowerCase().includes('unauthorized') || errorMessage?.toLowerCase().includes('401') ? 'solar:lock-bold' : 'solar:danger-triangle-bold'}
+              width={40}
+              sx={{ color: 'warning.main', opacity: 0.6 }}
+            />
             <Box>
               <Typography variant="h6" sx={{ color: 'text.secondary', fontWeight: 500 }}>
-                Failed to load data
+                {errorMessage?.toLowerCase().includes('unauthorized') || errorMessage?.toLowerCase().includes('401')
+                  ? 'Session expired'
+                  : 'Failed to load data'}
               </Typography>
               <Typography variant="body2" color="text.disabled" sx={{ mt: 0.5 }}>
-                {errorMessage || 'An unexpected error occurred. Please try again.'}
+                {errorMessage?.toLowerCase().includes('unauthorized') || errorMessage?.toLowerCase().includes('401')
+                  ? 'Your session has expired. Please refresh the page and log in again.'
+                  : (errorMessage || 'An unexpected error occurred. Please try again.')}
               </Typography>
             </Box>
             {onErrorRetry && (

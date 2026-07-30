@@ -302,8 +302,9 @@ export default function ZoneListPage() {
           error={isError}
           errorMessage={`Failed to load zones: ${(error as Error)?.message || 'Unknown error'}`}
           emptyTitle="No Zones Created"
-          emptyDescription="Create your first geographic zone to get started"
+          emptyDescription="Create your first geographic zone to organize cities and departments"
           emptyIcon="solar:map-point-bold-duotone"
+          createAction={canCreate ? { icon: 'solar:add-circle-bold', label: 'Create Zone', onClick: () => navigate(paths.dashboard.zoneMasterCreate) } : undefined}
         />
       </PageContainer>
 
