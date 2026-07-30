@@ -28,6 +28,7 @@ import { usePhaseById, useCreatePhase, useUpdatePhase } from 'src/services/hooks
 
 import { Iconify } from 'src/components/iconify';
 import { PageHeader, PageContainer } from 'src/components/page-layout';
+import { renderDropdownItems } from 'src/components/hook-form/dropdown-empty';
 
 export default function PhaseFormPage() {
   const { id } = useParams();
@@ -177,7 +178,7 @@ export default function PhaseFormPage() {
               required
               fullWidth
             >
-              {allBrands?.map((b) => (
+              {renderDropdownItems(allBrands, (b) => (
                 <MenuItem key={b.id} value={b.id}>{b.brandName}</MenuItem>
               ))}
             </TextField>
@@ -189,7 +190,7 @@ export default function PhaseFormPage() {
               required
               fullWidth
             >
-              {allCities?.map((c) => (
+              {renderDropdownItems(allCities, (c) => (
                 <MenuItem key={c.id} value={c.id}>{c.name}</MenuItem>
               ))}
             </TextField>

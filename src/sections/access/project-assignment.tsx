@@ -32,6 +32,7 @@ import { zoneService } from 'src/services/services/geography.service';
 
 import { Iconify } from 'src/components/iconify';
 import { PageHeader, PageContainer } from 'src/components/page-layout';
+import { renderDropdownItems } from 'src/components/hook-form/dropdown-empty';
 
 const stringToColor = (name: string) => {
   const colors = ['hsl(210,55%,50%)', 'hsl(160,55%,50%)', 'hsl(30,55%,50%)', 'hsl(280,55%,50%)', 'hsl(0,55%,50%)'];
@@ -149,7 +150,7 @@ export default function ProjectAssignmentPage() {
               sx={{ minWidth: 160 }}
             >
               <MenuItem value="">All Zones</MenuItem>
-              {activeZones.map((z) => <MenuItem key={z.id} value={z.id}>{z.name}</MenuItem>)}
+              {renderDropdownItems(activeZones, (z) => <MenuItem key={z.id} value={z.id}>{z.name}</MenuItem>)}
             </TextField>
             <TextField
               label="Project"
@@ -158,7 +159,7 @@ export default function ProjectAssignmentPage() {
               onChange={(e) => handleProjectChange(e.target.value)}
               sx={{ minWidth: 260 }}
             >
-              {projects.map((p) => (
+              {renderDropdownItems(projects, (p) => (
                 <MenuItem key={p.id} value={p.id}>{p.name} ({p.code})</MenuItem>
               ))}
             </TextField>

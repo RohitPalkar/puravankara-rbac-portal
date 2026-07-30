@@ -18,6 +18,7 @@ import { zoneService } from 'src/services/services/geography.service';
 
 import { Iconify } from 'src/components/iconify';
 import { PageContainer } from 'src/components/page-layout';
+import { renderDropdownItems } from 'src/components/hook-form/dropdown-empty';
 
 import { KpiCards } from './widgets/kpi-cards';
 import { QuickActions } from './widgets/quick-actions';
@@ -73,7 +74,7 @@ export default function DashboardView() {
             size="small"
           >
             <MenuItem value="">All Zones</MenuItem>
-            {activeZones.map((z) => <MenuItem key={z.id} value={z.id}>{z.name}</MenuItem>)}
+            {renderDropdownItems(activeZones, (z) => <MenuItem key={z.id} value={z.id}>{z.name}</MenuItem>)}
           </TextField>
         </Box>
 

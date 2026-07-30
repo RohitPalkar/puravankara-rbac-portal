@@ -37,6 +37,7 @@ import { useProjectById, useCreateProject, useUpdateProject } from 'src/services
 
 import { Iconify } from 'src/components/iconify';
 import { PageHeader, PageContainer } from 'src/components/page-layout';
+import { renderDropdownItems } from 'src/components/hook-form/dropdown-empty';
 
 const quillModules = {
   toolbar: [
@@ -315,11 +316,11 @@ export default function ProjectFormPage() {
           <Box display="grid" gridTemplateColumns={{ xs: '1fr', sm: '1fr 1fr' }} gap={3}>
             <TextField label="Phase" value={phaseId} onChange={(e) => { setPhaseId(Number(e.target.value) || ''); }} select required error={!!phaseIdError} helperText={phaseIdError} fullWidth>
               <MenuItem value="">Select Phase</MenuItem>
-              {allPhases?.map((p) => <MenuItem key={p.id} value={p.id}>{p.phaseName}</MenuItem>)}
+              {renderDropdownItems(allPhases, (p) => <MenuItem key={p.id} value={p.id}>{p.phaseName}</MenuItem>)}
             </TextField>
             <TextField label="Brand" value={derivedBrandName} InputProps={{ readOnly: true }} disabled placeholder={phaseId ? 'Deriving brand...' : 'Select a phase first'} fullWidth />
             <TextField label="City" value={cityId} onChange={(e) => setCityId(Number(e.target.value) || '')} select required error={!!cityIdError} helperText={cityIdError} fullWidth>
-              {allCities?.map((c) => <MenuItem key={c.id} value={c.id}>{c.name}</MenuItem>)}
+              {renderDropdownItems(allCities, (c) => <MenuItem key={c.id} value={c.id}>{c.name}</MenuItem>)}
             </TextField>
             <TextField label="Project Name" value={name} onChange={(e) => { setName(e.target.value); setNameError(''); }} error={!!nameError} helperText={nameError} required placeholder="Enter project name" fullWidth />
             <TextField label="Billing Name" value={billingName} onChange={(e) => setBillingName(e.target.value)} placeholder="Enter Name" fullWidth />

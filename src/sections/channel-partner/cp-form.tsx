@@ -33,6 +33,7 @@ import {
 import { Iconify } from 'src/components/iconify';
 import { FormSection } from 'src/components/form-section';
 import { PageHeader, PageContainer } from 'src/components/page-layout';
+import { renderDropdownItems } from 'src/components/hook-form/dropdown-empty';
 
 export default function ChannelPartnerFormPage() {
   const { id } = useParams();
@@ -146,7 +147,7 @@ export default function ChannelPartnerFormPage() {
             <TextField label="CP Name" value={cpName} onChange={(e) => { setCpName(e.target.value); setCpNameError(''); }} error={!!cpNameError} helperText={cpNameError} required fullWidth />
             <TextField label="CP ID" value={cpIdField} onChange={(e) => setCpIdField(e.target.value)} required fullWidth />
             <TextField label="CP Type" value={cpTypeId} onChange={(e) => setCpTypeId(Number(e.target.value) || '')} select required fullWidth>
-              {cpTypes?.map((t) => <MenuItem key={t.id} value={t.id}>{t.name}</MenuItem>)}
+              {renderDropdownItems(cpTypes, (t) => <MenuItem key={t.id} value={t.id}>{t.name}</MenuItem>)}
             </TextField>
             <DatePicker label="Start Date" value={startDate} onChange={(newValue) => setStartDate(newValue)} slotProps={{ textField: { fullWidth: true, required: true } }} />
             <DatePicker label="End Date" value={endDate} onChange={(newValue) => setEndDate(newValue)} slotProps={{ textField: { fullWidth: true } }} />
