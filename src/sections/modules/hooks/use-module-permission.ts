@@ -10,6 +10,10 @@ function slugify(text: string): string {
   return text.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
 }
 
+function safeProjects(proj: unknown): proj is { projects: unknown[] } {
+  return !!proj && typeof proj === 'object' && 'projects' in proj && Array.isArray((proj as any).projects);
+}
+
 export function useModulePermission(actionCode?: string) {
   const { moduleCode } = useParams<{ moduleCode: string }>();
   const { data: myPermissions, isLoading: permissionsLoading } = useMyPermissions();
@@ -18,6 +22,10 @@ export function useModulePermission(actionCode?: string) {
   return useMemo(() => {
     if (!moduleCode || !myPermissions || !moduleTree || permissionsLoading || treeLoading) {
       return { moduleName: '', moduleId: null, isAllowed: false, isLoading: permissionsLoading || treeLoading };
+    }
+
+    if (!safeProjects(myPermissions)) {
+      return { moduleName: '', moduleId: null, isAllowed: false, isLoading: false };
     }
 
     const treeModule = moduleTree.find((m) => slugify(m.code ?? m.name) === moduleCode);
@@ -50,6 +58,10 @@ export function useModuleActions() {
   return useMemo(() => {
     if (!moduleCode || !myPermissions || !moduleTree || isLoading) {
       return { actions: {}, subModules: [], moduleName: '', isLoading: true };
+    }
+
+    if (!safeProjects(myPermissions)) {
+      return { actions: {}, subModules: [], moduleName: '', isLoading: false };
     }
 
     const treeModule = moduleTree.find((m) => slugify(m.code ?? m.name) === moduleCode);
