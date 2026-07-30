@@ -139,7 +139,7 @@ export default function DepartmentListPage() {
   const { data: permissions } = useMyPermissions();
 
   const canCreate = useMemo(() => hasDepartmentPermission(permissions, 'CREATE'), [permissions]);
-  const canEdit = useMemo(() => hasDepartmentPermission(permissions, 'EDIT'), [permissions]);
+  const canEdit = useMemo(() => hasDepartmentPermission(permissions, 'EDIT') || hasDepartmentPermission(permissions, 'UPDATE'), [permissions]);
   const canDelete = useMemo(() => hasDepartmentPermission(permissions, 'DELETE'), [permissions]);
 
   const { data: zones } = useQuery({

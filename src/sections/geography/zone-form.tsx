@@ -58,7 +58,7 @@ export default function ZoneFormPage() {
 
   const { data: permissions } = useMyPermissions();
   const canCreate = useMemo(() => hasZonePermission(permissions, 'CREATE'), [permissions]);
-  const canEdit = useMemo(() => hasZonePermission(permissions, 'EDIT'), [permissions]);
+  const canEdit = useMemo(() => hasZonePermission(permissions, 'EDIT') || hasZonePermission(permissions, 'UPDATE'), [permissions]);
 
   const { data: zoneData, isLoading: isFetching, isError: isFetchError } = useZoneById(zoneId ?? 0);
   const { mutateAsync: createZone, isPending: isCreating } = useCreateZone();

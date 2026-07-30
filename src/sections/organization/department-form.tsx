@@ -63,7 +63,7 @@ export default function DepartmentFormPage() {
 
   const { data: permissions } = useMyPermissions();
   const canCreate = useMemo(() => hasDepartmentPermission(permissions, 'CREATE'), [permissions]);
-  const canEdit = useMemo(() => hasDepartmentPermission(permissions, 'EDIT'), [permissions]);
+  const canEdit = useMemo(() => hasDepartmentPermission(permissions, 'EDIT') || hasDepartmentPermission(permissions, 'UPDATE'), [permissions]);
 
   const { data: deptData, isLoading: isFetching, isError: isFetchError } = useDepartmentById(departmentId ?? 0);
   const { mutateAsync: createDepartment, isPending: isCreating } = useCreateDepartment();

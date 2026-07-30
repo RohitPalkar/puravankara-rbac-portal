@@ -177,7 +177,7 @@ export default function ZoneListPage() {
   const { data: permissions } = useMyPermissions();
 
   const canCreate = useMemo(() => hasZonePermission(permissions, 'CREATE'), [permissions]);
-  const canEdit = useMemo(() => hasZonePermission(permissions, 'EDIT'), [permissions]);
+  const canEdit = useMemo(() => hasZonePermission(permissions, 'EDIT') || hasZonePermission(permissions, 'UPDATE'), [permissions]);
   const canDelete = useMemo(() => hasZonePermission(permissions, 'DELETE'), [permissions]);
 
   const queryParams = useMemo(() => {
