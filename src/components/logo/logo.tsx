@@ -25,7 +25,7 @@ export const Logo = forwardRef<HTMLDivElement, LogoProps>(
       <Box
         component="img"
         alt="Puravankara"
-        src={`${CONFIG.assetsDir}/logo/logo-single.png`}
+        src={`${CONFIG.assetsDir}/logo/logo-single.svg`}
         sx={{ width: 1, height: 1, objectFit: 'contain' }}
       />
     );
@@ -34,17 +34,17 @@ export const Logo = forwardRef<HTMLDivElement, LogoProps>(
       <Box
         component="img"
         alt="Puravankara"
-        src={`${CONFIG.assetsDir}/logo/logo-full.png`}
+        src={`${CONFIG.assetsDir}/logo/logo-full.svg`}
         sx={{ width: 1, height: 1, objectFit: 'contain' }}
       />
     );
 
     const baseSize = {
-      width: width ?? 56,
-      height: height ?? 56,
+      width: width ?? 52,
+      height: height ?? 52,
       ...(!isSingle && {
-        width: width ?? 160,
-        height: height ?? 52,
+        width: width ?? 144,
+        height: height ?? 48,
       }),
     };
 
