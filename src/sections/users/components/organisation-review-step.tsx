@@ -85,14 +85,13 @@ export default forwardRef<OrganisationReviewStepHandle, Props>(
 
     const validate = useCallback((): boolean => {
       const errs: string[] = [];
-      if (!reportingManagerId) errs.push('Reporting Manager is required.');
       if (!effectiveFrom) errs.push('Effective From is required.');
       if (effectiveTill && effectiveFrom && effectiveTill.isBefore(effectiveFrom)) {
         errs.push('Effective Till must be after Effective From.');
       }
       setErrors(errs);
       return errs.length === 0;
-    }, [reportingManagerId, effectiveFrom, effectiveTill]);
+    }, [effectiveFrom, effectiveTill]);
 
     const getData = useCallback((): OrganisationData => ({
       employmentStatus,
@@ -148,7 +147,7 @@ export default forwardRef<OrganisationReviewStepHandle, Props>(
             }}
             onInputChange={(_, val) => setReportingManagerSearch(val)}
             renderInput={(params) => (
-              <TextField {...params} label="Reporting Manager *" size="medium" />
+              <TextField {...params} label="Reporting Manager (Optional)" size="medium" />
             )}
             renderOption={(props, option: any) => (
               <li {...props}>
