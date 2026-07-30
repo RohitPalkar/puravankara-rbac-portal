@@ -24,7 +24,7 @@ import { paths } from 'src/routes/paths';
 import { CONFIG } from 'src/config-global';
 import { queryKeys } from 'src/services/api/query-keys';
 import { zoneService } from 'src/services/services/geography.service';
-import { useRoleList, useDepartmentList } from 'src/services/hooks/use-organization';
+import { useDepartmentList, useDepartmentRoleList } from 'src/services/hooks/use-organization';
 import { useSetRolePermissions, useRolePermissionsSummary } from 'src/services/hooks/use-permissions';
 
 import { PageHeader, PageContainer } from 'src/components/page-layout';
@@ -67,13 +67,17 @@ export default function PermissionMatrixCreatePage() {
     [departments],
   );
 
-  const { data: allRoles } = useRoleList({});
+  const { data: departmentRoles } = useDepartmentRoleList();
   const filteredRoleOptions = useMemo(() => {
-    if (!allRoles || !departmentId) return [];
-    return (allRoles as { id: number; name: string; departmentId?: number | null }[]).filter(
-      (r) => r.departmentId === Number(departmentId),
+    if (!departmentRoles || !departmentId) return [];
+    const deptRoles = departmentRoles.filter(
+      (dr: any) => dr.departmentId === Number(departmentId) || dr.department?.id === Number(departmentId),
     );
-  }, [allRoles, departmentId]);
+    return deptRoles.map((dr: any) => ({
+      id: dr.roleId ?? dr.role?.id,
+      name: dr.roleName ?? dr.role?.name,
+    })).filter(Boolean);
+  }, [departmentRoles, departmentId]);
 
   const { data: summary } = useRolePermissionsSummary();
   const editRoleInfo = useMemo(() => {
@@ -107,10 +111,10 @@ export default function PermissionMatrixCreatePage() {
   }, []);
 
   const selectedRoleName = useMemo(() => {
-    if (!allRoles || !roleId) return '';
-    const role = (allRoles as { id: number; name: string }[]).find((r) => r.id === Number(roleId));
+    if (!filteredRoleOptions.length || !roleId) return '';
+    const role = filteredRoleOptions.find((r) => r.id === Number(roleId));
     return role?.name ?? '';
-  }, [allRoles, roleId]);
+  }, [filteredRoleOptions, roleId]);
 
   const selectedZoneName = useMemo(() => {
     if (!zoneOptions || !zoneId) return '';
@@ -211,7 +215,7 @@ export default function PermissionMatrixCreatePage() {
                   value={filteredRoleOptions.find((r) => r.id === Number(roleId)) ?? null}
                   onChange={(_e, val) => setRoleId(val ? val.id : '')}
                   disabled={isEditMode || !departmentId}
-                  loading={!allRoles}
+                  loading={!departmentRoles}
                   noOptionsText={!departmentId ? 'Select a department first' : 'No roles available'}
                   renderInput={(params) => (
                     <TextField {...params} label="Role *" placeholder="Search roles..." required />
