@@ -3,6 +3,7 @@ import {
   Get,
   Post,
   Patch,
+  Put,
   Delete,
   Body,
   Param,
@@ -96,6 +97,19 @@ export class UserController {
     @Body() dto: UpdateUserDto,
   ) {
     return this.userService.update(id, dto);
+  }
+
+  @Put(':id/full')
+  @ApiOperation({
+    summary:
+      'Update user with roles, zones, reporting hierarchy, and profiles in a single transaction',
+  })
+  @AuditAction({ entity: 'USERS', action: 'UPDATE' })
+  async updateFull(
+    @Param('id', RawStringPipe) id: string,
+    @Body() dto: CreateUserFullDto,
+  ) {
+    return this.userService.updateFull(id, dto);
   }
 
   @Delete(':id')

@@ -858,6 +858,338 @@ export class UserService {
     const nextNum = lastNum + 1;
     return `PPL${String(nextNum).padStart(5, '0')}`;
   }
+
+  async updateFull(
+    id: string,
+    dto: CreateUserFullDto,
+  ): Promise<{ user: User; roles: UserRole[]; zones: UserZone[]; reportingLines: UserReportingLine[]; profiles: PermissionProfile[] }> {
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    try {
+      const existing = await queryRunner.manager.findOne(User, {
+        where: { empId: id },
+      });
+      if (!existing || existing.deletedAt) {
+        throw new NotFoundException('User not found');
+      }
+
+      if (dto.basic.email && dto.basic.email !== existing.email) {
+        const conflict = await queryRunner.manager.findOne(User, {
+          where: { email: dto.basic.email },
+        });
+        if (conflict && conflict.empId !== id) {
+          throw new ConflictException('Email already in use');
+        }
+      }
+
+      // --- Zone-aware validation (mirrors createFull) ---
+      const { zoneId, primaryRole, secondaryRoles } = dto.organization;
+
+      const zone = await queryRunner.manager.findOne(Zone, { where: { id: zoneId } });
+      if (!zone) throw new BadRequestException(`Zone with id ${zoneId} not found`);
+      if (zone.isActive === false) {
+        throw new BadRequestException(`Zone "${zone.name}" is not active`);
+      }
+
+      if (dto.basic.departmentId) {
+        const dept = await queryRunner.manager.findOne(Department, {
+          where: { id: dto.basic.departmentId, deletedAt: null },
+        });
+        if (!dept) {
+          throw new BadRequestException(`Department with id ${dto.basic.departmentId} not found`);
+        }
+        if (dept.zoneId !== zoneId) {
+          throw new BadRequestException(
+            `Department "${dept.name}" does not belong to the selected zone`,
+          );
+        }
+
+        if (primaryRole) {
+          const deptRole = await queryRunner.manager.findOne(DepartmentRole, {
+            where: { departmentId: dto.basic.departmentId, roleId: primaryRole },
+          });
+          if (!deptRole) {
+            throw new BadRequestException(
+              `Primary role is not assigned to the selected department`,
+            );
+          }
+        }
+
+        if (secondaryRoles?.length) {
+          for (const sr of secondaryRoles) {
+            const deptRole = await queryRunner.manager.findOne(DepartmentRole, {
+              where: { departmentId: dto.basic.departmentId, roleId: sr.roleId },
+            });
+            if (!deptRole) {
+              throw new BadRequestException(
+                `Secondary role id ${sr.roleId} is not assigned to the selected department`,
+              );
+            }
+          }
+        }
+      }
+
+      // --- Basic details ---
+      const oldDeptId = existing.departmentId;
+      existing.name = dto.basic.name;
+      existing.email = dto.basic.email;
+      existing.departmentId = dto.basic.departmentId;
+      if (dto.basic.employmentStatus) {
+        existing.employmentStatus = dto.basic.employmentStatus;
+      }
+      if (dto.basic.isActive != null) {
+        existing.isActive = dto.basic.isActive;
+      }
+      const savedUser = await queryRunner.manager.save(existing);
+
+      // --- Department Administrator transfer ---
+      const wasDeptAdmin =
+        oldDeptId != null &&
+        (await queryRunner.manager.findOne(Department, {
+          where: { id: oldDeptId, departmentAdminId: id },
+        })) != null;
+
+      const wantDeptAdmin = !!dto.organization.isDepartmentAdmin && !!dto.basic.departmentId;
+
+      if (wantDeptAdmin) {
+        const newDept = await queryRunner.manager.findOne(Department, {
+          where: { id: dto.basic.departmentId },
+        });
+        if (newDept?.departmentAdminId && newDept.departmentAdminId !== id) {
+          throw new BadRequestException(
+            `This department already has a Department Administrator (${newDept.departmentAdminId}). Only one active Department Administrator is allowed per department.`,
+          );
+        }
+        await queryRunner.manager.update(
+          Department,
+          { id: dto.basic.departmentId },
+          { departmentAdminId: id },
+        );
+      }
+
+      if (wasDeptAdmin && (!wantDeptAdmin || oldDeptId !== dto.basic.departmentId)) {
+        await queryRunner.manager.update(
+          Department,
+          { id: oldDeptId, departmentAdminId: id },
+          { departmentAdminId: null },
+        );
+      }
+
+      // --- Replace user_roles ---
+      await queryRunner.manager.delete(UserRole, { userId: id });
+      const roles: UserRole[] = [];
+      const zones: UserZone[] = [];
+      const reportingLines: UserReportingLine[] = [];
+      const profiles: PermissionProfile[] = [];
+
+      if (!dto.profiles?.length) {
+        const primaryRoleRow = queryRunner.manager.create(UserRole, {
+          userId: id,
+          departmentId: dto.basic.departmentId,
+          roleId: dto.organization.primaryRole,
+          assignedBy: 'SYSTEM',
+          assignedAt: new Date(),
+        });
+        roles.push(await queryRunner.manager.save(primaryRoleRow));
+
+        if (dto.organization.secondaryRoles?.length) {
+          for (const entry of dto.organization.secondaryRoles) {
+            const sr = queryRunner.manager.create(UserRole, {
+              userId: id,
+              departmentId: entry.departmentId ?? dto.basic.departmentId,
+              roleId: entry.roleId,
+              assignedBy: 'SYSTEM',
+              assignedAt: new Date(),
+            });
+            roles.push(await queryRunner.manager.save(sr));
+          }
+        }
+
+        // Replace the primary zone assignment
+        await queryRunner.manager.delete(UserZone, { userId: id });
+        const uz = queryRunner.manager.create(UserZone, {
+          userId: id,
+          zoneId: dto.organization.zoneId,
+          assignedAt: new Date(),
+        });
+        zones.push(await queryRunner.manager.save(uz));
+      }
+
+      // --- Replace reporting lines ---
+      await queryRunner.manager.delete(UserReportingLine, { userId: id });
+      if (dto.organization.reporting?.length) {
+        for (const entry of dto.organization.reporting) {
+          const rl = queryRunner.manager.create(UserReportingLine, {
+            userId: id,
+            reportsToUserId: entry.managerId,
+            levelRank: entry.levelRank,
+            effectiveFrom: new Date(),
+          });
+          reportingLines.push(await queryRunner.manager.save(rl));
+        }
+      }
+
+      // --- Replace permission profiles + UserProjectAccess ---
+      await queryRunner.manager.delete(PermissionProfile, { userId: id });
+      const allProjectIds = new Set<number>();
+      if (dto.profiles?.length) {
+        const deptRolePairs = new Set<string>();
+        for (const profileDto of dto.profiles) {
+          if (profileDto.profileType === ProfileType.BUDDY_RM) {
+            if (!profileDto.departmentId || !profileDto.roleId) {
+              throw new BadRequestException(
+                'Buddy RM profile requires departmentId and roleId',
+              );
+            }
+            if (profileDto.buddyUserId === id) {
+              throw new BadRequestException('Buddy RM cannot be the same user');
+            }
+          }
+
+          if (profileDto.departmentId && profileDto.roleId) {
+            const pair = `${profileDto.departmentId}:${profileDto.roleId}`;
+            if (deptRolePairs.has(pair)) {
+              throw new BadRequestException(
+                `Duplicate department+role assignment: department ${profileDto.departmentId}, role ${profileDto.roleId}`,
+              );
+            }
+            deptRolePairs.add(pair);
+          }
+
+          const profile = queryRunner.manager.create(PermissionProfile, {
+            userId: id,
+            profileType: profileDto.profileType,
+            departmentId: profileDto.departmentId ?? null,
+            roleId: profileDto.roleId ?? null,
+            buddyUserId: profileDto.buddyUserId ?? null,
+            displayName: profileDto.displayName ?? null,
+            status: profileDto.status ?? 'ACTIVE',
+          });
+          const savedProfile = await queryRunner.manager.save(profile);
+
+          // user_role for backward compat
+          if (profileDto.roleId && profileDto.departmentId) {
+            const ur = queryRunner.manager.create(UserRole, {
+              userId: id,
+              departmentId: profileDto.departmentId,
+              roleId: profileDto.roleId,
+              assignedBy: 'SYSTEM',
+              assignedAt: new Date(),
+            });
+            roles.push(await queryRunner.manager.save(ur));
+          }
+
+          if (profileDto.modules?.length) {
+            for (const modDto of profileDto.modules) {
+              const ppm = queryRunner.manager.create(PermissionProfileModule, {
+                profileId: savedProfile.id,
+                moduleId: modDto.moduleId,
+                displayOrder: modDto.displayOrder ?? 0,
+              });
+              const savedMod = await queryRunner.manager.save(ppm);
+
+              if (modDto.subModules?.length) {
+                for (const smDto of modDto.subModules) {
+                  const ppsm = queryRunner.manager.create(
+                    PermissionProfileSubModule,
+                    {
+                      profileModuleId: savedMod.id,
+                      subModuleId: smDto.subModuleId,
+                      inheritFutureProjects: smDto.inheritFutureProjects ?? false,
+                    },
+                  );
+                  const savedSm = await queryRunner.manager.save(ppsm);
+
+                  if (smDto.projects?.length) {
+                    for (const projDto of smDto.projects) {
+                      const ppp = queryRunner.manager.create(
+                        PermissionProfileProject,
+                        {
+                          profileSubModuleId: savedSm.id,
+                          projectId: projDto.projectId,
+                          selectedBy: projDto.selectedBy ?? 'SYSTEM',
+                        },
+                      );
+                      await queryRunner.manager.save(ppp);
+                      allProjectIds.add(projDto.projectId);
+                    }
+                  }
+                }
+              }
+            }
+          }
+
+          profiles.push(savedProfile);
+        }
+      }
+
+      // Sync UserProjectAccess records
+      await queryRunner.manager.delete(UserProjectAccess, { userId: id });
+      for (const projectId of allProjectIds) {
+        await queryRunner.manager.save(
+          queryRunner.manager.create(UserProjectAccess, {
+            userId: id,
+            projectId,
+            assignedBy: 'SYSTEM',
+            assignedAt: new Date(),
+          }),
+        );
+      }
+
+      await queryRunner.commitTransaction();
+
+      // Trigger permission compilation
+      if (profiles.length > 0) {
+        const projectIds = new Set<number>();
+        for (const p of profiles) {
+          const fullProfile = await this.profileRepo.findOne({
+            where: { id: p.id },
+            relations: { modules: { subModules: { projects: true } } },
+          });
+          if (fullProfile?.modules) {
+            for (const mod of fullProfile.modules) {
+              for (const sm of mod.subModules) {
+                for (const proj of sm.projects) {
+                  projectIds.add(proj.projectId);
+                }
+              }
+            }
+          }
+        }
+        for (const pid of projectIds) {
+          this.compilerService
+            .compileAndSave(id, pid)
+            .catch((err) =>
+              this.logger.error(
+                'Failed to compile permissions for user project',
+                err,
+              ),
+            );
+        }
+      }
+
+      return { user: savedUser, roles, zones, reportingLines, profiles };
+    } catch (err) {
+      await queryRunner.rollbackTransaction();
+      this.logger.error(
+        `User update transaction failed: ${(err as Error).message}`,
+      );
+      if (
+        err instanceof ConflictException ||
+        err instanceof BadRequestException ||
+        err instanceof NotFoundException
+      ) {
+        throw err;
+      }
+      throw new BadRequestException(
+        'User update failed. All changes rolled back.',
+      );
+    } finally {
+      await queryRunner.release();
+    }
+  }
 }
 
 @Injectable()

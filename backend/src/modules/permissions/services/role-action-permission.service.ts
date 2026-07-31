@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, DataSource } from 'typeorm';
+import { Repository, DataSource, IsNull } from 'typeorm';
 import { RoleActionPermission } from '../entities/role-action-permission.entity';
 import { Module as ModuleEntity } from '../../product-catalog/entities/module.entity';
 import { SubModule } from '../../product-catalog/entities/sub-module.entity';
@@ -166,6 +166,15 @@ export class RoleActionPermissionService {
       if (zoneId != null) deleteWhere.zoneId = zoneId;
       if (departmentId != null) deleteWhere.departmentId = departmentId;
       await queryRunner.manager.delete(RoleActionPermission, deleteWhere);
+
+      // Remove legacy rows saved without zone/department so they can never
+      // union-grant alongside the new zone/department-scoped mapping
+      if (zoneId != null || departmentId != null) {
+        await queryRunner.manager.delete(RoleActionPermission, [
+          { roleId, zoneId: IsNull() },
+          { roleId, departmentId: IsNull() },
+        ]);
+      }
 
       if (actionIds.length > 0) {
         const actionIdParams = actionIds.join(',');
