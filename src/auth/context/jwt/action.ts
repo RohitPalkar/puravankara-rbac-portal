@@ -27,7 +27,7 @@ export const signInWithPassword = async ({ email, password }: SignInParams): Pro
 
   const res = await axios.post(endpoints.auth.signIn, params);
 
-  const { accessToken, user, permissions } = res.data.data;
+  const { accessToken, user } = res.data.data;
 
   if (!accessToken) {
     throw new Error('Access token not found in response');
@@ -40,29 +40,7 @@ export const signInWithPassword = async ({ email, password }: SignInParams): Pro
     sessionStorage.setItem(STORAGE_KEY_USER, JSON.stringify(user));
   }
 
-  if (permissions) {
-    const transformed = {
-      projects: permissions.projects.map((p: any) => ({
-        ...p,
-        modules: p.modules.map((m: any) => ({
-          ...m,
-          subModules: (m.subModules ?? []).map((sm: any) => ({
-            id: sm.id,
-            name: sm.name,
-            actions: (sm.actions ?? []).map((a: any) => {
-              if (typeof a === 'string') {
-                return { code: a, label: a, allowed: true };
-              }
-              return { code: a.code ?? '', label: a.label ?? a.code ?? '', allowed: a.allowed ?? true };
-            }),
-          })),
-        })),
-      })),
-    };
-    sessionStorage.setItem(STORAGE_KEY_PERMISSIONS, JSON.stringify(transformed));
-  } else {
-    sessionStorage.removeItem(STORAGE_KEY_PERMISSIONS);
-  }
+  sessionStorage.removeItem(STORAGE_KEY_PERMISSIONS);
 };
 
 /** **************************************
