@@ -782,6 +782,8 @@ export class RoleService extends BaseService<Role> {
       sortOrder = 'DESC',
       departmentId,
       hierarchyLevelRank,
+      zoneId,
+      roleId,
       ...filters
     } = query;
 
@@ -800,6 +802,27 @@ export class RoleService extends BaseService<Role> {
         'dr.role_id = role.id AND dr.department_id = :deptId',
         { deptId: Number(departmentId) },
       );
+    }
+
+    // Roles are global; zone filtering goes through the departments a role
+    // is attached to (roles table has no direct zone column)
+    if (zoneId != null && zoneId !== '') {
+      qb.innerJoin(
+        'department_roles',
+        'dr_zone',
+        'dr_zone.role_id = role.id',
+      )
+        .innerJoin(
+          'departments',
+          'zone_dept',
+          'zone_dept.id = dr_zone.department_id AND zone_dept.zone_id = :zoneId',
+          { zoneId: Number(zoneId) },
+        )
+        .distinct(true);
+    }
+
+    if (roleId != null && roleId !== '') {
+      qb.andWhere('role.id = :roleId', { roleId: Number(roleId) });
     }
 
     if (hierarchyLevelRank) {

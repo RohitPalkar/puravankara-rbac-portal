@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, DataSource, IsNull } from 'typeorm';
+import { Repository, DataSource } from 'typeorm';
 import { RoleActionPermission } from '../entities/role-action-permission.entity';
 import { Module as ModuleEntity } from '../../product-catalog/entities/module.entity';
 import { SubModule } from '../../product-catalog/entities/sub-module.entity';
@@ -168,12 +168,16 @@ export class RoleActionPermissionService {
       await queryRunner.manager.delete(RoleActionPermission, deleteWhere);
 
       // Remove legacy rows saved without zone/department so they can never
-      // union-grant alongside the new zone/department-scoped mapping
+      // union-grant alongside the new zone/department-scoped mapping.
+      // Raw SQL: TypeORM 1.0.0 normalizes array criteria into numeric-keyed
+      // objects ({0:..., 1:...}) which throws EntityPropertyNotFoundError.
       if (zoneId != null || departmentId != null) {
-        await queryRunner.manager.delete(RoleActionPermission, [
-          { roleId, zoneId: IsNull() },
-          { roleId, departmentId: IsNull() },
-        ]);
+        await queryRunner.manager.query(
+          `DELETE FROM role_action_permissions
+           WHERE role_id = $1
+             AND (zone_id IS NULL OR department_id IS NULL)`,
+          [roleId],
+        );
       }
 
       if (actionIds.length > 0) {
