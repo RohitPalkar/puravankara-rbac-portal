@@ -1,11 +1,15 @@
 import { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 
 import Link from '@mui/material/Link';
 import Typography from '@mui/material/Typography';
 import Breadcrumbs from '@mui/material/Breadcrumbs';
 
 import { usePathname } from 'src/routes/hooks';
+
+import { queryKeys } from 'src/services/api/query-keys';
+import { moduleService, subModuleService } from 'src/services/services/product-catalog.service';
 
 import { Iconify } from 'src/components/iconify';
 
@@ -37,6 +41,10 @@ const LABEL_MAP: Record<string, string> = {
   view: 'View',
 };
 
+function slugify(text: string): string {
+  return text.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+}
+
 function segmentToLabel(segment: string): string {
   return LABEL_MAP[segment] ?? segment.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
 }
@@ -45,18 +53,63 @@ export function DashboardBreadcrumbs() {
   const pathname = usePathname();
   const navigate = useNavigate();
 
+  const segments = useMemo(
+    () => pathname.replace(/^\/|\/$/g, '').split('/').filter(Boolean),
+    [pathname],
+  );
+
+  const isModulePage = segments[0] === 'dashboard' && segments[1] === 'modules';
+  const moduleSlug = isModulePage ? segments[2] : undefined;
+
+  const isSubmodulePage =
+    isModulePage && segments[3] === 'submodule' && !!segments[4] && !Number.isNaN(Number(segments[4]));
+  const submoduleId = isSubmodulePage ? Number(segments[4]) : undefined;
+
+  const { data: modules } = useQuery({
+    queryKey: queryKeys.modules.list({}),
+    queryFn: async () => {
+      const res = await moduleService.list({});
+      return res.data ?? [];
+    },
+    enabled: isModulePage,
+  });
+
+  const { data: subModules } = useQuery({
+    queryKey: queryKeys.subModules.list({}),
+    queryFn: async () => {
+      const res = await subModuleService.list({});
+      return res.data ?? [];
+    },
+    enabled: isSubmodulePage,
+  });
+
   const crumbs = useMemo(() => {
-    const segments = pathname.replace(/^\/|\/$/g, '').split('/').filter(Boolean);
     const result: { label: string; href?: string }[] = [];
 
     segments.forEach((segment, idx) => {
-      const label = segmentToLabel(segment);
       const href = `/${segments.slice(0, idx + 1).join('/')}`;
-      result.push({ label, href });
+
+      if (isModulePage && idx === 2) {
+        const module = (modules ?? []).find((m: any) => slugify(m.name) === moduleSlug);
+        result.push({ label: module?.name ?? segmentToLabel(segment), href });
+        return;
+      }
+
+      if (isSubmodulePage && idx === 3) {
+        const subModule = (subModules ?? []).find((s: any) => s.id === submoduleId);
+        result.push({ label: subModule?.name ?? segmentToLabel(segment) });
+        return;
+      }
+
+      if (isSubmodulePage && idx === 4) {
+        return;
+      }
+
+      result.push({ label: segmentToLabel(segment), href });
     });
 
     return result;
-  }, [pathname]);
+  }, [segments, isModulePage, isSubmodulePage, moduleSlug, submoduleId, modules, subModules]);
 
   if (crumbs.length <= 1) return null;
 
@@ -67,7 +120,7 @@ export function DashboardBreadcrumbs() {
     >
       {crumbs.map((crumb, idx) => {
         const isLast = idx === crumbs.length - 1;
-        if (isLast) {
+        if (isLast || !crumb.href) {
           return (
             <Typography key={crumb.label} variant="body2" color="text.disabled">
               {crumb.label}
