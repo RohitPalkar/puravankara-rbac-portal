@@ -6,7 +6,10 @@ import { CONFIG } from 'src/config-global';
 
 // ----------------------------------------------------------------------
 
-const axiosInstance = axios.create({ baseURL: CONFIG.serverUrl });
+const axiosInstance = axios.create({
+  baseURL: CONFIG.serverUrl,
+  validateStatus: (status) => (status >= 200 && status < 300) || status === 304,
+});
 
 axiosInstance.interceptors.response.use(
   (response) => response,
