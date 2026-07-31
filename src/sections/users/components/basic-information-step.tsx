@@ -29,10 +29,12 @@ export interface BasicInformationStepHandle {
 
 interface Props {
   initialData?: BasicInfoData;
+  mode?: 'create' | 'edit';
 }
 
-export default forwardRef<BasicInformationStepHandle, Props>(({ initialData }: Props, ref) => {
+export default forwardRef<BasicInformationStepHandle, Props>(({ initialData, mode = 'create' }: Props, ref) => {
 
+  const isEdit = mode === 'edit';
   const [employeeId, setEmployeeId] = useState(initialData?.employeeId ?? '');
   const [employeeName, setEmployeeName] = useState(initialData?.employeeName ?? '');
   const [email, setEmail] = useState(initialData?.email ?? '');
@@ -110,8 +112,10 @@ export default forwardRef<BasicInformationStepHandle, Props>(({ initialData }: P
     }
 
     if (!mobile.trim()) {
-      setMobileError('Mobile number is required');
-      valid = false;
+      if (!isEdit) {
+        setMobileError('Mobile number is required');
+        valid = false;
+      }
     } else if (!/^\+?\d{7,15}$/.test(mobile.trim().replace(/[\s-]/g, ''))) {
       setMobileError('Valid mobile number required');
       valid = false;
@@ -120,7 +124,7 @@ export default forwardRef<BasicInformationStepHandle, Props>(({ initialData }: P
     }
 
     return valid;
-  }, [employeeId, employeeName, email, mobile]);
+  }, [employeeId, employeeName, email, mobile, isEdit]);
 
   const getData = useCallback((): BasicInfoData => ({
     employeeId: employeeId.trim(),
@@ -145,9 +149,9 @@ export default forwardRef<BasicInformationStepHandle, Props>(({ initialData }: P
         placeholder="Enter Employee ID"
         required
         fullWidth
-        disabled={isFetching}
+        disabled={isFetching || isEdit}
         InputProps={{
-          endAdornment: (
+          endAdornment: isEdit ? null : (
             <InputAdornment position="end">
               <Button
                 size="small"

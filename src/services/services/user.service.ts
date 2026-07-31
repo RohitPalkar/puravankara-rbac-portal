@@ -1,5 +1,5 @@
 import { endpoints } from '../api/endpoints';
-import { apiGet, apiPost, apiPatch, apiDelete } from '../api/client';
+import { apiGet, apiPut, apiPost, apiPatch, apiDelete } from '../api/client';
 
 import type { ApiResponse, PaginationQuery } from '../types/api';
 import type {
@@ -29,6 +29,9 @@ export const userService = {
 
   update: async (id: string, data: UpdateUserRequest): Promise<ApiResponse<User>> =>
     apiPatch<User>(endpoints.users.update(id), data),
+
+  updateFull: async (id: string, data: CreateUserFullRequest): Promise<ApiResponse<{ user: User }>> =>
+    apiPut<{ user: User }>(endpoints.users.updateFull(id), data),
 
   delete: async (id: string): Promise<ApiResponse<void>> =>
     apiDelete<void>(endpoints.users.delete(id)),

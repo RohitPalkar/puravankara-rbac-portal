@@ -22,6 +22,8 @@ const STORAGE_KEY_PERMISSIONS = 'jwt_permissions';
 export function useMyPermissions() {
   return useQuery({
     queryKey: queryKeys.permissions.me,
+    staleTime: 10_000,
+    refetchOnWindowFocus: true,
     queryFn: async () => {
       const res = await permissionService.getMyPermissions();
       const {data} = res;
@@ -266,6 +268,8 @@ export function useSetRolePermissions(roleId: number) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.roles.permissions.byRole(roleId) });
       queryClient.invalidateQueries({ queryKey: queryKeys.roles.permissions.tree(roleId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.permissions.me });
+      sessionStorage.removeItem('jwt_permissions');
     },
   });
 }

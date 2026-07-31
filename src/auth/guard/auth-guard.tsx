@@ -65,7 +65,7 @@ export function AuthGuard({ children }: Props) {
           const res = await permissionService.getMyPermissions();
           return res.data;
         },
-        staleTime: 30000,
+        staleTime: 10_000,
       });
       queryClient.prefetchQuery({
         queryKey: queryKeys.modules.tree,

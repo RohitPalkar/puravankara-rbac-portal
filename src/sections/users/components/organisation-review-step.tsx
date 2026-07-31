@@ -45,10 +45,11 @@ export interface OrganisationReviewStepHandle {
 interface Props {
   zoneId?: number | null;
   departmentId?: number | null;
+  initialData?: OrganisationData;
 }
 
 export default forwardRef<OrganisationReviewStepHandle, Props>(
-  ({ zoneId, departmentId }: Props, ref) => {
+  ({ zoneId, departmentId, initialData }: Props, ref) => {
     const { data: userGroups } = useUserGroupList();
 
     const [employmentStatus, setEmploymentStatus] = useState<'Active' | 'Inactive'>('Active');
@@ -99,6 +100,16 @@ export default forwardRef<OrganisationReviewStepHandle, Props>(
     useEffect(() => {
       setErrors([]);
     }, []);
+
+    useEffect(() => {
+      if (initialData) {
+        setEmploymentStatus(initialData.employmentStatus);
+        setReportingManagerId(initialData.reportingManagerId);
+        setTeamLeadId(initialData.teamLeadId ?? '');
+        setEffectiveFrom(initialData.effectiveFrom ? dayjs(initialData.effectiveFrom) : dayjs());
+        setEffectiveTill(initialData.effectiveTill ? dayjs(initialData.effectiveTill) : null);
+      }
+    }, [initialData]);
 
     const validate = useCallback((): boolean => {
       const errs: string[] = [];

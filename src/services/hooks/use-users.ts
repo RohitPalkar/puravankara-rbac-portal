@@ -77,6 +77,21 @@ export function useUpdateUser() {
   });
 }
 
+export function useUpdateUserFull() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: CreateUserFullRequest }) => {
+      const res = await userService.updateFull(id, data);
+      return res.data;
+    },
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.users.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.users.byId(variables.id) });
+    },
+  });
+}
+
 export function useDeleteUser() {
   const queryClient = useQueryClient();
 
