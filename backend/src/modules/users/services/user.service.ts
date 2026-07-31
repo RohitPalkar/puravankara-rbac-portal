@@ -1125,17 +1125,19 @@ export class UserService {
         }
       }
 
-      // Sync UserProjectAccess records
-      await queryRunner.manager.delete(UserProjectAccess, { userId: id });
-      for (const projectId of allProjectIds) {
-        await queryRunner.manager.save(
-          queryRunner.manager.create(UserProjectAccess, {
-            userId: id,
-            projectId,
-            assignedBy: 'SYSTEM',
-            assignedAt: new Date(),
-          }),
-        );
+      // Sync UserProjectAccess records (only when profiles drive project selection)
+      if (dto.profiles?.length) {
+        await queryRunner.manager.delete(UserProjectAccess, { userId: id });
+        for (const projectId of allProjectIds) {
+          await queryRunner.manager.save(
+            queryRunner.manager.create(UserProjectAccess, {
+              userId: id,
+              projectId,
+              assignedBy: 'SYSTEM',
+              assignedAt: new Date(),
+            }),
+          );
+        }
       }
 
       await queryRunner.commitTransaction();
