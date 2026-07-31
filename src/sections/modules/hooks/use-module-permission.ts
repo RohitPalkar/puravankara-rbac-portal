@@ -38,12 +38,12 @@ export function useModulePermission(actionCode?: string) {
     if (!foundModule) return { moduleName: treeModule.name, moduleId: treeModule.id, isAllowed: false, isLoading: false };
 
     if (!actionCode) {
-      const hasAny = foundModule.subModules.some((sm) => sm.actions.some((a) => a.allowed));
+      const hasAny = (foundModule.subModules ?? []).some((sm) => (sm.actions ?? []).some((a) => a.allowed));
       return { moduleName: treeModule.name, moduleId: treeModule.id, isAllowed: hasAny, isLoading: false };
     }
 
-    const isAllowed = foundModule.subModules.some((sm) =>
-      sm.actions.some((a) => a.code === actionCode && a.allowed)
+    const isAllowed = (foundModule.subModules ?? []).some((sm) =>
+      (sm.actions ?? []).some((a) => a.code === actionCode && a.allowed)
     );
 
     return { moduleName: treeModule.name, moduleId: treeModule.id, isAllowed, isLoading: false };
@@ -75,8 +75,8 @@ export function useModuleActions() {
 
     const actions: Record<string, boolean> = {};
 
-    foundModule.subModules.forEach((sm) => {
-      sm.actions.forEach((a) => {
+    (foundModule.subModules ?? []).forEach((sm) => {
+      (sm.actions ?? []).forEach((a) => {
         if (a.allowed) actions[a.code] = true;
       });
     });

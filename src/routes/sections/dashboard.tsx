@@ -5,6 +5,7 @@ import { CONFIG } from 'src/config-global';
 import { DashboardLayout } from 'src/layouts/dashboard';
 
 import { LoadingScreen } from 'src/components/loading-screen';
+import { ErrorBoundary } from 'src/components/error-boundary/error-boundary';
 
 import { AuthGuard } from 'src/auth/guard';
 
@@ -47,9 +48,11 @@ const DashboardIndex = lazy(() => import('src/pages/dashboard/index'));
 
 const layoutContent = (
   <DashboardLayout>
-    <Suspense fallback={<LoadingScreen />}>
-      <Outlet />
-    </Suspense>
+    <ErrorBoundary>
+      <Suspense fallback={<LoadingScreen />}>
+        <Outlet />
+      </Suspense>
+    </ErrorBoundary>
   </DashboardLayout>
 );
 

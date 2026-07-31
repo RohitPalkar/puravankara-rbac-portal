@@ -43,7 +43,7 @@ export function useNavData() {
     if (isSuperAdmin) {
       const allModules = (moduleTree ?? []).map((mod) => {
         const moduleSlug = slugify(mod.code ?? mod.name);
-        const subItems = mod.subModules.map((sm) => ({
+        const subItems = (mod.subModules ?? []).map((sm) => ({
           title: sm.name,
           path: paths.dashboard.modules.dashboard(moduleSlug),
         }));
@@ -96,15 +96,15 @@ export function useNavData() {
 
     if (myPermissions?.projects && Array.isArray(myPermissions.projects)) {
       myPermissions.projects.forEach((project) => {
-        project.modules.forEach((mod) => {
-          const hasAnyAction = mod.subModules.some((sm) =>
-            sm.actions.some((a) => a.allowed),
+        (project.modules ?? []).forEach((mod) => {
+          const hasAnyAction = (mod.subModules ?? []).some((sm) =>
+            (sm.actions ?? []).some((a) => a.allowed),
           );
           if (hasAnyAction) {
             allowedModuleIds.add(mod.id);
           }
-          mod.subModules.forEach((sm) => {
-            if (sm.actions.some((a) => a.allowed)) {
+          (mod.subModules ?? []).forEach((sm) => {
+            if ((sm.actions ?? []).some((a) => a.allowed)) {
               allowedSubModuleIds.add(sm.id);
             }
           });
@@ -116,7 +116,7 @@ export function useNavData() {
       .filter((mod) => allowedModuleIds.has(mod.id))
       .map((mod) => {
         const moduleSlug = slugify(mod.code ?? mod.name);
-        const subItems = mod.subModules
+        const subItems = (mod.subModules ?? [])
           .filter((sm) => allowedSubModuleIds.has(sm.id))
           .map((sm) => ({
             title: sm.name,

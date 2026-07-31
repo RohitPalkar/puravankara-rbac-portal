@@ -63,6 +63,7 @@ function hasZonePermission(
   action: string
 ): boolean {
   if (!permissions) return false;
+  if (!Array.isArray(permissions.projects)) return false;
   return permissions.projects.some((project) =>
     project.modules.some((mod) =>
       mod.subModules.some((sub) =>
