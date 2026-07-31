@@ -21,6 +21,7 @@ import { Iconify } from 'src/components/iconify';
 import { DataTable } from 'src/components/data-table';
 import { RowActionsMenu } from 'src/components/row-actions';
 import { PageHeader, PageContainer } from 'src/components/page-layout';
+import { PermissionChips } from 'src/components/permission-summary/permission-summary';
 
 const PAGE_SIZE = 20;
 
@@ -193,6 +194,9 @@ export default function ProjectListPage() {
             Create Project
           </Button>
         } />
+        <Box sx={{ mb: 1.5 }}>
+          <PermissionChips moduleName="PROJECTS" />
+        </Box>
         <DataTable
           columns={columns}
           rows={projects}

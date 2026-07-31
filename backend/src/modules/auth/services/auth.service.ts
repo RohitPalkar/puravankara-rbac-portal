@@ -3,6 +3,7 @@ import {
   UnauthorizedException,
   ForbiddenException,
   NotFoundException,
+  BadRequestException,
   Logger,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -366,6 +367,42 @@ export class AuthService {
         }),
       );
     }
+  }
+
+  async changePassword(
+    empId: string,
+    currentPassword: string,
+    newPassword: string,
+  ): Promise<void> {
+    const userAuth = await this.userAuthRepository.findOne({
+      where: { userId: empId },
+    });
+
+    if (!userAuth || !userAuth.passwordHash) {
+      throw new BadRequestException(
+        'Password not configured. Contact administrator.',
+      );
+    }
+
+    const isValid = await this.passwordService.comparePassword(
+      currentPassword,
+      userAuth.passwordHash,
+    );
+
+    if (!isValid) {
+      throw new BadRequestException('Current password is incorrect');
+    }
+
+    if (currentPassword === newPassword) {
+      throw new BadRequestException(
+        'New password must be different from current password',
+      );
+    }
+
+    userAuth.passwordHash = await bcrypt.hash(newPassword, 10);
+    userAuth.failedAttempts = 0;
+    userAuth.isLocked = false;
+    await this.userAuthRepository.save(userAuth);
   }
 
   async getProfile(empId: string) {

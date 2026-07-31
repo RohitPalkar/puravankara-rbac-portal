@@ -25,6 +25,7 @@ import { EmptyState } from 'src/components/empty-state';
 import { RowActionsMenu } from 'src/components/row-actions';
 import { ConfirmDialog } from 'src/components/confirm-dialog';
 import { PageHeader, PageContainer } from 'src/components/page-layout';
+import { PermissionChips } from 'src/components/permission-summary/permission-summary';
 
 const PAGE_SIZE = 20;
 
@@ -113,6 +114,9 @@ export default function ChannelPartnerListPage() {
             Create Channel Partner
           </Button>
         } />
+        <Box sx={{ mb: 1.5 }}>
+          <PermissionChips moduleName="CHANNEL_PARTNERS" />
+        </Box>
         <Card sx={{ overflow: 'hidden' }}>
           {isError ? (
             <Box sx={{ p: 4, textAlign: 'center' }}>

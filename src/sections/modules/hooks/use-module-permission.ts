@@ -6,6 +6,9 @@ import { useParams } from 'react-router-dom';
 import { useMyPermissions } from 'src/services/hooks/use-permissions';
 import { useModuleTree } from 'src/services/hooks/use-product-catalog';
 
+import { isSuperAdmin } from 'src/auth/utils/authorization';
+import { useAuthContext } from 'src/auth/hooks/use-auth-context';
+
 function slugify(text: string): string {
   return text.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
 }
@@ -14,22 +17,63 @@ function safeProjects(proj: unknown): proj is { projects: unknown[] } {
   return !!proj && typeof proj === 'object' && 'projects' in proj && Array.isArray((proj as any).projects);
 }
 
+const STANDARD_ACTIONS = ['VIEW', 'CREATE', 'EDIT', 'DELETE', 'APPROVE', 'EXPORT'] as const;
+
+export type SubModuleActions = {
+  id: string | number | null;
+  name: string;
+  actions: { code: string; label?: string | null; allowed: boolean }[];
+};
+
+export type ModuleActionsResult = {
+  moduleName: string;
+  moduleId: string | number | null;
+  isAllowed: boolean;
+  isLoading: boolean;
+  subModules: SubModuleActions[];
+  actions: Record<string, boolean>;
+};
+
+function superAdminResult(moduleTree: any, treeModule: any): ModuleActionsResult {
+  const subModules: SubModuleActions[] = (treeModule?.subModules ?? []).map((sm: any) => ({
+    id: sm.id,
+    name: sm.name,
+    actions: STANDARD_ACTIONS.map((code) => ({ code, label: code, allowed: true })),
+  }));
+
+  return {
+    moduleName: treeModule?.name ?? '',
+    moduleId: treeModule?.id ?? null,
+    isAllowed: true,
+    isLoading: false,
+    subModules,
+    actions: Object.fromEntries(STANDARD_ACTIONS.map((code) => [code, true])),
+  };
+}
+
 export function useModulePermission(actionCode?: string) {
   const { moduleCode } = useParams<{ moduleCode: string }>();
+  const { user: authUser } = useAuthContext();
   const { data: myPermissions, isLoading: permissionsLoading } = useMyPermissions();
   const { data: moduleTree, isLoading: treeLoading } = useModuleTree();
 
-  return useMemo(() => {
-    if (!moduleCode || !myPermissions || !moduleTree || permissionsLoading || treeLoading) {
-      return { moduleName: '', moduleId: null, isAllowed: false, isLoading: permissionsLoading || treeLoading };
-    }
+  const isSA = isSuperAdmin(authUser);
 
-    if (!safeProjects(myPermissions)) {
-      return { moduleName: '', moduleId: null, isAllowed: false, isLoading: false };
+  return useMemo(() => {
+    if (!moduleCode || !moduleTree || permissionsLoading || treeLoading) {
+      return { moduleName: '', moduleId: null, isAllowed: false, isLoading: permissionsLoading || treeLoading };
     }
 
     const treeModule = moduleTree.find((m) => slugify(m.code ?? m.name) === moduleCode);
     if (!treeModule) return { moduleName: '', moduleId: null, isAllowed: false, isLoading: false };
+
+    if (isSA) {
+      return superAdminResult(moduleTree, treeModule);
+    }
+
+    if (!myPermissions || !safeProjects(myPermissions)) {
+      return { moduleName: treeModule.name, moduleId: treeModule.id, isAllowed: false, isLoading: false };
+    }
 
     const foundModule: ModulePermissions | undefined = myPermissions.projects
       .map((p) => p.modules.find((m) => m.id === treeModule.id))
@@ -47,31 +91,38 @@ export function useModulePermission(actionCode?: string) {
     );
 
     return { moduleName: treeModule.name, moduleId: treeModule.id, isAllowed, isLoading: false };
-  }, [moduleCode, myPermissions, moduleTree, permissionsLoading, treeLoading, actionCode]);
+  }, [moduleCode, myPermissions, moduleTree, permissionsLoading, treeLoading, actionCode, isSA]);
 }
 
 export function useModuleActions() {
   const { moduleCode } = useParams<{ moduleCode: string }>();
+  const { user: authUser } = useAuthContext();
   const { data: myPermissions, isLoading } = useMyPermissions();
   const { data: moduleTree } = useModuleTree();
 
-  return useMemo(() => {
-    if (!moduleCode || !myPermissions || !moduleTree || isLoading) {
-      return { actions: {}, subModules: [], moduleName: '', isLoading: true };
-    }
+  const isSA = isSuperAdmin(authUser);
 
-    if (!safeProjects(myPermissions)) {
-      return { actions: {}, subModules: [], moduleName: '', isLoading: false };
+  return useMemo((): ModuleActionsResult => {
+    if (!moduleCode || !moduleTree || isLoading) {
+      return { actions: {}, subModules: [], moduleName: '', moduleId: null, isAllowed: false, isLoading: true };
     }
 
     const treeModule = moduleTree.find((m) => slugify(m.code ?? m.name) === moduleCode);
-    if (!treeModule) return { actions: {}, subModules: [], moduleName: '', isLoading: false };
+    if (!treeModule) return { actions: {}, subModules: [], moduleName: '', moduleId: null, isAllowed: false, isLoading: false };
+
+    if (isSA) {
+      return superAdminResult(moduleTree, treeModule);
+    }
+
+    if (!myPermissions || !safeProjects(myPermissions)) {
+      return { actions: {}, subModules: [], moduleName: treeModule.name, moduleId: treeModule.id, isAllowed: false, isLoading: false };
+    }
 
     const foundModule: ModulePermissions | undefined = myPermissions.projects
       .map((p) => p.modules.find((m) => m.id === treeModule.id))
       .find(Boolean);
 
-    if (!foundModule) return { actions: {}, subModules: [], moduleName: treeModule.name, isLoading: false };
+    if (!foundModule) return { actions: {}, subModules: [], moduleName: treeModule.name, moduleId: treeModule.id, isAllowed: false, isLoading: false };
 
     const actions: Record<string, boolean> = {};
 
@@ -81,16 +132,17 @@ export function useModuleActions() {
       });
     });
 
-    const standardActions = ['VIEW', 'CREATE', 'EDIT', 'DELETE', 'APPROVE', 'EXPORT'];
-    standardActions.forEach((code) => {
+    STANDARD_ACTIONS.forEach((code) => {
       if (!(code in actions)) actions[code] = false;
     });
 
     return {
       actions,
-      subModules: foundModule.subModules,
+      subModules: (foundModule.subModules ?? []) as SubModuleActions[],
       moduleName: treeModule.name,
+      moduleId: treeModule.id,
+      isAllowed: true,
       isLoading: false,
     };
-  }, [moduleCode, myPermissions, moduleTree, isLoading]);
+  }, [moduleCode, myPermissions, moduleTree, isLoading, isSA]);
 }

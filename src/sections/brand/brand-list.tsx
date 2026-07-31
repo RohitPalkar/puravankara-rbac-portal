@@ -22,6 +22,10 @@ import { DataTable } from 'src/components/data-table';
 import { RowActionsMenu } from 'src/components/row-actions';
 import { ConfirmDialog } from 'src/components/confirm-dialog';
 import { PageHeader, PageContainer } from 'src/components/page-layout';
+import { PermissionChips } from 'src/components/permission-summary/permission-summary';
+
+import { canAccess } from 'src/auth/utils/authorization';
+import { useAuthContext } from 'src/auth/hooks/use-auth-context';
 
 const PAGE_SIZE = 20;
 
@@ -33,21 +37,6 @@ const groupMap: Record<string, string> = {
 };
 
 const groupDividerFields = ['salaryMultiplier', 'reraQualificationPercentage', 'rtmQualificationPercentage'];
-
-function hasBrandPermission(
-  permissions: { projects: { modules: { subModules: { name: string; actions: { code: string; allowed: boolean }[] }[] }[] }[] } | undefined,
-  action: string
-): boolean {
-  if (!permissions) return false;
-  if (!Array.isArray(permissions.projects)) return false;
-  return permissions.projects.some((project) =>
-    project.modules.some((mod) =>
-      mod.subModules.some((sub) =>
-        sub.name === 'BRANDS' && sub.actions.some((a) => a.code === action && a.allowed)
-      )
-    )
-  );
-}
 
 function renderBrandHeader(params: GridColumnHeaderParams) {
   const group = groupMap[params.field];
@@ -97,11 +86,12 @@ export default function BrandListPage() {
   const [search, setSearch] = useState('');
   const [deleteId, setDeleteId] = useState<number | null>(null);
 
+  const { user: authUser } = useAuthContext();
   const { data: permissions } = useMyPermissions();
 
-  const canCreate = useMemo(() => hasBrandPermission(permissions, 'CREATE'), [permissions]);
-  const canEdit = useMemo(() => hasBrandPermission(permissions, 'EDIT') || hasBrandPermission(permissions, 'UPDATE'), [permissions]);
-  const canDelete = useMemo(() => hasBrandPermission(permissions, 'DELETE'), [permissions]);
+  const canCreate = useMemo(() => canAccess(authUser, permissions, 'BRANDS', 'CREATE'), [authUser, permissions]);
+  const canEdit = useMemo(() => canAccess(authUser, permissions, 'BRANDS', 'EDIT') || canAccess(authUser, permissions, 'BRANDS', 'UPDATE'), [authUser, permissions]);
+  const canDelete = useMemo(() => canAccess(authUser, permissions, 'BRANDS', 'DELETE'), [authUser, permissions]);
 
   const { mutateAsync: deleteBrand, isPending: isDeleting } = useDeleteBrand();
 
@@ -228,6 +218,9 @@ export default function BrandListPage() {
             </Button>
           ) : null
         } />
+        <Box sx={{ mb: 1.5 }}>
+          <PermissionChips moduleName="BRANDS" />
+        </Box>
         <DataTable
           columns={columns}
           rows={brands}

@@ -8,6 +8,7 @@ import type {
   LoginRequest,
   SetPasswordRequest,
   RefreshTokenRequest,
+  ChangePasswordRequest,
 } from '../types/auth';
 
 export const authService = {
@@ -31,6 +32,9 @@ export const authService = {
 
   setPassword: async (data: SetPasswordRequest): Promise<ApiResponse<void>> =>
     apiPost<void>(endpoints.auth.setPassword, data),
+
+  changePassword: async (data: ChangePasswordRequest): Promise<ApiResponse<void>> =>
+    apiPost<void>(endpoints.auth.changePassword, data),
 
   me: async (): Promise<ApiResponse<MeResponse>> =>
     apiGet<MeResponse>(endpoints.auth.me),

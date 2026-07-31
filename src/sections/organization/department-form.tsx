@@ -35,22 +35,10 @@ import { Iconify } from 'src/components/iconify';
 import { MergeLevelDialog } from 'src/components/delete-level-dialog';
 import { PageHeader, PageContainer } from 'src/components/page-layout';
 
-const DEBOUNCE_MS = 400;
+import { canAccess } from 'src/auth/utils/authorization';
+import { useAuthContext } from 'src/auth/hooks/use-auth-context';
 
-function hasDepartmentPermission(
-  permissions: { projects: { modules: { subModules: { name: string; actions: { code: string; allowed: boolean }[] }[] }[] }[] } | undefined,
-  action: string
-): boolean {
-  if (!permissions) return false;
-  if (!Array.isArray(permissions.projects)) return false;
-  return permissions.projects.some((project) =>
-    project.modules.some((mod) =>
-      mod.subModules.some((sub) =>
-        sub.name === 'DEPARTMENTS' && sub.actions.some((a) => a.code === action && a.allowed)
-      )
-    )
-  );
-}
+const DEBOUNCE_MS = 400;
 
 function sanitizeNumericInput(value: string): string {
   return value.replace(/[^0-9]/g, '');
@@ -62,9 +50,10 @@ export default function DepartmentFormPage() {
   const isEdit = Boolean(id);
   const departmentId = id ? Number(id) : undefined;
 
+  const { user: authUser } = useAuthContext();
   const { data: permissions } = useMyPermissions();
-  const canCreate = useMemo(() => hasDepartmentPermission(permissions, 'CREATE'), [permissions]);
-  const canEdit = useMemo(() => hasDepartmentPermission(permissions, 'EDIT') || hasDepartmentPermission(permissions, 'UPDATE'), [permissions]);
+  const canCreate = useMemo(() => canAccess(authUser, permissions, 'DEPARTMENTS', 'CREATE'), [authUser, permissions]);
+  const canEdit = useMemo(() => canAccess(authUser, permissions, 'DEPARTMENTS', 'EDIT') || canAccess(authUser, permissions, 'DEPARTMENTS', 'UPDATE'), [authUser, permissions]);
 
   const { data: deptData, isLoading: isFetching, isError: isFetchError } = useDepartmentById(departmentId ?? 0);
   const { mutateAsync: createDepartment, isPending: isCreating } = useCreateDepartment();

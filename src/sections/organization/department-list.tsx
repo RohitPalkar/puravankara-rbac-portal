@@ -36,6 +36,10 @@ import { Iconify } from 'src/components/iconify';
 import { RowActionsMenu } from 'src/components/row-actions';
 import { PageHeader, PageContainer } from 'src/components/page-layout';
 import { DataTable, type FilterOption } from 'src/components/data-table';
+import { PermissionChips } from 'src/components/permission-summary/permission-summary';
+
+import { canAccess } from 'src/auth/utils/authorization';
+import { useAuthContext } from 'src/auth/hooks/use-auth-context';
 
 const PAGE_SIZE = 20;
 
@@ -74,21 +78,6 @@ function ZoneBadge({ name }: { name: string }) {
         justifyContent: 'center',
       }}
     />
-  );
-}
-
-function hasDepartmentPermission(
-  permissions: { projects: { modules: { subModules: { name: string; actions: { code: string; allowed: boolean }[] }[] }[] }[] } | undefined,
-  action: string
-): boolean {
-  if (!permissions) return false;
-  if (!Array.isArray(permissions.projects)) return false;
-  return permissions.projects.some((project) =>
-    project.modules.some((mod) =>
-      mod.subModules.some((sub) =>
-        sub.name === 'DEPARTMENTS' && sub.actions.some((a) => a.code === action && a.allowed)
-      )
-    )
   );
 }
 
@@ -137,11 +126,12 @@ export default function DepartmentListPage() {
   const [search, setSearch] = useState('');
   const [filters, setFilters] = useState<Record<string, string>>({});
 
+  const { user: authUser } = useAuthContext();
   const { data: permissions } = useMyPermissions();
 
-  const canCreate = useMemo(() => hasDepartmentPermission(permissions, 'CREATE'), [permissions]);
-  const canEdit = useMemo(() => hasDepartmentPermission(permissions, 'EDIT') || hasDepartmentPermission(permissions, 'UPDATE'), [permissions]);
-  const canDelete = useMemo(() => hasDepartmentPermission(permissions, 'DELETE'), [permissions]);
+  const canCreate = useMemo(() => canAccess(authUser, permissions, 'DEPARTMENTS', 'CREATE'), [authUser, permissions]);
+  const canEdit = useMemo(() => canAccess(authUser, permissions, 'DEPARTMENTS', 'EDIT') || canAccess(authUser, permissions, 'DEPARTMENTS', 'UPDATE'), [authUser, permissions]);
+  const canDelete = useMemo(() => canAccess(authUser, permissions, 'DEPARTMENTS', 'DELETE'), [authUser, permissions]);
 
   const { data: zones } = useQuery({
     queryKey: queryKeys.zones.list({}),
@@ -409,6 +399,10 @@ export default function DepartmentListPage() {
             </Button>
           ) : null
         } />
+
+        <Box sx={{ mb: 2 }}>
+          <PermissionChips moduleName="DEPARTMENTS" />
+        </Box>
 
         <Box sx={{ mb: 3 }}>
           <Grid container spacing={2}>

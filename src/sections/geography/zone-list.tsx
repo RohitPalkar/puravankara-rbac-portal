@@ -29,6 +29,10 @@ import { Iconify } from 'src/components/iconify';
 import { RowActionsMenu } from 'src/components/row-actions';
 import { PageHeader, PageContainer } from 'src/components/page-layout';
 import { DataTable, type FilterOption } from 'src/components/data-table';
+import { PermissionChips } from 'src/components/permission-summary/permission-summary';
+
+import { canAccess } from 'src/auth/utils/authorization';
+import { useAuthContext } from 'src/auth/hooks/use-auth-context';
 
 const PAGE_SIZE = 20;
 
@@ -57,21 +61,6 @@ const overflowChipSx = {
   '&:hover': { bgcolor: 'primary.dark' },
   '& .MuiChip-label': { px: 1.5 },
 };
-
-function hasZonePermission(
-  permissions: { projects: { modules: { subModules: { name: string; actions: { code: string; allowed: boolean }[] }[] }[] }[] } | undefined,
-  action: string
-): boolean {
-  if (!permissions) return false;
-  if (!Array.isArray(permissions.projects)) return false;
-  return permissions.projects.some((project) =>
-    project.modules.some((mod) =>
-      mod.subModules.some((sub) =>
-        sub.name === 'ZONES' && sub.actions.some((a) => a.code === action && a.allowed)
-      )
-    )
-  );
-}
 
 function CitiesChipCell({ cities }: { cities?: string[] }) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -175,11 +164,12 @@ export default function ZoneListPage() {
   const [search, setSearch] = useState('');
   const [statusFilter] = useState('');
 
+  const { user: authUser } = useAuthContext();
   const { data: permissions } = useMyPermissions();
 
-  const canCreate = useMemo(() => hasZonePermission(permissions, 'CREATE'), [permissions]);
-  const canEdit = useMemo(() => hasZonePermission(permissions, 'EDIT') || hasZonePermission(permissions, 'UPDATE'), [permissions]);
-  const canDelete = useMemo(() => hasZonePermission(permissions, 'DELETE'), [permissions]);
+  const canCreate = useMemo(() => canAccess(authUser, permissions, 'ZONES', 'CREATE'), [authUser, permissions]);
+  const canEdit = useMemo(() => canAccess(authUser, permissions, 'ZONES', 'EDIT') || canAccess(authUser, permissions, 'ZONES', 'UPDATE'), [authUser, permissions]);
+  const canDelete = useMemo(() => canAccess(authUser, permissions, 'ZONES', 'DELETE'), [authUser, permissions]);
 
   const queryParams = useMemo(() => {
     const params: Record<string, unknown> = {
@@ -285,6 +275,9 @@ export default function ZoneListPage() {
             </Button>
           ) : null
         } />
+        <Box sx={{ mb: 1.5 }}>
+          <PermissionChips moduleName="ZONES" />
+        </Box>
 
         <DataTable
           columns={columns}

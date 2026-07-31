@@ -70,6 +70,11 @@ export interface SetPasswordRequest {
   password: string;
 }
 
+export interface ChangePasswordRequest {
+  currentPassword: string;
+  newPassword: string;
+}
+
 export interface MeUser {
   empId: string;
   name: string;

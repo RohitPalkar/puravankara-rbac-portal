@@ -13,6 +13,7 @@ import { AuthService } from './services/auth.service';
 import { LoginDto } from './dto/login.dto';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
 import { SetPasswordDto } from './dto/set-password.dto';
+import { ChangePasswordDto } from './dto/change-password.dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { CurrentUser } from './decorators/current-user.decorator';
 import { Public } from './decorators/public.decorator';
@@ -72,6 +73,23 @@ export class AuthController {
   async setPassword(@Body() dto: SetPasswordDto) {
     await this.authService.setInitialPassword(dto.userId, dto.password);
     return { message: 'Password set successfully' };
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @Post('change-password')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Change password for the current user' })
+  async changePassword(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() dto: ChangePasswordDto,
+  ) {
+    await this.authService.changePassword(
+      user.empId,
+      dto.currentPassword,
+      dto.newPassword,
+    );
+    return { message: 'Password changed successfully' };
   }
 
   @UseGuards(JwtAuthGuard)

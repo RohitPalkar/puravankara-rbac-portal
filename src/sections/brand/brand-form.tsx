@@ -35,20 +35,8 @@ import {
 import { Iconify } from 'src/components/iconify';
 import { PageHeader, PageContainer } from 'src/components/page-layout';
 
-function hasBrandPermission(
-  permissions: { projects: { modules: { subModules: { name: string; actions: { code: string; allowed: boolean }[] }[] }[] }[] } | undefined,
-  action: string
-): boolean {
-  if (!permissions) return false;
-  if (!Array.isArray(permissions.projects)) return false;
-  return permissions.projects.some((project) =>
-    project.modules.some((mod) =>
-      mod.subModules.some((sub) =>
-        sub.name === 'BRANDS' && sub.actions.some((a) => a.code === action && a.allowed)
-      )
-    )
-  );
-}
+import { canAccess } from 'src/auth/utils/authorization';
+import { useAuthContext } from 'src/auth/hooks/use-auth-context';
 
 const quillModules = {
   toolbar: [
@@ -66,8 +54,9 @@ export default function BrandFormPage() {
   const brandId = id ? Number(id) : undefined;
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const { user: authUser } = useAuthContext();
   const { data: permissions } = useMyPermissions();
-  const canCreate = useMemo(() => hasBrandPermission(permissions, 'CREATE'), [permissions]);
+  const canCreate = useMemo(() => canAccess(authUser, permissions, 'BRANDS', 'CREATE'), [authUser, permissions]);
 
   const { data: brandData, isLoading: isFetching, isError: isFetchError } = useBrandById(brandId ?? 0);
   const { mutateAsync: createBrand, isPending: isCreating } = useCreateBrand();

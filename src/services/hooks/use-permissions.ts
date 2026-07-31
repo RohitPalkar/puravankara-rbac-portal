@@ -24,7 +24,7 @@ export function useMyPermissions() {
     queryKey: queryKeys.permissions.me,
     queryFn: async () => {
       const res = await permissionService.getMyPermissions();
-      const data = res.data;
+      const {data} = res;
       if (data) {
         sessionStorage.setItem(STORAGE_KEY_PERMISSIONS, JSON.stringify(data));
       }

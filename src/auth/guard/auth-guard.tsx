@@ -1,13 +1,13 @@
+import { useQueryClient } from '@tanstack/react-query';
 import { useState, useEffect, useCallback } from 'react';
 
 import { paths } from 'src/routes/paths';
 import { useRouter, usePathname, useSearchParams } from 'src/routes/hooks';
-import { useQueryClient } from '@tanstack/react-query';
-
-import { SplashScreen } from 'src/components/loading-screen';
 
 import { queryKeys } from 'src/services/api/query-keys';
 import { permissionService } from 'src/services/services/permission.service';
+
+import { SplashScreen } from 'src/components/loading-screen';
 
 import { useAuthContext } from '../hooks';
 

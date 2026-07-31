@@ -32,6 +32,7 @@ import { DataTable } from 'src/components/data-table';
 import { RowActionsMenu } from 'src/components/row-actions';
 import { ConfirmDialog } from 'src/components/confirm-dialog';
 import { PageHeader, PageContainer } from 'src/components/page-layout';
+import { PermissionChips } from 'src/components/permission-summary/permission-summary';
 
 const PAGE_SIZE = 20;
 
@@ -175,6 +176,9 @@ export default function PhaseListPage() {
             Create Phase
           </Button>
         } />
+        <Box sx={{ mb: 1.5 }}>
+          <PermissionChips moduleName="PHASES" />
+        </Box>
         <DataTable
           columns={columns}
           rows={phases}

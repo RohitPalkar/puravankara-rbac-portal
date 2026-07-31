@@ -36,6 +36,10 @@ const PermissionMatrixViewPage = lazy(() => import('src/sections/access/permissi
 const AuditLogsPage = lazy(() => import('src/sections/system/audit-logs'));
 const SettingsPage = lazy(() => import('src/sections/system/settings'));
 
+// Account
+const MyProfilePage = lazy(() => import('src/sections/account/my-profile'));
+const ChangePasswordPage = lazy(() => import('src/sections/account/change-password'));
+
 // Modules (RBAC Showcase)
 const ModuleDashboardPage = lazy(() => import('src/sections/modules/module-dashboard'));
 const ModuleListPage = lazy(() => import('src/sections/modules/module-list'));
@@ -94,6 +98,9 @@ export const dashboardRoutes = [
       // System
       { path: 'audit-logs', element: <AuditLogsPage /> },
       { path: 'settings', element: <SettingsPage /> },
+      // Account
+      { path: 'my-profile', element: <MyProfilePage /> },
+      { path: 'change-password', element: <ChangePasswordPage /> },
       // Modules (RBAC Showcase)
       { path: 'modules/:moduleCode', element: <ModuleDashboardPage /> },
       { path: 'modules/:moduleCode/list', element: <ModuleListPage /> },

@@ -34,20 +34,8 @@ import { cityService, cityZoneMappingService } from 'src/services/services/geogr
 import { Iconify } from 'src/components/iconify';
 import { PageHeader, PageContainer } from 'src/components/page-layout';
 
-function hasZonePermission(
-  permissions: { projects: { modules: { subModules: { name: string; actions: { code: string; allowed: boolean }[] }[] }[] }[] } | undefined,
-  action: string
-): boolean {
-  if (!permissions) return false;
-  if (!Array.isArray(permissions.projects)) return false;
-  return permissions.projects.some((project) =>
-    project.modules.some((mod) =>
-      mod.subModules.some((sub) =>
-        sub.name === 'ZONES' && sub.actions.some((a) => a.code === action && a.allowed)
-      )
-    )
-  );
-}
+import { canAccess } from 'src/auth/utils/authorization';
+import { useAuthContext } from 'src/auth/hooks/use-auth-context';
 
 export default function ZoneFormPage() {
   const { id } = useParams();
@@ -55,9 +43,10 @@ export default function ZoneFormPage() {
   const isEdit = Boolean(id);
   const zoneId = id ? Number(id) : undefined;
 
+  const { user: authUser } = useAuthContext();
   const { data: permissions } = useMyPermissions();
-  const canCreate = useMemo(() => hasZonePermission(permissions, 'CREATE'), [permissions]);
-  const canEdit = useMemo(() => hasZonePermission(permissions, 'EDIT') || hasZonePermission(permissions, 'UPDATE'), [permissions]);
+  const canCreate = useMemo(() => canAccess(authUser, permissions, 'ZONES', 'CREATE'), [authUser, permissions]);
+  const canEdit = useMemo(() => canAccess(authUser, permissions, 'ZONES', 'EDIT') || canAccess(authUser, permissions, 'ZONES', 'UPDATE'), [authUser, permissions]);
 
   const { data: zoneData, isLoading: isFetching, isError: isFetchError } = useZoneById(zoneId ?? 0);
   const { mutateAsync: createZone, isPending: isCreating } = useCreateZone();

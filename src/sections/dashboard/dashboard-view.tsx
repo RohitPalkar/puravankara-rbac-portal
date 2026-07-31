@@ -25,7 +25,9 @@ import { PageContainer } from 'src/components/page-layout';
 import { renderDropdownItems } from 'src/components/hook-form/dropdown-empty';
 
 import { useAuthContext } from 'src/auth/hooks/use-auth-context';
+import { isSuperAdmin as isSuperAdminUser } from 'src/auth/utils/authorization';
 
+import BusinessDashboard from './business/business-dashboard';
 import { filterWidgets, createWidgetRegistry, groupWidgetsBySection } from './widget-engine';
 
 import type { WidgetContext, WidgetSection } from './widget-engine';
@@ -82,8 +84,7 @@ export default function DashboardView() {
   const { data: moduleTree } = useModuleTree();
   const [selectedZoneId, setSelectedZoneId] = useState<number | ''>('');
 
-  const isSuperAdmin = Array.isArray((authUser as any)?.roles)
-    && (authUser as any).roles.includes('SUPER_ADMIN');
+  const isSuperAdmin = isSuperAdminUser(authUser);
 
   const { data: allZones } = useQuery({
     queryKey: queryKeys.zones.list({}),
@@ -122,6 +123,10 @@ export default function DashboardView() {
   ];
 
   const nonGridSections: WidgetSection[] = ['welcome', 'quick-actions', 'system-status'];
+
+  if (!isSuperAdmin) {
+    return <BusinessDashboard />;
+  }
 
   return (
     <>
