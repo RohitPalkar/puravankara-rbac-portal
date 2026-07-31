@@ -208,7 +208,7 @@ export default forwardRef<BasicInformationStepHandle, Props>(({ initialData, mod
           onChange={(e) => { setMobile(e.target.value); setMobileError(''); }}
           error={!!mobileError}
           helperText={mobileError}
-          required
+          required={!isEdit}
           fullWidth
           placeholder="+91 XXXXX XXXXX"
         />

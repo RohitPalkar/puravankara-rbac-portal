@@ -52,6 +52,7 @@ interface EnrichedUser {
   email: string;
   departmentId: number | null;
   departmentName?: string;
+  zoneId?: number | null;
   employmentStatus: EmploymentStatus;
   isActive: boolean;
   profiles?: {
@@ -114,7 +115,7 @@ function userToProjectData(user: EnrichedUser): ProjectMappingData {
   const departmentId = user.departmentId ?? null;
 
   return {
-    zoneId: user.userZones?.[0]?.zoneId ?? null,
+    zoneId: user.zoneId ?? user.userZones?.[0]?.zoneId ?? null,
     departmentId,
     primaryRoleId,
     isDepartmentAdmin: !!user.isDepartmentAdmin,

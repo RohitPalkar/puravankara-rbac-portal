@@ -243,7 +243,7 @@ export class UserService {
 
   async findById(
     id: string,
-  ): Promise<User & { profiles?: PermissionProfile[]; userRoles?: any[]; userZones?: any[]; reportingManager?: any; isDepartmentAdmin?: boolean }> {
+  ): Promise<User & { zoneId?: number | null; profiles?: PermissionProfile[]; userRoles?: any[]; userZones?: any[]; reportingManager?: any; isDepartmentAdmin?: boolean }> {
     this.logger.debug(`findById called with id="${id}" (typeof=${typeof id})`);
 
     let user: User | null = null;
@@ -308,6 +308,7 @@ export class UserService {
 
     return {
       ...user,
+      zoneId: user.department?.zoneId ?? null,
       profiles,
       userRoles: userRoles.map(ur => ({ roleId: ur.roleId, roleName: ur.role?.name, departmentId: ur.departmentId, departmentName: ur.department?.name })),
       userZones: userZones.map(uz => ({ zoneId: uz.zoneId, zoneName: uz.zone?.name })),
