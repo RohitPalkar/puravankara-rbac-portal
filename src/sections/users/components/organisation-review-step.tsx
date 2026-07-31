@@ -24,6 +24,7 @@ export interface OrganisationData {
   userGroupId?: number;
   effectiveFrom: string;
   effectiveTill?: string;
+  reportingManagerName?: string;
 }
 
 interface UserSearchResult {
@@ -79,9 +80,29 @@ export default forwardRef<OrganisationReviewStepHandle, Props>(
 
     const allUserList = useMemo(() => {
       const list = (potentialManagers as UserSearchResult[]) ?? [];
-      const exists = list.some((u) => u.empId === 'ADMIN001');
-      return exists ? list : [SUPER_ADMIN_USER, ...list];
-    }, [potentialManagers]);
+      const merged = list.some((u) => u.empId === 'ADMIN001') ? list : [SUPER_ADMIN_USER, ...list];
+      if (initialData?.reportingManagerId) {
+        const existing = merged.some((u) => u.empId === initialData.reportingManagerId);
+        if (!existing) {
+          merged.push({
+            empId: initialData.reportingManagerId,
+            name: initialData.reportingManagerName ?? 'Reporting Manager',
+            email: '',
+          });
+        }
+      }
+      if (initialData?.teamLeadId) {
+        const existing = merged.some((u) => u.empId === initialData.teamLeadId);
+        if (!existing) {
+          merged.push({
+            empId: initialData.teamLeadId,
+            name: 'Team Lead',
+            email: '',
+          });
+        }
+      }
+      return merged;
+    }, [potentialManagers, initialData]);
 
     const searchUsers = useMemo(() => {
       const list = userSearchResults ?? [];

@@ -138,6 +138,7 @@ function userToOrganisationData(user: EnrichedUser): OrganisationData {
   return {
     employmentStatus: 'Active',
     reportingManagerId: user.reportingManager?.empId ?? '',
+    reportingManagerName: user.reportingManager?.name,
     effectiveFrom: new Date().toISOString().slice(0, 10),
   };
 }
