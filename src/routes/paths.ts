@@ -50,6 +50,8 @@ export const paths = {
       root: `${ROOTS.DASHBOARD}/modules`,
       dashboard: (code: string) => `${ROOTS.DASHBOARD}/modules/${code}`,
       list: (code: string) => `${ROOTS.DASHBOARD}/modules/${code}/list`,
+      submodule: (code: string, submoduleId: string | number) =>
+        `${ROOTS.DASHBOARD}/modules/${code}/submodule/${submoduleId}`,
     },
   },
 };

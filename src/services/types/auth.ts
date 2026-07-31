@@ -45,6 +45,21 @@ export interface ScopeInfo {
 }
 
 export interface CompiledPermissions {
+  user?: {
+    empId: string;
+    name: string;
+    email: string;
+    roles: string[];
+  };
+  permissions?: {
+    modules: {
+      code: string;
+      name: string;
+      route: string;
+      allowed: boolean;
+      actions: string[];
+    }[];
+  };
   projects: ProjectPermissions[];
   scope?: ScopeInfo;
 }

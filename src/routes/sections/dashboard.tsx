@@ -42,6 +42,7 @@ const ChangePasswordPage = lazy(() => import('src/sections/account/change-passwo
 
 // Modules (RBAC Showcase)
 const ModuleDashboardPage = lazy(() => import('src/sections/modules/module-dashboard'));
+const SubmoduleShowcasePage = lazy(() => import('src/sections/modules/submodule-showcase'));
 const ModuleListPage = lazy(() => import('src/sections/modules/module-list'));
 const ModuleCreatePage = lazy(() => import('src/sections/modules/module-create'));
 const ModuleViewPage = lazy(() => import('src/sections/modules/module-view'));
@@ -103,6 +104,7 @@ export const dashboardRoutes = [
       { path: 'change-password', element: <ChangePasswordPage /> },
       // Modules (RBAC Showcase)
       { path: 'modules/:moduleCode', element: <ModuleDashboardPage /> },
+      { path: 'modules/:moduleCode/submodule/:submoduleId', element: <SubmoduleShowcasePage /> },
       { path: 'modules/:moduleCode/list', element: <ModuleListPage /> },
       { path: 'modules/:moduleCode/new', element: <ModuleCreatePage /> },
       { path: 'modules/:moduleCode/:id', element: <ModuleViewPage /> },

@@ -45,7 +45,7 @@ export function useNavData() {
         const moduleSlug = slugify(mod.code ?? mod.name);
         const subItems = (mod.subModules ?? []).map((sm) => ({
           title: sm.name,
-          path: paths.dashboard.modules.dashboard(moduleSlug),
+          path: paths.dashboard.modules.submodule(moduleSlug, sm.id),
         }));
         return {
           title: mod.name,
@@ -120,7 +120,7 @@ export function useNavData() {
           .filter((sm) => allowedSubModuleIds.has(sm.id))
           .map((sm) => ({
             title: sm.name,
-            path: paths.dashboard.modules.dashboard(moduleSlug),
+            path: paths.dashboard.modules.submodule(moduleSlug, sm.id),
           }));
 
         return {
