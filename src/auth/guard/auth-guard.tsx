@@ -61,7 +61,10 @@ export function AuthGuard({ children }: Props) {
     if (authenticated && !loading) {
       queryClient.prefetchQuery({
         queryKey: queryKeys.permissions.me,
-        queryFn: () => permissionService.getMyPermissions(),
+        queryFn: async () => {
+          const res = await permissionService.getMyPermissions();
+          return res.data;
+        },
         staleTime: 30000,
       });
       queryClient.prefetchQuery({
