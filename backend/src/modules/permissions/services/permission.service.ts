@@ -782,6 +782,51 @@ export class PermissionService {
     const allActions = await this.actionRepo.find({
       where: { isActive: true },
     });
+
+    // Hoisted single-pass fetches (independent of module) to avoid N+1
+    let userRoles: UserRole[] = [];
+    let roleIds: number[] = [];
+    let rolePermsAll: RoleProjectPermission[] = [];
+    let roleActionPermsAll: RoleActionPermission[] = [];
+    let templatePermsAll: TemplatePermission[] = [];
+    let overridesAll: UserPermissionOverride[] = [];
+    let profiles: PermissionProfile[] = [];
+
+    if (!isSuperAdmin) {
+      userRoles = await this.userRoleRepo.find({ where: { userId } });
+      roleIds = userRoles.map((ur) => ur.roleId);
+      if (roleIds.length > 0) {
+        rolePermsAll = await this.rppRepo.find({
+          where: { roleId: In(roleIds), projectId },
+        });
+        roleActionPermsAll = await this.rapRepo.find({
+          where: { roleId: In(roleIds) },
+        });
+      }
+      const templates = await this.uptRepo.find({
+        where: { userId, projectId },
+      });
+      const templateIds = templates.map((t) => t.templateId);
+      if (templateIds.length > 0) {
+        templatePermsAll = await this.tpRepo.find({
+          where: { templateId: In(templateIds) },
+        });
+      }
+      overridesAll = await this.upoRepo.find({
+        where: { userId, projectId },
+      });
+
+      // Fetch profile-based module access (once per call)
+      try {
+        profiles = await this.profileRepo.find({
+          where: { userId },
+          relations: { modules: { subModules: { projects: true } } },
+        });
+      } catch {
+        // profile table may not exist
+      }
+    }
+
     const result: {
       id: number;
       name: string;
@@ -825,48 +870,16 @@ export class PermissionService {
           });
         }
       } else {
-        const userRoles = await this.userRoleRepo.find({ where: { userId } });
-        const roleIds = userRoles.map((ur) => ur.roleId);
-
-        const rolePerms =
-          roleIds.length > 0
-            ? await this.rppRepo.find({
-                where: { roleId: In(roleIds), projectId, moduleId: mod.id },
-              })
-            : [];
-
-        const roleActionPerms =
-          roleIds.length > 0
-            ? await this.rapRepo.find({
-                where: { roleId: In(roleIds), moduleId: mod.id },
-              })
-            : [];
-
-        const templates = await this.uptRepo.find({
-          where: { userId, projectId },
-        });
-        const templateIds = templates.map((t) => t.templateId);
-        const templatePerms =
-          templateIds.length > 0
-            ? await this.tpRepo.find({
-                where: { templateId: In(templateIds), moduleId: mod.id },
-              })
-            : [];
-
-        const overrides = await this.upoRepo.find({
-          where: { userId, projectId, moduleId: mod.id },
-        });
-
-        // Fetch profile-based module access
-        let profiles: PermissionProfile[] = [];
-        try {
-          profiles = await this.profileRepo.find({
-            where: { userId },
-            relations: { modules: { subModules: { projects: true } } },
-          });
-        } catch {
-          // profile table may not exist
-        }
+        const rolePerms = rolePermsAll.filter(
+          (p) => p.moduleId === mod.id,
+        );
+        const roleActionPerms = roleActionPermsAll.filter(
+          (p) => p.moduleId === mod.id,
+        );
+        const templatePerms = templatePermsAll.filter(
+          (p) => p.moduleId === mod.id,
+        );
+        const overrides = overridesAll.filter((o) => o.moduleId === mod.id);
 
         if (subModules.length > 0) {
           for (const sm of subModules) {
