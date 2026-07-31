@@ -11,29 +11,7 @@ import CardContent from '@mui/material/CardContent';
 
 import { Iconify } from 'src/components/iconify';
 
-import { hasAnyAction } from 'src/auth/utils/authorization';
-
 const ACTION_ORDER = ['VIEW', 'CREATE', 'EDIT', 'DELETE', 'APPROVE', 'EXPORT'];
-
-function moduleSummary(permissions: any, moduleName: string): Record<string, boolean> {
-  const summary: Record<string, boolean> = {};
-  ACTION_ORDER.forEach((code) => { summary[code] = false; });
-
-  if (!permissions || !Array.isArray(permissions.projects)) return summary;
-
-  permissions.projects.forEach((project: any) => {
-    (project.modules ?? []).forEach((mod: any) => {
-      (mod.subModules ?? []).forEach((sm: any) => {
-        if (sm.name !== moduleName) return;
-        (sm.actions ?? []).forEach((a: any) => {
-          if (a.allowed) summary[a.code] = true;
-        });
-      });
-    });
-  });
-
-  return summary;
-}
 
 type ModuleSummaryItem = { id: string | number | null; name: string; summary: Record<string, boolean> };
 
@@ -41,11 +19,24 @@ export function PermissionSummary({ permissions, moduleTree, isLoading }: { perm
   const modules = useMemo<ModuleSummaryItem[]>(() => {
     if (!permissions || !Array.isArray(permissions.projects) || !moduleTree) return [];
 
-    return (moduleTree ?? []).filter((mod: any) => hasAnyAction(permissions, mod.name)).map((mod: any) => ({
-      id: mod.id,
-      name: mod.name,
-      summary: moduleSummary(permissions, mod.name),
-    }));
+    const allowedModules = new Map<string, Record<string, boolean>>();
+    permissions.projects.forEach((project: any) => {
+      (project.modules ?? []).forEach((mod: any) => {
+        if (!allowedModules.has(mod.name)) {
+          allowedModules.set(mod.name, Object.fromEntries(ACTION_ORDER.map((code) => [code, false])));
+        }
+        (mod.subModules ?? []).forEach((sm: any) => {
+          if (!moduleTree.some((m: any) => m.name === mod.name)) return;
+          (sm.actions ?? []).forEach((a: any) => {
+            if (a.allowed) allowedModules.get(mod.name)![a.code] = true;
+          });
+        });
+      });
+    });
+
+    return Array.from(allowedModules.entries())
+      .filter(([, summary]) => ACTION_ORDER.some((code) => summary[code]))
+      .map(([name, summary]) => ({ id: null, name, summary }));
   }, [permissions, moduleTree]);
 
   if (isLoading) {
