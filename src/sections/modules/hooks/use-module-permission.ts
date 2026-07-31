@@ -64,7 +64,7 @@ export function useModulePermission(actionCode?: string) {
       return { moduleName: '', moduleId: null, isAllowed: false, isLoading: permissionsLoading || treeLoading };
     }
 
-    const treeModule = moduleTree.find((m) => slugify(m.code ?? m.name) === moduleCode);
+    const treeModule = moduleTree.find((m) => slugify(m.name) === moduleCode);
     if (!treeModule) return { moduleName: '', moduleId: null, isAllowed: false, isLoading: false };
 
     if (isSA) {
@@ -107,7 +107,7 @@ export function useModuleActions() {
       return { actions: {}, subModules: [], moduleName: '', moduleId: null, isAllowed: false, isLoading: true };
     }
 
-    const treeModule = moduleTree.find((m) => slugify(m.code ?? m.name) === moduleCode);
+    const treeModule = moduleTree.find((m) => slugify(m.name) === moduleCode);
     if (!treeModule) return { actions: {}, subModules: [], moduleName: '', moduleId: null, isAllowed: false, isLoading: false };
 
     if (isSA) {

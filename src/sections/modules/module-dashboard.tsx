@@ -1,8 +1,5 @@
 import { Helmet } from 'react-helmet-async';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useQueryClient } from '@tanstack/react-query';
-
-import { queryKeys } from 'src/services/api/query-keys';
 
 import Box from '@mui/material/Box';
 import Grid from '@mui/material/Grid';
@@ -51,19 +48,7 @@ export default function ModuleDashboardPage() {
   const { data: myPermissions } = useMyPermissions();
   const { data: moduleTree } = useModuleTree();
 
-  const treeModule = (moduleTree ?? []).find((m) => slugify(m.code ?? m.name) === moduleCode);
-
-  const queryClient = useQueryClient();
-  const qs = queryClient.getQueryState(queryKeys.permissions.me);
-  const dbg = JSON.stringify({
-    isLoading,
-    subModules: subModules.length,
-    permsKeys: myPermissions ? Object.keys(myPermissions) : null,
-    projects: myPermissions?.projects?.length ?? null,
-    qStatus: qs?.status,
-    qHasData: !!qs?.data,
-    treeModuleId: treeModule?.id ?? null,
-  });
+  const treeModule = (moduleTree ?? []).find((m) => slugify(m.name) === moduleCode);
 
   const assignedProjects = (myPermissions?.projects ?? [])
     .filter((p) => p.id !== 0 && (p.modules ?? []).some((m) => treeModule && m.id === treeModule.id));
@@ -86,7 +71,6 @@ export default function ModuleDashboardPage() {
 
   return (
     <>
-      <div data-testid="rbac-debug" style={{ position: 'fixed', bottom: 0, right: 0, zIndex: 99999, background: '#000', color: '#0f0', fontSize: 11, padding: 6, maxWidth: 500 }}>{dbg}</div>
       <Helmet><title>{moduleName || 'Module'} - {CONFIG.appName}</title></Helmet>
       <PageContainer>
         <PageHeader

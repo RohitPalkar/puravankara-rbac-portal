@@ -54,7 +54,7 @@ export function ModuleShortcuts({ permissions, moduleTree, isLoading }: { permis
               transition: 'all 0.2s ease',
               '&:hover': { borderColor: 'primary.main', bgcolor: 'primary.lighter', transform: 'translateY(-2px)' },
             }}
-            onClick={() => navigate(paths.dashboard.modules.dashboard(slugify(mod.code ?? mod.name)))}
+            onClick={() => navigate(paths.dashboard.modules.dashboard(slugify(mod.name)))}
           >
             <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
               <Stack direction="row" spacing={1.5} alignItems="center">

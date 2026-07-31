@@ -127,7 +127,7 @@ export default function SubmoduleShowcasePage() {
   const [formName, setFormName] = useState('');
   const [notice, setNotice] = useState<{ severity: 'success' | 'info' | 'error'; text: string } | null>(null);
 
-  const treeModule = (moduleTree ?? []).find((m) => slugify(m.code ?? m.name) === moduleCode);
+  const treeModule = (moduleTree ?? []).find((m) => slugify(m.name) === moduleCode);
 
   const openForm = (mode: 'create' | 'edit') => {
     setShowForm(mode);

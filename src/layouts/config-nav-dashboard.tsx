@@ -42,7 +42,7 @@ export function useNavData() {
   return useMemo(() => {
     if (isSuperAdmin) {
       const allModules = (moduleTree ?? []).map((mod) => {
-        const moduleSlug = slugify(mod.code ?? mod.name);
+        const moduleSlug = slugify(mod.name);
         const subItems = (mod.subModules ?? []).map((sm) => ({
           title: sm.name,
           path: paths.dashboard.modules.submodule(moduleSlug, sm.id),
@@ -115,7 +115,7 @@ export function useNavData() {
     const dynamicItems = !myPermissions ? [] : (moduleTree ?? [])
       .filter((mod) => allowedModuleIds.has(mod.id))
       .map((mod) => {
-        const moduleSlug = slugify(mod.code ?? mod.name);
+        const moduleSlug = slugify(mod.name);
         const subItems = (mod.subModules ?? [])
           .filter((sm) => allowedSubModuleIds.has(sm.id))
           .map((sm) => ({
