@@ -28,6 +28,16 @@ const apiClient = axios.create({
   headers: { 'Content-Type': 'application/json' },
 });
 
+const RETRYABLE_STATUS_CODES = [502, 503, 504];
+
+const MAX_RETRIES = 2;
+
+const RETRY_DELAY_MS = 1000;
+
+function retryDelay(attempt: number): number {
+  return RETRY_DELAY_MS * 2 ** attempt;
+}
+
 apiClient.interceptors.request.use((config: InternalAxiosRequestConfig) => {
   if (accessToken && config.headers) {
     config.headers.Authorization = `Bearer ${accessToken}`;
@@ -37,12 +47,24 @@ apiClient.interceptors.request.use((config: InternalAxiosRequestConfig) => {
 
 apiClient.interceptors.response.use(
   (response) => response,
-  (error: AxiosError<ApiErrorType>) => {
+  async (error: AxiosError<ApiErrorType>) => {
     if (!error.response) {
       return Promise.reject(new NetworkError());
     }
 
-    const { status, data } = error.response;
+    const { status, data, config } = error.response;
+
+    const attempt = (config as InternalAxiosRequestConfig & { _retryCount?: number })?._retryCount ?? 0;
+
+    const canRetry =
+      RETRYABLE_STATUS_CODES.includes(status) &&
+      attempt < MAX_RETRIES;
+
+    if (canRetry) {
+      (config as InternalAxiosRequestConfig & { _retryCount?: number })._retryCount = attempt + 1;
+      await new Promise((resolve) => setTimeout(resolve, retryDelay(attempt)));
+      return apiClient.request(config as InternalAxiosRequestConfig);
+    }
 
     switch (status) {
       case 401:

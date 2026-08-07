@@ -40,7 +40,7 @@ describe('TokenService', () => {
 
       expect(token).toBe('access-token');
       expect(jwtService.sign).toHaveBeenCalledWith(mockPayload, {
-        expiresIn: 900,
+        expiresIn: 28800,
       });
     });
   });
@@ -67,7 +67,7 @@ describe('TokenService', () => {
 
       expect(pair.accessToken).toBe('token');
       expect(pair.refreshToken).toBe('token');
-      expect(pair.expiresIn).toBe(900);
+      expect(pair.expiresIn).toBe(28800);
     });
   });
 

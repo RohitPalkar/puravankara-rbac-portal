@@ -122,8 +122,6 @@ export default function DashboardView() {
     'activities', 'system-status', 'security', 'health', 'quick-actions',
   ];
 
-  const nonGridSections: WidgetSection[] = ['welcome', 'quick-actions', 'system-status'];
-
   if (!isSuperAdmin) {
     return <BusinessDashboard />;
   }

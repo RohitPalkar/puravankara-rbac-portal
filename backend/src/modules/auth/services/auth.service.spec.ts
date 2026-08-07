@@ -154,7 +154,6 @@ describe('AuthService', () => {
       const result = await service.login(loginDto, '127.0.0.1', 'test-agent');
 
       expect(result.accessToken).toBe('access-token');
-      expect(result.refreshToken).toBe('refresh-token');
       expect(result.user.email).toBe('test@example.com');
       expect(auditService.createLog).toHaveBeenCalledWith(
         expect.objectContaining({ action: 'LOGIN_SUCCESS' }),

@@ -1,8 +1,10 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
 import { PermissionService } from './permission.service';
 import { PermissionCacheService } from './permission-cache.service';
+import { PermissionCompilerService } from './permission-compiler.service';
+import { ScopeResolutionService } from './scope-resolution.service';
 import { User } from '../../users/entities/user.entity';
 import { UserRole } from '../../users/entities/user-role.entity';
 import { Role } from '../../organization/entities/role.entity';
@@ -15,8 +17,10 @@ import { UserProjectGroup } from '../../project-access/entities/user-project-gro
 import { ProjectGroupProject } from '../../project-access/entities/project-group-project.entity';
 import { Module } from '../../product-catalog/entities/module.entity';
 import { SubModule } from '../../product-catalog/entities/sub-module.entity';
+import { ModuleAction } from '../../product-catalog/entities/module-action.entity';
 import { Action } from '../../product-catalog/entities/action.entity';
-import { PermissionCompilerService } from './permission-compiler.service';
+import { PermissionProfile } from '../entities/permission-profile.entity';
+import { RoleActionPermission } from '../entities/role-action-permission.entity';
 
 describe('PermissionService', () => {
   let service: PermissionService;
@@ -102,12 +106,31 @@ describe('PermissionService', () => {
           useValue: { find: jest.fn(), findOne: jest.fn() },
         },
         {
+          provide: getRepositoryToken(SubModule),
+          useValue: { find: jest.fn().mockResolvedValue([]) },
+        },
+        {
+          provide: getRepositoryToken(ModuleAction),
+          useValue: { find: jest.fn(), findOne: jest.fn() },
+        },
+        {
           provide: getRepositoryToken(Action),
           useValue: { find: jest.fn(), findOne: jest.fn() },
         },
         {
-          provide: getRepositoryToken(SubModule),
-          useValue: { find: jest.fn().mockResolvedValue([]) },
+          provide: getRepositoryToken(PermissionProfile),
+          useValue: {
+            find: jest.fn().mockResolvedValue([]),
+            findOne: jest.fn(),
+          },
+        },
+        {
+          provide: getRepositoryToken(RoleActionPermission),
+          useValue: { find: jest.fn(), count: jest.fn() },
+        },
+        {
+          provide: DataSource,
+          useValue: { query: jest.fn(), createQueryRunner: jest.fn() },
         },
         {
           provide: PermissionCacheService,
@@ -116,6 +139,16 @@ describe('PermissionService', () => {
         {
           provide: PermissionCompilerService,
           useValue: { getCompiled: jest.fn(), compileForUser: jest.fn() },
+        },
+        {
+          provide: ScopeResolutionService,
+          useValue: {
+            resolveScope: jest.fn(),
+            resolveUserScope: jest.fn().mockResolvedValue({
+              resources: { zones: [] },
+              hasProject: jest.fn().mockReturnValue(true),
+            }),
+          },
         },
       ],
     }).compile();
