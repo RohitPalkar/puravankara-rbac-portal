@@ -34,7 +34,6 @@ import { UserPermissionOverrideService } from './services/user-permission-overri
 import { PermissionTemplateService } from './services/permission-template.service';
 import { PermissionCacheService } from './services/permission-cache.service';
 import { PermissionCompilerService } from './services/permission-compiler.service';
-import { PermissionProfileService } from './services/permission-profile.service';
 import { RoleActionPermissionService } from './services/role-action-permission.service';
 import { ScopeResolutionService } from './services/scope-resolution.service';
 import { PermissionGuard } from './guards/permission.guard';
@@ -92,7 +91,6 @@ import { RoleProjectPermissionService } from './services/role-project-permission
     RoleActionPermissionService,
     PermissionCacheService,
     PermissionCompilerService,
-    PermissionProfileService,
     ScopeResolutionService,
     PermissionGuard,
   ],

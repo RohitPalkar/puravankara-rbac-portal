@@ -8,7 +8,6 @@ import { AuthService } from './services/auth.service';
 import { TokenService } from './services/token.service';
 import { PasswordService } from './services/password.service';
 import { JwtStrategy } from './strategies/jwt.strategy';
-import { RefreshStrategy } from './strategies/refresh.strategy';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { User } from '../users/entities/user.entity';
 import { UserAuth } from './entities/user-auth.entity';
@@ -44,7 +43,6 @@ import { PermissionsModule } from '../permissions/permissions.module';
     TokenService,
     PasswordService,
     JwtStrategy,
-    RefreshStrategy,
     JwtAuthGuard,
   ],
   exports: [

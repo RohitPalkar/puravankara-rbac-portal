@@ -288,25 +288,6 @@ export const endpoints = {
     },
   },
 
-  delegations: {
-    list: `${API_PREFIX}/delegations`,
-    byId: (id: number) => `${API_PREFIX}/delegations/${id}`,
-    create: `${API_PREFIX}/delegations`,
-    update: (id: number) => `${API_PREFIX}/delegations/${id}`,
-    delete: (id: number) => `${API_PREFIX}/delegations/${id}`,
-  },
-
-  notifications: {
-    list: `${API_PREFIX}/notifications`,
-    count: `${API_PREFIX}/notifications/count`,
-    preferences: {
-      get: `${API_PREFIX}/notifications/preferences`,
-      update: `${API_PREFIX}/notifications/preferences`,
-    },
-    read: (id: number) => `${API_PREFIX}/notifications/${id}/read`,
-    readAll: `${API_PREFIX}/notifications/read-all`,
-  },
-
   auditLogs: {
     list: `${API_PREFIX}/audit-logs`,
   },

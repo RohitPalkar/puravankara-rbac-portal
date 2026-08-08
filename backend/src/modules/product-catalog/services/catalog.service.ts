@@ -13,8 +13,6 @@ import {
   UpdateModuleDto,
   CreateSubModuleDto,
   UpdateSubModuleDto,
-  CreateActionGroupDto,
-  UpdateActionGroupDto,
   CreateActionDto,
   UpdateActionDto,
   CreateModuleActionDto,
@@ -117,24 +115,6 @@ export class SubModuleCatalogService extends BaseService<SubModule> {
   }
 
   async update(id: number, dto: UpdateSubModuleDto): Promise<SubModule> {
-    return super.update(id, dto);
-  }
-}
-
-@Injectable()
-export class ActionGroupCatalogService extends BaseService<ActionGroup> {
-  constructor(
-    @InjectRepository(ActionGroup)
-    readonly repository: Repository<ActionGroup>,
-  ) {
-    super(repository);
-  }
-
-  async create(dto: CreateActionGroupDto): Promise<ActionGroup> {
-    return super.create(dto);
-  }
-
-  async update(id: number, dto: UpdateActionGroupDto): Promise<ActionGroup> {
     return super.update(id, dto);
   }
 }

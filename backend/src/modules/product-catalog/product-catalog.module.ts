@@ -8,14 +8,12 @@ import { ModuleAction } from './entities/module-action.entity';
 import {
   ModuleCatalogService,
   SubModuleCatalogService,
-  ActionGroupCatalogService,
   ActionCatalogService,
   ModuleActionCatalogService,
 } from './services/catalog.service';
 import {
   ModuleController,
   SubModuleController,
-  ActionGroupController,
   ActionController,
   ModuleActionController,
 } from './controllers/catalog.controller';
@@ -33,14 +31,12 @@ import {
   controllers: [
     ModuleController,
     SubModuleController,
-    ActionGroupController,
     ActionController,
     ModuleActionController,
   ],
   providers: [
     ModuleCatalogService,
     SubModuleCatalogService,
-    ActionGroupCatalogService,
     ActionCatalogService,
     ModuleActionCatalogService,
   ],

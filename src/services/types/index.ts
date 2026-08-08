@@ -9,19 +9,6 @@ export type { ApiError, ApiResponse, PaginationMeta, PaginationQuery } from './a
 
 export type { UserGroup, CreateUserGroupRequest, UpdateUserGroupRequest } from './user-group';
 export type { Phase, CreatePhaseRequest, UpdatePhaseRequest, UpdateLaunchRequest } from './phase';
-export type {
-  Delegation,
-  DelegationQuery,
-  CreateDelegationRequest,
-  UpdateDelegationRequest,
-} from './delegation';
-
-export type {
-  Notification,
-  NotificationQuery,
-  NotificationPreference,
-  UpdateNotificationPreferenceRequest,
-} from './notification';
 
 export type {
   Role,
@@ -64,17 +51,6 @@ export type {
   CreateChannelPartnerTypeRequest,
   UpdateChannelPartnerTypeRequest,
 } from './channel-partner';
-
-export type {
-  ApprovalStep,
-  ApprovalRequest,
-  ApprovalWorkflow,
-  ApprovalRequestStep,
-  CreateWorkflowRequest,
-  SubmitApprovalRequest,
-  ApprovalActionRequest,
-  CreateWorkflowStepRequest,
-} from './workflow';
 
 export type {
   Project,

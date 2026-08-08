@@ -161,30 +161,6 @@ export const queryKeys = {
     },
   },
 
-  workflows: {
-    all: ['workflows'] as const,
-    byId: (id: number) => ['workflows', id] as const,
-    steps: (id: number) => ['workflows', id, 'steps'] as const,
-    approvals: {
-      pending: ['approvals', 'pending'] as const,
-      submitted: ['approvals', 'submitted'] as const,
-      byId: (id: number) => ['approvals', id] as const,
-    },
-  },
-
-  delegations: {
-    all: ['delegations'] as const,
-    list: (params?: Record<string, unknown>) => ['delegations', 'list', params] as const,
-    byId: (id: number) => ['delegations', id] as const,
-  },
-
-  notifications: {
-    all: ['notifications'] as const,
-    list: (params?: Record<string, unknown>) => ['notifications', 'list', params] as const,
-    count: ['notifications', 'count'] as const,
-    preferences: ['notifications', 'preferences'] as const,
-  },
-
   auditLogs: {
     list: (params?: Record<string, unknown>) => ['audit-logs', 'list', params] as const,
   },
