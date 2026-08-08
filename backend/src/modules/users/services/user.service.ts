@@ -428,20 +428,13 @@ export class UserService {
 
       const deptRolePairs = new Set<string>();
       for (const profileDto of dto.profiles) {
-        // Validate buddy RM requires department + role
         if (profileDto.profileType === ProfileType.BUDDY_RM) {
-          if (!profileDto.departmentId || !profileDto.roleId) {
-            throw new BadRequestException(
-              'Buddy RM profile requires departmentId and roleId',
-            );
-          }
           if (profileDto.buddyUserId === id) {
             throw new BadRequestException('Buddy RM cannot be the same user');
           }
-        }
-
-        // Validate no duplicate dept+role across profiles
-        if (profileDto.departmentId && profileDto.roleId) {
+          // Buddy RM is a temporary delegation target identified by
+          // buddyUserId; department/role are informational and optional.
+        } else if (profileDto.departmentId && profileDto.roleId) {
           const pair = `${profileDto.departmentId}:${profileDto.roleId}`;
           if (deptRolePairs.has(pair)) {
             throw new BadRequestException(
@@ -498,17 +491,21 @@ export class UserService {
       }
     }
 
-    // Sync UserProjectAccess records so the permission system can resolve project IDs
-    await this.userProjectAccessRepository.delete({ userId: id });
-    for (const projectId of allProjectIds) {
-      await this.userProjectAccessRepository.save(
-        this.userProjectAccessRepository.create({
-          userId: id,
-          projectId,
-          assignedBy: 'SYSTEM',
-          assignedAt: new Date(),
-        }),
-      );
+    // Sync UserProjectAccess records only when profiles were explicitly
+    // managed in this update. A plain field edit (e.g. active status toggle)
+    // must never wipe the user's project mapping.
+    if (dto.profiles) {
+      await this.userProjectAccessRepository.delete({ userId: id });
+      for (const projectId of allProjectIds) {
+        await this.userProjectAccessRepository.save(
+          this.userProjectAccessRepository.create({
+            userId: id,
+            projectId,
+            assignedBy: 'SYSTEM',
+            assignedAt: new Date(),
+          }),
+        );
+      }
     }
 
     const result = await this.findById(id);
@@ -605,38 +602,44 @@ export class UserService {
       const reportingLines: UserReportingLine[] = [];
       const profiles: PermissionProfile[] = [];
 
-      // Create legacy user_roles for backward compatibility
-      if (!dto.profiles?.length) {
-        const primaryRole = queryRunner.manager.create(UserRole, {
+      // Create legacy user_roles for backward compatibility. Primary + secondaries
+      // are always derived from the organization block so a secondary role is
+      // never lost even when its permission profile has no enabled modules.
+      const savedRolePairs = new Set<string>();
+      const addRoleRow = async (
+        departmentId: number | null,
+        roleId: number | null,
+      ) => {
+        if (!departmentId || !roleId) return;
+        const key = `${departmentId}:${roleId}`;
+        if (savedRolePairs.has(key)) return;
+        savedRolePairs.add(key);
+        const row = queryRunner.manager.create(UserRole, {
           userId: savedUser.empId,
-          departmentId: dto.basic.departmentId,
-          roleId: dto.organization.primaryRole,
+          departmentId,
+          roleId,
           assignedBy: 'SYSTEM',
           assignedAt: new Date(),
         });
-        roles.push(await queryRunner.manager.save(primaryRole));
+        roles.push(await queryRunner.manager.save(row));
+      };
 
-        if (dto.organization.secondaryRoles?.length) {
-          for (const entry of dto.organization.secondaryRoles) {
-            const sr = queryRunner.manager.create(UserRole, {
-              userId: savedUser.empId,
-              departmentId: entry.departmentId ?? dto.basic.departmentId,
-              roleId: entry.roleId,
-              assignedBy: 'SYSTEM',
-              assignedAt: new Date(),
-            });
-            roles.push(await queryRunner.manager.save(sr));
-          }
-        }
-
-        // Assign the primary zone
-        const uz = queryRunner.manager.create(UserZone, {
-          userId: savedUser.empId,
-          zoneId: dto.organization.zoneId,
-          assignedAt: new Date(),
-        });
-        zones.push(await queryRunner.manager.save(uz));
+      await addRoleRow(dto.basic.departmentId, dto.organization.primaryRole);
+      for (const entry of dto.organization.secondaryRoles ?? []) {
+        await addRoleRow(
+          entry.departmentId ?? dto.basic.departmentId,
+          entry.roleId,
+        );
       }
+
+      // Always assign the primary zone so zone-filtered lists and reporting
+      // lookup work even when permission profiles drive user creation.
+      const uz = queryRunner.manager.create(UserZone, {
+        userId: savedUser.empId,
+        zoneId: dto.organization.zoneId,
+        assignedAt: new Date(),
+      });
+      zones.push(await queryRunner.manager.save(uz));
 
       // Handle Department Administrator assignment
       if (dto.organization.isDepartmentAdmin && dto.basic.departmentId) {
@@ -672,28 +675,21 @@ export class UserService {
       if (dto.profiles?.length) {
         const deptRolePairs = new Set<string>();
         for (const profileDto of dto.profiles) {
-          // Validate buddy RM requires department + role
           if (profileDto.profileType === ProfileType.BUDDY_RM) {
-            if (!profileDto.departmentId || !profileDto.roleId) {
-              throw new BadRequestException(
-                'Buddy RM profile requires departmentId and roleId',
-              );
-            }
             if (profileDto.buddyUserId === savedUser.empId) {
               throw new BadRequestException('Buddy RM cannot be the same user');
             }
+            // Buddy RM is a temporary delegation target identified by
+            // buddyUserId; department/role are informational and optional.
+          } else if (profileDto.departmentId && profileDto.roleId) {
+          const pair = `${profileDto.departmentId}:${profileDto.roleId}`;
+          if (deptRolePairs.has(pair)) {
+            throw new BadRequestException(
+              `Duplicate department+role assignment: department ${profileDto.departmentId}, role ${profileDto.roleId}`,
+            );
           }
-
-          // Validate no duplicate dept+role across profiles
-          if (profileDto.departmentId && profileDto.roleId) {
-            const pair = `${profileDto.departmentId}:${profileDto.roleId}`;
-            if (deptRolePairs.has(pair)) {
-              throw new BadRequestException(
-                `Duplicate department+role assignment: department ${profileDto.departmentId}, role ${profileDto.roleId}`,
-              );
-            }
-            deptRolePairs.add(pair);
-          }
+          deptRolePairs.add(pair);
+        }
 
           const profile = queryRunner.manager.create(PermissionProfile, {
             userId: savedUser.empId,
@@ -706,16 +702,9 @@ export class UserService {
           });
           const savedProfile = await queryRunner.manager.save(profile);
 
-          // Create user_role entries for backward compat
-          if (profileDto.roleId && profileDto.departmentId) {
-            const ur = queryRunner.manager.create(UserRole, {
-              userId: savedUser.empId,
-              departmentId: profileDto.departmentId,
-              roleId: profileDto.roleId,
-              assignedBy: 'SYSTEM',
-              assignedAt: new Date(),
-            });
-            roles.push(await queryRunner.manager.save(ur));
+          // Create user_role entries for backward compat (skip buddy RM)
+          if (profileDto.profileType !== ProfileType.BUDDY_RM) {
+            await addRoleRow(profileDto.departmentId, profileDto.roleId);
           }
 
           // Create module → subModule → project tree
@@ -788,33 +777,14 @@ export class UserService {
 
       await queryRunner.commitTransaction();
 
-      // Trigger permission compilation
-      if (profiles.length > 0) {
-        const projectIds = new Set<number>();
-        for (const p of profiles) {
-          const fullProfile = await this.profileRepo.findOne({
-            where: { id: p.id },
-            relations: { modules: { subModules: { projects: true } } },
-          });
-          if (fullProfile?.modules) {
-            for (const mod of fullProfile.modules) {
-              for (const sm of mod.subModules) {
-                for (const proj of sm.projects) {
-                  projectIds.add(proj.projectId);
-                }
-              }
-            }
-          }
-        }
-        for (const pid of projectIds) {
-          this.compilerService
-            .compileAndSave(savedUser.empId, pid)
-            .catch((err) =>
-              this.logger.error(
-                'Failed to compile permissions for user project',
-                err,
-              ),
-            );
+      // Await permission compilation so the freshly-created user's snapshot is
+      // available immediately after the response, not fire-and-forget.
+      const compileProjectIds = new Set<number>([...allProjectIds]);
+      for (const pid of compileProjectIds) {
+        try {
+          await this.compilerService.compileAndSave(savedUser.empId, pid);
+        } catch (err) {
+          this.logger.error('Failed to compile permissions for user project', err);
         }
       }
 
@@ -978,37 +948,45 @@ export class UserService {
         );
       }
 
-      // --- Replace user_roles ---
+      // --- Replace user_roles (primary + secondaries always from org) ---
       await queryRunner.manager.delete(UserRole, { userId: id });
       const roles: UserRole[] = [];
       const zones: UserZone[] = [];
       const reportingLines: UserReportingLine[] = [];
       const profiles: PermissionProfile[] = [];
+      const savedRolePairs = new Set<string>();
 
-      if (!dto.profiles?.length) {
-        const primaryRoleRow = queryRunner.manager.create(UserRole, {
+      const addRoleRow = async (
+        departmentId: number | null,
+        roleId: number | null,
+      ) => {
+        if (!departmentId || !roleId) return;
+        const key = `${departmentId}:${roleId}`;
+        if (savedRolePairs.has(key)) return;
+        savedRolePairs.add(key);
+        const row = queryRunner.manager.create(UserRole, {
           userId: id,
-          departmentId: dto.basic.departmentId,
-          roleId: dto.organization.primaryRole,
+          departmentId,
+          roleId,
           assignedBy: 'SYSTEM',
           assignedAt: new Date(),
         });
-        roles.push(await queryRunner.manager.save(primaryRoleRow));
+        roles.push(await queryRunner.manager.save(row));
+      };
 
-        if (dto.organization.secondaryRoles?.length) {
-          for (const entry of dto.organization.secondaryRoles) {
-            const sr = queryRunner.manager.create(UserRole, {
-              userId: id,
-              departmentId: entry.departmentId ?? dto.basic.departmentId,
-              roleId: entry.roleId,
-              assignedBy: 'SYSTEM',
-              assignedAt: new Date(),
-            });
-            roles.push(await queryRunner.manager.save(sr));
-          }
-        }
+      await addRoleRow(dto.basic.departmentId, dto.organization.primaryRole);
+      for (const entry of dto.organization.secondaryRoles ?? []) {
+        await addRoleRow(
+          entry.departmentId ?? dto.basic.departmentId,
+          entry.roleId,
+        );
+      }
 
-        // Replace the primary zone assignment
+      // Always persist the primary zone assignment. Previously this was only
+      // written in the no-profiles branch, so edits with permission profiles
+      // silently left user_zones stale (users stayed in their old zone for
+      // zone-filtered lists and reporting-manager lookup).
+      if (dto.organization.zoneId != null) {
         await queryRunner.manager.delete(UserZone, { userId: id });
         const uz = queryRunner.manager.create(UserZone, {
           userId: id,
@@ -1033,23 +1011,23 @@ export class UserService {
       }
 
       // --- Replace permission profiles + UserProjectAccess ---
-      await queryRunner.manager.delete(PermissionProfile, { userId: id });
+      // Only when the client explicitly manages profiles. An edit that omits
+      // the profiles payload (e.g. legacy callers) must not wipe the tree.
+      const managesProfiles = Array.isArray(dto.profiles);
       const allProjectIds = new Set<number>();
+      if (managesProfiles) {
+        await queryRunner.manager.delete(PermissionProfile, { userId: id });
+      }
       if (dto.profiles?.length) {
         const deptRolePairs = new Set<string>();
         for (const profileDto of dto.profiles) {
           if (profileDto.profileType === ProfileType.BUDDY_RM) {
-            if (!profileDto.departmentId || !profileDto.roleId) {
-              throw new BadRequestException(
-                'Buddy RM profile requires departmentId and roleId',
-              );
-            }
             if (profileDto.buddyUserId === id) {
               throw new BadRequestException('Buddy RM cannot be the same user');
             }
-          }
-
-          if (profileDto.departmentId && profileDto.roleId) {
+            // Buddy RM is a temporary delegation target identified by
+            // buddyUserId; department/role are informational and optional.
+          } else if (profileDto.departmentId && profileDto.roleId) {
             const pair = `${profileDto.departmentId}:${profileDto.roleId}`;
             if (deptRolePairs.has(pair)) {
               throw new BadRequestException(
@@ -1070,17 +1048,8 @@ export class UserService {
           });
           const savedProfile = await queryRunner.manager.save(profile);
 
-          // user_role for backward compat
-          if (profileDto.roleId && profileDto.departmentId) {
-            const ur = queryRunner.manager.create(UserRole, {
-              userId: id,
-              departmentId: profileDto.departmentId,
-              roleId: profileDto.roleId,
-              assignedBy: 'SYSTEM',
-              assignedAt: new Date(),
-            });
-            roles.push(await queryRunner.manager.save(ur));
-          }
+          // user_role for backward compat (deduped against org roles)
+          await addRoleRow(profileDto.departmentId, profileDto.roleId);
 
           if (profileDto.modules?.length) {
             for (const modDto of profileDto.modules) {
@@ -1126,8 +1095,15 @@ export class UserService {
         }
       }
 
-      // Sync UserProjectAccess records (only when profiles drive project selection)
-      if (dto.profiles?.length) {
+      // Capture previous project access before this edit replaces rows, so we
+      // can recompile scopes the user may have lost access to (no stale grants).
+      const prevAccess = await queryRunner.manager.find(UserProjectAccess, {
+        where: { userId: id },
+      });
+
+      // Sync UserProjectAccess records (full replace when profiles are managed,
+      // untouched otherwise so a partial edit never orphans the mapping).
+      if (managesProfiles) {
         await queryRunner.manager.delete(UserProjectAccess, { userId: id });
         for (const projectId of allProjectIds) {
           await queryRunner.manager.save(
@@ -1143,33 +1119,17 @@ export class UserService {
 
       await queryRunner.commitTransaction();
 
-      // Trigger permission compilation
-      if (profiles.length > 0) {
-        const projectIds = new Set<number>();
-        for (const p of profiles) {
-          const fullProfile = await this.profileRepo.findOne({
-            where: { id: p.id },
-            relations: { modules: { subModules: { projects: true } } },
-          });
-          if (fullProfile?.modules) {
-            for (const mod of fullProfile.modules) {
-              for (const sm of mod.subModules) {
-                for (const proj of sm.projects) {
-                  projectIds.add(proj.projectId);
-                }
-              }
-            }
-          }
-        }
-        for (const pid of projectIds) {
-          this.compilerService
-            .compileAndSave(id, pid)
-            .catch((err) =>
-              this.logger.error(
-                'Failed to compile permissions for user project',
-                err,
-              ),
-            );
+      // Recompile for the union of previous and current project scopes so that
+      // projects the user lost access to have their snapshots reset.
+      const compileProjectIds = new Set<number>([
+        ...prevAccess.map((a) => a.projectId),
+        ...Array.from(allProjectIds),
+      ]);
+      for (const pid of compileProjectIds) {
+        try {
+          await this.compilerService.compileAndSave(id, pid);
+        } catch (err) {
+          this.logger.error('Failed to compile permissions for user project', err);
         }
       }
 

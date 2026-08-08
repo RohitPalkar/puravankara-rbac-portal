@@ -720,9 +720,50 @@ export class RoleService extends BaseService<Role> {
     const deptRoles = await this.deptRoleRepo.find({
       relations: { department: true },
     });
-    const roleDeptMap = new Map<number, any>();
+    // Fallback scope for a role when no scoped permission rows exist yet
+    // (e.g. legacy unscoped rows). Kept as the last department_roles entry.
+    const roleDeptMap = new Map<number, Department | undefined>();
     deptRoles.forEach((dr) => {
       roleDeptMap.set(dr.roleId, dr.department);
+    });
+
+    // Derive the displayed department/zone scope from the permission rows
+    // themselves. The department_roles table may attach a role to departments
+    // where it has no permissions, so the scope reported here must match the
+    // scope actually holding the granted actions (View and Edit consistency).
+    const scopeRows: {
+      role_id: number;
+      department_id: number | null;
+      zone_id: number | null;
+      scope_count: string;
+    }[] = await this.repository.manager.query(
+      `SELECT role_id,
+              department_id,
+              zone_id,
+              COUNT(*) as scope_count
+       FROM role_action_permissions
+       WHERE department_id IS NOT NULL
+       GROUP BY role_id, department_id, zone_id`,
+    );
+
+    // Pick the scope holding the most permission rows for each role so the
+    // summary (and therefore Edit prefill) points at the scope that actually
+    // contains the permissions rather than an unrelated department_roles row.
+    const roleScopeMap = new Map<
+      number,
+      { departmentId: number; zoneId: number | null; count: number }
+    >();
+    scopeRows.forEach((r) => {
+      const roleId = Number(r.role_id);
+      const count = Number(r.scope_count);
+      const prev = roleScopeMap.get(roleId);
+      if (!prev || count > prev.count) {
+        roleScopeMap.set(roleId, {
+          departmentId: Number(r.department_id),
+          zoneId: r.zone_id != null ? Number(r.zone_id) : null,
+          count,
+        });
+      }
     });
 
     const countRows: {
@@ -748,17 +789,26 @@ export class RoleService extends BaseService<Role> {
       }),
     );
 
+    const deptById = new Map<number, Department>();
+    deptRoles.forEach((dr) => {
+      if (dr.department) deptById.set(dr.department.id, dr.department);
+    });
+
     return roles
       .map((role) => {
-        const dept = roleDeptMap.get(role.id);
+        const scoped = roleScopeMap.get(role.id);
+        const dept =
+          (scoped &&
+            (deptById.get(scoped.departmentId) ?? roleDeptMap.get(role.id))) ??
+          roleDeptMap.get(role.id);
         const counts = countMap.get(role.id) ?? { modules: 0, permissions: 0 };
         return {
           id: role.id,
           name: role.name,
           hierarchyLevelRank: role.hierarchyLevelRank,
-          departmentId: dept?.id ?? null,
+          departmentId: scoped?.departmentId ?? dept?.id ?? null,
           departmentName: dept?.name ?? null,
-          zoneId: dept?.zoneId ?? null,
+          zoneId: scoped?.zoneId ?? dept?.zoneId ?? null,
           isActive: role.isActive,
           isSystemRole: role.isSystemRole,
           moduleCount: counts.modules,

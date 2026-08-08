@@ -57,6 +57,7 @@ export function useCreateUserFull() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.users.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.permissions.me });
     },
   });
 }
@@ -88,6 +89,13 @@ export function useUpdateUserFull() {
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.users.all });
       queryClient.invalidateQueries({ queryKey: queryKeys.users.byId(variables.id) });
+      // Recompute + refresh the edited user's permission snapshot so the
+      // sidebar, dashboard and module pages reflect the new matrix immediately.
+      queryClient.invalidateQueries({ queryKey: queryKeys.permissions.user(variables.id) });
+      if (sessionStorage.getItem('jwt_permissions')) {
+        sessionStorage.removeItem('jwt_permissions');
+      }
+      queryClient.invalidateQueries({ queryKey: queryKeys.permissions.me });
     },
   });
 }

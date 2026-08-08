@@ -386,7 +386,7 @@ export default forwardRef<ProjectMappingStepHandle, Props>(({ initialData }: Pro
         <Autocomplete
           options={rolesForDepartment}
           value={rolesForDepartment.find((r: Role) => r.id === primaryRoleId) ?? null}
-          onChange={(_, newValue) => { setPrimaryRoleId(newValue?.id ?? null); setErrList([]); }}
+          onChange={(_, newValue) => { setPrimaryRoleId(newValue?.id ?? null); setPrimaryPermissions([]); setErrList([]); }}
           getOptionLabel={(option: Role) => `${option.name} • ${selectedZoneName}`}
           isOptionEqualToValue={(option: Role, value: Role) => option.id === value.id}
           renderInput={(params) => <TextField {...params} label="Role *" placeholder="Search Role" />}
@@ -400,7 +400,7 @@ export default forwardRef<ProjectMappingStepHandle, Props>(({ initialData }: Pro
         <Autocomplete
           options={rolesForDepartment}
           value={rolesForDepartment.find((r: Role) => r.id === secondaryRoleId) ?? null}
-          onChange={(_, newValue) => { setSecondaryRoleId(newValue?.id ?? null); setErrList([]); }}
+          onChange={(_, newValue) => { setSecondaryRoleId(newValue?.id ?? null); setSecondaryPermissions([]); setErrList([]); }}
           getOptionLabel={(option: Role) => `${option.name} • ${selectedZoneName}`}
           isOptionEqualToValue={(option: Role, value: Role) => option.id === value.id}
           renderInput={(params) => (
