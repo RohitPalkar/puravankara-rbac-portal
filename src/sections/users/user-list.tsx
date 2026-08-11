@@ -155,6 +155,29 @@ export default function UserListPage() {
       ),
     },
     {
+      field: 'credentials', headerName: 'Credentials', width: 180,
+      renderCell: (params) => {
+        const {value} = params;
+        if (!value) return <Typography variant="body2" color="text.disabled">No password</Typography>;
+        return (
+          <Tooltip title="Copy password" arrow>
+            <Stack
+              direction="row"
+              alignItems="center"
+              spacing={0.5}
+              onClick={() => navigator.clipboard.writeText(value)}
+              sx={{ cursor: 'pointer', width: 1, overflow: 'hidden' }}
+            >
+              <Typography variant="body2" fontFamily="monospace" fontSize="0.75rem" noWrap>
+                {value}
+              </Typography>
+              <Iconify icon="solar:copy-bold" width={14} sx={{ color: 'text.secondary', flexShrink: 0 }} />
+            </Stack>
+          </Tooltip>
+        );
+      },
+    },
+    {
       field: 'departmentName', headerName: 'Department', width: 140,
       renderCell: (params) => (
         <Typography variant="body2" noWrap>

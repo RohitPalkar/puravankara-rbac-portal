@@ -1,10 +1,10 @@
 export { createCrudHooks } from './use-crud';
 export { useAuditLogList } from './use-audit';
 export { useResetSetup, useSetupStatus } from './use-setup';
-export { useMe, useLogin, useLogout, useSetPassword, useRefreshToken } from './use-auth';
 export { useBrandList, useBrandById, useCreateBrand, useUpdateBrand, useDeleteBrand } from './use-brands';
 export { usePhaseList, usePhaseById, useCreatePhase, useUpdatePhase, useDeletePhase, useUpdateLaunch } from './use-phases';
 export { useUserGroupList, useUserGroupById, useCreateUserGroup, useUpdateUserGroup, useDeleteUserGroup } from './use-user-groups';
+export { useMe, useLogin, useLogout, useSetPassword, useRefreshToken, useResetPassword, useForgotPassword, useChangePassword } from './use-auth';
 export { useDashboardKpis, useDashboardSystemInfo, useDashboardZoneOverview, useDashboardSecurityStats, useDashboardOperationsSummary } from './use-dashboard';
 export { useProjectList, useProjectById, useCreateProject, useUpdateProject, useDeleteProject, useProjectLocationList, useCreateProjectLocation, useDeleteProjectLocation, useProjectLocationsByZone } from './use-projects';
 export { useCityList, useCityById, useZoneList, useZoneById, useCreateCity, useUpdateCity, useDeleteCity, useCreateZone, useUpdateZone, useDeleteZone, useCityZoneMappingList, useCreateCityZoneMapping, useDeleteCityZoneMapping } from './use-geography';

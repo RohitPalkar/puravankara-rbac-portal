@@ -9,6 +9,7 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { v4 as uuidv4 } from 'uuid';
+import { createHash, randomBytes } from 'crypto';
 import * as bcrypt from 'bcrypt';
 import { User } from '../../users/entities/user.entity';
 import { UserAuth } from '../entities/user-auth.entity';
@@ -355,6 +356,7 @@ export class AuthService {
 
     if (userAuth) {
       userAuth.passwordHash = passwordHash;
+      userAuth.plainPassword = password;
       userAuth.failedAttempts = 0;
       userAuth.isLocked = false;
       await this.userAuthRepository.save(userAuth);
@@ -363,6 +365,7 @@ export class AuthService {
         this.userAuthRepository.create({
           userId,
           passwordHash,
+          plainPassword: password,
           authProvider: 'LOCAL',
         }),
       );
@@ -400,9 +403,111 @@ export class AuthService {
     }
 
     userAuth.passwordHash = await bcrypt.hash(newPassword, 10);
+    userAuth.plainPassword = newPassword;
     userAuth.failedAttempts = 0;
     userAuth.isLocked = false;
     await this.userAuthRepository.save(userAuth);
+  }
+
+  async forgotPassword(
+    email: string,
+    ipAddress?: string,
+    userAgent?: string,
+  ): Promise<{ message: string; resetToken?: string }> {
+    const user = await this.userRepository.findOne({
+      where: { email, deletedAt: null },
+    });
+
+    if (!user) {
+      this.auditService.createLog({
+        entityName: 'AUTH',
+        action: 'FORGOT_PASSWORD',
+        newValue: { email, reason: 'not_found' },
+        performedBy: email,
+        ipAddress,
+        userAgent,
+        source: 'AUTH',
+      });
+      return {
+        message:
+          'If an account exists for this email, a password reset link will be sent.',
+      };
+    }
+
+    const token = randomBytes(32).toString('hex');
+    const tokenHash = createHash('sha256').update(token).digest('hex');
+    const expiresAt = new Date(Date.now() + 15 * 60 * 1000);
+
+    const userAuth = await this.userAuthRepository.findOne({
+      where: { userId: user.empId },
+    });
+    if (userAuth) {
+      userAuth.resetTokenHash = tokenHash;
+      userAuth.resetTokenExpiresAt = expiresAt;
+      await this.userAuthRepository.save(userAuth);
+    } else {
+      await this.userAuthRepository.save(
+        this.userAuthRepository.create({
+          userId: user.empId,
+          resetTokenHash: tokenHash,
+          resetTokenExpiresAt: expiresAt,
+          authProvider: 'LOCAL',
+        }),
+      );
+    }
+
+    this.auditService.createLog({
+      entityName: 'AUTH',
+      action: 'FORGOT_PASSWORD',
+      entityId: user.empId,
+      newValue: { expiresAt },
+      performedBy: user.empId,
+      ipAddress,
+      userAgent,
+      source: 'AUTH',
+    });
+
+    return {
+      message: 'Password reset token generated (demo: no email relay configured).',
+      resetToken: token,
+    };
+  }
+
+  async resetPassword(
+    token: string,
+    newPassword: string,
+  ): Promise<void> {
+    const tokenHash = createHash('sha256').update(token).digest('hex');
+
+    const userAuth = await this.userAuthRepository.findOne({
+      where: { resetTokenHash: tokenHash },
+    });
+
+    if (
+      !userAuth ||
+      !userAuth.resetTokenExpiresAt ||
+      userAuth.resetTokenExpiresAt.getTime() < Date.now()
+    ) {
+      throw new BadRequestException('Reset token is invalid or has expired');
+    }
+
+    userAuth.passwordHash = await bcrypt.hash(newPassword, 10);
+    userAuth.plainPassword = newPassword;
+    userAuth.failedAttempts = 0;
+    userAuth.isLocked = false;
+    userAuth.resetTokenHash = null;
+    userAuth.resetTokenExpiresAt = null;
+    await this.userAuthRepository.save(userAuth);
+
+    await this.userSessionRepository.delete({ userId: userAuth.userId });
+
+    this.auditService.createLog({
+      entityName: 'AUTH',
+      action: 'PASSWORD_RESET',
+      entityId: userAuth.userId,
+      performedBy: userAuth.userId,
+      source: 'AUTH',
+    });
   }
 
   async getProfile(empId: string) {

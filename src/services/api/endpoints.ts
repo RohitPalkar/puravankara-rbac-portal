@@ -10,6 +10,8 @@ export const endpoints = {
     logoutAll: `${API_PREFIX}/auth/logout-all`,
     setPassword: `${API_PREFIX}/auth/set-password`,
     changePassword: `${API_PREFIX}/auth/change-password`,
+    forgotPassword: `${API_PREFIX}/auth/forgot-password`,
+    resetPassword: `${API_PREFIX}/auth/reset-password`,
     me: `${API_PREFIX}/auth/me`,
   },
 

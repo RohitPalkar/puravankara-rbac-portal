@@ -4,7 +4,7 @@ import { queryKeys } from '../api/query-keys';
 import { setAccessToken } from '../api/client';
 import { authService } from '../services/auth.service';
 
-import type { MeUser, MeResponse, LoginRequest, SetPasswordRequest, RefreshTokenRequest, ChangePasswordRequest } from '../types/auth';
+import type { MeUser, MeResponse, LoginRequest, SetPasswordRequest, RefreshTokenRequest, ResetPasswordRequest, ChangePasswordRequest, ForgotPasswordRequest } from '../types/auth';
 
 type FlatMe = MeUser & { roles: MeResponse['roles'] };
 
@@ -72,6 +72,20 @@ export function useChangePassword() {
   return useMutation({
     mutationFn: async (data: ChangePasswordRequest) => {
       await authService.changePassword(data);
+    },
+  });
+}
+
+export function useForgotPassword() {
+  return useMutation({
+    mutationFn: async (data: ForgotPasswordRequest) => authService.forgotPassword(data),
+  });
+}
+
+export function useResetPassword() {
+  return useMutation({
+    mutationFn: async (data: ResetPasswordRequest) => {
+      await authService.resetPassword(data);
     },
   });
 }

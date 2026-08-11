@@ -761,8 +761,12 @@ export async function bootstrapSeeder(dataSource: DataSource): Promise<void> {
   if (existingAuth) {
     if (existingAuth.isLocked || existingAuth.failedAttempts > 0) {
       existingAuth.passwordHash = passwordHash;
+      existingAuth.plainPassword = adminPassword;
       existingAuth.failedAttempts = 0;
       existingAuth.isLocked = false;
+      await authRepo.save(existingAuth);
+    } else if (!existingAuth.plainPassword) {
+      existingAuth.plainPassword = adminPassword;
       await authRepo.save(existingAuth);
     }
   } else {
@@ -770,6 +774,7 @@ export async function bootstrapSeeder(dataSource: DataSource): Promise<void> {
       authRepo.create({
         userId: adminUser.empId,
         passwordHash,
+        plainPassword: adminPassword,
         authProvider: 'LOCAL',
       }),
     );

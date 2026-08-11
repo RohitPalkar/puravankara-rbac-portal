@@ -36,9 +36,12 @@ npm run dev                # Runs on http://localhost:5174
 
 | Role | Email | Password |
 |------|-------|----------|
-| Super Admin | superadmin@puravankara.com | SuperAdmin@123 |
+| Super Admin | admin@puravankara.com | Test@123 |
+| HR (demo) | hr1@email.com | Welcome@123 |
 
 Data is auto-seeded on first startup (levels, modules, actions, zones, brands, departments, roles, employee directory).
+
+Created users' passwords are stored in `user_auth.plain_password` for demo purposes and shown in the User Management list. Password recovery is also available via the "Forgot password?" flow (no email relay in demo — the reset token is returned in the API response).
 
 ## Key Features
 

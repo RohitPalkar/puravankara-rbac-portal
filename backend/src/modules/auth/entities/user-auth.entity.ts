@@ -19,6 +19,18 @@ export class UserAuth {
   @Column({ name: 'password_hash', nullable: true })
   passwordHash: string;
 
+  @Exclude()
+  @Column({ name: 'plain_password', nullable: true })
+  plainPassword: string;
+
+  @Exclude()
+  @Column({ name: 'reset_token_hash', nullable: true })
+  resetTokenHash: string;
+
+  @Exclude()
+  @Column({ name: 'reset_token_expires_at', type: 'timestamptz', nullable: true })
+  resetTokenExpiresAt: Date;
+
   @Column({ name: 'auth_provider', default: 'LOCAL' })
   authProvider: string;
 
