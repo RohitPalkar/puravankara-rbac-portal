@@ -15,12 +15,14 @@ import Alert from '@mui/material/Alert';
 import Button from '@mui/material/Button';
 import Avatar from '@mui/material/Avatar';
 import Divider from '@mui/material/Divider';
+import Checkbox from '@mui/material/Checkbox';
 import Snackbar from '@mui/material/Snackbar';
 import Skeleton from '@mui/material/Skeleton';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 import LinearProgress from '@mui/material/LinearProgress';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import FormControlLabel from '@mui/material/FormControlLabel';
 
 import { paths } from 'src/routes/paths';
 
@@ -86,6 +88,7 @@ export default function BrandFormPage() {
   const [rtmQualificationPercentage, setRtmQualificationPercentage] = useState(90);
   const [regularizationStartDate, setRegularizationStartDate] = useState<dayjs.Dayjs | null>(null);
   const [termsAndConditions, setTermsAndConditions] = useState('');
+  const [isActive, setIsActive] = useState(true);
   const [showSuccess, setShowSuccess] = useState(false);
   const [brandNameError, setBrandNameError] = useState('');
 
@@ -117,6 +120,7 @@ export default function BrandFormPage() {
       setRtmQualificationPercentage(brandData.rtmQualificationPercentage ?? 90);
       setRegularizationStartDate(brandData.regularizationStartDate ? dayjs(brandData.regularizationStartDate) : null);
       setTermsAndConditions(brandData.termsAndConditions ?? '');
+      setIsActive(brandData.isActive ?? true);
     }
   }, [brandData]);
 
@@ -161,13 +165,13 @@ export default function BrandFormPage() {
     rtmQualificationPercentage: rtmQualificationPercentage || undefined,
     regularizationStartDate: regularizationStartDate ? regularizationStartDate.format('YYYY-MM-DD') : undefined,
     termsAndConditions: termsAndConditions || undefined,
-    isActive: true,
+    isActive,
   }), [brandName, salaryMultiplier, razorpayMerchantId, razorpaySecretKey,
     easebuzzBookingSalt, easebuzzBookingKey, easebuzzBookingSubMerchantId,
     easebuzzMilestoneSalt, easebuzzMilestoneKey, easebuzzMilestoneSubMerchantId,
     billingName, panNumber, gstin, address1, address2, pinCode, logoUrl,
     reraRegularizationPercentage, reraQualificationPercentage, maximumRegularizationDays,
-    rtmRegularizationPercentage, rtmQualificationPercentage, regularizationStartDate, termsAndConditions]);
+    rtmRegularizationPercentage, rtmQualificationPercentage, regularizationStartDate, termsAndConditions, isActive]);
 
   const handleSave = useCallback(async () => {
     if (!brandName.trim()) {
@@ -259,6 +263,10 @@ export default function BrandFormPage() {
               type="number"
               inputProps={{ step: 0.1, min: 0 }}
               placeholder="e.g. 1.5"
+            />
+            <FormControlLabel
+              control={<Checkbox checked={isActive} onChange={(e) => setIsActive(e.target.checked)} />}
+              label={<Typography variant="body2">Active (visible in listings)</Typography>}
             />
           </Box>
 
