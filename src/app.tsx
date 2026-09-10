@@ -7,6 +7,7 @@ import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 
 import { Router } from 'src/routes/sections';
 
+import { useKeepAlive } from 'src/hooks/use-keep-alive';
 import { useScrollToTop } from 'src/hooks/use-scroll-to-top';
 
 import { ThemeProvider } from 'src/theme/theme-provider';
@@ -19,12 +20,20 @@ import { AuthProvider } from 'src/auth/context/jwt';
 
 const queryClient = new QueryClient({
   defaultOptions: {
-    queries: { retry: 1, refetchOnWindowFocus: false, staleTime: 30_000 },
+    queries: {
+      retry: 1,
+      refetchOnWindowFocus: false,
+      staleTime: 5 * 60_000, // 5m - masters rarely change, reduces sluggish refetches
+      gcTime: 30 * 60_000,
+      networkMode: 'offlineFirst',
+    },
+    mutations: { retry: 0 },
   },
 });
 
 export default function App() {
   useScrollToTop();
+  useKeepAlive();
 
   return (
     <QueryClientProvider client={queryClient}>

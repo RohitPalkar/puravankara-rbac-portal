@@ -13,6 +13,19 @@ function buildOptions(): DataSourceOptions {
     synchronize: false,
     logging: false,
     ssl: isProduction ? { rejectUnauthorized: false } : undefined,
+    // Performance: pool tuning for Supabase pooler (ap-northeast-1 → Oregon latency)
+    extra: {
+      max: 20,
+      min: 2,
+      connectionTimeoutMillis: 3000,
+      idleTimeoutMillis: 30000,
+      statement_timeout: 10000,
+      query_timeout: 10000,
+    },
+    cache: {
+      duration: 30000, // 30s query cache for metadata queries
+    },
+    maxQueryExecutionTime: 1000,
   };
 
   if (url) {

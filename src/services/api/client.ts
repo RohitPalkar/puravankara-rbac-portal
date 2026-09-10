@@ -26,6 +26,9 @@ export function getAccessToken(): string | null {
 const apiClient = axios.create({
   baseURL: CONFIG.serverUrl,
   headers: { 'Content-Type': 'application/json' },
+  timeout: 10000,
+  // Keep-alive for better performance on Render (Oregon ↔ Tokyo)
+  transitional: { silentJSONParsing: true },
 });
 
 const RETRYABLE_STATUS_CODES = [502, 503, 504];

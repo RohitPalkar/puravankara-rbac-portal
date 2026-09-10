@@ -31,15 +31,27 @@ export default defineConfig({
       },
     ],
   },
-  server: { port: PORT, host: true },
+  server: { port: PORT, host: true, hmr: { overlay: false } },
   preview: { port: PORT, host: true },
+  optimizeDeps: {
+    include: ['react', 'react-dom', 'react-router-dom', '@mui/material', '@mui/icons-material', '@tanstack/react-query', 'axios', 'zustand'],
+  },
+  esbuild: {
+    drop: process.env.NODE_ENV === 'production' ? ['console', 'debugger'] : [],
+  },
   build: {
+    target: 'esnext',
+    cssMinify: true,
+    reportCompressedSize: false,
     rollupOptions: {
       output: {
         manualChunks: {
           vendor: ['react', 'react-dom', 'react-router-dom'],
           mui: ['@mui/material', '@mui/icons-material', '@emotion/react', '@emotion/styled'],
+          muiX: ['@mui/x-data-grid', '@mui/x-date-pickers', '@mui/x-tree-view'],
           data: ['@tanstack/react-query', 'zustand', 'axios'],
+          charts: ['recharts'],
+          editor: ['react-quill'],
         },
       },
     },

@@ -9,7 +9,7 @@ import { Module } from '../../modules/product-catalog/entities/module.entity';
 import { SubModule } from '../../modules/product-catalog/entities/sub-module.entity';
 import { ActionGroup } from '../../modules/product-catalog/entities/action-group.entity';
 import { ModuleAction } from '../../modules/product-catalog/entities/module-action.entity';
-const SALT_ROUNDS = 12;
+const SALT_ROUNDS = 10;
 
 interface ModuleSeed {
   name: string;

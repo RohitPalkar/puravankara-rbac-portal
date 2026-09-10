@@ -202,35 +202,13 @@ export class AuthService {
       userAgent,
     );
 
-    // Fire permission compilation in background - don't block login response
-    this.compilerService.compileForAllUserProjects(user.empId).catch(() => {});
+    // Fire permission compilation in background - don't block login response at all
+    // Use setImmediate to defer to next tick so login returns ~300ms faster
+    setImmediate(() => {
+      this.compilerService.compileForAllUserProjects(user.empId).catch(() => {});
+    });
 
-    let permissions: any = undefined;
-    try {
-      const accessRows = await this.accessRepo.find({
-        where: { userId: user.empId },
-        relations: { project: true },
-        take: 1,
-      });
-      if (accessRows.length > 0) {
-        const snapshot = await this.compilerService.getCompiled(
-          user.empId,
-          accessRows[0].projectId,
-        );
-        permissions = {
-          projects: [
-            {
-              id: accessRows[0].projectId,
-              name: accessRows[0].project.name,
-              modules: snapshot.modules,
-            },
-          ],
-        };
-      }
-    } catch {
-      // permissions are optional in login response
-    }
-
+    // Permissions are fetched lazily via /permissions/me and /auth/me - not blocking login
     return {
       accessToken: tokens.accessToken,
       expiresIn: tokens.expiresIn,
@@ -241,7 +219,6 @@ export class AuthService {
         role: userRoles.length > 0 ? userRoles[0].role?.name || 'USER' : 'USER',
         roles: userRoles.map((ur) => ur.role?.name || 'USER'),
       },
-      permissions,
     };
   }
 
