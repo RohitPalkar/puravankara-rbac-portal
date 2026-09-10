@@ -17,6 +17,7 @@ const icon = (name: string) => (
 const ICONS = {
   dashboard: icon('ic-dashboard'),
   zone: icon('ic-map'),
+  map: icon('ic-map'),
   project: icon('ic-folder'),
   department: icon('ic-building'),
   brand: icon('ic-building'),
@@ -25,6 +26,7 @@ const ICONS = {
   audit: icon('ic-analytics'),
   settings: icon('ic-calendar'),
   module: icon('ic-folder'),
+  parameter: icon('ic-parameter'),
 };
 
 function slugify(text: string): string {
@@ -72,6 +74,15 @@ export function useNavData() {
             { title: 'Project Master', path: paths.dashboard.projectMaster, icon: ICONS.project },
             { title: 'Phase Master', path: paths.dashboard.phaseMaster, icon: ICONS.project },
             { title: 'Channel Partner', path: paths.dashboard.channelPartnerMaster, icon: ICONS.user },
+          ],
+        },
+        {
+          subheader: 'MASTERS',
+          items: [
+            { title: 'Cities', path: paths.dashboard.masters.cities, icon: ICONS.map },
+            { title: 'Land Consultants', path: paths.dashboard.masters.consultants, icon: ICONS.parameter },
+            { title: 'BD & Land Team', path: paths.dashboard.masters.team, icon: ICONS.user },
+            { title: 'Departments', path: paths.dashboard.masters.departments, icon: ICONS.department },
           ],
         },
         {

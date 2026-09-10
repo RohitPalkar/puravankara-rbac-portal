@@ -23,6 +23,17 @@ const ProjectFormPage = lazy(() => import('src/sections/projects/project-form'))
 const DepartmentMasterPage = lazy(() => import('src/sections/organization/department-list'));
 const DepartmentFormPage = lazy(() => import('src/sections/organization/department-form'));
 
+// Masters (standalone reference masters)
+const MasterCitiesPage = lazy(() => import('src/sections/masters/city/city-list'));
+const MasterCityFormPage = lazy(() => import('src/sections/masters/city/city-form'));
+const MasterCityViewPage = lazy(() => import('src/sections/masters/city/city-view'));
+const LandConsultantListPage = lazy(() => import('src/sections/masters/land-consultant/land-consultant-list'));
+const LandConsultantFormPage = lazy(() => import('src/sections/masters/land-consultant/land-consultant-form'));
+const BDLandTeamListPage = lazy(() => import('src/sections/masters/bd-land-team/bd-land-team-list'));
+const BDLandTeamFormPage = lazy(() => import('src/sections/masters/bd-land-team/bd-land-team-form'));
+const MasterDepartmentListPage = lazy(() => import('src/sections/masters/department/department-list'));
+const MasterDepartmentFormPage = lazy(() => import('src/sections/masters/department/department-form'));
+
 // Access Management
 const UserManagementPage = lazy(() => import('src/sections/users/user-list'));
 const UserNewPage = lazy(() => import('src/sections/users/user-new'));
@@ -87,6 +98,20 @@ export const dashboardRoutes = [
       { path: 'department-master', element: <DepartmentMasterPage /> },
       { path: 'department-master/create', element: <DepartmentFormPage /> },
       { path: 'department-master/:id/edit', element: <DepartmentFormPage /> },
+      // Masters (standalone reference masters)
+      { path: 'masters/cities', element: <MasterCitiesPage /> },
+      { path: 'masters/cities/create', element: <MasterCityFormPage /> },
+      { path: 'masters/cities/:id', element: <MasterCityViewPage /> },
+      { path: 'masters/cities/:id/edit', element: <MasterCityFormPage /> },
+      { path: 'masters/land-consultants', element: <LandConsultantListPage /> },
+      { path: 'masters/land-consultants/create', element: <LandConsultantFormPage /> },
+      { path: 'masters/land-consultants/:id/edit', element: <LandConsultantFormPage /> },
+      { path: 'masters/bd-land-team', element: <BDLandTeamListPage /> },
+      { path: 'masters/bd-land-team/create', element: <BDLandTeamFormPage /> },
+      { path: 'masters/bd-land-team/:id/edit', element: <BDLandTeamFormPage /> },
+      { path: 'masters/departments', element: <MasterDepartmentListPage /> },
+      { path: 'masters/departments/create', element: <MasterDepartmentFormPage /> },
+      { path: 'masters/departments/:id/edit', element: <MasterDepartmentFormPage /> },
       // Access Management
       { path: 'user-management', element: <UserManagementPage /> },
       { path: 'user-management/new', element: <UserNewPage /> },

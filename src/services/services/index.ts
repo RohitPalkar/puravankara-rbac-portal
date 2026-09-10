@@ -13,3 +13,4 @@ export { cityService, zoneService, cityZoneMappingService } from './geography.se
 export { channelPartnerService, channelPartnerTypeService } from './channel-partner.service';
 export { roleService, departmentService, departmentRoleService } from './organization.service';
 export { moduleService, actionService, subModuleService, moduleActionService } from './product-catalog.service';
+export { masterCityService, bdLandTeamService, landConsultantService, masterDepartmentService } from './master.service';

@@ -32,6 +32,22 @@ export const paths = {
     departmentMaster: `${ROOTS.DASHBOARD}/department-master`,
     departmentMasterCreate: `${ROOTS.DASHBOARD}/department-master/create`,
     departmentMasterEdit: (id: string) => `${ROOTS.DASHBOARD}/department-master/${id}/edit`,
+    // Masters (standalone reference masters)
+    masters: {
+      cities: `${ROOTS.DASHBOARD}/masters/cities`,
+      cityCreate: `${ROOTS.DASHBOARD}/masters/cities/create`,
+      cityView: (id: number | string) => `${ROOTS.DASHBOARD}/masters/cities/${id}`,
+      cityEdit: (id: number | string) => `${ROOTS.DASHBOARD}/masters/cities/${id}/edit`,
+      consultants: `${ROOTS.DASHBOARD}/masters/land-consultants`,
+      consultantCreate: `${ROOTS.DASHBOARD}/masters/land-consultants/create`,
+      consultantEdit: (id: number | string) => `${ROOTS.DASHBOARD}/masters/land-consultants/${id}/edit`,
+      team: `${ROOTS.DASHBOARD}/masters/bd-land-team`,
+      teamMemberCreate: `${ROOTS.DASHBOARD}/masters/bd-land-team/create`,
+      teamMemberEdit: (id: number | string) => `${ROOTS.DASHBOARD}/masters/bd-land-team/${id}/edit`,
+      departments: `${ROOTS.DASHBOARD}/masters/departments`,
+      departmentCreate: `${ROOTS.DASHBOARD}/masters/departments/create`,
+      departmentEdit: (id: number | string) => `${ROOTS.DASHBOARD}/masters/departments/${id}/edit`,
+    },
     // Access Management
     userManagement: `${ROOTS.DASHBOARD}/user-management`,
     userNew: `${ROOTS.DASHBOARD}/user-management/new`,

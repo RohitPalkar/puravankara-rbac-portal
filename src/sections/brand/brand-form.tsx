@@ -264,10 +264,12 @@ export default function BrandFormPage() {
               inputProps={{ step: 0.1, min: 0 }}
               placeholder="e.g. 1.5"
             />
-            <FormControlLabel
-              control={<Checkbox checked={isActive} onChange={(e) => setIsActive(e.target.checked)} />}
-              label={<Typography variant="body2">Active (visible in listings)</Typography>}
-            />
+            {isEdit && (
+              <FormControlLabel
+                control={<Checkbox checked={isActive} onChange={(e) => setIsActive(e.target.checked)} />}
+                label={<Typography variant="body2">Active (visible in listings)</Typography>}
+              />
+            )}
           </Box>
 
           <Box display="grid" gridTemplateColumns={{ xs: '1fr', sm: '1fr 1fr' }} gap={3} sx={{ mt: 3 }}>
