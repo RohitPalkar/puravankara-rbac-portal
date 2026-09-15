@@ -4,6 +4,7 @@ import {
   HealthCheckService,
   HealthCheck,
   TypeOrmHealthIndicator,
+  MemoryHealthIndicator,
 } from '@nestjs/terminus';
 import { Public } from '../auth/decorators/public.decorator';
 
@@ -13,13 +14,17 @@ export class HealthController {
   constructor(
     private health: HealthCheckService,
     private db: TypeOrmHealthIndicator,
+    private memory: MemoryHealthIndicator,
   ) {}
 
   @Get()
   @Public()
   @HealthCheck()
-  @ApiOperation({ summary: 'Application health check' })
+  @ApiOperation({ summary: 'Application health check (DB + memory)' })
   check() {
-    return this.health.check([() => this.db.pingCheck('database')]);
+    return this.health.check([
+      () => this.db.pingCheck('database'),
+      () => this.memory.checkHeap('memory_heap', 300 * 1024 * 1024),
+    ]);
   }
 }

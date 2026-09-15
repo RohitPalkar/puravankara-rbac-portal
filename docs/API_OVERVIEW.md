@@ -1,6 +1,10 @@
 # API Overview
 
-Base URL: `http://localhost:3000/api/`
+Base URL: `http://localhost:3000/api/v1/`
+
+All APIs prefixed with `/api/v1` via `app.setGlobalPrefix('api/v1')` in `backend/src/main.ts:15`. Swagger at `http://localhost:3000/api/v1/docs` (`/api/v1/docs-json`).
+
+Legacy docs may show `/api/` without version - use `/api/v1/` for all calls.
 
 All endpoints require `Authorization: Bearer <JWT>` unless marked `@Public()`.
 

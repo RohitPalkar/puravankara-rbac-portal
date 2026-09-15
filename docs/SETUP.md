@@ -3,28 +3,26 @@
 ## Prerequisites
 
 - Node.js >= 20
-- MySQL 8+ running locally (port 3306)
-- npm >= 10
+- PostgreSQL 16+ (Supabase) or local Postgres 16 (port 5432)
+- npm >= 10 or yarn 1.22.22
+- Redis 7+ (optional, falls back to memory)
 
 ## Database Setup
 
+Postgres is now primary (see `backend/src/config/database.config.ts:15` + `env.validation.ts:12`). MySQL legacy removed.
+
 ```bash
-# Create database
-mysql -u root -p -e "CREATE DATABASE IF NOT EXISTS puravankara_rbac;"
+# Local Postgres (via docker-compose)
+docker compose up -d postgres redis
+
+# Or create DB manually
+psql -U postgres -c "CREATE DATABASE puravankara_rbac_v3;"
 ```
 
-Default connection config (`backend/src/config/database.config.ts`):
+Env is `DATABASE_URL` (Supabase pooler) or `DB_HOST/DB_USERNAME/DB_NAME`. See `backend/.env.example:8`.
 
-| Setting | Default |
-|---------|---------|
-| Host | localhost |
-| Port | 3306 |
-| Username | root |
-| Password | YourStrongPassword123! |
-| Database | puravankara_rbac |
-| Synchronize | true (auto-creates tables) |
-
-To override, set environment variables or edit `database.config.ts`.
+- `synchronize: false` - migrations only (`npm run migration:run`)
+- Default pool: `max 10` (prod 20), `statement_timeout` recommended
 
 ## Backend Setup
 
@@ -38,26 +36,26 @@ npm run start:prod           # Production (from dist/)
 
 Backend runs on **http://localhost:3000**
 
-Swagger docs: `http://localhost:3000/api/docs`
+Swagger docs: `http://localhost:3000/api/v1/docs` (OpenAPI JSON at `/api/v1/docs-json`)
 
 ## Frontend Setup
 
 ```bash
-cd frontend
+# Frontend lives at root (Vite)
 npm install
-npm run dev                  # Development (HMR on port 5174)
+npm run dev                  # Development (HMR on port 8081, proxy /api -> 3000)
 npm run build                # Production build to dist/
-npm run preview              # Preview production build
+npm run preview              # Preview on port 4173 (for nginx)
 ```
 
 ## First Run
 
-1. Start MySQL
-2. `cd backend && npm run start:dev`
-3. Wait for "Backend running on http://localhost:3000" (auto-seeds data)
-4. `cd frontend && npm run dev`
-5. Open `http://localhost:5174`
-6. Login: `superadmin@puravankara.com` / `SuperAdmin@123`
+1. Start Postgres + Redis: `docker compose up -d`
+2. `cd backend && npm run migration:run && npm run start:dev`
+3. Wait for "Backend running on http://localhost:3000" + "Swagger docs at /api/v1/docs"
+4. `npm run dev` (root, port 8081)
+5. Open `http://localhost:8081`
+6. Login: `admin@puravankara.com` / `Test@123` (super admin `ADMIN001`)
 
 ## What Gets Seeded
 

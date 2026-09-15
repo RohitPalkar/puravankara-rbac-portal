@@ -44,7 +44,7 @@ export default defineConfig({
   },
   preview: { port: 4173, host: true },
   optimizeDeps: {
-    include: ['react', 'react-dom', 'react-router-dom', '@mui/material', '@mui/icons-material', '@tanstack/react-query', 'axios', 'zustand'],
+    include: ['react', 'react-dom', 'react-router-dom', '@mui/material', '@mui/icons-material', '@tanstack/react-query', 'axios'],
   },
   esbuild: {
     drop:
@@ -62,7 +62,7 @@ export default defineConfig({
           vendor: ['react', 'react-dom', 'react-router-dom'],
           mui: ['@mui/material', '@mui/icons-material', '@emotion/react', '@emotion/styled'],
           muiX: ['@mui/x-data-grid', '@mui/x-date-pickers', '@mui/x-tree-view'],
-          data: ['@tanstack/react-query', 'zustand', 'axios'],
+          data: ['@tanstack/react-query', 'axios'],
           charts: ['recharts'],
           editor: ['react-quill'],
         },
