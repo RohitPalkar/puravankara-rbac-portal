@@ -103,12 +103,16 @@ export class UserService {
       ];
     }
 
+    const allowedUserSort = new Set(['createdAt', 'name', 'email', 'empId', 'updatedAt']);
+    const safeSortBy = allowedUserSort.has(sortBy) ? sortBy : 'createdAt';
+    const safeOrder: 'ASC' | 'DESC' = sortOrder === 'ASC' ? 'ASC' : 'DESC';
+    const cappedLimit = Math.min(limit, 100);
     let userQuery = this.repository
       .createQueryBuilder('u')
       .where('u.deleted_at IS NULL')
-      .orderBy(`u.${sortBy}`, sortOrder)
-      .skip((page - 1) * limit)
-      .take(limit);
+      .orderBy(`u.${safeSortBy}`, safeOrder)
+      .skip((page - 1) * cappedLimit)
+      .take(cappedLimit);
 
     if (rawIsActive !== undefined) {
       userQuery = userQuery.andWhere('u.is_active = :isActive', { isActive: rawIsActive === 'true' });
@@ -158,7 +162,7 @@ export class UserService {
 
     const empIds = data.map((u) => u.empId);
 
-    const [userRoles, userZones, projectCounts, reportingLines] = await Promise.all([
+    const [userRoles, userZones, projectCounts, reportingLines, deptWithAdmins] = await Promise.all([
       this.userRoleRepository.find({
         where: { userId: In(empIds) },
         relations: { role: true, department: true },
@@ -177,6 +181,9 @@ export class UserService {
       this.reportingLineRepository.find({
         where: { userId: In(empIds), levelRank: 1 },
         relations: { reportsTo: true },
+      }),
+      this.repository.manager.find(Department, {
+        where: { departmentAdminId: In(empIds) },
       }),
     ]);
 
@@ -215,11 +222,8 @@ export class UserService {
     }
 
     const deptAdminSet = new Set<string>();
-    const deptWithAdmins = await this.repository.manager.find(Department, {
-      where: { departmentAdminId: In(empIds) },
-    });
     for (const d of deptWithAdmins) {
-      deptAdminSet.add(d.departmentAdminId);
+      if (d.departmentAdminId) deptAdminSet.add(d.departmentAdminId);
     }
 
     const enriched = data.map((user) => {
@@ -237,7 +241,7 @@ export class UserService {
 
     return {
       data: enriched,
-      meta: { page, limit, total, totalPages: Math.ceil(total / limit) },
+      meta: { page, limit: cappedLimit, total, totalPages: Math.ceil(total / cappedLimit) },
     };
   }
 
