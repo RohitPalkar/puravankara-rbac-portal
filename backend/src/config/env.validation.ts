@@ -9,12 +9,28 @@ export const envValidationSchema = Joi.object({
     .valid('development', 'staging', 'production', 'test')
     .default('development'),
 
-  DATABASE_URL: Joi.string().optional(),
-  DB_HOST: Joi.string().optional(),
+  DATABASE_URL: Joi.string().uri().optional(),
+  DB_HOST: Joi.string().when('DATABASE_URL', {
+    is: Joi.exist(),
+    then: Joi.optional(),
+    otherwise: Joi.required(),
+  }),
   DB_PORT: Joi.number().default(5432),
-  DB_USERNAME: Joi.string().optional(),
-  DB_PASSWORD: Joi.string().optional(),
-  DB_NAME: Joi.string().optional(),
+  DB_USERNAME: Joi.string().when('DATABASE_URL', {
+    is: Joi.exist(),
+    then: Joi.optional(),
+    otherwise: Joi.required(),
+  }),
+  DB_PASSWORD: Joi.string().when('DATABASE_URL', {
+    is: Joi.exist(),
+    then: Joi.optional(),
+    otherwise: Joi.required(),
+  }),
+  DB_NAME: Joi.string().when('DATABASE_URL', {
+    is: Joi.exist(),
+    then: Joi.optional(),
+    otherwise: Joi.required(),
+  }),
   DB_LOGGING: Joi.boolean().default(false),
   DB_POOL_MAX: Joi.number().default(10),
 
@@ -24,13 +40,13 @@ export const envValidationSchema = Joi.object({
   REDIS_PASSWORD: Joi.string().allow('').optional(),
 
   JWT_SECRET: Joi.string().min(16).required(),
-  JWT_REFRESH_SECRET: Joi.string().optional(),
+  JWT_REFRESH_SECRET: Joi.string().min(16).required(),
   JWT_EXPIRES_IN: Joi.string().default('15m'),
   JWT_REFRESH_EXPIRES_IN: Joi.string().default('7d'),
 
   LOG_LEVEL: Joi.string()
     .valid('error', 'warn', 'info', 'debug')
-    .default('debug'),
+    .default('info'),
   LOG_FORMAT: Joi.string().valid('pretty', 'json').default('pretty'),
 
   CORS_ORIGINS: Joi.string().optional(),

@@ -181,28 +181,28 @@ export class RoleActionPermissionService {
       }
 
       if (actionIds.length > 0) {
-        const actionIdParams = actionIds.join(',');
         const rows = await queryRunner.manager.query(
           `SELECT a.id as action_id, a.action_group_id, sm.id as sub_module_id, sm.module_id
            FROM actions a
            JOIN action_groups ag ON ag.id = a.action_group_id
            JOIN sub_modules sm ON sm.id = ag.sub_module_id
-           WHERE a.id IN (${actionIdParams})`,
+           WHERE a.id = ANY($1::int[])`,
+          [actionIds],
         );
 
         if (rows.length > 0) {
-          const zoneVal = zoneId ?? 'NULL';
-          const deptVal = departmentId ?? 'NULL';
-          const values = rows
-            .map(
-              (r: any) =>
-                `(${zoneVal}, ${deptVal}, ${roleId}, ${r.module_id}, ${r.sub_module_id}, ${r.action_group_id}, ${r.action_id})`,
-            )
-            .join(', ');
-
-          await queryRunner.manager.query(
-            `INSERT INTO role_action_permissions (zone_id, department_id, role_id, module_id, sub_module_id, action_group_id, action_id) VALUES ${values}`,
+          const entities = rows.map((r: any) =>
+            queryRunner.manager.create(RoleActionPermission, {
+              zoneId: zoneId ?? null,
+              departmentId: departmentId ?? null,
+              roleId,
+              moduleId: r.module_id,
+              subModuleId: r.sub_module_id,
+              actionGroupId: r.action_group_id,
+              actionId: r.action_id,
+            }),
           );
+          await queryRunner.manager.save(entities);
         }
       }
 

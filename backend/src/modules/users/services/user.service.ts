@@ -222,14 +222,6 @@ export class UserService {
       deptAdminSet.add(d.departmentAdminId);
     }
 
-    const authRows = await this.userAuthRepository.find({
-      where: { userId: In(empIds) },
-    });
-    const credentialsMap = new Map<string, string>();
-    for (const row of authRows) {
-      if (row.plainPassword) credentialsMap.set(row.userId, row.plainPassword);
-    }
-
     const enriched = data.map((user) => {
       const role = roleMap.get(user.empId);
       return {
@@ -240,7 +232,6 @@ export class UserService {
         projectCount: projectCountMap.get(user.empId) ?? 0,
         reportsToName: reportsToMap.get(user.empId) ?? null,
         isDepartmentAdmin: deptAdminSet.has(user.empId),
-        credentials: credentialsMap.get(user.empId) ?? null,
       };
     });
 
@@ -383,7 +374,6 @@ export class UserService {
       this.userAuthRepository.create({
         userId: savedUser.empId,
         passwordHash,
-        plainPassword: generatedPassword,
         authProvider: 'LOCAL',
       }),
     );
@@ -781,7 +771,6 @@ export class UserService {
         queryRunner.manager.create(UserAuth, {
           userId: savedUser.empId,
           passwordHash,
-          plainPassword: generatedPassword,
           authProvider: 'LOCAL',
         }),
       );

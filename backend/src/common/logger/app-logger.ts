@@ -19,13 +19,19 @@ export class AppLogger implements LoggerService {
   private logger: winston.Logger;
 
   constructor(context?: string) {
-    const logLevel = process.env.LOG_LEVEL || 'debug';
+    const logLevel = process.env.LOG_LEVEL || 'info';
     const logFormat = process.env.LOG_FORMAT || 'pretty';
     const isProduction = process.env.NODE_ENV === 'production';
 
-    const transports: winston.transport[] = [new winston.transports.Console()];
+    const transports: winston.transport[] = [
+      new winston.transports.Console({
+        format: isProduction ? json() : prettyFormat,
+      }),
+    ];
 
-    if (isProduction) {
+    // In containerized prod, logs should go to stdout only (platform collects).
+    // Keep file transports only when explicitly enabled via LOG_TO_FILE=true
+    if (isProduction && process.env.LOG_TO_FILE === 'true') {
       transports.push(
         new DailyRotateFile({
           filename: 'logs/app-%DATE%.log',

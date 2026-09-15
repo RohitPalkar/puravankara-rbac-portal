@@ -20,10 +20,6 @@ export class UserAuth {
   passwordHash: string;
 
   @Exclude()
-  @Column({ name: 'plain_password', nullable: true })
-  plainPassword: string;
-
-  @Exclude()
   @Column({ name: 'reset_token_hash', nullable: true })
   resetTokenHash: string;
 

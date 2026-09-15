@@ -91,7 +91,17 @@ export class AuthController {
   @Post('set-password')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Set initial password for a user (admin only)' })
-  async setPassword(@Body() dto: SetPasswordDto) {
+  async setPassword(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() dto: SetPasswordDto,
+  ) {
+    // Only super admin or self can set password; guard against privilege escalation
+    const isSuperAdmin = user.roles?.includes('SUPER_ADMIN');
+    if (!isSuperAdmin && user.empId !== dto.userId) {
+      throw new (await import('@nestjs/common')).ForbiddenException(
+        'Only super admin can set password for other users',
+      );
+    }
     await this.authService.setInitialPassword(dto.userId, dto.password);
     return { message: 'Password set successfully' };
   }

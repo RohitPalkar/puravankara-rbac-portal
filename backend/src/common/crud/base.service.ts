@@ -25,12 +25,29 @@ export abstract class BaseService<
 
     const where: FindOptionsWhere<T> = { deletedAt: null };
 
-    if (search && searchableFields.length > 0) {
+    const allowedSortFields = new Set([
+      'id',
+      'name',
+      'createdAt',
+      'updatedAt',
+      'email',
+      'brandName',
+      'phaseName',
+      'billingName',
+      defaultSort,
+    ]);
+    const safeSortBy = allowedSortFields.has(sortBy) ? sortBy : defaultSort;
+    const safeSortOrder: 'ASC' | 'DESC' =
+      sortOrder === 'ASC' ? 'ASC' : 'DESC';
+    const escapedSearch = search
+      ? search.replace(/[%_\\]/g, '\\$&')
+      : search;
+
+    if (escapedSearch && searchableFields.length > 0) {
       const searchConditions = searchableFields.map((field) => ({
-        [field]: ILike(`%${search}%`),
+        [field]: ILike(`%${escapedSearch}%`),
         ...where,
       })) as FindOptionsWhere<T>[];
-      delete (where as any).deletedAt;
 
       for (const [key, value] of Object.entries(filters)) {
         if (value !== undefined && value !== '' && value !== null) {
@@ -40,10 +57,13 @@ export abstract class BaseService<
         }
       }
 
+      const effectiveLimit = paginate ? Math.min(limit!, 100) : 100;
       const [data, total] = await this.repository.findAndCount({
         where: searchConditions,
-        order: { [sortBy]: sortOrder } as any,
-        ...(paginate ? { skip: (page - 1) * limit, take: limit } : {}),
+        order: { [safeSortBy]: safeSortOrder } as any,
+        ...(paginate
+          ? { skip: (page! - 1) * limit!, take: effectiveLimit }
+          : { take: effectiveLimit }),
       });
 
       return {
@@ -63,19 +83,22 @@ export abstract class BaseService<
       }
     }
 
+    const cappedLimit = paginate ? Math.min(limit!, 100) : 100;
     const [data, total] = await this.repository.findAndCount({
       where,
-      order: { [sortBy]: sortOrder } as any,
-      ...(paginate ? { skip: (page - 1) * limit, take: limit } : {}),
+      order: { [safeSortBy]: safeSortOrder } as any,
+      ...(paginate
+        ? { skip: (page! - 1) * limit!, take: cappedLimit }
+        : { take: cappedLimit }),
     });
 
     return {
       data,
       meta: {
-        page: paginate ? page : 1,
-        limit: paginate ? limit : total,
+        page: paginate ? page! : 1,
+        limit: paginate ? limit! : total,
         total,
-        totalPages: paginate ? Math.ceil(total / limit) : 1,
+        totalPages: paginate ? Math.ceil(total / limit!) : 1,
       },
     };
   }

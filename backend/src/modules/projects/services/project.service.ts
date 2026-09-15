@@ -29,26 +29,77 @@ export class ProjectService extends BaseService<Project> {
   }
 
   async findAll(
-    query: PaginationQuery = { page: 1, limit: 100 },
+    query: PaginationQuery = { page: 1, limit: 20 },
   ): Promise<PaginatedResult<Project>> {
     const {
       page = 1,
-      limit = 100,
+      limit = 20,
       search,
       sortBy = 'createdAt',
       sortOrder = 'DESC',
       ...filters
     } = query;
-    const rows = await this.repository.query(
-      `SELECT * FROM (SELECT DISTINCT ON (p.id) p.*, c.name AS "cityName", ph.phase_name AS "phaseName", b.brand_name AS "brandName", z.name AS "zoneName" FROM public.projects p LEFT JOIN public.cities c ON c.id = p.city_id LEFT JOIN public.phases ph ON ph.id = p.phase_id LEFT JOIN public.brands b ON b.id = ph.brand_id LEFT JOIN public.project_locations pl ON pl.project_id = p.id LEFT JOIN public.zones z ON z.id = pl.zone_id WHERE p.deleted_at IS NULL ORDER BY p.id) sub ORDER BY sub.created_at DESC`,
-    );
+    const cappedLimit = Math.min(limit, 100);
+    const safeSortOrder = sortOrder === 'ASC' ? 'ASC' : 'DESC';
+    const allowedSort = new Set([
+      'createdAt',
+      'name',
+      'id',
+      'updatedAt',
+      'cityName',
+      'phaseName',
+    ]);
+    const safeSortBy = allowedSort.has(sortBy) ? sortBy : 'createdAt';
+    const offset = (page - 1) * cappedLimit;
+
+    const qb = this.repository
+      .createQueryBuilder('p')
+      .leftJoinAndSelect('p.city', 'c')
+      .leftJoinAndSelect('p.phase', 'ph')
+      .leftJoinAndSelect('ph.brand', 'b')
+      .leftJoin('p.projectLocations', 'pl')
+      .leftJoin('pl.zone', 'z')
+      .addSelect('c.name', 'cityName')
+      .addSelect('ph.phaseName', 'phaseName')
+      .addSelect('b.brandName', 'brandName')
+      .addSelect('z.name', 'zoneName')
+      .where('p.deletedAt IS NULL');
+
+    if (search) {
+      const escaped = search.replace(/[%_\\]/g, '\\$&');
+      qb.andWhere('(p.name ILIKE :search OR c.name ILIKE :search OR ph.phaseName ILIKE :search)', {
+        search: `%${escaped}%`,
+      });
+    }
+
+    for (const [key, value] of Object.entries(filters)) {
+      if (value === undefined || value === '' || value === null) continue;
+      if (key === 'cityId') qb.andWhere('p.cityId = :cityId', { cityId: value });
+      else if (key === 'phaseId') qb.andWhere('p.phaseId = :phaseId', { phaseId: value });
+      else if (key === 'brandId') qb.andWhere('b.id = :brandId', { brandId: value });
+      else if (key === 'zoneId') qb.andWhere('z.id = :zoneId', { zoneId: value });
+    }
+
+    const sortMap: Record<string, string> = {
+      createdAt: 'p.createdAt',
+      updatedAt: 'p.updatedAt',
+      name: 'p.name',
+      id: 'p.id',
+      cityName: 'c.name',
+      phaseName: 'ph.phaseName',
+    };
+    qb.orderBy(sortMap[safeSortBy] || 'p.createdAt', safeSortOrder);
+    qb.skip(offset).take(cappedLimit);
+
+    const [rows, total] = await qb.getManyAndCount();
+
     return {
-      data: rows,
+      data: rows as any,
       meta: {
         page,
-        limit,
-        total: rows.length,
-        totalPages: Math.ceil(rows.length / limit),
+        limit: cappedLimit,
+        total,
+        totalPages: Math.ceil(total / cappedLimit),
       },
     };
   }

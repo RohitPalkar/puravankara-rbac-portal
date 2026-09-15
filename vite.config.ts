@@ -31,18 +31,31 @@ export default defineConfig({
       },
     ],
   },
-  server: { port: PORT, host: true, hmr: { overlay: false } },
-  preview: { port: PORT, host: true },
+  server: {
+    port: PORT,
+    host: true,
+    hmr: { overlay: false },
+    proxy: {
+      '/api': {
+        target: 'http://localhost:3000',
+        changeOrigin: true,
+      },
+    },
+  },
+  preview: { port: 4173, host: true },
   optimizeDeps: {
     include: ['react', 'react-dom', 'react-router-dom', '@mui/material', '@mui/icons-material', '@tanstack/react-query', 'axios', 'zustand'],
   },
   esbuild: {
-    drop: process.env.NODE_ENV === 'production' ? ['console', 'debugger'] : [],
+    drop:
+      process.env.NODE_ENV === 'production'
+        ? ['debugger']
+        : [],
   },
   build: {
     target: 'esnext',
     cssMinify: true,
-    reportCompressedSize: false,
+    reportCompressedSize: true,
     rollupOptions: {
       output: {
         manualChunks: {

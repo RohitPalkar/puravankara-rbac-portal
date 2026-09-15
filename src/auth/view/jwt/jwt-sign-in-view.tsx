@@ -107,7 +107,7 @@ export function JwtSignInView() {
     >
       <Box
         component="img"
-        src="/assets/login/Login Image.png"
+        src="/assets/login/login-image.png"
         alt=""
         sx={{
           width: 1,

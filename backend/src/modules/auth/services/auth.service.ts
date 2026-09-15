@@ -333,7 +333,6 @@ export class AuthService {
 
     if (userAuth) {
       userAuth.passwordHash = passwordHash;
-      userAuth.plainPassword = password;
       userAuth.failedAttempts = 0;
       userAuth.isLocked = false;
       await this.userAuthRepository.save(userAuth);
@@ -342,7 +341,6 @@ export class AuthService {
         this.userAuthRepository.create({
           userId,
           passwordHash,
-          plainPassword: password,
           authProvider: 'LOCAL',
         }),
       );
@@ -380,7 +378,6 @@ export class AuthService {
     }
 
     userAuth.passwordHash = await bcrypt.hash(newPassword, 10);
-    userAuth.plainPassword = newPassword;
     userAuth.failedAttempts = 0;
     userAuth.isLocked = false;
     await this.userAuthRepository.save(userAuth);
@@ -444,9 +441,14 @@ export class AuthService {
       source: 'AUTH',
     });
 
+    if (process.env.NODE_ENV !== 'production') {
+      return {
+        message: 'Password reset token generated (demo: no email relay configured).',
+        resetToken: token,
+      };
+    }
     return {
-      message: 'Password reset token generated (demo: no email relay configured).',
-      resetToken: token,
+      message: 'If an account exists, a password reset link has been sent.',
     };
   }
 
@@ -469,7 +471,6 @@ export class AuthService {
     }
 
     userAuth.passwordHash = await bcrypt.hash(newPassword, 10);
-    userAuth.plainPassword = newPassword;
     userAuth.failedAttempts = 0;
     userAuth.isLocked = false;
     userAuth.resetTokenHash = null;
@@ -548,7 +549,7 @@ export class AuthService {
     ipAddress?: string,
     userAgent?: string,
   ): Promise<void> {
-    const tokenHash = await bcrypt.hash(refreshToken, 6);
+    const tokenHash = await bcrypt.hash(refreshToken, 10);
 
     const session = this.userSessionRepository.create({
       id: sessionId,

@@ -17,10 +17,18 @@ export class PermissionCacheService {
   constructor() {
     const host = process.env.REDIS_HOST || 'localhost';
     const port = Number(process.env.REDIS_PORT) || 6379;
+    const password = process.env.REDIS_PASSWORD || undefined;
 
     if (process.env.REDIS_ENABLED === 'true') {
       try {
-        this.redis = new Redis({ host, port, lazyConnect: true });
+        this.redis = new Redis({
+          host,
+          port,
+          password,
+          lazyConnect: true,
+          maxRetriesPerRequest: 2,
+          enableReadyCheck: true,
+        });
         this.redis
           .connect()
           .then(() => {
@@ -33,11 +41,44 @@ export class PermissionCacheService {
             );
             this.redisAvailable = false;
           });
+
+        this.redis.on('error', (err) => {
+          this.logger.warn(`Redis error: ${err.message}`);
+          this.redisAvailable = false;
+        });
+        this.redis.on('close', () => {
+          this.redisAvailable = false;
+        });
+
+        // Sweeper for memory cache to prevent unbounded growth
+        setInterval(() => {
+          const now = Date.now();
+          for (const [k, v] of this.memoryCache.entries()) {
+            if (now > v.expiry) this.memoryCache.delete(k);
+          }
+          // Cap at 1000 entries LRU-ish: delete oldest if over
+          if (this.memoryCache.size > 1000) {
+            const firstKey = this.memoryCache.keys().next().value;
+            if (firstKey) this.memoryCache.delete(firstKey);
+          }
+        }, 60_000).unref();
       } catch (err) {
         this.logger.warn(
-          `Redis connection failed, using memory cache: ${err.message}`,
+          `Redis connection failed, using memory cache: ${(err as Error).message}`,
         );
       }
+    } else {
+      // Even for memory-only, sweep expired entries
+      setInterval(() => {
+        const now = Date.now();
+        for (const [k, v] of this.memoryCache.entries()) {
+          if (now > v.expiry) this.memoryCache.delete(k);
+        }
+        if (this.memoryCache.size > 1000) {
+          const firstKey = this.memoryCache.keys().next().value;
+          if (firstKey) this.memoryCache.delete(firstKey);
+        }
+      }, 60_000).unref();
     }
   }
 
@@ -94,14 +135,23 @@ export class PermissionCacheService {
   async invalidateByPattern(pattern: string): Promise<void> {
     if (this.redisAvailable && this.redis) {
       try {
-        const keys = await this.redis.keys(pattern);
-        if (keys.length > 0) await this.redis.del(...keys);
+        const stream = this.redis.scanStream({ match: pattern, count: 100 });
+        const keysToDel: string[] = [];
+        for await (const keys of stream) {
+          if (keys.length) keysToDel.push(...keys);
+          if (keysToDel.length >= 500) {
+            await this.redis.del(...keysToDel.splice(0, 500));
+          }
+        }
+        if (keysToDel.length) await this.redis.del(...keysToDel);
       } catch {
         /* ignore */
       }
     }
 
-    const regex = new RegExp(pattern.replace('*', '.*'));
+    const regex = new RegExp(
+      '^' + pattern.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/\\\*/g, '.*') + '$',
+    );
     for (const key of this.memoryCache.keys()) {
       if (regex.test(key)) {
         this.memoryCache.delete(key);

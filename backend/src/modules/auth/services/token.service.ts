@@ -13,26 +13,28 @@ export interface JwtPayload {
 export interface TokenPair {
   accessToken: string;
   refreshToken: string;
-  expiresIn: number;
+  expiresIn: string | number;
 }
 
 @Injectable()
 export class TokenService {
-  private readonly accessTokenExpiry = 28800; // 8 hours in seconds
-  private readonly refreshTokenExpiry = '7d';
+  private readonly accessTokenExpiry: string | number =
+    process.env.JWT_EXPIRES_IN || '15m';
+  private readonly refreshTokenExpiry: string | number =
+    process.env.JWT_REFRESH_EXPIRES_IN || '7d';
 
   constructor(private readonly jwtService: JwtService) {}
 
   generateAccessToken(payload: JwtPayload): string {
     return this.jwtService.sign(payload, {
-      expiresIn: this.accessTokenExpiry,
+      expiresIn: this.accessTokenExpiry as any,
     });
   }
 
   generateRefreshToken(payload: JwtPayload): string {
     const refreshPayload = { ...payload, type: 'refresh' };
     return this.jwtService.sign(refreshPayload, {
-      expiresIn: this.refreshTokenExpiry,
+      expiresIn: this.refreshTokenExpiry as any,
       secret: process.env.JWT_REFRESH_SECRET || process.env.JWT_SECRET,
     });
   }

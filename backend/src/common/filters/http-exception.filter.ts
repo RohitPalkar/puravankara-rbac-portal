@@ -36,7 +36,14 @@ export class AllExceptionsFilter implements ExceptionFilter {
           ? res
           : (res as any).message || exception.message;
     } else if (exception instanceof Error) {
-      message = exception.message;
+      message = 'Internal server error';
+      // Do not leak raw DB messages to client; log them internally
+      if (status >= 500) {
+        this.logger.error(
+          `Unhandled error: ${exception.message}`,
+          exception.stack,
+        );
+      }
     }
 
     if (status >= 500) {

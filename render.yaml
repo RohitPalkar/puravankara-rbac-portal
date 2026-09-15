@@ -6,7 +6,7 @@ services:
     plan: free
     rootDir: backend
     buildCommand: npm install --include=dev && npm run build
-    startCommand: npm run migration:run:prod && npm run seed:prod && npm run start:prod
+    startCommand: npm run migration:run:prod && npm run start:prod
     healthCheckPath: /api/v1/health
     envVars:
       - key: NODE_ENV
@@ -16,9 +16,9 @@ services:
       - key: DATABASE_URL
         sync: false
       - key: JWT_SECRET
-        generateValue: true
+        sync: false
       - key: JWT_REFRESH_SECRET
-        generateValue: true
+        sync: false
       - key: CORS_ORIGINS
         sync: false
       - key: FRONTEND_URL

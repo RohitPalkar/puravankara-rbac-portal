@@ -51,20 +51,44 @@ export function isValidToken(accessToken: string) {
 
 // ----------------------------------------------------------------------
 
+let expiryTimer: ReturnType<typeof setTimeout> | null = null;
+
 export function tokenExpired(exp: number) {
   const currentTime = Date.now();
   const timeLeft = exp * 1000 - currentTime;
 
-  setTimeout(() => {
-    try {
-      alert('Token expired!');
-      sessionStorage.removeItem(STORAGE_KEY);
+  if (expiryTimer) clearTimeout(expiryTimer);
+  if (timeLeft <= 0) {
+    // Already expired -> redirect immediately without alert
+    sessionStorage.removeItem(STORAGE_KEY);
+    if (typeof window !== 'undefined' && !window.location.pathname.startsWith('/auth')) {
       window.location.href = paths.auth.jwt.signIn;
+    }
+    return;
+  }
+  // Cap to max setTimeout (2^31-1) and avoid multi-hour timers leaking
+  const capped = Math.min(timeLeft, 2147483647);
+  expiryTimer = setTimeout(() => {
+    try {
+      sessionStorage.removeItem(STORAGE_KEY);
+      sessionStorage.removeItem('jwt_user');
+      sessionStorage.removeItem('jwt_permissions');
+      if (typeof window !== 'undefined' && !window.location.pathname.startsWith('/auth')) {
+        // Use navigation instead of blocking alert
+        window.dispatchEvent(new CustomEvent('session:expired'));
+        window.location.href = paths.auth.jwt.signIn;
+      }
     } catch (error) {
       console.error('Error during token expiration:', error);
-      throw error;
     }
-  }, timeLeft);
+  }, capped);
+}
+
+export function clearExpiryTimer() {
+  if (expiryTimer) {
+    clearTimeout(expiryTimer);
+    expiryTimer = null;
+  }
 }
 
 // ----------------------------------------------------------------------
@@ -76,7 +100,7 @@ export async function setSession(accessToken: string | null) {
 
       axios.defaults.headers.common.Authorization = `Bearer ${accessToken}`;
 
-      const decodedToken = jwtDecode(accessToken); // ~3 days by minimals server
+      const decodedToken = jwtDecode(accessToken);
 
       if (decodedToken && 'exp' in decodedToken) {
         tokenExpired(decodedToken.exp);
@@ -84,6 +108,7 @@ export async function setSession(accessToken: string | null) {
         throw new Error('Invalid access token!');
       }
     } else {
+      clearExpiryTimer();
       sessionStorage.removeItem(STORAGE_KEY);
       delete axios.defaults.headers.common.Authorization;
     }

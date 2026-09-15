@@ -30,7 +30,10 @@ export type ConfigValue = {
 export const CONFIG: ConfigValue = {
   appName: 'Puravankara RBAC Portal',
   appVersion: packageJson.version,
-  serverUrl: import.meta.env.VITE_SERVER_URL ?? '',
+  serverUrl:
+    import.meta.env.VITE_SERVER_URL ??
+    import.meta.env.VITE_API_URL ??
+    '',
   assetsDir: import.meta.env.VITE_ASSETS_DIR ?? '',
   auth: {
     method: 'jwt',

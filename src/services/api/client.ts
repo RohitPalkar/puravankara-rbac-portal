@@ -23,6 +23,12 @@ export function getAccessToken(): string | null {
   return accessToken;
 }
 
+if (!CONFIG.serverUrl && typeof window !== 'undefined') {
+  console.warn(
+    'VITE_SERVER_URL / VITE_API_URL is empty - API baseURL will be "" and requests will 404. Set it in .env or Vercel env.',
+  );
+}
+
 const apiClient = axios.create({
   baseURL: CONFIG.serverUrl,
   headers: { 'Content-Type': 'application/json' },
@@ -70,12 +76,46 @@ apiClient.interceptors.response.use(
     }
 
     switch (status) {
-      case 401:
+      case 401: {
         if (accessToken) {
           accessToken = null;
           delete apiClient.defaults.headers.common.Authorization;
         }
+        // Attempt refresh once if refreshToken exists in storage
+        const refreshToken = typeof window !== 'undefined' ? sessionStorage.getItem('refresh_token') : null;
+        const originalConfig = config as InternalAxiosRequestConfig & { _retryAuth?: boolean };
+        if (refreshToken && !originalConfig._retryAuth) {
+          originalConfig._retryAuth = true;
+          try {
+            const refreshRes = await axios.post<{ data: { accessToken: string; refreshToken?: string } }>(
+              `${CONFIG.serverUrl}/auth/refresh`,
+              { refreshToken },
+            );
+            const newToken = (refreshRes.data as any)?.data?.accessToken || (refreshRes.data as any)?.accessToken;
+            if (newToken) {
+              setAccessToken(newToken);
+              if (typeof window !== 'undefined') sessionStorage.setItem('jwt_access_token', newToken);
+              const newRefresh = (refreshRes.data as any)?.data?.refreshToken || (refreshRes.data as any)?.refreshToken;
+              if (newRefresh && typeof window !== 'undefined') sessionStorage.setItem('refresh_token', newRefresh);
+              originalConfig.headers.Authorization = `Bearer ${newToken}`;
+              return await apiClient.request(originalConfig);
+            }
+          } catch {
+            // refresh failed -> fall through to logout
+          }
+        }
+        if (typeof window !== 'undefined') {
+          sessionStorage.removeItem('jwt_access_token');
+          sessionStorage.removeItem('jwt_user');
+          sessionStorage.removeItem('jwt_permissions');
+          // Redirect to login preserving returnTo
+          const current = window.location.pathname + window.location.search;
+          if (!current.startsWith('/auth')) {
+            window.location.href = `/auth/jwt/sign-in?returnTo=${encodeURIComponent(current)}`;
+          }
+        }
         return Promise.reject(new UnauthorizedError(data));
+      }
       case 404:
         return Promise.reject(new NotFoundError(data));
       case 422:

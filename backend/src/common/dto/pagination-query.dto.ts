@@ -15,7 +15,7 @@ export class PaginationQueryDto {
   @Type(() => Number)
   @IsInt()
   @Min(1)
-  @Max(10000)
+  @Max(100)
   limit?: number;
 
   @ApiPropertyOptional()

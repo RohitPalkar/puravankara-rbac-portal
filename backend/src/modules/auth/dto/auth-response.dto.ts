@@ -74,7 +74,7 @@ export class AuthResponseDto {
   refreshToken?: string;
 
   @ApiProperty()
-  expiresIn: number;
+  expiresIn: number | string;
 
   @ApiProperty()
   user: UserInfo;
