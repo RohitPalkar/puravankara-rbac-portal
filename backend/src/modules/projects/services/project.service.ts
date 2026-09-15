@@ -6,6 +6,7 @@ import { ProjectLocation } from '../entities/project-location.entity';
 import { ProjectPaymentGateway } from '../entities/project-payment-gateway.entity';
 import { ProjectIncentiveRule } from '../entities/project-incentive-rule.entity';
 import { CityZoneMapping } from '../../geography/entities/city-zone-mapping.entity';
+import { Zone } from '../../geography/entities/zone.entity';
 import { BaseService } from '../../../common/crud/base.service';
 import { CreateProjectDto, UpdateProjectDto } from '../dto/project.dto';
 import {
@@ -52,18 +53,20 @@ export class ProjectService extends BaseService<Project> {
     const safeSortBy = allowedSort.has(sortBy) ? sortBy : 'createdAt';
     const offset = (page - 1) * cappedLimit;
 
+    const needsZone = filters.zoneId !== undefined && filters.zoneId !== '' && filters.zoneId !== null;
+
     const qb = this.repository
       .createQueryBuilder('p')
       .leftJoinAndSelect('p.city', 'c')
       .leftJoinAndSelect('p.phase', 'ph')
       .leftJoinAndSelect('ph.brand', 'b')
-      .leftJoin('p.projectLocations', 'pl')
-      .leftJoin('pl.zone', 'z')
-      .addSelect('c.name', 'cityName')
-      .addSelect('ph.phaseName', 'phaseName')
-      .addSelect('b.brandName', 'brandName')
-      .addSelect('z.name', 'zoneName')
       .where('p.deletedAt IS NULL');
+
+    if (needsZone) {
+      qb.leftJoin(ProjectLocation, 'pl', 'pl.project_id = p.id')
+        .leftJoin(Zone, 'z', 'z.id = pl.zone_id')
+        .distinct(true);
+    }
 
     if (search) {
       const escaped = search.replace(/[%_\\]/g, '\\$&');
