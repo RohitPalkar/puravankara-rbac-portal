@@ -31,6 +31,7 @@ import { HealthModule } from './modules/health/health.module';
 import { SetupModule } from './modules/setup/setup.module';
 import { DashboardModule } from './modules/dashboard/dashboard.module';
 import { CommonModule } from './common/common.module';
+import { LandConsultantsModule } from './modules/land-consultants/land-consultants.module';
 
 @Module({
   imports: [
@@ -68,6 +69,7 @@ import { CommonModule } from './common/common.module';
     SetupModule,
     DashboardModule,
     CommonModule,
+    LandConsultantsModule,
   ],
   providers: [
     { provide: APP_FILTER, useClass: AllExceptionsFilter },

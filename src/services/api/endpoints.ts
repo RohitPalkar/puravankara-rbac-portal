@@ -99,6 +99,14 @@ export const endpoints = {
     delete: (id: number) => `${API_PREFIX}/cities/${id}`,
   },
 
+  landConsultants: {
+    list: `${API_PREFIX}/land-consultants`,
+    byId: (id: number) => `${API_PREFIX}/land-consultants/${id}`,
+    create: `${API_PREFIX}/land-consultants`,
+    update: (id: number) => `${API_PREFIX}/land-consultants/${id}`,
+    delete: (id: number) => `${API_PREFIX}/land-consultants/${id}`,
+  },
+
   zones: {
     list: `${API_PREFIX}/zones`,
     byId: (id: number) => `${API_PREFIX}/zones/${id}`,

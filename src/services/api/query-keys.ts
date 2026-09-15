@@ -55,6 +55,12 @@ export const queryKeys = {
     byId: (id: number) => ['cities', id] as const,
   },
 
+  landConsultants: {
+    all: ['land-consultants'] as const,
+    list: (params?: Record<string, unknown>) => ['land-consultants', 'list', params] as const,
+    byId: (id: number) => ['land-consultants', id] as const,
+  },
+
   zones: {
     all: ['zones'] as const,
     list: (params?: Record<string, unknown>) => ['zones', 'list', params] as const,
