@@ -1,4 +1,4 @@
-import { Entity, Column, ManyToOne, JoinColumn, Index } from 'typeorm';
+import { Entity, Column, Index } from 'typeorm';
 import { AppBaseEntity } from '../../../common/entities/app-base.entity';
 
 export enum ConsultantType {
@@ -42,19 +42,11 @@ export class LandConsultant extends AppBaseEntity {
   @Column({ name: 'bd_executive_id' })
   bdExecutiveId: string;
 
-  @ManyToOne('User', { nullable: true })
-  @JoinColumn({ name: 'bd_executive_id' })
-  bdExecutive: any;
-
   @Column({ name: 'is_puravankara_employee', default: false })
   isPuravankaraEmployee: boolean;
 
   @Column({ name: 'department_id', type: 'int', nullable: true })
   departmentId: number;
-
-  @ManyToOne('Department', { nullable: true })
-  @JoinColumn({ name: 'department_id' })
-  department: any;
 
   @Column({ name: 'employee_id', nullable: true })
   employeeId: string;
