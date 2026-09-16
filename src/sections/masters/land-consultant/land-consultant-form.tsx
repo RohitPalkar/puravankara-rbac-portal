@@ -56,10 +56,15 @@ export default function LandConsultantFormPage() {
   const { mutateAsync: createConsultant, isPending: isCreating } = useCreateLandConsultant();
   const { mutateAsync: updateConsultant, isPending: isUpdating } = useUpdateLandConsultant();
   const { data: departmentsData } = useDepartmentList();
-  const departments = (departmentsData as any)?.data ?? departmentsData ?? [];
+  const departments = useMemo(
+    () => (departmentsData as any)?.data ?? departmentsData ?? [],
+    [departmentsData]
+  );
   const { data: usersResponse } = useUserList({ page: 1, limit: 100 } as any);
-  const usersRaw: any = usersResponse;
-  const users: any[] = usersRaw?.data ?? (Array.isArray(usersRaw) ? usersRaw : []);
+  const users: any[] = useMemo(() => {
+    const usersRaw: any = usersResponse;
+    return usersRaw?.data ?? (Array.isArray(usersRaw) ? usersRaw : []);
+  }, [usersResponse]);
 
   const [consultantType, setConsultantType] = useState<'Individual' | 'Registered'>('Registered');
   const [businessName, setBusinessName] = useState('');

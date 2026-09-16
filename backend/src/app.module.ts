@@ -32,6 +32,7 @@ import { SetupModule } from './modules/setup/setup.module';
 import { DashboardModule } from './modules/dashboard/dashboard.module';
 import { CommonModule } from './common/common.module';
 import { LandConsultantsModule } from './modules/land-consultants/land-consultants.module';
+import { LaCitiesModule } from './modules/la-cities/la-cities.module';
 
 @Module({
   imports: [
@@ -70,6 +71,7 @@ import { LandConsultantsModule } from './modules/land-consultants/land-consultan
     DashboardModule,
     CommonModule,
     LandConsultantsModule,
+    LaCitiesModule,
   ],
   providers: [
     { provide: APP_FILTER, useClass: AllExceptionsFilter },

@@ -9,27 +9,23 @@ import Box from '@mui/material/Box';
 import Chip from '@mui/material/Chip';
 import Button from '@mui/material/Button';
 import Typography from '@mui/material/Typography';
-import Stack from '@mui/material/Stack';
 
 import { paths } from 'src/routes/paths';
 
 import { CONFIG } from 'src/config-global';
 import { queryKeys } from 'src/services/api/query-keys';
-import { userService } from 'src/services/services/user.service';
-import {
-  useLandConsultantList,
-  useDeleteLandConsultant,
-} from 'src/services/hooks/use-land-consultants';
+import { zoneService } from 'src/services/services/geography.service';
+import { useLaCityList, useDeleteLaCity } from 'src/services/hooks/use-la-cities';
 
 import { Iconify } from 'src/components/iconify';
 import { DataTable } from 'src/components/data-table';
 import { RowActionsMenu } from 'src/components/row-actions';
 import { ConfirmDialog } from 'src/components/confirm-dialog';
-import { PageHeader, PageContainer } from 'src/components/page-layout';
+import { PageContainer } from 'src/components/page-layout';
 
 const PAGE_SIZE = 5;
 
-export default function LandConsultantListPage() {
+export default function LaCityListPage() {
   const navigate = useNavigate();
   const [paginationModel, setPaginationModel] = useState<GridPaginationModel>({
     page: 0,
@@ -49,41 +45,37 @@ export default function LandConsultantListPage() {
     [paginationModel, search]
   );
 
-  const { data: response, isLoading, isError, refetch } = useLandConsultantList(queryParams as any) as any;
-  const { mutateAsync: deleteConsultant, isPending: isDeleting } = useDeleteLandConsultant();
+  const { data: response, isLoading, isError, refetch } = useLaCityList(queryParams as any) as any;
+  const { mutateAsync: deleteCity, isPending: isDeleting } = useDeleteLaCity();
 
-  // BD Executive name map
-  const { data: usersData } = useQuery({
-    queryKey: queryKeys.users.list({ page: 1, limit: 100 } as any),
+  const { data: zonesResponse } = useQuery({
+    queryKey: queryKeys.zones.list({}),
     queryFn: async () => {
-      const res = await userService.list({ page: 1, limit: 100 } as any);
+      const res = await zoneService.list({} as any);
       return res.data as any;
     },
   });
-  const users: any[] = useMemo(() => {
-    const raw: any = usersData;
+  const zones: any[] = useMemo(() => {
+    const raw: any = zonesResponse;
     return raw?.data ?? (Array.isArray(raw) ? raw : []);
-  }, [usersData]);
-  const bdName = useCallback(
-    (id: string) => {
-      const u = (users as any[]).find((x: any) => x.empId === id || x.id === id);
-      return u?.name ?? id ?? '-';
-    },
-    [users]
+  }, [zonesResponse]);
+  const zoneName = useCallback(
+    (id: number) => zones.find((z) => z.id === id)?.name ?? '-',
+    [zones]
   );
 
-  const consultants = response?.data ?? [];
+  const cities: any[] = response?.data ?? [];
   const meta = response?.meta;
 
   const handleDelete = useCallback(async () => {
     if (deleteId === null) return;
     try {
-      await deleteConsultant(deleteId);
+      await deleteCity(deleteId);
       setDeleteId(null);
     } catch {
-      // handled
+      // handled by error UI
     }
-  }, [deleteId, deleteConsultant]);
+  }, [deleteId, deleteCity]);
 
   const handleSearchChange = useCallback((value: string) => {
     setSearch(value);
@@ -93,104 +85,61 @@ export default function LandConsultantListPage() {
   const columns: GridColDef[] = useMemo(
     () => [
       {
-        field: 'consultantDisplayName',
-        headerName: 'Consultant Name',
-        flex: 1.5,
-        minWidth: 180,
-        valueGetter: (_value, row: any) =>
-          row.consultantType === 'Registered'
-            ? row.businessName || row.consultantName || '-'
-            : row.consultantName || row.businessName || '-',
+        field: 'cityName',
+        headerName: 'City Name',
+        flex: 1,
+        minWidth: 140,
         renderCell: (params) => (
-          <Typography variant="body2" fontWeight={500} noWrap>
+          <Typography variant="body2" fontWeight={600} noWrap>
             {params.value}
           </Typography>
         ),
       },
       {
-        field: 'consultantType',
-        headerName: 'Type',
-        width: 120,
-        renderCell: (params) => {
-          const isRegistered = params.value === 'Registered';
-          return (
-            <Chip
-              label={params.value}
-              size="small"
-              sx={{
-                height: 24,
-                fontSize: '0.75rem',
-                fontWeight: 500,
-                bgcolor: isRegistered ? '#E6F7F8' : '#F3E8FF',
-                color: isRegistered ? '#0E7C8E' : '#7C3AED',
-                borderRadius: '6px',
-              }}
-            />
-          );
-        },
-      },
-      {
-        field: 'contactPersonDetails',
-        headerName: 'Contact Person Details',
-        flex: 1.8,
-        minWidth: 220,
-        sortable: false,
-        renderCell: (params) => {
-          const row = params.row as any;
-          return (
-            <Stack spacing={0} sx={{ py: 0.5 }}>
-              <Typography variant="body2" fontWeight={500} lineHeight={1.2} noWrap>
-                {row.contactPersonName || '-'}
-              </Typography>
-              <Typography variant="caption" color="text.secondary" lineHeight={1.2} noWrap>
-                {row.emailAddress || ''}
-              </Typography>
-            </Stack>
-          );
-        },
-      },
-      {
-        field: 'bdExecutiveId',
-        headerName: 'BD Executive',
+        field: 'businessZoneId',
+        headerName: 'Business Zone',
         width: 130,
         renderCell: (params) => (
-          <Typography variant="body2" noWrap>
-            {bdName(params.value)}
+          <Chip
+            label={zoneName(params.value) !== '-' ? zoneName(params.value) : params.row.businessZoneName || '-'}
+            size="small"
+            variant="outlined"
+            sx={{ borderRadius: '6px', fontSize: '0.75rem' }}
+          />
+        ),
+      },
+      {
+        field: 'regionsCount',
+        headerName: 'Regions',
+        width: 90,
+        align: 'center',
+        headerAlign: 'center',
+        renderCell: (params) => (
+          <Typography variant="body2" sx={{ width: 1, textAlign: 'center' }}>
+            {params.value ?? 0}
           </Typography>
         ),
       },
       {
-        field: 'proposedS0Count',
-        headerName: 'Proposed (S0)',
+        field: 'micromarketsCount',
+        headerName: 'Micromarkets',
         width: 120,
         align: 'center',
         headerAlign: 'center',
         renderCell: (params) => (
-          <Typography variant="body2" fontWeight={500} sx={{ width: 1, textAlign: 'center' }}>
+          <Typography variant="body2" sx={{ width: 1, textAlign: 'center' }}>
             {params.value ?? 0}
           </Typography>
         ),
       },
       {
-        field: 's1s2Count',
-        headerName: 'S1/S2',
-        width: 80,
-        align: 'center',
-        headerAlign: 'center',
-        renderCell: (params) => (
-          <Typography variant="body2" fontWeight={500} sx={{ width: 1, textAlign: 'center' }}>
-            {params.value ?? 0}
-          </Typography>
-        ),
-      },
-      {
-        field: 'mouJdaCount',
-        headerName: 'MOU/JDA/Termsheet',
+        field: 'pincodesCount',
+        headerName: 'Pincodes/Localities',
         width: 160,
         align: 'center',
         headerAlign: 'center',
         renderCell: (params) => (
-          <Typography variant="body2" fontWeight={500} sx={{ width: 1, textAlign: 'center' }}>
+          <Typography variant="body2" sx={{ width: 1, textAlign: 'center' }}>
             {params.value ?? 0}
           </Typography>
         ),
@@ -208,12 +157,12 @@ export default function LandConsultantListPage() {
                 {
                   label: 'View',
                   icon: 'solar:eye-bold',
-                  onClick: () => navigate(paths.dashboard.masters.consultantEdit(params.row.id)),
+                  onClick: () => navigate(`/dashboard/la-cities/${params.row.id}`),
                 },
                 {
                   label: 'Edit',
                   icon: 'solar:pen-bold',
-                  onClick: () => navigate(paths.dashboard.masters.consultantEdit(params.row.id)),
+                  onClick: () => navigate(`/dashboard/la-cities/${params.row.id}/edit`),
                 },
                 {
                   label: 'Delete',
@@ -227,23 +176,23 @@ export default function LandConsultantListPage() {
         ),
       },
     ],
-    [navigate, bdName]
+    [navigate, zoneName]
   );
 
   return (
     <>
       <Helmet>
-        <title>Land Consultant - {CONFIG.appName}</title>
+        <title>City - {CONFIG.appName}</title>
       </Helmet>
       <PageContainer>
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3 }}>
           <Typography variant="h4" fontWeight={700}>
-            Land Consultant
+            City
           </Typography>
           <Button
             variant="contained"
             startIcon={<Iconify icon="mingcute:add-line" />}
-            onClick={() => navigate(paths.dashboard.masters.consultantCreate)}
+            onClick={() => navigate('/dashboard/la-cities/new')}
             sx={{
               bgcolor: '#1A237E',
               '&:hover': { bgcolor: '#283593' },
@@ -252,13 +201,13 @@ export default function LandConsultantListPage() {
               fontWeight: 600,
             }}
           >
-            Create Land Consultant
+            Add City
           </Button>
         </Box>
 
         <DataTable
           columns={columns}
-          rows={consultants}
+          rows={cities}
           getRowId={(r) => r.id}
           loading={isLoading}
           paginationMode="server"
@@ -270,31 +219,22 @@ export default function LandConsultantListPage() {
           searchPlaceholder="Search by name"
           error={isError}
           onErrorRetry={() => refetch()}
-          errorMessage="Failed to load land consultants"
-          emptyTitle="No Land Consultants"
-          emptyDescription="Create your first land consultant"
-          emptyIcon="solar:users-group-rounded-bold-duotone"
+          errorMessage="Failed to load cities"
+          emptyTitle="No Cities"
+          emptyDescription="Add your first city for Land Acquisition"
+          emptyIcon="solar:city-bold-duotone"
           createAction={{
             icon: 'mingcute:add-line',
-            label: 'Create Land Consultant',
-            onClick: () => navigate(paths.dashboard.masters.consultantCreate),
-          }}
-          dataGridSx={{
-            '& .MuiDataGrid-columnHeaders': {
-              bgcolor: '#F8F9FC',
-              borderBottom: '1px solid #E8EAF0',
-            },
-            '& .MuiDataGrid-row': {
-              borderBottom: '1px dashed #E8EAF0',
-            },
+            label: 'Add City',
+            onClick: () => navigate('/dashboard/la-cities/new'),
           }}
         />
       </PageContainer>
 
       <ConfirmDialog
         open={deleteId !== null}
-        title="Delete Land Consultant"
-        message="Are you sure you want to delete this land consultant? This action cannot be undone."
+        title="Delete City"
+        message="Are you sure you want to delete this city? This action cannot be undone."
         confirmLabel={isDeleting ? 'Deleting...' : 'Delete'}
         loading={isDeleting}
         onConfirm={handleDelete}
