@@ -141,7 +141,7 @@ export default forwardRef<ProjectMappingStepHandle, Props>(({ initialData }: Pro
     queryKey: ['departments-by-zone', zoneId],
     queryFn: async () => {
       if (!zoneId) return [];
-      const res = await departmentService.list({ zoneId: String(zoneId), limit: 200 } as any);
+      const res = await departmentService.list({ zoneId: String(zoneId), limit: 100 } as any);
       return res.data ?? [];
     },
     enabled: !!zoneId,
