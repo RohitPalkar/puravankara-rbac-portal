@@ -781,16 +781,18 @@ export class UserService {
 
       await queryRunner.commitTransaction();
 
-      // Await permission compilation so the freshly-created user's snapshot is
-      // available immediately after the response, not fire-and-forget.
+      // Fire permission compilation in background - don't block user-creation
+      // response (Render cold start + compilation >10s caused frontend timeout
+      // -> Network error while user was already committed, leading to
+      // "Email already in use" on retry with lost generatedPassword).
       const compileProjectIds = new Set<number>([...allProjectIds]);
-      for (const pid of compileProjectIds) {
-        try {
-          await this.compilerService.compileAndSave(savedUser.empId, pid);
-        } catch (err) {
-          this.logger.error('Failed to compile permissions for user project', err);
+      setImmediate(() => {
+        for (const pid of compileProjectIds) {
+          this.compilerService.compileAndSave(savedUser.empId, pid).catch((err) => {
+            this.logger.error('Failed to compile permissions for user project', err);
+          });
         }
-      }
+      });
 
       return {
         user: savedUser,
@@ -1123,19 +1125,18 @@ export class UserService {
 
       await queryRunner.commitTransaction();
 
-      // Recompile for the union of previous and current project scopes so that
-      // projects the user lost access to have their snapshots reset.
+      // Recompile in background - don't block update response
       const compileProjectIds = new Set<number>([
         ...prevAccess.map((a) => a.projectId),
         ...Array.from(allProjectIds),
       ]);
-      for (const pid of compileProjectIds) {
-        try {
-          await this.compilerService.compileAndSave(id, pid);
-        } catch (err) {
-          this.logger.error('Failed to compile permissions for user project', err);
+      setImmediate(() => {
+        for (const pid of compileProjectIds) {
+          this.compilerService.compileAndSave(id, pid).catch((err) => {
+            this.logger.error('Failed to compile permissions for user project', err);
+          });
         }
-      }
+      });
 
       return { user: savedUser, roles, zones, reportingLines, profiles };
     } catch (err) {

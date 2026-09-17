@@ -334,7 +334,14 @@ export default function UserWizard({ mode, userId }: UserWizardProps) {
         setShowSuccess(true);
       }
     } catch (err: any) {
-      setSubmitError(err?.message ?? `Failed to ${isEdit ? 'update' : 'create'} user. Please try again.`);
+      const msg = err?.message ?? '';
+      if (msg.includes('Email already in use')) {
+        setSubmitError('Email already in use — user was likely created on previous attempt but password was not shown due to timeout. Check Users list; use Forgot Password to set a new password.');
+      } else if (err?.name === 'NetworkError' || msg.includes('timed out') || msg.includes('Network error')) {
+        setSubmitError('Request timed out — user may have been created in background. Please refresh Users list before retrying. If user appears, use Forgot Password to set password.');
+      } else {
+        setSubmitError(msg || `Failed to ${isEdit ? 'update' : 'create'} user. Please try again.`);
+      }
     } finally {
       setSubmitting(false);
     }

@@ -16,8 +16,8 @@ export class AppApiError extends Error {
 }
 
 export class NetworkError extends Error {
-  constructor() {
-    super('Network error');
+  constructor(message = 'Network error') {
+    super(message);
     this.name = 'NetworkError';
   }
 }

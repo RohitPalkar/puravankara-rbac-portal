@@ -32,7 +32,7 @@ if (!CONFIG.serverUrl && typeof window !== 'undefined') {
 const apiClient = axios.create({
   baseURL: CONFIG.serverUrl,
   headers: { 'Content-Type': 'application/json' },
-  timeout: 10000,
+  timeout: 30000,
   // Keep-alive for better performance on Render (Oregon ↔ Tokyo)
   transitional: { silentJSONParsing: true },
 });
@@ -58,6 +58,9 @@ apiClient.interceptors.response.use(
   (response) => response,
   async (error: AxiosError<ApiErrorType>) => {
     if (!error.response) {
+      if (error.code === 'ECONNABORTED' || error.message?.includes('timeout')) {
+        return Promise.reject(new NetworkError('Request timed out — server may still be processing. Please check Users list before retrying.'));
+      }
       return Promise.reject(new NetworkError());
     }
 
@@ -136,9 +139,10 @@ export async function apiGet<T>(
 
 export async function apiPost<T>(
   url: string,
-  data?: unknown
+  data?: unknown,
+  config?: { timeout?: number }
 ): Promise<ApiResponse<T>> {
-  const res = await apiClient.post<ApiResponse<T>>(url, data);
+  const res = await apiClient.post<ApiResponse<T>>(url, data, config);
   return res.data;
 }
 
