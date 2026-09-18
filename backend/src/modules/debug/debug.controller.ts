@@ -43,6 +43,34 @@ export class DebugController {
   }
 
   @Public()
+  @Post('migrate-active-role')
+  async migrateActiveRole() {
+    const stmts: string[] = [];
+    const run = async (sql: string, label: string) => {
+      try {
+        await this.ds.query(sql);
+        stmts.push(`${label}: ok`);
+      } catch (e: any) {
+        stmts.push(`${label}: ${e.message.slice(0, 200)}`);
+      }
+    };
+    await run(`ALTER TABLE "user_sessions" ADD COLUMN IF NOT EXISTS "active_role_id" integer NULL`, 'add active_role_id');
+    await run(`DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM information_schema.table_constraints WHERE constraint_name = 'FK_user_sessions_active_role') THEN ALTER TABLE "user_sessions" ADD CONSTRAINT "FK_user_sessions_active_role" FOREIGN KEY ("active_role_id") REFERENCES "roles"("id") ON DELETE SET NULL; END IF; END $$;`, 'fk active_role');
+    await run(`CREATE INDEX IF NOT EXISTS "IDX_user_sessions_active_role" ON "user_sessions" ("active_role_id")`, 'idx sessions');
+    await run(`ALTER TABLE "user_roles" ADD COLUMN IF NOT EXISTS "expires_at" timestamptz NULL`, 'add expires_at user_roles');
+    await run(`ALTER TABLE "user_roles" ADD COLUMN IF NOT EXISTS "role_type" varchar(20) NULL`, 'add role_type');
+    await run(`CREATE INDEX IF NOT EXISTS "IDX_user_roles_expires_at" ON "user_roles" ("expires_at") WHERE "expires_at" IS NOT NULL`, 'idx roles expires');
+    await run(`WITH ranked AS (SELECT id, user_id, ROW_NUMBER() OVER (PARTITION BY user_id ORDER BY assigned_at NULLS FIRST, id ASC) AS rn FROM "user_roles" WHERE "role_type" IS NULL) UPDATE "user_roles" ur SET "role_type" = CASE WHEN r.rn = 1 THEN 'PRIMARY' ELSE 'SECONDARY' END FROM ranked r WHERE ur.id = r.id`, 'backfill role_type');
+    await run(`ALTER TABLE "permission_profiles" ADD COLUMN IF NOT EXISTS "expires_at" timestamptz NULL`, 'add expires_at profiles');
+    await run(`CREATE INDEX IF NOT EXISTS "IDX_permission_profiles_expires_at" ON "permission_profiles" ("expires_at") WHERE "expires_at" IS NOT NULL`, 'idx profiles');
+    // verify
+    const colsS: any[] = await this.ds.query(`SELECT column_name FROM information_schema.columns WHERE table_name='user_sessions' ORDER BY ordinal_position`).catch(() => []);
+    const colsR: any[] = await this.ds.query(`SELECT column_name FROM information_schema.columns WHERE table_name='user_roles' ORDER BY ordinal_position`).catch(() => []);
+    const colsP: any[] = await this.ds.query(`SELECT column_name FROM information_schema.columns WHERE table_name='permission_profiles' ORDER BY ordinal_position`).catch(() => []);
+    return { stmts, user_sessions: colsS.map((r: any) => r.column_name), user_roles: colsR.map((r: any) => r.column_name), permission_profiles: colsP.map((r: any) => r.column_name) };
+  }
+
+  @Public()
   @Post('login-test')
   async loginTest(@Body() body: any) {
     try {
