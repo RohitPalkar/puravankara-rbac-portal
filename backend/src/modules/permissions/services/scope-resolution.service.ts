@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
+import { InjectRepository, InjectDataSource } from '@nestjs/typeorm';
 import { Repository, In, DataSource } from 'typeorm';
 import { UserZone } from '../../users/entities/user-zone.entity';
 import { ProjectLocation } from '../../projects/entities/project-location.entity';
@@ -20,6 +20,7 @@ export class ScopeResolutionService {
     private readonly zoneRepo: Repository<Zone>,
     @InjectRepository(Project)
     private readonly projectRepo: Repository<Project>,
+    @InjectDataSource()
     private readonly dataSource: DataSource,
   ) {}
 

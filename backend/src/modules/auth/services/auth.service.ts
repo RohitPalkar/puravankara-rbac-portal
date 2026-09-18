@@ -5,6 +5,7 @@ import {
   NotFoundException,
   BadRequestException,
   Logger,
+  Optional,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -51,6 +52,7 @@ export class AuthService {
     private readonly passwordService: PasswordService,
     private readonly auditService: AuditService,
     private readonly compilerService: PermissionCompilerService,
+    @Optional()
     private readonly cacheService: PermissionCacheService,
   ) {}
 
@@ -187,10 +189,7 @@ export class AuthService {
       source: 'AUTH',
     });
 
-    const userRoles = await this.userRoleRepository.find({
-      where: { userId: user.empId },
-      relations: { role: true },
-    });
+    const userRoles = await this.findUserRolesSafe(user.empId);
 
     const roleIds = userRoles.map((ur) => String(ur.roleId));
 
@@ -198,12 +197,12 @@ export class AuthService {
     const now = new Date();
     const validRoles = userRoles.filter((ur) => {
       if (!ur.role || !ur.role.isActive) return false;
-      if (ur.expiresAt && new Date(ur.expiresAt) <= now) return false;
+      if ((ur as any).expiresAt && new Date((ur as any).expiresAt) <= now) return false;
       return true;
     });
     let activeRoleId: number | null = null;
     if (validRoles.length > 0) {
-      const primary = validRoles.find((ur) => ur.roleType === 'PRIMARY');
+      const primary = validRoles.find((ur) => (ur as any).roleType === 'PRIMARY');
       activeRoleId = (primary ?? validRoles[0]).roleId;
     } else if (userRoles.length > 0) {
       activeRoleId = userRoles[0].roleId;
@@ -280,17 +279,14 @@ export class AuthService {
     const previousActiveRoleId: number | null = (session as any).activeRoleId ?? (payload as any).activeRoleId ?? null;
     await this.userSessionRepository.delete({ id: session.id });
 
-    const userRoles = await this.userRoleRepository.find({
-      where: { userId: user.empId },
-      relations: { role: true },
-    });
+    const userRoles = await this.findUserRolesSafe(user.empId);
     const roleIds = userRoles.map((ur) => String(ur.roleId));
 
     // Preserve activeRoleId if still valid, else fallback to PRIMARY
     const now = new Date();
     const validRoles = userRoles.filter((ur) => {
       if (!ur.role || !ur.role.isActive) return false;
-      if (ur.expiresAt && new Date(ur.expiresAt) <= now) return false;
+      if ((ur as any).expiresAt && new Date((ur as any).expiresAt) <= now) return false;
       return true;
     });
     let preservedActiveRoleId: number | null = previousActiveRoleId;
@@ -299,7 +295,7 @@ export class AuthService {
       if (!stillValid) preservedActiveRoleId = null;
     }
     if (preservedActiveRoleId == null && validRoles.length > 0) {
-      const primary = validRoles.find((ur) => ur.roleType === 'PRIMARY');
+      const primary = validRoles.find((ur) => (ur as any).roleType === 'PRIMARY');
       preservedActiveRoleId = (primary ?? validRoles[0]).roleId;
     } else if (preservedActiveRoleId == null && userRoles.length > 0) {
       preservedActiveRoleId = userRoles[0].roleId;
@@ -545,10 +541,7 @@ export class AuthService {
       throw new UnauthorizedException('User not found');
     }
 
-    const userRoles = await this.userRoleRepository.find({
-      where: { userId: empId },
-      relations: { role: true, department: true },
-    });
+    const userRoles = await this.findUserRolesSafe(empId, true);
 
     let permissions: any = undefined;
     try {
@@ -596,10 +589,7 @@ export class AuthService {
     const user = await this.userRepository.findOne({ where: { empId } });
     if (!user) throw new UnauthorizedException('User not found');
 
-    const userRoles = await this.userRoleRepository.find({
-      where: { userId: empId },
-      relations: { role: true, department: true },
-    });
+    const userRoles = await this.findUserRolesSafe(empId, true);
 
     const now = new Date();
     // Filter to valid assignments: role active + not expired
@@ -724,13 +714,15 @@ export class AuthService {
     const user = await this.userRepository.findOne({ where: { empId } });
     if (!user) throw new UnauthorizedException('User not found');
 
-    const session = await this.userSessionRepository.findOne({ where: { id: sessionId } });
+    let session: any;
+    try {
+      session = await this.userSessionRepository.findOne({ where: { id: sessionId } });
+    } catch {
+      session = await this.userSessionRepository.findOne({ where: { id: sessionId } });
+    }
     if (!session) throw new UnauthorizedException('Session not found');
 
-    const userRoles = await this.userRoleRepository.find({
-      where: { userId: empId },
-      relations: { role: true },
-    });
+    const userRoles = await this.findUserRolesSafe(empId);
 
     const targetAssignment = userRoles.find((ur) => ur.roleId === targetRoleId);
     // Also check permission_profiles for BUDDY_RM fallback
@@ -775,12 +767,27 @@ export class AuthService {
       if (e instanceof ForbiddenException) throw e;
     }
 
-    const previousActiveRoleId: number | null = (session as any).activeRoleId ?? null;
+    let previousActiveRoleId: number | null = null;
+    try {
+      previousActiveRoleId = (session as any).activeRoleId ?? null;
+    } catch {}
     const previousRole = previousActiveRoleId ? await this.roleRepository.findOne({ where: { id: previousActiveRoleId } }) : null;
 
-    // Update session activeRoleId
+    // Update session activeRoleId (tolerant to missing column)
     (session as any).activeRoleId = targetRoleId;
-    await this.userSessionRepository.save(session);
+    try {
+      await this.userSessionRepository.save(session);
+    } catch (e: any) {
+      const msg = e?.message || '';
+      if (msg.includes('column') && msg.includes('active_role_id')) {
+        this.logger.warn(`switchRole save active_role_id fallback: ${msg}`);
+        try {
+          await this.userSessionRepository.query(`UPDATE user_sessions SET token_hash = $1 WHERE id = $2`, [(session as any).tokenHash, session.id]);
+        } catch {}
+      } else {
+        throw e;
+      }
+    }
 
     // Generate new token pair with same roles but new activeRoleId
     const roleIds = userRoles.map((ur) => String(ur.roleId));
@@ -796,7 +803,21 @@ export class AuthService {
     // Update session tokenHash to new refresh token
     const tokenHash = await bcrypt.hash(tokens.refreshToken, 10);
     (session as any).tokenHash = tokenHash;
-    await this.userSessionRepository.save(session);
+    try {
+      await this.userSessionRepository.save(session);
+    } catch (e: any) {
+      const msg = e?.message || '';
+      if (msg.includes('column') && msg.includes('active_role_id')) {
+        this.logger.warn(`switchRole save tokenHash fallback: ${msg}`);
+        await this.userSessionRepository.query(`UPDATE user_sessions SET token_hash = $1 WHERE id = $2`, [tokenHash, session.id]);
+        // also try to persist active_role_id via raw if possible (ignore if column missing)
+        try {
+          await this.userSessionRepository.query(`UPDATE user_sessions SET active_role_id = $1 WHERE id = $2`, [targetRoleId, session.id]);
+        } catch {}
+      } else {
+        throw e;
+      }
+    }
 
     // Audit log
     await this.auditService.createLog({
@@ -812,13 +833,12 @@ export class AuthService {
     });
 
     // Invalidate permission caches for this user (all projects)
-    try {
-      await this.cacheService.invalidateByPattern(`permissions:*:${empId}:*`);
-      await this.cacheService.invalidateByPattern(`permissions:snapshot:${empId}:*`);
-      await this.cacheService.invalidateByPattern(`permission:${empId}:*`);
-      // Also generic invalidation
-      await this.cacheService.invalidateByPattern(`*${empId}*`);
-    } catch {}
+    await this.safeCacheInvalidate([
+      `permissions:*:${empId}:*`,
+      `permissions:snapshot:${empId}:*`,
+      `permission:${empId}:*`,
+      `*${empId}*`,
+    ]);
 
     // Also invalidate via compiler? compiler holds same cache keys
 
@@ -829,6 +849,62 @@ export class AuthService {
       activeRoleId: targetRoleId,
       activeRoleName: targetRole.name,
     };
+  }
+
+  private async findUserRolesSafe(userId: string, withDepartment = false): Promise<UserRole[]> {
+    try {
+      if (withDepartment) {
+        return await this.userRoleRepository.find({ where: { userId }, relations: { role: true, department: true } });
+      }
+      return await this.userRoleRepository.find({ where: { userId }, relations: { role: true } });
+    } catch (e: any) {
+      const msg = e?.message || '';
+      if (msg.includes('column') && (msg.includes('expires_at') || msg.includes('role_type') || msg.includes('active_role_id'))) {
+        this.logger.warn(`findUserRolesSafe fallback for ${userId}: ${msg}`);
+        try {
+          // Fallback raw query without new columns
+          const rows: any[] = await this.userRoleRepository.query(
+            `SELECT ur.id, ur.user_id, ur.department_id, ur.role_id, ur.assigned_by, ur.assigned_at, ur.created_at, ur.updated_at,
+                    r.id as r_id, r.name as r_name, r.hierarchy_level_rank, r.is_active, r.is_system_role,
+                    d.id as d_id, d.name as d_name
+             FROM user_roles ur
+             LEFT JOIN roles r ON r.id = ur.role_id
+             LEFT JOIN departments d ON d.id = ur.department_id
+             WHERE ur.user_id = $1`,
+            [userId],
+          );
+          return rows.map((r: any) => {
+            const ur: any = {
+              id: r.id,
+              userId: r.user_id,
+              departmentId: r.department_id,
+              roleId: r.role_id,
+              assignedBy: r.assigned_by,
+              assignedAt: r.assigned_at,
+              createdAt: r.created_at,
+              updatedAt: r.updated_at,
+              role: r.r_id ? { id: r.r_id, name: r.r_name, hierarchyLevelRank: r.hierarchy_level_rank, isActive: r.is_active, isSystemRole: r.is_system_role } : null,
+              department: r.d_id ? { id: r.d_id, name: r.d_name } : null,
+            };
+            return ur as UserRole;
+          });
+        } catch {
+          return [];
+        }
+      }
+      throw e;
+    }
+  }
+
+  private async safeCacheInvalidate(patterns: string[]) {
+    if (!this.cacheService) return;
+    for (const p of patterns) {
+      try {
+        await this.cacheService.invalidateByPattern(p);
+      } catch {
+        // ignore
+      }
+    }
   }
 
   private async createSession(
@@ -851,6 +927,25 @@ export class AuthService {
       activeRoleId: activeRoleId ?? null,
     } as any);
 
-    await this.userSessionRepository.save(session);
+    try {
+      await this.userSessionRepository.save(session);
+    } catch (e: any) {
+      const msg = e?.message || '';
+      if (msg.includes('column') && msg.includes('active_role_id')) {
+        this.logger.warn(`createSession fallback without active_role_id: ${msg}`);
+        // Retry without activeRoleId
+        const fallback = this.userSessionRepository.create({
+          id: sessionId,
+          userId,
+          tokenHash,
+          ipAddress: ipAddress || null,
+          userAgent: userAgent || null,
+          expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+        } as any);
+        await this.userSessionRepository.save(fallback);
+      } else {
+        throw e;
+      }
+    }
   }
 }

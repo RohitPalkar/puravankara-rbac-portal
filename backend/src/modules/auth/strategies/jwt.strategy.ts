@@ -36,17 +36,37 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
       throw new UnauthorizedException('User not found or inactive');
     }
 
-    // Resolve activeRoleId with expiry + validity fallback
+    // Resolve activeRoleId with expiry + validity fallback (tolerant to missing columns pre-migration)
     let activeRoleId: number | null = payload.activeRoleId ?? null;
     try {
       const now = new Date();
-      const userRoles = await this.userRoleRepository.find({
-        where: { userId: payload.sub },
-        relations: { role: true },
-      });
+      let userRoles: any[];
+      try {
+        userRoles = await this.userRoleRepository.find({
+          where: { userId: payload.sub },
+          relations: { role: true },
+        });
+      } catch (e: any) {
+        const msg = e?.message || '';
+        if (msg.includes('column') && (msg.includes('expires_at') || msg.includes('role_type'))) {
+          // Fallback without new columns
+          const rows: any[] = await this.userRoleRepository.query(
+            `SELECT ur.role_id, r.is_active as r_is_active FROM user_roles ur LEFT JOIN roles r ON r.id = ur.role_id WHERE ur.user_id = $1`,
+            [payload.sub],
+          );
+          userRoles = rows.map((r: any) => ({
+            roleId: r.role_id,
+            role: r.r_is_active != null ? { isActive: r.r_is_active } : null,
+            expiresAt: null,
+            roleType: null,
+          }));
+        } else {
+          throw e;
+        }
+      }
       const validRoles = userRoles.filter((ur) => {
-        if (!ur.role || !ur.role.isActive) return false;
-        if (ur.expiresAt && new Date(ur.expiresAt) <= now) return false;
+        if (!ur.role || (ur.role as any).isActive === false) return false;
+        if ((ur as any).expiresAt && new Date((ur as any).expiresAt) <= now) return false;
         return true;
       });
 
