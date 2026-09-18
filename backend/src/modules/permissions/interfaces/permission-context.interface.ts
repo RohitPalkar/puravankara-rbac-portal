@@ -3,4 +3,5 @@ export interface PermissionContext {
   projectId: number;
   moduleCode: string;
   actionCode: string;
+  activeRoleId?: number | null;
 }

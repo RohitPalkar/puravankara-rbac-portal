@@ -116,6 +116,11 @@ export class CreatePermissionProfileDto {
   @IsString()
   buddyUserId?: string;
 
+  @ApiPropertyOptional({ description: 'Expiry for secondary/buddy profile', example: '2026-12-31T23:59:59.000Z' })
+  @IsOptional()
+  @IsString()
+  expiresAt?: string | null;
+
   @ApiPropertyOptional({ type: [ProfileModuleDto] })
   @IsOptional()
   @ValidateNested({ each: true })
@@ -222,6 +227,11 @@ export class SecondaryRoleEntryDto {
   @IsOptional()
   @IsInt()
   departmentId?: number;
+
+  @ApiPropertyOptional({ description: 'Expiry date for secondary/buddy role (ISO string). Null means no expiry.', example: '2026-12-31T23:59:59.000Z' })
+  @IsOptional()
+  @IsString()
+  expiresAt?: string | null;
 }
 
 export class UserOrganizationDto {

@@ -613,6 +613,8 @@ export class UserService {
       const addRoleRow = async (
         departmentId: number | null,
         roleId: number | null,
+        roleType: string = 'SECONDARY',
+        expiresAt?: Date | null,
       ) => {
         if (!departmentId || !roleId) return;
         const key = `${departmentId}:${roleId}`;
@@ -624,15 +626,19 @@ export class UserService {
           roleId,
           assignedBy: 'SYSTEM',
           assignedAt: new Date(),
-        });
+          roleType,
+          expiresAt: expiresAt ?? null,
+        } as any);
         roles.push(await queryRunner.manager.save(row));
       };
 
-      await addRoleRow(dto.basic.departmentId, dto.organization.primaryRole);
+      await addRoleRow(dto.basic.departmentId, dto.organization.primaryRole, 'PRIMARY');
       for (const entry of dto.organization.secondaryRoles ?? []) {
         await addRoleRow(
           entry.departmentId ?? dto.basic.departmentId,
           entry.roleId,
+          'SECONDARY',
+          (entry as any).expiresAt ? new Date((entry as any).expiresAt) : null,
         );
       }
 
@@ -703,12 +709,18 @@ export class UserService {
             buddyUserId: profileDto.buddyUserId ?? null,
             displayName: profileDto.displayName ?? null,
             status: profileDto.status ?? 'ACTIVE',
-          });
+            expiresAt: (profileDto as any).expiresAt ? new Date((profileDto as any).expiresAt) : null,
+          } as any);
           const savedProfile = await queryRunner.manager.save(profile);
 
           // Create user_role entries for backward compat (skip buddy RM)
           if (profileDto.profileType !== ProfileType.BUDDY_RM) {
-            await addRoleRow(profileDto.departmentId, profileDto.roleId);
+            await addRoleRow(
+              profileDto.departmentId,
+              profileDto.roleId,
+              profileDto.profileType as string,
+              (profileDto as any).expiresAt ? new Date((profileDto as any).expiresAt) : null,
+            );
           }
 
           // Create module → subModule → project tree
@@ -965,6 +977,8 @@ export class UserService {
       const addRoleRow = async (
         departmentId: number | null,
         roleId: number | null,
+        roleType: string = 'SECONDARY',
+        expiresAt?: Date | null,
       ) => {
         if (!departmentId || !roleId) return;
         const key = `${departmentId}:${roleId}`;
@@ -976,15 +990,19 @@ export class UserService {
           roleId,
           assignedBy: 'SYSTEM',
           assignedAt: new Date(),
-        });
+          roleType,
+          expiresAt: expiresAt ?? null,
+        } as any);
         roles.push(await queryRunner.manager.save(row));
       };
 
-      await addRoleRow(dto.basic.departmentId, dto.organization.primaryRole);
+      await addRoleRow(dto.basic.departmentId, dto.organization.primaryRole, 'PRIMARY');
       for (const entry of dto.organization.secondaryRoles ?? []) {
         await addRoleRow(
           entry.departmentId ?? dto.basic.departmentId,
           entry.roleId,
+          'SECONDARY',
+          (entry as any).expiresAt ? new Date((entry as any).expiresAt) : null,
         );
       }
 
@@ -1051,11 +1069,19 @@ export class UserService {
             buddyUserId: profileDto.buddyUserId ?? null,
             displayName: profileDto.displayName ?? null,
             status: profileDto.status ?? 'ACTIVE',
-          });
+            expiresAt: (profileDto as any).expiresAt ? new Date((profileDto as any).expiresAt) : null,
+          } as any);
           const savedProfile = await queryRunner.manager.save(profile);
 
           // user_role for backward compat (deduped against org roles)
-          await addRoleRow(profileDto.departmentId, profileDto.roleId);
+          if (profileDto.profileType !== ProfileType.BUDDY_RM) {
+            await addRoleRow(
+              profileDto.departmentId,
+              profileDto.roleId,
+              profileDto.profileType as string,
+              (profileDto as any).expiresAt ? new Date((profileDto as any).expiresAt) : null,
+            );
+          }
 
           if (profileDto.modules?.length) {
             for (const modDto of profileDto.modules) {

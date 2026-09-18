@@ -75,12 +75,15 @@ export class PermissionGuard {
       throw new ForbiddenException('Project ID is required');
     }
 
+    const activeRoleId: number | null = (user as any)?.activeRoleId ?? null;
+
     await this.permissionService.assertOrThrow({
       userId,
       projectId,
       moduleCode: permission.module,
       actionCode: permission.action,
-    });
+      activeRoleId,
+    } as any);
 
     return true;
   }

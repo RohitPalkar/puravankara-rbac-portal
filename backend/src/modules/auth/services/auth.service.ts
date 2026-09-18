@@ -16,12 +16,15 @@ import { UserAuth } from '../entities/user-auth.entity';
 import { UserSession } from '../entities/user-session.entity';
 import { UserRole } from '../../users/entities/user-role.entity';
 import { UserProjectAccess } from '../../project-access/entities/user-project-access.entity';
+import { Role } from '../../organization/entities/role.entity';
+import { PermissionProfile } from '../../permissions/entities/permission-profile.entity';
 import { TokenService } from './token.service';
 import { PasswordService } from './password.service';
 import { LoginDto } from '../dto/login.dto';
 import { AuthResponseDto } from '../dto/auth-response.dto';
 import { AuditService } from '../../audit/services/audit.service';
 import { PermissionCompilerService } from '../../permissions/services/permission-compiler.service';
+import { PermissionCacheService } from '../../permissions/services/permission-cache.service';
 
 const MAX_FAILED_ATTEMPTS = 5;
 
@@ -40,10 +43,15 @@ export class AuthService {
     private readonly userRoleRepository: Repository<UserRole>,
     @InjectRepository(UserProjectAccess)
     private readonly accessRepo: Repository<UserProjectAccess>,
+    @InjectRepository(Role)
+    private readonly roleRepository: Repository<Role>,
+    @InjectRepository(PermissionProfile)
+    private readonly profileRepository: Repository<PermissionProfile>,
     private readonly tokenService: TokenService,
     private readonly passwordService: PasswordService,
     private readonly auditService: AuditService,
     private readonly compilerService: PermissionCompilerService,
+    private readonly cacheService: PermissionCacheService,
   ) {}
 
   async login(
@@ -186,10 +194,26 @@ export class AuthService {
 
     const roleIds = userRoles.map((ur) => String(ur.roleId));
 
+    // Determine activeRoleId: Prefer PRIMARY valid role, fallback to first valid
+    const now = new Date();
+    const validRoles = userRoles.filter((ur) => {
+      if (!ur.role || !ur.role.isActive) return false;
+      if (ur.expiresAt && new Date(ur.expiresAt) <= now) return false;
+      return true;
+    });
+    let activeRoleId: number | null = null;
+    if (validRoles.length > 0) {
+      const primary = validRoles.find((ur) => ur.roleType === 'PRIMARY');
+      activeRoleId = (primary ?? validRoles[0]).roleId;
+    } else if (userRoles.length > 0) {
+      activeRoleId = userRoles[0].roleId;
+    }
+
     const payload = this.tokenService.createSessionPayload(
       user.empId,
       user.email,
       roleIds,
+      activeRoleId,
     );
 
     const tokens = this.tokenService.generateTokenPair(payload);
@@ -200,6 +224,7 @@ export class AuthService {
       tokens.refreshToken,
       ipAddress,
       userAgent,
+      activeRoleId,
     );
 
     // Fire permission compilation in background - don't block login response at all
@@ -252,6 +277,7 @@ export class AuthService {
       throw new UnauthorizedException('User not found or inactive');
     }
 
+    const previousActiveRoleId: number | null = (session as any).activeRoleId ?? (payload as any).activeRoleId ?? null;
     await this.userSessionRepository.delete({ id: session.id });
 
     const userRoles = await this.userRoleRepository.find({
@@ -260,10 +286,30 @@ export class AuthService {
     });
     const roleIds = userRoles.map((ur) => String(ur.roleId));
 
+    // Preserve activeRoleId if still valid, else fallback to PRIMARY
+    const now = new Date();
+    const validRoles = userRoles.filter((ur) => {
+      if (!ur.role || !ur.role.isActive) return false;
+      if (ur.expiresAt && new Date(ur.expiresAt) <= now) return false;
+      return true;
+    });
+    let preservedActiveRoleId: number | null = previousActiveRoleId;
+    if (preservedActiveRoleId != null) {
+      const stillValid = validRoles.some((ur) => ur.roleId === preservedActiveRoleId);
+      if (!stillValid) preservedActiveRoleId = null;
+    }
+    if (preservedActiveRoleId == null && validRoles.length > 0) {
+      const primary = validRoles.find((ur) => ur.roleType === 'PRIMARY');
+      preservedActiveRoleId = (primary ?? validRoles[0]).roleId;
+    } else if (preservedActiveRoleId == null && userRoles.length > 0) {
+      preservedActiveRoleId = userRoles[0].roleId;
+    }
+
     const newPayload = this.tokenService.createSessionPayload(
       user.empId,
       user.email,
       roleIds,
+      preservedActiveRoleId,
     );
 
     const tokens = this.tokenService.generateTokenPair(newPayload);
@@ -274,6 +320,7 @@ export class AuthService {
       tokens.refreshToken,
       ipAddress,
       userAgent,
+      preservedActiveRoleId,
     );
 
     return {
@@ -537,8 +584,250 @@ export class AuthService {
         departmentName: ur.department?.name,
         hierarchyLevelRank: ur.role?.hierarchyLevelRank ?? 0,
         isSystemRole: ur.role?.isSystemRole ?? false,
+        roleType: (ur as any).roleType ?? null,
+        expiresAt: (ur as any).expiresAt ?? null,
+        isActive: ur.role?.isActive ?? true,
       })),
       permissions,
+    };
+  }
+
+  async getMyRoles(empId: string, sessionId?: string, activeRoleIdFromToken?: number | null) {
+    const user = await this.userRepository.findOne({ where: { empId } });
+    if (!user) throw new UnauthorizedException('User not found');
+
+    const userRoles = await this.userRoleRepository.find({
+      where: { userId: empId },
+      relations: { role: true, department: true },
+    });
+
+    const now = new Date();
+    // Filter to valid assignments: role active + not expired
+    const rolesWithMeta = userRoles.map((ur) => {
+      const roleTypeRaw = (ur as any).roleType as string | null;
+      const expiresAt = (ur as any).expiresAt as Date | null;
+      const isExpired = expiresAt ? new Date(expiresAt) <= now : false;
+      const isRoleActive = ur.role?.isActive !== false;
+      const isActive = isRoleActive && !isExpired;
+      // Derive roleType if null: first assignment treated as PRIMARY for display
+      let roleType = roleTypeRaw;
+      if (!roleType) {
+        // heuristic: if multiple roles, earliest assigned is PRIMARY
+        roleType = 'SECONDARY';
+      }
+      return {
+        roleId: ur.roleId,
+        roleName: ur.role?.name ?? `Role ${ur.roleId}`,
+        roleType,
+        departmentId: ur.departmentId,
+        departmentName: ur.department?.name ?? null,
+        hierarchyLevelRank: ur.role?.hierarchyLevelRank ?? 0,
+        isSystemRole: ur.role?.isSystemRole ?? false,
+        isActive,
+        expiresAt,
+        assignedAt: ur.assignedAt,
+      };
+    });
+
+    // Try to enrich PRIMARY detection: earliest assignedAt should be PRIMARY if none marked PRIMARY
+    const hasPrimary = rolesWithMeta.some((r) => r.roleType === 'PRIMARY');
+    if (!hasPrimary && rolesWithMeta.length > 0) {
+      const earliest = [...rolesWithMeta].sort((a, b) => {
+        const ta = a.assignedAt ? new Date(a.assignedAt).getTime() : 0;
+        const tb = b.assignedAt ? new Date(b.assignedAt).getTime() : 0;
+        return ta - tb;
+      })[0];
+      earliest.roleType = 'PRIMARY';
+    }
+
+    // Also include BUDDY_RM permission_profiles if not already in user_roles
+    try {
+      const profiles = await this.profileRepository.find({
+        where: { userId: empId },
+        relations: { role: true, department: true },
+      });
+      for (const p of profiles) {
+        const isProfileExpired = (p as any).expiresAt ? new Date((p as any).expiresAt) <= now : false;
+        const isProfileActive = (p.status ?? 'ACTIVE') === 'ACTIVE' && !isProfileExpired;
+        if (!p.roleId) continue;
+        const exists = rolesWithMeta.some((r) => r.roleId === p.roleId && r.roleType === p.profileType);
+        if (exists) continue;
+        const roleEntity = p.role ?? await this.roleRepository.findOne({ where: { id: p.roleId } });
+        if (!roleEntity) continue;
+        rolesWithMeta.push({
+          roleId: p.roleId,
+          roleName: roleEntity.name,
+          roleType: p.profileType as any,
+          departmentId: p.departmentId ?? null,
+          departmentName: p.department?.name ?? null,
+          hierarchyLevelRank: roleEntity.hierarchyLevelRank ?? 0,
+          isSystemRole: roleEntity.isSystemRole ?? false,
+          isActive: isProfileActive && roleEntity.isActive,
+          expiresAt: (p as any).expiresAt ?? null,
+          assignedAt: (p as any).createdAt ?? null,
+        });
+      }
+    } catch {
+      // ignore profile enrichment errors
+    }
+
+    // Only return active, non-expired roles for switcher visibility
+    const visibleRoles = rolesWithMeta.filter((r) => r.isActive);
+    // Sort: PRIMARY first, then by hierarchy rank, then name
+    visibleRoles.sort((a, b) => {
+      const order: Record<string, number> = { PRIMARY: 0, SECONDARY: 1, BUDDY_RM: 2 };
+      const oa = order[a.roleType] ?? 99;
+      const ob = order[b.roleType] ?? 99;
+      if (oa !== ob) return oa - ob;
+      if (a.hierarchyLevelRank !== b.hierarchyLevelRank) return a.hierarchyLevelRank - b.hierarchyLevelRank;
+      return a.roleName.localeCompare(b.roleName);
+    });
+
+    // Determine activeRoleId: Prefer token/session value if still valid, else PRIMARY
+    let activeRoleId: number | null = activeRoleIdFromToken ?? null;
+    if (sessionId) {
+      try {
+        const session = await this.userSessionRepository.findOne({ where: { id: sessionId } });
+        if (session && (session as any).activeRoleId) {
+          activeRoleId = (session as any).activeRoleId;
+        }
+      } catch {}
+    }
+    const activeStillValid = activeRoleId != null && visibleRoles.some((r) => r.roleId === activeRoleId);
+    if (!activeStillValid) {
+      const primary = visibleRoles.find((r) => r.roleType === 'PRIMARY');
+      activeRoleId = (primary ?? visibleRoles[0])?.roleId ?? null;
+    }
+    const activeRoleName = visibleRoles.find((r) => r.roleId === activeRoleId)?.roleName ?? null;
+
+    return {
+      activeRoleId,
+      activeRoleName,
+      roles: rolesWithMeta
+        .filter((r) => r.isActive) // ensure expired not returned? but spec says must not appear — filter
+        .map((r) => ({
+          roleId: r.roleId,
+          roleName: r.roleName,
+          roleType: r.roleType,
+          departmentId: r.departmentId,
+          departmentName: r.departmentName,
+          hierarchyLevelRank: r.hierarchyLevelRank,
+          isSystemRole: r.isSystemRole,
+          isActive: r.isActive,
+          expiresAt: r.expiresAt,
+        })),
+      // include allRoles for debug? not needed
+    };
+  }
+
+  async switchRole(empId: string, sessionId: string, targetRoleId: number, ipAddress?: string, userAgent?: string) {
+    const user = await this.userRepository.findOne({ where: { empId } });
+    if (!user) throw new UnauthorizedException('User not found');
+
+    const session = await this.userSessionRepository.findOne({ where: { id: sessionId } });
+    if (!session) throw new UnauthorizedException('Session not found');
+
+    const userRoles = await this.userRoleRepository.find({
+      where: { userId: empId },
+      relations: { role: true },
+    });
+
+    const targetAssignment = userRoles.find((ur) => ur.roleId === targetRoleId);
+    // Also check permission_profiles for BUDDY_RM fallback
+    let isAssigned = !!targetAssignment;
+    let targetRole: any = targetAssignment?.role ?? null;
+    if (!isAssigned) {
+      try {
+        const profiles = await this.profileRepository.find({ where: { userId: empId, roleId: targetRoleId } });
+        if (profiles.length > 0) {
+          isAssigned = true;
+          targetRole = profiles[0].role ?? await this.roleRepository.findOne({ where: { id: targetRoleId } });
+        }
+      } catch {}
+    }
+    if (!isAssigned) {
+      throw new ForbiddenException('Role not assigned to user');
+    }
+
+    // Load role entity if not loaded
+    if (!targetRole) {
+      targetRole = await this.roleRepository.findOne({ where: { id: targetRoleId } });
+    }
+    if (!targetRole) throw new NotFoundException('Role not found');
+    if (!targetRole.isActive) throw new ForbiddenException('Role is inactive');
+
+    // Check expiry on assignment
+    const now = new Date();
+    if (targetAssignment && (targetAssignment as any).expiresAt) {
+      if (new Date((targetAssignment as any).expiresAt) <= now) {
+        throw new ForbiddenException('Role assignment has expired');
+      }
+    }
+    try {
+      const profile = await this.profileRepository.findOne({ where: { userId: empId, roleId: targetRoleId } });
+      if (profile && (profile as any).expiresAt && new Date((profile as any).expiresAt) <= now) {
+        throw new ForbiddenException('Role assignment has expired');
+      }
+      if (profile && profile.status !== 'ACTIVE') {
+        throw new ForbiddenException('Role assignment is inactive');
+      }
+    } catch (e) {
+      if (e instanceof ForbiddenException) throw e;
+    }
+
+    const previousActiveRoleId: number | null = (session as any).activeRoleId ?? null;
+    const previousRole = previousActiveRoleId ? await this.roleRepository.findOne({ where: { id: previousActiveRoleId } }) : null;
+
+    // Update session activeRoleId
+    (session as any).activeRoleId = targetRoleId;
+    await this.userSessionRepository.save(session);
+
+    // Generate new token pair with same roles but new activeRoleId
+    const roleIds = userRoles.map((ur) => String(ur.roleId));
+    // Ensure roles includes target if coming from profile not in user_roles (edge): add it
+    if (!roleIds.includes(String(targetRoleId))) roleIds.push(String(targetRoleId));
+
+    const newPayload = this.tokenService.createSessionPayload(empId, user.email, roleIds, targetRoleId);
+    // Keep same sessionId? We should rotate sessionId per token? spec says JWT regeneration using existing architecture.
+    // We will keep existing session id in payload to maintain session continuity, but TokenService.createSessionPayload generates new uuid.
+    // Override to keep same sessionId to avoid session table churn? Instead we update session's tokenHash to new refresh token.
+    const payloadForToken = { ...newPayload, sessionId };
+    const tokens = this.tokenService.generateTokenPair(payloadForToken as any);
+    // Update session tokenHash to new refresh token
+    const tokenHash = await bcrypt.hash(tokens.refreshToken, 10);
+    (session as any).tokenHash = tokenHash;
+    await this.userSessionRepository.save(session);
+
+    // Audit log
+    await this.auditService.createLog({
+      entityName: 'AUTH',
+      entityId: empId,
+      action: 'ROLE_SWITCH',
+      oldValue: previousActiveRoleId ? { roleId: previousActiveRoleId, roleName: previousRole?.name ?? String(previousActiveRoleId) } : null,
+      newValue: { roleId: targetRoleId, roleName: targetRole.name },
+      performedBy: empId,
+      ipAddress,
+      userAgent,
+      source: 'AUTH',
+    });
+
+    // Invalidate permission caches for this user (all projects)
+    try {
+      await this.cacheService.invalidateByPattern(`permissions:*:${empId}:*`);
+      await this.cacheService.invalidateByPattern(`permissions:snapshot:${empId}:*`);
+      await this.cacheService.invalidateByPattern(`permission:${empId}:*`);
+      // Also generic invalidation
+      await this.cacheService.invalidateByPattern(`*${empId}*`);
+    } catch {}
+
+    // Also invalidate via compiler? compiler holds same cache keys
+
+    return {
+      accessToken: tokens.accessToken,
+      refreshToken: tokens.refreshToken,
+      expiresIn: tokens.expiresIn,
+      activeRoleId: targetRoleId,
+      activeRoleName: targetRole.name,
     };
   }
 
@@ -548,6 +837,7 @@ export class AuthService {
     refreshToken: string,
     ipAddress?: string,
     userAgent?: string,
+    activeRoleId?: number | null,
   ): Promise<void> {
     const tokenHash = await bcrypt.hash(refreshToken, 10);
 
@@ -558,7 +848,8 @@ export class AuthService {
       ipAddress: ipAddress || null,
       userAgent: userAgent || null,
       expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-    });
+      activeRoleId: activeRoleId ?? null,
+    } as any);
 
     await this.userSessionRepository.save(session);
   }

@@ -7,6 +7,7 @@ export interface JwtPayload {
   email: string;
   sessionId: string;
   roles: string[];
+  activeRoleId?: number | null;
   type?: string;
 }
 
@@ -69,12 +70,14 @@ export class TokenService {
     empId: string,
     email: string,
     roles: string[],
+    activeRoleId?: number | null,
   ): JwtPayload {
     return {
       sub: empId,
       email,
       sessionId: uuidv4(),
       roles,
+      activeRoleId: activeRoleId ?? (roles.length > 0 ? Number(roles[0]) : null),
     };
   }
 }

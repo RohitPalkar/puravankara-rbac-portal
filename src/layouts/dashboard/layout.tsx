@@ -26,6 +26,7 @@ import { AccountDrawer } from '../components/account-drawer';
 import { SettingsButton } from '../components/settings-button';
 import { DashboardFooter } from '../components/dashboard-footer';
 import { FullscreenButton } from '../components/fullscreen-button';
+import { RoleSwitcher } from '../components/role-switcher';
 
 export type DashboardLayoutProps = {
   sx?: SxProps<Theme>;
@@ -128,6 +129,7 @@ export function DashboardLayout({ sx, children, header, data }: DashboardLayoutP
             rightArea: (
               <Box display="flex" alignItems="center" gap={{ xs: 0, sm: 0.75 }}>
                 <Searchbar data={navData} />
+                <RoleSwitcher />
                 <FullscreenButton />
                 <SettingsButton />
                 <AccountDrawer data={_account} />

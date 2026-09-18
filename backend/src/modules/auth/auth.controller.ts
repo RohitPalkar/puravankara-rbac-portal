@@ -16,6 +16,7 @@ import { SetPasswordDto } from './dto/set-password.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
+import { SwitchRoleDto } from './dto/switch-role.dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { CurrentUser } from './decorators/current-user.decorator';
 import { Public } from './decorators/public.decorator';
@@ -130,5 +131,29 @@ export class AuthController {
   @ApiOperation({ summary: 'Get current user profile and roles' })
   async getProfile(@CurrentUser() user: AuthenticatedUser) {
     return this.authService.getProfile(user.empId);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @Get('my-roles')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Get authenticated user available roles and active role' })
+  async getMyRoles(@CurrentUser() user: AuthenticatedUser) {
+    return this.authService.getMyRoles(user.empId, user.sessionId, user.activeRoleId ?? null);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @Post('switch-role')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Switch active role context for current session' })
+  async switchRole(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() dto: SwitchRoleDto,
+    @Req() req: Request,
+  ) {
+    const ip = req.ip;
+    const ua = req.headers['user-agent'];
+    return this.authService.switchRole(user.empId, user.sessionId, dto.roleId, ip, ua);
   }
 }

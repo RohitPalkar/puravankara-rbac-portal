@@ -14,6 +14,8 @@ import { UserAuth } from './entities/user-auth.entity';
 import { UserSession } from './entities/user-session.entity';
 import { UserRole } from '../users/entities/user-role.entity';
 import { UserProjectAccess } from '../project-access/entities/user-project-access.entity';
+import { Role } from '../organization/entities/role.entity';
+import { PermissionProfile } from '../permissions/entities/permission-profile.entity';
 import { AuditModule } from '../audit/audit.module';
 import { PermissionsModule } from '../permissions/permissions.module';
 
@@ -25,6 +27,8 @@ import { PermissionsModule } from '../permissions/permissions.module';
       UserSession,
       UserRole,
       UserProjectAccess,
+      Role,
+      PermissionProfile,
     ]),
     PassportModule.register({ defaultStrategy: 'jwt' }),
     JwtModule.registerAsync({

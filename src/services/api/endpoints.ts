@@ -13,6 +13,8 @@ export const endpoints = {
     forgotPassword: `${API_PREFIX}/auth/forgot-password`,
     resetPassword: `${API_PREFIX}/auth/reset-password`,
     me: `${API_PREFIX}/auth/me`,
+    myRoles: `${API_PREFIX}/auth/my-roles`,
+    switchRole: `${API_PREFIX}/auth/switch-role`,
   },
 
   setup: {

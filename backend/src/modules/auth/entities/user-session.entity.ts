@@ -35,6 +35,9 @@ export class UserSession {
   @Column({ name: 'expires_at', type: 'timestamptz', nullable: true })
   expiresAt: Date;
 
+  @Column({ name: 'active_role_id', nullable: true })
+  activeRoleId: number | null;
+
   @ManyToOne(() => User, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'user_id' })
   user: User;

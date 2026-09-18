@@ -126,3 +126,33 @@ export interface MeResponse {
   user: MeUser;
   roles: MeRole[];
 }
+
+export interface MyRoleItem {
+  roleId: number;
+  roleName: string;
+  roleType: 'PRIMARY' | 'SECONDARY' | 'BUDDY_RM' | string;
+  departmentId: number | null;
+  departmentName: string | null;
+  hierarchyLevelRank: number;
+  isSystemRole: boolean;
+  isActive: boolean;
+  expiresAt: string | null;
+}
+
+export interface MyRolesResponse {
+  activeRoleId: number | null;
+  activeRoleName: string | null;
+  roles: MyRoleItem[];
+}
+
+export interface SwitchRoleRequest {
+  roleId: number;
+}
+
+export interface SwitchRoleResponse {
+  accessToken: string;
+  refreshToken: string;
+  expiresIn: string | number;
+  activeRoleId: number;
+  activeRoleName: string;
+}

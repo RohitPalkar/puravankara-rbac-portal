@@ -72,7 +72,7 @@ export class PermissionService {
   ) {}
 
   async resolve(context: PermissionContext): Promise<ResolvedPermission> {
-    const { userId, projectId, moduleCode, actionCode } = context;
+    const { userId, projectId, moduleCode, actionCode, activeRoleId } = context as PermissionContext & { activeRoleId?: number | null };
 
     if (!userId || !moduleCode || !actionCode) {
       return {
@@ -97,7 +97,9 @@ export class PermissionService {
     }
 
     if (projectId) {
-      const scope = await this.scopeService.resolveUserScope(userId);
+      const scope = activeRoleId
+        ? await this.scopeService.resolveUserScopeForRole(userId, activeRoleId).catch(() => this.scopeService.resolveUserScope(userId))
+        : await this.scopeService.resolveUserScope(userId);
       if (scope.resources.zones.length > 0 && !scope.hasProject(projectId)) {
         return {
           allowed: false,
@@ -115,7 +117,9 @@ export class PermissionService {
       };
     }
 
-    const hasProjectAccess = await this.hasProjectAccess(userId, projectId);
+    const hasProjectAccess = activeRoleId
+      ? await this.hasProjectAccessForRole(userId, projectId, activeRoleId)
+      : await this.hasProjectAccess(userId, projectId);
     if (!hasProjectAccess) {
       return { allowed: false, source: 'denied', reason: 'No project access' };
     }
@@ -160,6 +164,7 @@ export class PermissionService {
       projectId,
       module.id,
       action.id,
+      activeRoleId,
     );
     if (hasRolePermission) {
       return { allowed: true, source: 'role' };
@@ -180,6 +185,7 @@ export class PermissionService {
       projectId,
       module.id,
       action.id,
+      activeRoleId,
     );
     if (hasProfilePermission) {
       return { allowed: true, source: 'profile' };
@@ -195,7 +201,7 @@ export class PermissionService {
   async explain(
     context: PermissionContext,
   ): Promise<ExplainPermissionResponse> {
-    const { userId, projectId, moduleCode, actionCode } = context;
+    const { userId, projectId, moduleCode, actionCode, activeRoleId } = context as PermissionContext & { activeRoleId?: number | null };
     const explanation: ExplainStep[] = [];
 
     const user = await this.userRepo.findOne({ where: { empId: userId } });
@@ -231,7 +237,9 @@ export class PermissionService {
     // Scope check: is project within user's zone scope?
     if (projectId) {
       try {
-        const scope = await this.scopeService.resolveUserScope(userId);
+        const scope = activeRoleId
+          ? await this.scopeService.resolveUserScopeForRole(userId, activeRoleId).catch(() => this.scopeService.resolveUserScope(userId))
+          : await this.scopeService.resolveUserScope(userId);
         if (scope.resources.zones.length > 0 && !scope.hasProject(projectId)) {
           explanation.push({
             step: 'ZONE_SCOPE',
@@ -254,7 +262,9 @@ export class PermissionService {
       }
     }
 
-    const hasProjectAccess = await this.hasProjectAccess(userId, projectId);
+    const hasProjectAccess = activeRoleId
+      ? await this.hasProjectAccessForRole(userId, projectId, activeRoleId)
+      : await this.hasProjectAccess(userId, projectId);
     if (!hasProjectAccess) {
       explanation.push({
         step: 'PROJECT_ACCESS',
@@ -316,13 +326,15 @@ export class PermissionService {
       projectId,
       module.id,
       action.id,
+      activeRoleId,
     );
     if (hasRolePermission) {
       const userRoles = await this.userRoleRepo.find({
         where: { userId },
         relations: { role: true },
       });
-      const roleNames = userRoles.map((ur) => ur.role.name).join(', ');
+      const filteredRoles = activeRoleId ? userRoles.filter((ur) => ur.roleId === activeRoleId) : userRoles;
+      const roleNames = (filteredRoles.length ? filteredRoles : userRoles).map((ur) => ur.role.name).join(', ');
       explanation.push({
         step: 'ROLE_PERMISSION',
         result: true,
@@ -361,6 +373,7 @@ export class PermissionService {
       projectId,
       module.id,
       action.id,
+      activeRoleId,
     );
     if (hasProfilePermission) {
       explanation.push({
@@ -384,7 +397,7 @@ export class PermissionService {
     return { allowed: false, source: 'denied', explanation };
   }
 
-  async getUserPermissions(userId: string): Promise<UserPermissionsResponse> {
+  async getUserPermissions(userId: string, activeRoleId?: number | null): Promise<UserPermissionsResponse> {
     const user = await this.userRepo.findOne({ where: { empId: userId } });
     const allModules = await this.moduleRepo.find({
       where: { isActive: true },
@@ -464,7 +477,9 @@ export class PermissionService {
       }
       // Filter projects by zone scope (skip if user has no zone assignments)
       try {
-        const scope = await this.scopeService.resolveUserScope(userId);
+        const scope = activeRoleId
+          ? await this.scopeService.resolveUserScopeForRole(userId, activeRoleId).catch(() => this.scopeService.resolveUserScope(userId))
+          : await this.scopeService.resolveUserScope(userId);
         if (scope.resources.zones.length > 0) {
           projectEntities = projectEntities.filter((p) =>
             scope.hasProject(p.id),
@@ -472,6 +487,20 @@ export class PermissionService {
         }
       } catch {
         // if scope resolution fails, fall back to unfiltered projects
+      }
+      // If activeRoleId filters to zero projects but role has RoleProjectPermissions, keep those projects via role scope
+      if (activeRoleId && projectEntities.length === 0) {
+        try {
+          const roleProjectIds = await this.getProjectIdsForRole(activeRoleId);
+          if (roleProjectIds.length > 0) {
+            const placeholders = roleProjectIds.map((_, i) => `$${i + 1}`).join(',');
+            const rows = await this.dataSource.query(
+              `SELECT id, name FROM projects WHERE id IN (${placeholders})`,
+              roleProjectIds,
+            );
+            projectEntities = rows.map((p: any) => ({ id: Number(p.id), name: p.name }));
+          }
+        } catch {}
       }
     }
 
@@ -514,10 +543,7 @@ export class PermissionService {
     } else {
       for (let i = 0; i < projectCount; i++) {
         const proj = projectEntities[i];
-        const modules =
-          i === 0
-            ? await this.getUserModulePermissionsNested(userId, proj.id, false)
-            : await this.getUserModulePermissionsNested(userId, proj.id, false);
+        const modules = await this.getUserModulePermissionsNested(userId, proj.id, false, activeRoleId ?? null);
         result.projects.push({ id: proj.id, name: proj.name, modules });
       }
     }
@@ -650,16 +676,49 @@ export class PermissionService {
     return directIds;
   }
 
+  private async hasProjectAccessForRole(userId: string, projectId: number, activeRoleId: number): Promise<boolean> {
+    // For active-role model, project access is filtered through role-project-permission if exists,
+    // fallback to user_project_access. If role has any project mapping, enforce it.
+    const roleProjectCount = await this.rppRepo.count({ where: { roleId: activeRoleId, projectId } });
+    if (roleProjectCount > 0) return true;
+    // Also check roleActionPermission existence as signal that role generally scoped? fallback to user access
+    const hasUserAccess = await this.hasProjectAccess(userId, projectId);
+    if (hasUserAccess) {
+      // If role has at least one project mapping elsewhere, and current project not in it, deny? Strict.
+      const anyRoleProject = await this.rppRepo.count({ where: { roleId: activeRoleId } });
+      if (anyRoleProject > 0) return false;
+      return true;
+    }
+    return false;
+  }
+
+  private async getProjectIdsForRole(roleId: number): Promise<number[]> {
+    const rows = await this.rppRepo.find({ where: { roleId } });
+    return [...new Set(rows.map((r) => r.projectId))];
+  }
+
   private async hasRolePermission(
     userId: string,
     projectId: number,
     moduleId: number,
     actionId: number,
+    activeRoleId?: number | null,
   ): Promise<boolean> {
     const userRoles = await this.userRoleRepo.find({ where: { userId } });
     if (userRoles.length === 0) return false;
 
-    const roleIds = userRoles.map((ur) => ur.roleId);
+    let roleIds: number[];
+    if (activeRoleId != null) {
+      const valid = userRoles.some((ur) => ur.roleId === activeRoleId);
+      // Also allow role via profile (BUDDY_RM) not in user_roles: we still check DB directly
+      if (!valid) {
+        roleIds = [activeRoleId];
+      } else {
+        roleIds = [activeRoleId];
+      }
+    } else {
+      roleIds = userRoles.map((ur) => ur.roleId);
+    }
     const count = await this.rppRepo.count({
       where: {
         roleId: In(roleIds),
@@ -670,7 +729,10 @@ export class PermissionService {
     });
     if (count > 0) return true;
 
-    const deptIds = userRoles
+    const effectiveRolesForDept = activeRoleId != null
+      ? userRoles.filter((ur) => ur.roleId === activeRoleId)
+      : userRoles;
+    const deptIds = effectiveRolesForDept
       .map((ur) => ur.departmentId)
       .filter((d): d is number => d != null);
     const zoneDeptPairs = deptIds.length > 0
@@ -719,12 +781,26 @@ export class PermissionService {
     projectId: number,
     moduleId: number,
     actionId: number,
+    activeRoleId?: number | null,
   ): Promise<boolean> {
     let profiles: PermissionProfile[] = [];
     try {
+      const now = new Date();
+      // If activeRoleId specified, filter to profiles matching that role; else all
+      const where: any = { userId };
+      if (activeRoleId != null) {
+        // TypeORM OR: we fetch all and filter in memory to handle null/profileType logic
+      }
       profiles = await this.profileRepo.find({
-        where: { userId },
+        where,
         relations: { modules: { subModules: { projects: true } } },
+      });
+      // Filter by activeRoleId and expiry/status in memory
+      profiles = profiles.filter((p: any) => {
+        if (activeRoleId != null && p.roleId != null && p.roleId !== activeRoleId) return false;
+        if (p.status && p.status !== 'ACTIVE') return false;
+        if (p.expiresAt && new Date(p.expiresAt) <= now) return false;
+        return true;
       });
     } catch {
       return false;
@@ -764,6 +840,7 @@ export class PermissionService {
     userId: string,
     projectId: number,
     isSuperAdmin: boolean,
+    activeRoleId?: number | null,
   ): Promise<
     {
       id: number;
@@ -794,7 +871,25 @@ export class PermissionService {
 
     if (!isSuperAdmin) {
       userRoles = await this.userRoleRepo.find({ where: { userId } });
-      roleIds = userRoles.map((ur) => ur.roleId);
+      const now = new Date();
+      // Filter expired assignments when activeRoleId specified? Keep logic: if activeRoleId, only that role; else filter valid only?
+      if (activeRoleId != null) {
+        const validMatch = userRoles.find((ur) => ur.roleId === activeRoleId && !(ur as any).expiresAt ? true : (ur as any).expiresAt ? new Date((ur as any).expiresAt) > now : true);
+        if (validMatch) {
+          roleIds = [activeRoleId];
+        } else {
+          // Even if not found in userRoles (Buddy RM via profile), still use activeRoleId for permission lookup
+          roleIds = [activeRoleId];
+        }
+      } else {
+        roleIds = userRoles
+          .filter((ur) => {
+            const exp = (ur as any).expiresAt as Date | null;
+            if (exp && new Date(exp) <= now) return false;
+            return true;
+          })
+          .map((ur) => ur.roleId);
+      }
       if (roleIds.length > 0) {
         rolePermsAll = await this.rppRepo.find({
           where: { roleId: In(roleIds), projectId },
@@ -821,6 +916,13 @@ export class PermissionService {
         profiles = await this.profileRepo.find({
           where: { userId },
           relations: { modules: { subModules: { projects: true } } },
+        });
+        // Filter profiles by activeRoleId and expiry
+        profiles = profiles.filter((p: any) => {
+          if (activeRoleId != null && p.roleId != null && p.roleId !== activeRoleId) return false;
+          if (p.status && p.status !== 'ACTIVE') return false;
+          if (p.expiresAt && new Date(p.expiresAt) <= now) return false;
+          return true;
         });
       } catch {
         // profile table may not exist

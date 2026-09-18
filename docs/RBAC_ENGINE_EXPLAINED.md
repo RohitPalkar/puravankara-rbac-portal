@@ -87,15 +87,47 @@ The `ASSIGNED_PROJECTS` scope is the default for non-admin roles.
 
 ---
 
-## Permission Resolution Algorithm
+## Active Role Context (Enterprise RBAC v2.1)
 
-### Effective Permission = Role Permission ∩ Project Access
+A user may hold multiple roles (Primary, Secondary, Buddy RM) but **exactly one is active per session**. The active role determines the sole authorization context; permissions are **not** merged across all assigned roles while a role is active.
 
 ```
-User attempts Action A on Module M in Project P
+User
+  ↓
+Selected Active Role  ← per-session context (JWT + user_sessions.active_role_id)
+  ↓
+Project / Scope
+  ↓
+Module
+  ↓
+Submodule
+  ↓
+Action
+  ↓
+Effective Permission (ActiveRole ∩ Project)
+```
+
+Switching roles does **not** mutate role assignments; it rotates the authenticated context and invalidates permission/project-scope caches.
+
+- **Primary Role** — first assignment per user (`user_roles.role_type = 'PRIMARY'`), never expires unless deactivated.
+- **Secondary Role** — `role_type = 'SECONDARY'`, may have `expires_at` → auto-excluded from switcher and rejected by guard after expiry; if active secondary expires, next request falls back to Primary.
+- **Buddy RM** — `profile_type = BUDDY_RM` or `role_type = 'BUDDY_RM'`, delegated via permission profile; appears as a distinct switchable role.
+- **Expiry & Fallback** — `user_roles.expires_at` / `permission_profiles.expires_at` evaluated on every `JwtStrategy.validate` and on `POST /auth/switch-role`; expired assignments are invisible in `GET /auth/my-roles` and rejected on switch, with silent fallback to Primary.
+
+Backend remains source of truth: `PermissionGuard` resolves `activeRoleId` from JWT (`request.user.activeRoleId`) and passes it to `PermissionService.resolve({ activeRoleId })`, which narrows every lookup (`role_project_permissions`, `role_action_permissions`, `permission_profiles`) to that single role.
+
+## Permission Resolution Algorithm
+
+### Effective Permission = ActiveRole Permission ∩ Project Access
+
+```
+User (with ActiveRole = R) attempts Action A on Module M in Project P
     │
     ▼
-Step 1: Does the user's role have a DeptRoleModuleMapping for (Dept, Role, M, A)?
+Step 0: Resolve ActiveRole R from JWT/session (fallback to PRIMARY if expired/missing)
+    │
+    ▼
+Step 1: Does ActiveRole R have a mapping for (Dept, Role, M, A) via role_project_permissions / role_action_permissions / profile?
     │
     ├── No  → DENIED
     │
@@ -126,21 +158,35 @@ Step 4: Is there a UserProjectModuleAccess entry for (User, P, M, A, allowed=tru
 ### Pseudocode
 
 ```
-function hasPermission(user, moduleCode, actionCode, projectId?):
+function hasPermission(user, moduleCode, actionCode, projectId?, activeRoleId?):
     if user.isSuperAdmin:
         return true
 
-    rolePerms = getRolePermissions(user.activeRoleId)
+    activeRole = activeRoleId ?? user.session.activeRoleId ?? user.primaryRoleId
+    if expired(activeRole): activeRole = user.primaryRoleId // fallback
+
+    rolePerms = getRolePermissions(activeRole) // only this role, no merge
     if not rolePerms.has(moduleCode, actionCode):
         return false
 
-    if user.activeRoleAssignment.accessScope == 'ALL_PROJECTS':
-        return true
-
+    projectScope = resolveScope(user, activeRole) // zones intersected with role's department zone
+    if not projectScope.hasProject(projectId):
+        return false
     if projectId is null:
-        return false  // project required for non-admin, non-all-projects
+        return false
 
-    return userProjectAccess.has(projectId, moduleId, actionId, allowed=true)
+    return hasProjectAccess(user, projectId, activeRole) && rolePerms.has(moduleCode, actionCode)
+```
+
+Role switch path:
+```
+POST /api/v1/auth/switch-role { roleId }
+  → validate: authenticated, assigned, role.isActive, not expired, scope valid
+  → update user_sessions.active_role_id
+  → rotate tokens with new activeRoleId in JWT
+  → audit AUTH / ROLE_SWITCH { from, to, ip, ua }
+  → invalidate permission/scope caches for user
+  → frontend refetch GET /auth/my-roles + GET /permissions/me → nav/projects/menus recalc
 ```
 
 ---

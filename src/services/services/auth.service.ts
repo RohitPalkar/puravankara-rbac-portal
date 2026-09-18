@@ -4,6 +4,9 @@ import { apiGet, apiPost, setAccessToken } from '../api/client';
 import type { ApiResponse } from '../types/api';
 import type {
   MeResponse,
+  MyRolesResponse,
+  SwitchRoleRequest,
+  SwitchRoleResponse,
   AuthResponse,
   LoginRequest,
   SetPasswordRequest,
@@ -47,4 +50,10 @@ export const authService = {
 
   me: async (): Promise<ApiResponse<MeResponse>> =>
     apiGet<MeResponse>(endpoints.auth.me),
+
+  myRoles: async (): Promise<ApiResponse<MyRolesResponse>> =>
+    apiGet<MyRolesResponse>(endpoints.auth.myRoles),
+
+  switchRole: async (data: SwitchRoleRequest): Promise<ApiResponse<SwitchRoleResponse>> =>
+    apiPost<SwitchRoleResponse>(endpoints.auth.switchRole, data),
 };

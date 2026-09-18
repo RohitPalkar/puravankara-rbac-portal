@@ -17,9 +17,42 @@ Response format: `{ statusCode, message, data, meta }`
 | Endpoint | Method | Auth | Purpose |
 |----------|--------|------|---------|
 | `/auth/login` | POST | Public | Authenticate user, return JWT + permissions |
-| `/auth/profile` | GET | JWT | Get current user profile |
-| `/auth/sidebar` | GET | JWT | Get filtered module tree for sidebar |
+| `/auth/me` | GET | JWT | Get current user profile + roles |
+| `/auth/my-roles` | GET | JWT | Get available roles + active role (for role switcher) |
+| `/auth/switch-role` | POST | JWT | Switch active role context (rotate JWT, audit, invalidate caches) |
+| `/auth/refresh` | POST | Public | Refresh access token (preserves activeRoleId) |
+| `/auth/sidebar` | GET | JWT | Get filtered module tree for sidebar (deprecated → use permissions/me) |
 | `/auth/permissions` | GET | JWT | Get effective permissions for active role |
+
+### GET /auth/my-roles
+
+Response:
+```json
+{
+  "activeRoleId": 12,
+  "activeRoleName": "Finance Executive",
+  "roles": [
+    { "roleId": 12, "roleName": "Finance Executive", "roleType": "PRIMARY", "isActive": true },
+    { "roleId": 15, "roleName": "Sales Head", "roleType": "SECONDARY", "isActive": true },
+    { "roleId": 18, "roleName": "Relationship Manager", "roleType": "BUDDY_RM", "isActive": true }
+  ]
+}
+```
+Expired/inactive roles are omitted. If active secondary expires, next request falls back to PRIMARY.
+
+### POST /auth/switch-role
+
+Request:
+```json
+{ "roleId": 15 }
+```
+Validates: authenticated, assigned, role.isActive, not expired, scope valid. On success:
+- Updates `user_sessions.active_role_id`
+- Issues new token pair with `activeRoleId` in JWT payload
+- Audits `AUTH / ROLE_SWITCH` `{ fromRoleId, toRoleId, ip, ua }`
+- Invalidates `permissions:snapshot:*`, `permission:*` caches for user
+Response: `{ accessToken, refreshToken, expiresIn, activeRoleId, activeRoleName }`
+Frontend must refetch `GET /auth/my-roles` and `GET /permissions/me` and re-render nav/project scope; redirect if current route becomes forbidden.
 
 ### POST /auth/login
 

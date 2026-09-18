@@ -32,9 +32,12 @@ export class PermissionController {
   @ApiOperation({ summary: 'Get current user permissions for frontend' })
   async getMyPermissions(@Req() req: any): Promise<UserPermissionsResponse> {
     const userId = req.user?.empId || req.user?.userId;
-    const result = await this.permissionService.getUserPermissions(userId);
+    const activeRoleId: number | null = req.user?.activeRoleId ?? null;
+    const result = await this.permissionService.getUserPermissions(userId, activeRoleId);
     try {
-      const scope = await this.scopeService.resolveUserScope(userId);
+      const scope = activeRoleId
+        ? await this.scopeService.resolveUserScopeForRole(userId, activeRoleId).catch(() => this.scopeService.resolveUserScope(userId))
+        : await this.scopeService.resolveUserScope(userId);
       result.scope = {
         resources: {
           zones: scope.resources.zones,

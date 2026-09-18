@@ -63,7 +63,7 @@ export class LaCityService {
 
       const regionIds = await this.regionRepo.find({
         where: { laCityId: In(cityIds) },
-        select: ['id'],
+        select: { id: true } as any,
       });
       const rIds = regionIds.map((r) => r.id);
       if (rIds.length) {
@@ -80,7 +80,7 @@ export class LaCityService {
 
         const microIds = await this.micromarketRepo.find({
           where: { laRegionId: In(rIds) },
-          select: ['id'],
+          select: { id: true } as any,
         });
         const mIds = microIds.map((m) => m.id);
         if (mIds.length) {

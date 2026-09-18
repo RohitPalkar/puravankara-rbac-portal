@@ -4,6 +4,7 @@ export const queryKeys = {
   auth: {
     all: ['auth'] as const,
     me: ['auth', 'me'] as const,
+    myRoles: ['auth', 'my-roles'] as const,
   },
 
   setup: {

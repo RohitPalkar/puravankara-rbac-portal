@@ -89,3 +89,57 @@ export function useResetPassword() {
     },
   });
 }
+
+export function useMyRoles() {
+  return useQuery({
+    queryKey: queryKeys.auth.myRoles,
+    queryFn: async () => {
+      const res = await authService.myRoles();
+      return res.data;
+    },
+    staleTime: 10_000,
+    refetchOnWindowFocus: true,
+  });
+}
+
+export function useSwitchRole() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (data: { roleId: number }) => {
+      const res = await authService.switchRole(data);
+      const d = res.data as any;
+      // Persist new tokens atomically
+      if (d?.accessToken) {
+        setAccessToken(d.accessToken);
+        sessionStorage.setItem('jwt_access_token', d.accessToken);
+        // Also update jwt_access_token alias used by older code
+        sessionStorage.setItem('jwt_accessToken', d.accessToken);
+      }
+      if (d?.refreshToken) {
+        sessionStorage.setItem('refresh_token', d.refreshToken);
+      }
+      // Persist active role hint for fast UI fallback
+      if (d?.activeRoleId) {
+        try {
+          const stored = sessionStorage.getItem('jwt_user');
+          if (stored) {
+            const u = JSON.parse(stored);
+            u.activeRoleId = d.activeRoleId;
+            u.activeRoleName = d.activeRoleName;
+            sessionStorage.setItem('jwt_user', JSON.stringify(u));
+          }
+        } catch {
+          // ignore parse errors
+        }
+      }
+      return d;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.auth.me });
+      queryClient.invalidateQueries({ queryKey: queryKeys.auth.myRoles });
+      queryClient.invalidateQueries({ queryKey: queryKeys.permissions.me });
+      // Wipe permission caches
+      sessionStorage.removeItem('jwt_permissions');
+    },
+  });
+}

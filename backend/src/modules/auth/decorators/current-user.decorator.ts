@@ -8,6 +8,7 @@ export interface AuthenticatedUser {
   department?: any;
   sessionId: string;
   roles: string[];
+  activeRoleId?: number | null;
 }
 
 export const CurrentUser = createParamDecorator(

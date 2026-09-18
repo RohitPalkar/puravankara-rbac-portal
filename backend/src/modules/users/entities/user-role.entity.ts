@@ -33,6 +33,12 @@ export class UserRole {
   @Column({ name: 'assigned_at', type: 'timestamptz', nullable: true })
   assignedAt: Date;
 
+  @Column({ name: 'expires_at', type: 'timestamptz', nullable: true })
+  expiresAt: Date | null;
+
+  @Column({ name: 'role_type', type: 'varchar', length: 20, nullable: true })
+  roleType: string | null;
+
   @ManyToOne(() => User, { nullable: false, onDelete: 'CASCADE' })
   @JoinColumn({ name: 'user_id' })
   user: User;
