@@ -544,7 +544,10 @@ export class PermissionService {
       for (let i = 0; i < projectCount; i++) {
         const proj = projectEntities[i];
         const modules = await this.getUserModulePermissionsNested(userId, proj.id, false, activeRoleId ?? null);
-        result.projects.push({ id: proj.id, name: proj.name, modules });
+        // Only expose projects that have at least one permitted module for the active role
+        if (modules.length > 0) {
+          result.projects.push({ id: proj.id, name: proj.name, modules });
+        }
       }
     }
 
