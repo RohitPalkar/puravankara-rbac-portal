@@ -33,7 +33,6 @@ import { DashboardModule } from './modules/dashboard/dashboard.module';
 import { CommonModule } from './common/common.module';
 import { LandConsultantsModule } from './modules/land-consultants/land-consultants.module';
 import { LaCitiesModule } from './modules/la-cities/la-cities.module';
-import { DebugModule } from './modules/debug/debug.module';
 
 @Module({
   imports: [
@@ -73,7 +72,6 @@ import { DebugModule } from './modules/debug/debug.module';
     CommonModule,
     LandConsultantsModule,
     LaCitiesModule,
-    DebugModule,
   ],
   providers: [
     { provide: APP_FILTER, useClass: AllExceptionsFilter },
