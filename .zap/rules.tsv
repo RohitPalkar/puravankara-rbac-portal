@@ -1,0 +1,5 @@
+# ZAP baseline ignore list - RBAC false positives tuned per CWE
+# 10020 X-Frame-Options header not set - frontend uses CSP via helmet, ignore for API
+10020	IGNORE	(API - relied on helmet CSP)
+# 40012 Cross-Domain JS inclusion - CDN for assets, reviewed
+40012	IGNORE	(CDN assets - reviewed)

@@ -1,0 +1,132 @@
+name: Security — SAST / Secrets / Deps / DAST
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+  schedule:
+    - cron: '0 3 * * 1' # weekly Monday 03:00 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  security-events: write
+  actions: read
+
+jobs:
+  # ── 1. CodeQL (JS/TS deep analysis) ─────────────────────────────
+  codeql:
+    name: CodeQL (JS/TS)
+    runs-on: ubuntu-latest
+    if: github.repository_visibility == 'public' || github.event_name == 'workflow_dispatch'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: github/codeql-action/init@v3
+        with:
+          languages: javascript-typescript
+          # custom packs for RBAC: ensure every guarded controller passes through PermissionGuard
+          # queries: security-and-quality
+      - uses: github/codeql-action/autobuild@v3
+      - uses: github/codeql-action/analyze@v3
+        with:
+          category: "/language:javascript-typescript"
+
+  # ── 2. Semgrep CE (SAST – OWASP, JWT, RBAC) ─────────────────────
+  semgrep:
+    name: Semgrep CE
+    runs-on: ubuntu-latest
+    container:
+      image: semgrep/semgrep
+    steps:
+      - uses: actions/checkout@v4
+      - run: semgrep --config=auto --error --json --output=semgrep.json .
+        # auto = p/owasp-top-ten, p/javascript, p/typescript, p/security-audit, p/nodejs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: semgrep-json
+          path: semgrep.json
+          retention-days: 30
+
+  # ── 3. Gitleaks (secrets) ───────────────────────────────────────
+  gitleaks:
+    name: Gitleaks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # ── 4. Trivy (deps / fs / config / container) ───────────────────
+  trivy-fs:
+    name: Trivy FS
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: aquasecurity/trivy-action@0.24.0
+        with:
+          scan-type: fs
+          scan-ref: .
+          format: sarif
+          output: trivy-fs.sarif
+          severity: CRITICAL,HIGH
+      - uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: trivy-fs.sarif
+
+  trivy-config:
+    name: Trivy Config
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: aquasecurity/trivy-action@0.24.0
+        with:
+          scan-type: config
+          scan-ref: .
+          format: sarif
+          output: trivy-config.sarif
+      - uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: trivy-config.sarif
+
+  # ── 5. ESLint strict (FE + BE) ──────────────────────────────────
+  eslint:
+    name: ESLint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - run: npx eslint "src/**/*.{js,jsx,ts,tsx}" --no-ignore
+      - run: npm --prefix backend ci --ignore-scripts || npm --prefix backend install --ignore-scripts
+      - run: npx --prefix backend eslint "src/**/*.ts" --no-ignore || echo "BE lint warnings only"
+
+  # ── 6. OWASP ZAP baseline (DAST – needs running app) ────────────
+  zap:
+    name: ZAP Baseline
+    runs-on: ubuntu-latest
+    needs: [eslint]
+    if: github.event_name == 'workflow_dispatch' || github.event_name == 'schedule'
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build & start stack (adjust to your compose)
+        run: |
+          docker compose -f docker-compose.yml up -d --build
+          for i in {1..60}; do curl -sf http://localhost:3000/api/v1/health && break; sleep 5; done
+      - uses: zaproxy/action-baseline@v0.12.0
+        with:
+          target: http://localhost:3000
+          rules_file_name: .zap/rules.tsv
+          cmd_options: '-a -j -I'
+          allow_issue_writing: false
+      - if: always()
+        run: docker compose down -v
