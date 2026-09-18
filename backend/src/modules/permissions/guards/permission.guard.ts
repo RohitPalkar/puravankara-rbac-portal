@@ -12,6 +12,7 @@ import {
   PERMISSION_KEY,
   RequirePermissionOptions,
 } from '../decorators/require-permission.decorator';
+import { SKIP_PERMISSION_KEY } from '../decorators/skip-permission.decorator';
 import { IS_PUBLIC_KEY } from '../../auth/decorators/public.decorator';
 
 @Injectable()
@@ -30,6 +31,14 @@ export class PermissionGuard {
       context.getClass(),
     ]);
     if (isPublic) {
+      return true;
+    }
+
+    const skipPermission = this.reflector.getAllAndOverride<boolean>(SKIP_PERMISSION_KEY, [
+      context.getHandler(),
+      context.getClass(),
+    ]);
+    if (skipPermission) {
       return true;
     }
 

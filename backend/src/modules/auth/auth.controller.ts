@@ -20,6 +20,7 @@ import { SwitchRoleDto } from './dto/switch-role.dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { CurrentUser } from './decorators/current-user.decorator';
 import { Public } from './decorators/public.decorator';
+import { SkipPermission } from '../permissions/decorators/skip-permission.decorator';
 import type { Request } from 'express';
 import type { AuthenticatedUser } from './decorators/current-user.decorator';
 
@@ -126,6 +127,7 @@ export class AuthController {
 
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
+  @SkipPermission()
   @Get('me')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Get current user profile and roles' })
@@ -135,6 +137,7 @@ export class AuthController {
 
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
+  @SkipPermission()
   @Get('my-roles')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Get authenticated user available roles and active role' })
@@ -144,6 +147,7 @@ export class AuthController {
 
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
+  @SkipPermission()
   @Post('switch-role')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Switch active role context for current session' })
